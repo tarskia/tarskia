@@ -1,0 +1,18 @@
+owner: user
+name: remove-deprecated
+version: 0.1.0
+use:
+  - schema: core/web-app@0.3
+    alias: web
+
+types: []
+relations: []
+
+remove:
+  web.relations:
+    - old-calls
+    - old-writes
+
+  web.types.api-endpoint.properties:
+    - deprecatedField
+    - legacyFlag

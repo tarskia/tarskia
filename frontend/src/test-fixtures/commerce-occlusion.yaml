@@ -1,0 +1,948 @@
+version: 0.1.0
+schemaRefs:
+  - schema: core/web-app@0.3
+    layer: 0
+  - schema: core/frontend@0.3
+    layer: 0
+  - schema: core/kubernetes@0.3
+    layer: 0
+  - schema: core/code@0.1
+    layer: 1
+  - schema: core/data-model@0.3
+    layer: 1
+metadata:
+  name: Occlusion Fixture
+entities:
+  - id: app-frontend
+    type: core/frontend.types.frontend
+    name: Web Frontend
+
+  - id: app-checkout
+    type: core/web-app.types.application
+    name: Checkout Service
+    tags: [critical-path]
+    children:
+      - id: api-checkout
+        type: core/web-app.types.api
+        name: Checkout API
+        children:
+          - id: api-checkout-core
+            type: core/web-app.types.group
+            props:
+              mode: typed
+              groupType: core/web-app.types.api-endpoint
+            children:
+              - id: endpoint-create-order
+                type: core/web-app.types.api-endpoint
+                name: Create Order
+                props:
+                  http:
+                    method: POST
+                    path: /orders
+                    auth: auth
+                children:
+                  - id: module-create-order-flow
+                    type: core/code.types.module
+                    name: Create Order Flow
+                    props:
+                      role: workflow
+                      language: typescript
+              - id: endpoint-cancel-order
+                type: core/web-app.types.api-endpoint
+                name: Cancel Order
+                props:
+                  http:
+                    method: POST
+                    path: /orders/{id}/cancel
+                    auth: auth
+              - id: endpoint-get-order
+                type: core/web-app.types.api-endpoint
+                name: Get Order
+                props:
+                  http:
+                    method: GET
+                    path: /orders/{id}
+                    auth: auth
+              - id: endpoint-checkout-health
+                type: core/web-app.types.api-endpoint
+                props:
+                  http:
+                    method: GET
+                    path: /health
+                    auth: public
+      - id: services-checkout
+        type: core/web-app.types.group
+        name: Checkout Services
+        props:
+          mode: typed
+          groupType: core/web-app.types.service
+        children:
+          - id: service-orders
+            type: core/web-app.types.service
+            name: Orders Service
+            props:
+              deployability: deployable
+            children:
+              - id: module-order-coordination
+                type: core/code.types.module
+                name: Order Coordination
+                props:
+                  role: workflow
+                  language: typescript
+          - id: service-refunds
+            type: core/web-app.types.service
+            name: Refunds Service
+          - id: service-pricing
+            type: core/web-app.types.service
+            name: Pricing Service
+          - id: service-notifications
+            type: core/web-app.types.service
+            name: Notifications Service
+
+  - id: app-fulfillment
+    type: core/web-app.types.application
+    name: Fulfillment Service
+    children:
+      - id: api-fulfillment
+        type: core/web-app.types.api
+        name: Fulfillment API
+        children:
+          - id: api-fulfillment-endpoints
+            type: core/web-app.types.group
+            props:
+              mode: typed
+              groupType: core/web-app.types.api-endpoint
+            children:
+              - id: endpoint-assign-pick
+                type: core/web-app.types.api-endpoint
+                name: Assign Pick
+                props:
+                  http:
+                    method: POST
+                    path: /pick-jobs
+                    auth: auth
+              - id: endpoint-ship-order
+                type: core/web-app.types.api-endpoint
+                name: Ship Order
+                props:
+                  http:
+                    method: POST
+                    path: /shipments
+                    auth: auth
+      - id: services-fulfillment
+        type: core/web-app.types.group
+        name: Fulfillment Services
+        props:
+          mode: typed
+          groupType: core/web-app.types.service
+        children:
+          - id: service-picking
+            type: core/web-app.types.service
+            name: Picking Service
+          - id: service-shipping
+            type: core/web-app.types.service
+            name: Shipping Service
+
+  - id: app-analytics
+    type: core/web-app.types.application
+    name: Analytics Platform
+    children:
+      - id: services-analytics
+        type: core/web-app.types.group
+        name: Analytics Services
+        props:
+          mode: typed
+          groupType: core/web-app.types.service
+        children:
+          - id: service-events
+            type: core/web-app.types.service
+            name: Event Processor
+
+  - id: data-platform
+    type: core/web-app.types.group
+    name: Data Platform
+    props:
+      mode: mixed
+    children:
+      - id: orders-db
+        type: core/web-app.types.relational-db
+        name: Orders DB
+        tags: [critical-path]
+        props:
+          implementation: postgres
+          hosting:
+            provider: aws
+            service: rds
+            location: eu-west-2
+          owner: checkout-platform
+          tier: critical
+          retentionDays: 35
+          encryptedAtRest: true
+        children:
+          - id: orders-schema
+            type: core/web-app.types.group
+            name: orders
+            props:
+              mode: typed
+              groupType: core/data-model.types.table
+            children:
+              - id: orders
+                type: core/data-model.types.table
+                name: orders
+                children:
+                  - id: orders-id
+                    type: core/data-model.types.column
+                    name: order_id
+                    props:
+                      type: uuid
+                  - id: orders-customer-id
+                    type: core/data-model.types.column
+                    name: customer_id
+                    props:
+                      type: uuid
+                  - id: orders-status
+                    type: core/data-model.types.column
+                    name: status
+                    props:
+                      type: text
+                  - id: orders-total
+                    type: core/data-model.types.column
+                    name: total_amount
+                    props:
+                      type: decimal
+              - id: customers
+                type: core/data-model.types.table
+                name: customers
+                children:
+                  - id: customers-id
+                    type: core/data-model.types.column
+                    name: customer_id
+                    props:
+                      type: uuid
+                  - id: customers-email
+                    type: core/data-model.types.column
+                    name: email
+                    props:
+                      type: text
+                  - id: customers-name
+                    type: core/data-model.types.column
+                    name: name
+                    props:
+                      type: text
+                  - id: customers-segment
+                    type: core/data-model.types.column
+                    name: segment
+                    props:
+                      type: text
+              - id: order-items
+                type: core/data-model.types.table
+                name: order_items
+                children:
+                  - id: order-items-id
+                    type: core/data-model.types.column
+                    name: order_item_id
+                    props:
+                      type: uuid
+                  - id: order-items-order-id
+                    type: core/data-model.types.column
+                    name: order_id
+                    props:
+                      type: uuid
+                  - id: order-items-product-id
+                    type: core/data-model.types.column
+                    name: product_id
+                    props:
+                      type: uuid
+                  - id: order-items-qty
+                    type: core/data-model.types.column
+                    name: quantity
+                    props:
+                      type: int
+              - id: products
+                type: core/data-model.types.table
+                name: products
+                children:
+                  - id: products-id
+                    type: core/data-model.types.column
+                    name: product_id
+                    props:
+                      type: uuid
+                  - id: products-name
+                    type: core/data-model.types.column
+                    name: name
+                    props:
+                      type: text
+                  - id: products-price
+                    type: core/data-model.types.column
+                    name: price
+                    props:
+                      type: decimal
+                  - id: products-stock
+                    type: core/data-model.types.column
+                    name: stock
+                    props:
+                      type: int
+              - id: refunds
+                type: core/data-model.types.table
+                name: refunds
+                children:
+                  - id: refunds-id
+                    type: core/data-model.types.column
+                    name: refund_id
+                    props:
+                      type: uuid
+                  - id: refunds-order-id
+                    type: core/data-model.types.column
+                    name: order_id
+                    props:
+                      type: uuid
+                  - id: refunds-amount
+                    type: core/data-model.types.column
+                    name: amount
+                    props:
+                      type: decimal
+                  - id: refunds-status
+                    type: core/data-model.types.column
+                    name: status
+                    props:
+                      type: text
+              - id: shipments
+                type: core/data-model.types.table
+                name: shipments
+                children:
+                  - id: shipments-id
+                    type: core/data-model.types.column
+                    name: shipment_id
+                    props:
+                      type: uuid
+                  - id: shipments-order-id
+                    type: core/data-model.types.column
+                    name: order_id
+                    props:
+                      type: uuid
+                  - id: shipments-carrier
+                    type: core/data-model.types.column
+                    name: carrier
+                    props:
+                      type: text
+                  - id: shipments-status
+                    type: core/data-model.types.column
+                    name: status
+                    props:
+                      type: text
+      - id: queue-events
+        type: core/web-app.types.queue
+        name: Events Bus
+        tags: [event-driven]
+        children:
+          - id: topic-order-events
+            type: core/web-app.types.topic
+            name: order-events
+            props:
+              retentionHours: 168
+              partitions: 12
+            children:
+              - id: sub-fulfillment
+                type: core/web-app.types.subscription
+                name: fulfillment
+                props:
+                  delivery: push
+              - id: sub-analytics-orders
+                type: core/web-app.types.subscription
+                name: analytics-orders
+                props:
+                  delivery: pull
+              - id: sub-notifications
+                type: core/web-app.types.subscription
+                name: notifications
+                props:
+                  delivery: push
+          - id: topic-refund-events
+            type: core/web-app.types.topic
+            name: refund-events
+            props:
+              retentionHours: 336
+              partitions: 6
+            children:
+              - id: sub-analytics-refunds
+                type: core/web-app.types.subscription
+                name: analytics-refunds
+                props:
+                  delivery: pull
+              - id: sub-payments
+                type: core/web-app.types.subscription
+                name: payments
+                props:
+                  delivery: push
+      - id: cache-session
+        type: core/web-app.types.cache
+        name: Distributed Cache
+        children:
+          - id: cache-space-session
+            type: core/web-app.types.cache-space
+            name: sessions
+            props:
+              ttlSeconds: 3600
+              eviction: lru
+          - id: cache-space-pricing
+            type: core/web-app.types.cache-space
+            name: pricing
+            props:
+              ttlSeconds: 600
+              eviction: lfu
+          - id: cache-space-product
+            type: core/web-app.types.cache-space
+            name: products
+            props:
+              ttlSeconds: 900
+              eviction: ttl
+
+  - id: platform-services
+    type: core/web-app.types.group
+    name: Platform Services
+    props:
+      mode: mixed
+    children:
+      - id: scheduler-core
+        type: core/web-app.types.scheduler
+        name: Job Scheduler
+        children:
+          - id: job-retry-payments
+            type: core/web-app.types.scheduled-job
+            name: retry-payments
+            props:
+              schedule: "*/10 * * * *"
+              retries: 5
+          - id: job-sync-products
+            type: core/web-app.types.scheduled-job
+            name: sync-products
+            props:
+              schedule: "*/15 * * * *"
+              retries: 3
+          - id: job-refund-reconciliation
+            type: core/web-app.types.scheduled-job
+            name: refund-reconciliation
+            props:
+              schedule: "0 */1 * * *"
+              retries: 2
+
+  - id: external-apis
+    type: core/web-app.types.group
+    name: External APIs
+    props:
+      mode: typed
+      groupType: core/web-app.types.external-api
+    children:
+      - id: payments-api
+        type: core/web-app.types.external-api
+        name: Payments API
+      - id: tax-api
+        type: core/web-app.types.external-api
+        name: Tax API
+      - id: fraud-api
+        type: core/web-app.types.external-api
+        name: Fraud API
+      - id: shipping-api
+        type: core/web-app.types.external-api
+        name: Shipping API
+      - id: email-api
+        type: core/web-app.types.external-api
+        name: Email API
+
+  - id: runtime-prod
+    type: core/kubernetes.types.microservice-orchestrator
+    name: Production Runtime
+    tags: [critical-path]
+    props:
+      platform: kubernetes
+      region: eu-west-2
+      cluster: commerce-prod
+    children:
+      - id: ns-checkout
+        type: core/kubernetes.types.k8s-namespace
+        name: checkout
+        children:
+          - id: ingress-checkout
+            type: core/kubernetes.types.k8s-ingress
+            name: checkout-ingress
+            props:
+              host: api.checkout.internal
+              path: /
+          - id: svc-checkout-api
+            type: core/kubernetes.types.k8s-service
+            name: checkout-api
+            props:
+              serviceType: ClusterIP
+              port: 8080
+          - id: deploy-checkout-api
+            type: core/kubernetes.types.k8s-deployment
+            name: checkout-api
+            props:
+              image: checkout-api:v38
+              replicas: 2
+            children:
+              - id: pod-checkout-api-a
+                type: core/kubernetes.types.k8s-pod
+                name: checkout-api-a
+                props:
+                  node: ip-10-0-3-12
+              - id: pod-checkout-api-b
+                type: core/kubernetes.types.k8s-pod
+                name: checkout-api-b
+                props:
+                  node: ip-10-0-3-21
+          - id: svc-orders
+            type: core/kubernetes.types.k8s-service
+            name: orders
+            props:
+              serviceType: ClusterIP
+              port: 8081
+          - id: deploy-orders
+            type: core/kubernetes.types.k8s-deployment
+            name: orders
+            props:
+              image: orders:v74
+              replicas: 3
+            children:
+              - id: pod-orders-a
+                type: core/kubernetes.types.k8s-pod
+                name: orders-a
+                props:
+                  node: ip-10-0-5-11
+              - id: pod-orders-b
+                type: core/kubernetes.types.k8s-pod
+                name: orders-b
+                props:
+                  node: ip-10-0-5-18
+              - id: pod-orders-c
+                type: core/kubernetes.types.k8s-pod
+                name: orders-c
+                props:
+                  node: ip-10-0-5-25
+          - id: deploy-refunds
+            type: core/kubernetes.types.k8s-deployment
+            name: refunds
+            props:
+              image: refunds:v31
+              replicas: 2
+            children:
+              - id: pod-refunds-a
+                type: core/kubernetes.types.k8s-pod
+                name: refunds-a
+                props:
+                  node: ip-10-0-6-12
+              - id: pod-refunds-b
+                type: core/kubernetes.types.k8s-pod
+                name: refunds-b
+                props:
+                  node: ip-10-0-6-22
+          - id: deploy-pricing
+            type: core/kubernetes.types.k8s-deployment
+            name: pricing
+            props:
+              image: pricing:v22
+              replicas: 2
+            children:
+              - id: pod-pricing-a
+                type: core/kubernetes.types.k8s-pod
+                name: pricing-a
+                props:
+                  node: ip-10-0-6-14
+              - id: pod-pricing-b
+                type: core/kubernetes.types.k8s-pod
+                name: pricing-b
+                props:
+                  node: ip-10-0-6-23
+          - id: cfg-checkout
+            type: core/kubernetes.types.k8s-config-map
+            name: checkout-config
+            props:
+              keys: 14
+          - id: secret-checkout
+            type: core/kubernetes.types.k8s-secret
+            name: checkout-secrets
+            props:
+              scope: namespace
+
+      - id: ns-fulfillment
+        type: core/kubernetes.types.k8s-namespace
+        name: fulfillment
+        children:
+          - id: ingress-fulfillment
+            type: core/kubernetes.types.k8s-ingress
+            name: fulfillment-ingress
+            props:
+              host: api.fulfillment.internal
+              path: /
+          - id: svc-fulfillment-api
+            type: core/kubernetes.types.k8s-service
+            name: fulfillment-api
+            props:
+              serviceType: ClusterIP
+              port: 8090
+          - id: deploy-fulfillment-api
+            type: core/kubernetes.types.k8s-deployment
+            name: fulfillment-api
+            props:
+              image: fulfillment-api:v19
+              replicas: 2
+            children:
+              - id: pod-fulfillment-api-a
+                type: core/kubernetes.types.k8s-pod
+                name: fulfillment-api-a
+                props:
+                  node: ip-10-0-7-12
+              - id: pod-fulfillment-api-b
+                type: core/kubernetes.types.k8s-pod
+                name: fulfillment-api-b
+                props:
+                  node: ip-10-0-7-27
+          - id: deploy-picking
+            type: core/kubernetes.types.k8s-deployment
+            name: picking
+            props:
+              image: picking:v40
+              replicas: 2
+            children:
+              - id: pod-picking-a
+                type: core/kubernetes.types.k8s-pod
+                name: picking-a
+                props:
+                  node: ip-10-0-8-12
+              - id: pod-picking-b
+                type: core/kubernetes.types.k8s-pod
+                name: picking-b
+                props:
+                  node: ip-10-0-8-20
+          - id: deploy-shipping
+            type: core/kubernetes.types.k8s-deployment
+            name: shipping
+            props:
+              image: shipping:v55
+              replicas: 2
+            children:
+              - id: pod-shipping-a
+                type: core/kubernetes.types.k8s-pod
+                name: shipping-a
+                props:
+                  node: ip-10-0-8-14
+              - id: pod-shipping-b
+                type: core/kubernetes.types.k8s-pod
+                name: shipping-b
+                props:
+                  node: ip-10-0-8-29
+          - id: cfg-fulfillment
+            type: core/kubernetes.types.k8s-config-map
+            name: fulfillment-config
+            props:
+              keys: 9
+          - id: secret-fulfillment
+            type: core/kubernetes.types.k8s-secret
+            name: fulfillment-secrets
+            props:
+              scope: namespace
+
+      - id: ns-analytics
+        type: core/kubernetes.types.k8s-namespace
+        name: analytics
+        children:
+          - id: deploy-analytics
+            type: core/kubernetes.types.k8s-deployment
+            name: event-processor
+            props:
+              image: analytics:v12
+              replicas: 2
+            children:
+              - id: pod-analytics-a
+                type: core/kubernetes.types.k8s-pod
+                name: analytics-a
+                props:
+                  node: ip-10-0-9-12
+              - id: pod-analytics-b
+                type: core/kubernetes.types.k8s-pod
+                name: analytics-b
+                props:
+                  node: ip-10-0-9-21
+          - id: cron-reconcile
+            type: core/kubernetes.types.k8s-cronjob
+            name: reconcile-refunds
+            props:
+              schedule: "0 */1 * * *"
+            children:
+              - id: run-reconcile-latest
+                type: core/kubernetes.types.k8s-job-run
+                name: reconcile-2026-02-17T12-00
+                props:
+                  status: succeeded
+          - id: cfg-analytics
+            type: core/kubernetes.types.k8s-config-map
+            name: analytics-config
+            props:
+              keys: 7
+          - id: secret-analytics
+            type: core/kubernetes.types.k8s-secret
+            name: analytics-secrets
+            props:
+              scope: namespace
+
+relations:
+  - id: rel-frontend-calls-checkout
+    type: core/software.relations.calls
+    from: app-frontend
+    to: endpoint-create-order
+  - id: rel-frontend-calls-order-status
+    type: core/software.relations.calls
+    from: app-frontend
+    to: endpoint-get-order
+  - id: rel-frontend-calls-track
+    type: core/software.relations.calls
+    from: app-frontend
+    to: endpoint-ship-order
+
+  - id: rel-endpoint-create-calls-orders
+    type: core/software.relations.calls
+    from: endpoint-create-order
+    to: service-orders
+  - id: rel-endpoint-cancel-calls-refunds
+    type: core/software.relations.calls
+    from: endpoint-cancel-order
+    to: service-refunds
+  - id: rel-endpoint-get-calls-orders
+    type: core/software.relations.calls
+    from: endpoint-get-order
+    to: service-orders
+  - id: rel-endpoint-assign-calls-picking
+    type: core/software.relations.calls
+    from: endpoint-assign-pick
+    to: service-picking
+  - id: rel-endpoint-ship-calls-shipping
+    type: core/software.relations.calls
+    from: endpoint-ship-order
+    to: service-shipping
+
+  - id: rel-orders-calls-pricing
+    type: core/software.relations.calls
+    from: service-orders
+    to: service-pricing
+  - id: rel-orders-calls-notifications
+    type: core/software.relations.calls
+    from: service-orders
+    to: service-notifications
+  - id: rel-refunds-calls-notifications
+    type: core/software.relations.calls
+    from: service-refunds
+    to: service-notifications
+  - id: rel-picking-calls-orders
+    type: core/software.relations.calls
+    from: service-picking
+    to: service-orders
+  - id: rel-shipping-calls-orders
+    type: core/software.relations.calls
+    from: service-shipping
+    to: service-orders
+
+  - id: rel-orders-readwrites-orders
+    type: core/software.relations.read-writes
+    from: service-orders
+    to: orders
+    tags: [critical-path]
+  - id: rel-orders-readwrites-order-items
+    type: core/software.relations.read-writes
+    from: service-orders
+    to: order-items
+  - id: rel-orders-reads-customers
+    type: core/software.relations.reads
+    from: service-orders
+    to: customers
+  - id: rel-orders-reads-products
+    type: core/software.relations.reads
+    from: service-orders
+    to: products
+  - id: rel-refunds-reads-orders
+    type: core/software.relations.reads
+    from: service-refunds
+    to: orders
+  - id: rel-refunds-writes-refunds
+    type: core/software.relations.writes
+    from: service-refunds
+    to: refunds
+  - id: rel-shipping-writes-shipments
+    type: core/software.relations.writes
+    from: service-shipping
+    to: shipments
+  - id: rel-pricing-reads-products
+    type: core/software.relations.reads
+    from: service-pricing
+    to: products
+
+  - id: rel-orders-publishes-order-events
+    type: core/software.relations.publishes-to
+    from: service-orders
+    to: topic-order-events
+    tags: [event-driven]
+  - id: rel-refunds-publishes-refund-events
+    type: core/software.relations.publishes-to
+    from: service-refunds
+    to: topic-refund-events
+  - id: rel-picking-consumes-order-events
+    type: core/software.relations.consumes-from
+    from: service-picking
+    to: topic-order-events
+  - id: rel-shipping-consumes-order-events
+    type: core/software.relations.consumes-from
+    from: service-shipping
+    to: topic-order-events
+  - id: rel-notifications-consumes-order-events
+    type: core/software.relations.consumes-from
+    from: service-notifications
+    to: topic-order-events
+  - id: rel-events-consumes-order-events
+    type: core/software.relations.consumes-from
+    from: service-events
+    to: topic-order-events
+  - id: rel-events-consumes-refund-events
+    type: core/software.relations.consumes-from
+    from: service-events
+    to: topic-refund-events
+  - id: rel-scheduler-publishes-order-events
+    type: core/software.relations.publishes-to
+    from: job-sync-products
+    to: topic-order-events
+
+  - id: rel-orders-cache-sessions
+    type: core/software.relations.read-writes
+    from: service-orders
+    to: cache-space-session
+  - id: rel-pricing-cache-pricing
+    type: core/software.relations.read-writes
+    from: service-pricing
+    to: cache-space-pricing
+  - id: rel-orders-cache-products
+    type: core/software.relations.reads
+    from: service-orders
+    to: cache-space-product
+
+  - id: rel-refunds-calls-payments
+    type: core/software.relations.calls
+    from: service-refunds
+    to: payments-api
+  - id: rel-pricing-calls-tax
+    type: core/software.relations.calls
+    from: service-pricing
+    to: tax-api
+  - id: rel-orders-calls-fraud
+    type: core/software.relations.calls
+    from: service-orders
+    to: fraud-api
+  - id: rel-shipping-calls-shipping-api
+    type: core/software.relations.calls
+    from: service-shipping
+    to: shipping-api
+  - id: rel-notifications-calls-email
+    type: core/software.relations.calls
+    from: service-notifications
+    to: email-api
+
+  - id: rel-orders-customers
+    type: core/data-model.relations.many-to-one
+    from: orders
+    to: customers
+  - id: rel-orders-items
+    type: core/data-model.relations.one-to-many
+    from: orders
+    to: order-items
+  - id: rel-items-products
+    type: core/data-model.relations.many-to-one
+    from: order-items
+    to: products
+  - id: rel-orders-refunds
+    type: core/data-model.relations.one-to-many
+    from: orders
+    to: refunds
+  - id: rel-orders-shipments
+    type: core/data-model.relations.one-to-many
+    from: orders
+    to: shipments
+  - id: rel-orders-products
+    type: core/data-model.relations.many-to-many
+    from: orders
+    to: products
+
+  - id: rel-ingress-checkout-svc
+    type: core/kubernetes.relations.routes-to
+    from: ingress-checkout
+    to: svc-checkout-api
+  - id: rel-svc-checkout-deploy
+    type: core/kubernetes.relations.routes-to
+    from: svc-checkout-api
+    to: deploy-checkout-api
+  - id: rel-ingress-fulfillment-svc
+    type: core/kubernetes.relations.routes-to
+    from: ingress-fulfillment
+    to: svc-fulfillment-api
+  - id: rel-svc-fulfillment-deploy
+    type: core/kubernetes.relations.routes-to
+    from: svc-fulfillment-api
+    to: deploy-fulfillment-api
+
+  - id: rel-orders-deploy
+    type: core/kubernetes.relations.deploys-to
+    from: service-orders
+    to: deploy-orders
+  - id: rel-refunds-deploy
+    type: core/kubernetes.relations.deploys-to
+    from: service-refunds
+    to: deploy-refunds
+  - id: rel-pricing-deploy
+    type: core/kubernetes.relations.deploys-to
+    from: service-pricing
+    to: deploy-pricing
+  - id: rel-picking-deploy
+    type: core/kubernetes.relations.deploys-to
+    from: service-picking
+    to: deploy-picking
+  - id: rel-shipping-deploy
+    type: core/kubernetes.relations.deploys-to
+    from: service-shipping
+    to: deploy-shipping
+  - id: rel-events-deploy
+    type: core/kubernetes.relations.deploys-to
+    from: service-events
+    to: deploy-analytics
+
+  - id: rel-checkout-config
+    type: core/kubernetes.relations.configured-by
+    from: deploy-checkout-api
+    to: cfg-checkout
+  - id: rel-checkout-secret
+    type: core/kubernetes.relations.configured-by
+    from: deploy-checkout-api
+    to: secret-checkout
+  - id: rel-orders-config
+    type: core/kubernetes.relations.configured-by
+    from: deploy-orders
+    to: cfg-checkout
+  - id: rel-orders-secret
+    type: core/kubernetes.relations.configured-by
+    from: deploy-orders
+    to: secret-checkout
+  - id: rel-fulfillment-config
+    type: core/kubernetes.relations.configured-by
+    from: deploy-fulfillment-api
+    to: cfg-fulfillment
+  - id: rel-fulfillment-secret
+    type: core/kubernetes.relations.configured-by
+    from: deploy-fulfillment-api
+    to: secret-fulfillment
+  - id: rel-analytics-config
+    type: core/kubernetes.relations.configured-by
+    from: deploy-analytics
+    to: cfg-analytics
+  - id: rel-analytics-secret
+    type: core/kubernetes.relations.configured-by
+    from: deploy-analytics
+    to: secret-analytics
+  - id: rel-cron-config
+    type: core/kubernetes.relations.configured-by
+    from: cron-reconcile
+    to: cfg-analytics

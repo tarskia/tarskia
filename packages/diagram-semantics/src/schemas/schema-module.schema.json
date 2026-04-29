@@ -1,0 +1,506 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://semantic-diagrammer.local/schema-module.schema.json",
+  "title": "Semantic Diagrammer Schema Module",
+  "description": "Schema module format used by the semantic diagram rendering engine. This validates structure and documents runtime rendering semantics.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["owner", "name", "version", "types", "relations"],
+  "properties": {
+    "owner": {
+      "type": "string",
+      "enum": ["core", "gallery", "user"],
+      "description": "Owning namespace for the schema."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "description": "Owner-local schema name slug. Example: web-app."
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Module version string."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional human-oriented summary of what this schema module is for."
+    },
+    "use": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/schemaImport" },
+      "uniqueItems": true,
+      "description": "Optional imported schema modules used as dependencies and update targets."
+    },
+    "traits": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/traitDef" },
+      "description": "Optional trait catalog for capability-style matching."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/tagDef" },
+      "uniqueItems": true,
+      "description": "Optional tag catalog used for metadata, styling, and UI labels."
+    },
+    "types": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entityTypeDef" },
+      "description": "Entity type definitions."
+    },
+    "relations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/relationTypeDef" },
+      "description": "Relation type definitions used for validation and edge display."
+    },
+    "update": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/updateSelector" },
+      "additionalProperties": { "$ref": "#/$defs/updateOperations" },
+      "description": "Optional schema updates keyed by selector (<alias>.<section>.<id>[.properties[.<propertyId>]])."
+    },
+    "remove": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/removeSelector" },
+      "additionalProperties": { "$ref": "#/$defs/idList" },
+      "description": "Optional removals keyed by collection selector."
+    }
+  },
+  "$defs": {
+    "schemaImport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema"],
+      "properties": {
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Schema reference in the form <owner>/<name>[@version]."
+        },
+        "alias": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional alias used by update/remove selectors."
+        }
+      }
+    },
+    "updateSelector": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*\\.(?:types|traits|relations|tags)\\.[A-Za-z][A-Za-z0-9_-]*(?:\\.properties(?:\\.[A-Za-z][A-Za-z0-9_-]*)?)?$"
+    },
+    "removeSelector": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*\\.(?:(?:types|traits|relations|tags)|(?:types\\.[A-Za-z][A-Za-z0-9_-]*\\.properties))$"
+    },
+    "updateOperations": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "set": { "type": "object", "additionalProperties": true, "minProperties": 1 },
+        "add": { "type": "object", "additionalProperties": true, "minProperties": 1 },
+        "remove": { "type": "object", "additionalProperties": true, "minProperties": 1 }
+      }
+    },
+    "size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "styleConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hue": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 360,
+          "description": "Preferred node hue. When omitted, the renderer may fall back to the primary tag color."
+        }
+      }
+    },
+    "displayCount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["childTypes", "label"],
+      "properties": {
+        "childTypes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Child entity types included in count aggregation."
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plural label used in count pills and cards."
+        },
+        "singularLabel": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional singular override when count is 1."
+        }
+      }
+    },
+    "displayContentConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["markdown", "image"],
+          "description": "Richer node renderer to use for this type."
+        },
+        "bodyPath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Prop path containing markdown body text."
+        },
+        "srcPath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Prop path containing an image URL."
+        },
+        "altPath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Prop path containing image alt text."
+        },
+        "captionPath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Prop path containing markdown or image caption text."
+        }
+      }
+    },
+    "displayConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "primaryTag": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Primary semantic tag used for node tag labels and as a color fallback when no explicit type hue is set (display-only)."
+        },
+        "count": {
+          "$ref": "#/$defs/displayCount",
+          "description": "Count aggregation hints for compact card/list display."
+        },
+        "defaultSize": {
+          "$ref": "#/$defs/size",
+          "description": "Default node size hint consumed by the renderer. Display-only metadata."
+        },
+        "content": {
+          "$ref": "#/$defs/displayContentConfig",
+          "description": "Optional rich content renderer configuration for note or media-style nodes."
+        },
+        "style": {
+          "$ref": "#/$defs/styleConfig",
+          "description": "Visual style hint consumed by the renderer. Display-only metadata."
+        }
+      }
+    },
+    "entityTypeAnalysisConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "topLevelBias": {
+          "type": "string",
+          "enum": ["prefer", "neutral", "avoid"],
+          "description": "Optional synthesis hint for whether this type should usually be promoted to top-level boundaries or remain nested inside a stronger outer boundary."
+        }
+      }
+    },
+    "traitAnalysisConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "flowType": {
+          "type": "string",
+          "enum": ["source", "through", "sink"],
+          "description": "Positive node-level flow expectation used by compiled analysis semantics."
+        },
+        "mayTerminate": {
+          "type": "boolean",
+          "description": "Whether analysis may accept this trait as a valid flow boundary when continuation evidence is missing."
+        },
+        "expectedRelationIds": {
+          "$ref": "#/$defs/idList",
+          "description": "Optional relation ids this trait commonly participates in."
+        }
+      }
+    },
+    "relationAnalysisConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fulfills": {
+          "$ref": "#/$defs/relationFulfillmentConfig",
+          "description": "How this relation satisfies ingress/egress expectations for each endpoint."
+        }
+      }
+    },
+    "traitDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "extends": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional parent trait id."
+        },
+        "description": { "type": "string" },
+        "analysis": {
+          "$ref": "#/$defs/traitAnalysisConfig",
+          "description": "Analysis and synthesis hints consumed by schema-driven generation and flow analysis."
+        },
+        "relationParticipation": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/traitRelationParticipation" }
+        }
+      }
+    },
+    "traitRelationParticipation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relation", "endpoint"],
+      "properties": {
+        "relation": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Relation id this trait supports."
+        },
+        "endpoint": {
+          "type": "string",
+          "enum": ["from", "to", "both"],
+          "description": "Which endpoint positions this trait supports for the referenced relation."
+        }
+      }
+    },
+    "tagDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "color": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" }
+      }
+    },
+    "tagIdList": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "idList": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "propertyDisplay": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "showIn": {
+          "type": "string",
+          "enum": ["card", "hidden"],
+          "description": "Controls where this property can be rendered."
+        },
+        "valuePath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path to nested value when rendering object properties."
+        },
+        "template": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Template for combining nested values. Example: {provider} {service}."
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Display priority for constrained spaces. Lower number = higher priority (1 is highest). Used when selecting a capped subset of properties for cards/lists; ties preserve declaration order."
+        }
+      }
+    },
+    "relationDisplayConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "flowDirection": {
+          "type": "string",
+          "enum": ["forward", "reverse"],
+          "description": "Visual edge flow direction consumed by renderers. Defaults to forward and does not affect semantic endpoint validation."
+        }
+      }
+    },
+    "propertySchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean", "enum", "object"]
+        },
+        "values": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "allowOther": {
+          "type": "boolean",
+          "description": "When true for enum properties, free-text values are allowed."
+        },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/propertySchema" },
+          "description": "Nested object properties when type=object."
+        },
+        "description": { "type": "string" },
+        "display": { "$ref": "#/$defs/propertyDisplay" }
+      }
+    },
+    "containmentConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowedChildTypes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "allowedChildTraits": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "description": "Containment constraints for children of this type."
+    },
+    "namingConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "When true, entities of this type must have a non-empty name in documents. This is a validation contract. For optional-name types, renderer fallback naming is display-only (blank in card mode, \"Unnamed <Type>\" in list mode)."
+        }
+      },
+      "description": "Naming constraints for this type."
+    },
+    "entityTypeDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional human-oriented explanation of when to use this type."
+        },
+        "extends": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional parent type id (single inheritance)."
+        },
+        "traits": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "analysis": {
+          "$ref": "#/$defs/entityTypeAnalysisConfig",
+          "description": "Analysis and synthesis hints consumed by schema-driven generation."
+        },
+        "defaultTags": {
+          "$ref": "#/$defs/tagIdList",
+          "description": "Default semantic tags for this type. Entities can override/remove defaults at document level."
+        },
+        "naming": { "$ref": "#/$defs/namingConfig" },
+        "containment": { "$ref": "#/$defs/containmentConfig" },
+        "display": { "$ref": "#/$defs/displayConfig" },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/propertySchema" }
+        }
+      }
+    },
+    "relationTypeDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Canonical relation label."
+        },
+        "shortLabel": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Compact on-canvas label used for edge text when available."
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Relation precedence for collapsed-route label selection. Lower number = higher priority (1 is highest). If multiple relations collapse to the same visible route, the renderer chooses the relation with the smallest priority. If priorities tie, deterministic tie-breakers apply."
+        },
+        "defaultTags": {
+          "$ref": "#/$defs/tagIdList",
+          "description": "Default semantic tags for this relation type. Individual relations can override/remove defaults at document level."
+        },
+        "directed": {
+          "type": "boolean",
+          "description": "Whether endpoint constraints are directional. Defaults to true; when false, from/to endpoint checks are symmetric."
+        },
+        "display": {
+          "$ref": "#/$defs/relationDisplayConfig",
+          "description": "Display-only edge hints consumed by renderers. Does not affect semantic relation validation."
+        },
+        "analysis": {
+          "$ref": "#/$defs/relationAnalysisConfig",
+          "description": "Analysis hints consumed by flow analysis and synthesis."
+        }
+      }
+    },
+    "relationFulfillmentConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/relationFulfillmentList"
+        },
+        "to": {
+          "$ref": "#/$defs/relationFulfillmentList"
+        }
+      }
+    },
+    "relationFulfillmentList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["ingress", "egress"]
+      },
+      "uniqueItems": true
+    }
+  }
+}

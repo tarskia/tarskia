@@ -1,0 +1,178 @@
+version: 0.1.0
+schemaRefs:
+  - schema: core/presentation@0.1
+    layer: 0
+metadata:
+  name: Layout Fixture
+view:
+  kind: semantic-diagram-view
+  version: 2
+  nodesById:
+    schema-doc-mini:
+      expanded: true
+    git-workflow-mini:
+      expanded: true
+entities:
+  - id: tour-root
+    type: core/presentation.types.topic
+    name: Expand this node
+    children:
+      - id: tour-concepts
+        type: core/presentation.types.topic
+        name: Schemas define what can exist, documents define what does exist
+        children:
+          - id: note-schema-doc-view
+            type: core/presentation.types.note
+            name: The core model
+            props:
+              body: |
+                Tarskia is not just drawing boxes and arrows.
+
+                - A **schema** says which types, relations, and display hints are allowed.
+                - A **document** is the concrete system you are diagramming.
+                - A **view** decides which branches are expanded right now.
+
+                The same diagram can move between high-level architecture and low-level detail without losing meaning.
+          - id: schema-doc-mini
+            type: core/presentation.types.topic
+            name: Schema, document, view
+            children:
+              - id: schema-mini
+                type: core/presentation.types.note
+                name: Schema
+                props:
+                  body: |
+                    - Types
+                    - Relations
+                    - Display hints
+              - id: document-mini
+                type: core/presentation.types.note
+                name: Document
+                props:
+                  body: |
+                    - Entities
+                    - Relations
+                    - Containment
+              - id: view-mini
+                type: core/presentation.types.note
+                name: View
+                props:
+                  body: |
+                    - Expanded branches
+                    - Layout
+                    - Current focus
+          - id: note-semantic-zoom
+            type: core/presentation.types.note
+            name: Expansion is semantic zoom
+            props:
+              body: |
+                Expanding a node is not a camera trick.
+
+                You are revealing contained entities, typed groups, and local relationships. That lets the canvas stay fast while still carrying real structure.
+
+                Use this when you want a node to open into routes, tables, modules, queues, or any other domain-specific detail.
+      - id: tour-schema-extensibility
+        type: core/presentation.types.topic
+        name: The vocabulary is extensible
+        children:
+          - id: note-extensible-schemas
+            type: core/presentation.types.note
+            name: Add your own language
+            props:
+              body: |
+                Core schemas are only the starting point.
+
+                - You can publish new types, tags, and relations.
+                - Display hints let those types render cleanly without hardcoding every domain into the app.
+                - These note and image nodes come from a generic **presentation** schema rather than a special onboarding overlay.
+
+                That keeps tutorials, examples, and working diagrams inside one paradigm.
+      - id: tour-git
+        type: core/presentation.types.topic
+        name: Git is part of the story
+        children:
+          - id: note-git-integration
+            type: core/presentation.types.note
+            name: Diagrams can track code context
+            props:
+              body: |
+                The long-term direction is diagramming that understands repositories.
+
+                - Inputs can point at git repos and revisions.
+                - Generated diagrams can be treated as reviewable build artifacts.
+                - The interesting workflow is not just drawing a system, but diffing how it changes across branches.
+          - id: git-workflow-mini
+            type: core/presentation.types.topic
+            name: Repo-aware workflow
+            children:
+              - id: git-code-mini
+                type: core/presentation.types.note
+                name: Code
+                props:
+                  body: |
+                    - Repos
+                    - Commits
+                    - Branches
+              - id: git-inference-mini
+                type: core/presentation.types.note
+                name: Inference
+                props:
+                  body: |
+                    - Schema extraction
+                    - Entity discovery
+                    - Provenance
+              - id: git-diagram-mini
+                type: core/presentation.types.note
+                name: Diagram
+                props:
+                  body: |
+                    - Semantic view
+                    - Zoomable structure
+                    - Reviewable artifact
+              - id: git-review-mini
+                type: core/presentation.types.note
+                name: Review
+                props:
+                  body: |
+                    - Branch diffs
+                    - Pull requests
+                    - Feedback loop
+      - id: tour-examples
+        type: core/presentation.types.topic
+        name: Next, inspect one of the pre-built diagrams
+        children:
+          - id: note-open-example
+            type: core/presentation.types.note
+            name: Open Fixture Diagram
+            props:
+              body: |
+                Open a larger fixture diagram when you need to test nested layouts.
+
+                That example shows how the same expansion model can move from applications to APIs, services, databases, tables, columns, and infrastructure.
+
+                When you come back here, reset to the tutorial if you want to retrace the tour.
+relations:
+  - id: rel-tour-row-a
+    from: tour-concepts
+    to: tour-schema-extensibility
+    state: none
+  - id: rel-tour-row-b
+    from: tour-git
+    to: tour-examples
+    state: none
+  - id: rel-schema-doc-mini-a
+    from: schema-mini
+    to: document-mini
+    state: none
+  - id: rel-schema-doc-mini-b
+    from: document-mini
+    to: view-mini
+    state: none
+  - id: rel-git-workflow-a
+    from: git-code-mini
+    to: git-inference-mini
+    state: none
+  - id: rel-git-workflow-b
+    from: git-diagram-mini
+    to: git-review-mini
+    state: none

@@ -1,0 +1,54 @@
+owner: user
+name: cross-schema-relation
+version: 0.1.0
+use:
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/frontend@0.3
+    alias: fe
+  - schema: core/data-model@0.3
+    alias: data
+
+types: []
+
+relations:
+  - id: frontend-calls-endpoint
+    label: Calls
+    shortLabel: call
+    directed: true
+    defaultTags: [service]
+    analysis:
+      fulfills:
+        from: [egress]
+        to: [ingress]
+
+  - id: endpoint-reads-table
+    label: Reads
+    shortLabel: read
+    directed: true
+    defaultTags: [data]
+    display:
+      flowDirection: reverse
+    analysis:
+      fulfills:
+        from: [ingress]
+        to: [egress]
+
+update:
+  fe.traits.client-like:
+    add:
+      relationParticipation:
+        - relation: user/cross-schema-relation.relations.frontend-calls-endpoint
+          endpoint: from
+  sw.traits.endpoint-like:
+    add:
+      relationParticipation:
+        - relation: user/cross-schema-relation.relations.frontend-calls-endpoint
+          endpoint: to
+        - relation: user/cross-schema-relation.relations.endpoint-reads-table
+          endpoint: from
+  sw.traits.table-like:
+    add:
+      relationParticipation:
+        - relation: user/cross-schema-relation.relations.endpoint-reads-table
+          endpoint: to

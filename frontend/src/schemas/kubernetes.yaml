@@ -1,0 +1,307 @@
+owner: core
+name: kubernetes
+version: "0.3"
+use:
+  - schema: core/software@0.1
+    alias: sw
+
+tags: []
+
+traits:
+  - id: runtime-like
+    label: Runtime Resource
+    extends: core/base.traits.containable
+  - id: runtime-workload-like
+    label: Runtime Workload
+    extends: runtime-like
+    relationParticipation:
+      - relation: deploys-to
+        endpoint: to
+      - relation: routes-to
+        endpoint: to
+      - relation: runs-on
+        endpoint: from
+      - relation: configured-by
+        endpoint: from
+  - id: runtime-network-like
+    label: Runtime Network
+    extends: runtime-like
+    relationParticipation:
+      - relation: routes-to
+        endpoint: from
+      - relation: routes-to
+        endpoint: to
+      - relation: configured-by
+        endpoint: from
+  - id: runtime-config-like
+    label: Runtime Config
+    extends: runtime-like
+    relationParticipation:
+      - relation: configured-by
+        endpoint: to
+  - id: runtime-instance-like
+    label: Runtime Instance
+    extends: runtime-like
+    relationParticipation:
+      - relation: runs-on
+        endpoint: to
+
+types:
+  - id: microservice-orchestrator
+    label: Orchestrator
+    traits: [core/software.traits.compute, core/base.traits.container, core/kubernetes.traits.runtime-like]
+    defaultTags: [core/software.tags.deployment]
+    containment:
+      allowedChildTypes: [k8s-namespace]
+    display:
+      primaryTag: core/software.tags.deployment
+      defaultSize:
+        width: 260
+        height: 150
+      style:
+        hue: 245
+      count:
+        childTypes: [k8s-namespace]
+        label: namespaces
+    properties:
+      - id: platform
+        type: enum
+        values: [kubernetes, flyio, nomad]
+        allowOther: true
+        display:
+          priority: 1
+      - id: region
+        type: string
+        display:
+          priority: 2
+      - id: cluster
+        type: string
+        display:
+          priority: 3
+
+  - id: k8s-namespace
+    label: Namespace
+    traits: [core/base.traits.container, core/kubernetes.traits.runtime-like]
+    defaultTags: [core/software.tags.deployment]
+    containment:
+      allowedChildTraits: [core/kubernetes.traits.runtime-like, core/base.traits.group-like]
+    display:
+      primaryTag: core/software.tags.deployment
+      defaultSize:
+        width: 240
+        height: 130
+      style:
+        hue: 250
+      count:
+        childTypes: [k8s-ingress, k8s-service, k8s-deployment, k8s-cronjob, group]
+        label: resources
+
+  - id: k8s-ingress
+    label: Ingress
+    traits: [core/kubernetes.traits.runtime-network-like, core/software.traits.interface]
+    defaultTags: [core/software.tags.deployment]
+    display:
+      primaryTag: core/software.tags.deployment
+      defaultSize:
+        width: 180
+        height: 90
+      style:
+        hue: 265
+    properties:
+      - id: host
+        type: string
+        display:
+          priority: 1
+      - id: path
+        type: string
+        display:
+          priority: 2
+
+  - id: k8s-service
+    label: K8s Service
+    traits: [core/kubernetes.traits.runtime-network-like, core/software.traits.interface]
+    defaultTags: [core/software.tags.deployment]
+    display:
+      primaryTag: core/software.tags.deployment
+      defaultSize:
+        width: 170
+        height: 80
+      style:
+        hue: 260
+    properties:
+      - id: serviceType
+        type: enum
+        values: [ClusterIP, NodePort, LoadBalancer]
+        display:
+          priority: 1
+      - id: port
+        type: number
+        display:
+          priority: 2
+
+  - id: k8s-deployment
+    label: Deployment
+    traits:
+      [core/kubernetes.traits.runtime-workload-like, core/software.traits.compute, core/base.traits.container]
+    defaultTags: [core/software.tags.deployment]
+    containment:
+      allowedChildTypes: [k8s-pod]
+    display:
+      primaryTag: core/software.tags.deployment
+      defaultSize:
+        width: 210
+        height: 110
+      style:
+        hue: 255
+      count:
+        childTypes: [k8s-pod]
+        label: pods
+    properties:
+      - id: image
+        type: string
+        display:
+          priority: 1
+      - id: replicas
+        type: number
+        display:
+          priority: 2
+
+  - id: k8s-pod
+    label: Pod
+    traits: [core/kubernetes.traits.runtime-instance-like, core/software.traits.compute]
+    defaultTags: [core/software.tags.deployment]
+    display:
+      primaryTag: core/software.tags.deployment
+      defaultSize:
+        width: 150
+        height: 70
+      style:
+        hue: 258
+    properties:
+      - id: node
+        type: string
+
+  - id: k8s-cronjob
+    label: CronJob
+    traits:
+      [core/kubernetes.traits.runtime-workload-like, core/software.traits.compute, core/base.traits.container]
+    defaultTags: [core/software.tags.deployment]
+    containment:
+      allowedChildTypes: [k8s-job-run]
+    display:
+      primaryTag: core/software.tags.deployment
+      defaultSize:
+        width: 200
+        height: 100
+      style:
+        hue: 248
+      count:
+        childTypes: [k8s-job-run]
+        label: runs
+    properties:
+      - id: schedule
+        type: string
+        display:
+          priority: 1
+
+  - id: k8s-job-run
+    label: Job Run
+    traits: [core/kubernetes.traits.runtime-instance-like, core/software.traits.compute]
+    defaultTags: [core/software.tags.deployment]
+    display:
+      primaryTag: core/software.tags.deployment
+      defaultSize:
+        width: 160
+        height: 74
+      style:
+        hue: 246
+    properties:
+      - id: status
+        type: enum
+        values: [pending, running, succeeded, failed]
+        display:
+          priority: 1
+
+  - id: k8s-config-map
+    label: ConfigMap
+    traits: [core/kubernetes.traits.runtime-config-like]
+    defaultTags: [core/software.tags.deployment]
+    display:
+      primaryTag: core/software.tags.deployment
+      defaultSize:
+        width: 170
+        height: 70
+      style:
+        hue: 235
+    properties:
+      - id: keys
+        type: number
+        display:
+          priority: 1
+
+  - id: k8s-secret
+    label: Secret
+    traits: [core/kubernetes.traits.runtime-config-like]
+    defaultTags: [core/software.tags.deployment]
+    display:
+      primaryTag: core/software.tags.deployment
+      defaultSize:
+        width: 160
+        height: 70
+      style:
+        hue: 228
+    properties:
+      - id: scope
+        type: enum
+        values: [namespace, cluster]
+        display:
+          priority: 1
+
+relations:
+  - id: deploys-to
+    label: deploys-to
+    shortLabel: deploy
+    priority: 3
+    defaultTags: [deployment]
+
+  - id: routes-to
+    label: routes-to
+    shortLabel: route
+    priority: 4
+    defaultTags: [deployment]
+
+  - id: runs-on
+    label: runs-on
+    shortLabel: run
+    priority: 5
+    defaultTags: [deployment]
+
+  - id: configured-by
+    label: configured-by
+    shortLabel: cfg
+    priority: 6
+    defaultTags: [deployment]
+
+update:
+  sw.traits.compute:
+    add:
+      relationParticipation:
+        - relation: core/kubernetes.relations.deploys-to
+          endpoint: from
+        - relation: core/kubernetes.relations.routes-to
+          endpoint: from
+  sw.traits.interface:
+    add:
+      relationParticipation:
+        - relation: core/kubernetes.relations.routes-to
+          endpoint: from
+  sw.traits.api-like:
+    add:
+      relationParticipation:
+        - relation: core/kubernetes.relations.routes-to
+          endpoint: to
+  sw.traits.endpoint-like:
+    add:
+      relationParticipation:
+        - relation: core/kubernetes.relations.routes-to
+          endpoint: to

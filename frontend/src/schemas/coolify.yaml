@@ -1,0 +1,219 @@
+owner: gallery
+name: coolify
+version: "0.1"
+description: >-
+  Coolify-shaped architectural wrappers for the browser portal, Laravel control plane, queue and
+  scheduler worker runtime, and separate realtime terminal service, aligned to the repository's
+  Livewire/Laravel deployment and Node support code.
+use:
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/code@0.1
+    alias: code
+  - schema: core/frontend@0.3
+    alias: fe
+  - schema: core/web-app@0.3
+    alias: web
+traits:
+  - id: portal-boundary-like
+    label: Portal Boundary
+    description: Browser-facing UI boundary that originates user-driven flow into the repo-owned backend.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: source
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+  - id: control-plane-like
+    label: Control Plane
+    description: >-
+      Backend runtime boundary that accepts inbound calls and continues flow into orchestration,
+      APIs, and data access.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+      - relation: core/software.relations.calls
+        endpoint: to
+  - id: worker-service-like
+    label: Worker Service
+    description: >-
+      Queue and scheduler runtime that consumes background work and continues flow into downstream
+      maintenance steps.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+      - relation: core/software.relations.calls
+        endpoint: to
+      - relation: core/software.relations.consumes-from
+        endpoint: from
+  - id: realtime-service-like
+    label: Realtime Service
+    description: >-
+      Websocket and terminal bridge runtime that accepts interactive sessions and forwards them into
+      repo-owned auth and remote execution paths.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+      - relation: core/software.relations.calls
+        endpoint: to
+types:
+  - id: coolify
+    label: Coolify
+    description: >-
+      Top-level Coolify application boundary spanning the browser portal, Laravel control plane,
+      queue and scheduler worker runtime, and realtime service.
+    extends: core/web-app.types.application
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - portal-app
+        - control-plane
+        - worker-service
+        - realtime-service
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 320
+        height: 176
+      style:
+        hue: 210
+      count:
+        childTypes:
+          - portal-app
+          - control-plane
+          - worker-service
+          - realtime-service
+        label: components
+  - id: portal-app
+    label: Portal App
+    description: Browser-facing Livewire portal for operators and tenants.
+    extends: core/frontend.types.frontend
+    traits:
+      - gallery/coolify.traits.portal-boundary-like
+    analysis:
+      topLevelBias: prefer
+    containment:
+      allowedChildTypes:
+        - module
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/code.traits.code-like
+    display:
+      defaultSize:
+        width: 220
+        height: 96
+      style:
+        hue: 188
+      count:
+        childTypes:
+          - module
+          - group
+        label: components
+  - id: control-plane
+    label: Control Plane
+    description: >-
+      Main Laravel runtime that serves the operator UI, REST API, authentication, webhook handling,
+      and orchestration workflows.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/coolify.traits.control-plane-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - api
+        - module
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/code.traits.code-like
+        - core/software.traits.api-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 240
+        height: 120
+      style:
+        hue: 214
+      count:
+        childTypes:
+          - api
+          - module
+          - group
+        label: components
+  - id: worker-service
+    label: Worker Service
+    description: >-
+      Queue-processing and scheduled-task runtime for Horizon workers, maintenance jobs, and
+      background orchestration.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/coolify.traits.worker-service-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - scheduler
+        - module
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/code.traits.code-like
+        - core/software.traits.scheduler-like
+        - core/software.traits.job-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 230
+        height: 112
+      style:
+        hue: 30
+      count:
+        childTypes:
+          - scheduler
+          - module
+          - group
+        label: components
+  - id: realtime-service
+    label: Realtime Service
+    description: Separate Node/Soketi runtime for browser terminal sessions and realtime broadcasts.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/coolify.traits.realtime-service-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - module
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/code.traits.code-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 220
+        height: 104
+      style:
+        hue: 278
+      count:
+        childTypes:
+          - module
+          - group
+        label: components
+relations: []

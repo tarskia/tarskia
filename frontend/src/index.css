@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(220 25% 6%);
+  --color-foreground: hsl(220 30% 96%);
+  --color-muted: hsl(220 18% 14%);
+  --color-muted-foreground: hsl(220 15% 65%);
+  --color-accent: hsl(215 85% 65%);
+  --color-accent-foreground: hsl(220 25% 6%);
+  --color-secondary: hsl(185 55% 62%);
+  --color-secondary-foreground: hsl(220 25% 6%);
+  --color-border: hsl(0 0% 100% / 0.11);
+  --color-ring: hsl(215 85% 65% / 0.55);
+  --color-surface: hsl(220 22% 10% / 0.95);
+  --color-surface-hover: hsl(0 0% 100% / 0.08);
+  --color-destructive: hsl(0 62% 56%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+  --color-success: hsl(153 50% 62%);
+  --color-warning: hsl(45 100% 65%);
+  --color-info: hsl(215 70% 78%);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --font-sans: "Space Grotesk", system-ui, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+
+  --shadow-panel: 0 8px 24px rgb(0 0 0 / 0.2);
+  --shadow-toolbar: 0 2px 12px rgb(0 0 0 / 0.35);
+  --shadow-dropdown: 0 8px 30px rgb(0 0 0 / 0.4);
+  --shadow-popover: 0 10px 24px rgb(0 0 0 / 0.24);
+  --shadow-subtle: 0 1px 3px rgb(0 0 0 / 0.2);
+  --inset-shadow-glow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-background: hsl(220 20% 97%);
+    --color-foreground: hsl(220 25% 10%);
+    --color-muted: hsl(220 15% 92%);
+    --color-muted-foreground: hsl(220 12% 42%);
+    --color-accent: hsl(215 85% 50%);
+    --color-accent-foreground: hsl(0 0% 100%);
+    --color-secondary: hsl(185 55% 42%);
+    --color-secondary-foreground: hsl(0 0% 100%);
+    --color-border: hsl(220 15% 85%);
+    --color-ring: hsl(215 85% 50% / 0.4);
+    --color-surface: hsl(0 0% 100% / 0.95);
+    --color-surface-hover: hsl(220 15% 92%);
+    --color-destructive: hsl(0 62% 50%);
+    --color-destructive-foreground: hsl(0 0% 100%);
+    --color-success: hsl(153 50% 40%);
+    --color-warning: hsl(45 100% 42%);
+    --color-info: hsl(215 70% 50%);
+
+    --shadow-panel: 0 1px 8px rgb(0 0 0 / 0.06);
+    --shadow-toolbar: 0 1px 6px rgb(0 0 0 / 0.06);
+    --shadow-dropdown: 0 4px 16px rgb(0 0 0 / 0.08);
+    --shadow-popover: 0 4px 12px rgb(0 0 0 / 0.06);
+    --shadow-subtle: 0 1px 2px rgb(0 0 0 / 0.04);
+    --inset-shadow-glow: inset 0 1px 0 rgb(0 0 0 / 0.03);
+  }
+}

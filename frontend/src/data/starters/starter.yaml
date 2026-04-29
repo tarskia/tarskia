@@ -1,0 +1,24 @@
+version: 0.1.0
+schemaRefs:
+  - schema: core/web-app@0.3
+    layer: 0
+metadata:
+  name: Starter Diagram
+entities:
+  - id: application
+    type: core/web-app.types.application
+    name: Application
+    children:
+      - id: api
+        type: core/web-app.types.api
+        name: API
+
+  - id: database
+    type: core/web-app.types.relational-db
+    name: Database
+
+relations:
+  - id: rel-api-database
+    type: core/software.relations.reads
+    from: application
+    to: database

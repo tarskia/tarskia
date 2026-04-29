@@ -1,0 +1,21 @@
+{
+  "name": "tarskia",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:semantics": "node ./scripts/build-semantics.mjs",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "validate:schemas": "npm run validate:schemas -w @tarskia/frontend"
+  },
+  "optionalDependencies": {
+    "@tailwindcss/oxide-linux-x64-gnu": "4.2.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.3"
+  }
+}

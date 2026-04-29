@@ -1,0 +1,26 @@
+name: Repository request
+description: Request an open-source repository for the public gallery.
+title: "Repository request: "
+labels: ["repo-request"]
+body:
+  - type: input
+    id: repository
+    attributes:
+      label: Repository URL
+      placeholder: https://github.com/org/repo
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this repository?
+      description: Note what would make it a useful architecture diagram.
+    validations:
+      required: true
+  - type: checkboxes
+    id: public-source
+    attributes:
+      label: Public source
+      options:
+        - label: The repository is public and can be inspected without credentials.
+          required: true

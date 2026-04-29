@@ -1,0 +1,1638 @@
+:root {
+  font-family: var(--font-sans);
+  color: var(--color-foreground);
+  background: var(--color-background);
+  --canvas-bg: rgba(12, 14, 20, 0.85);
+  --panel-bg: var(--color-surface);
+  --panel-border: var(--color-border);
+  --text-muted: var(--color-muted-foreground);
+  --accent: var(--color-accent);
+  --node-text: hsla(0, 0%, 98%, 0.95);
+  --node-bg-s: 38%;
+  --node-bg-l: 16%;
+  --node-bg-l-group: 18%;
+  --node-border-s: 40%;
+  --node-border-l: 55%;
+  --node-border-a: 0.55;
+  --tag-pill-s: 88%;
+  --tag-pill-l: 80%;
+  --text-primary: rgba(255, 255, 255, 0.9);
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-tertiary: rgba(255, 255, 255, 0.62);
+  --text-faint: rgba(255, 255, 255, 0.5);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.22);
+  --fill-subtle: rgba(255, 255, 255, 0.04);
+  --fill-muted: rgba(255, 255, 255, 0.06);
+  --fill-hover: rgba(255, 255, 255, 0.08);
+  --stroke-primary: rgba(255, 255, 255, 1);
+  --stroke-default: rgba(255, 255, 255, 0.55);
+  --stroke-muted: rgba(255, 255, 255, 0.16);
+  --surface-overlay: rgba(10, 16, 22, 0.84);
+  --surface-elevated: rgba(10, 16, 22, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(33, 42, 60, 0.9), transparent 55%),
+    linear-gradient(160deg, #0a0c12 0%, #0d1119 40%, #0a0e16 100%);
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.canvas {
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  background: var(--canvas-bg);
+  overflow: hidden;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.canvas-focus-shell-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.canvas-focus-shell {
+  position: absolute;
+  border-radius: 8px;
+  background: transparent;
+  --focus-shell-ring-width: 12px;
+}
+
+.canvas-focus-shell--root {
+  --focus-shell-ring-width: 14px;
+}
+
+.canvas-focus-shell::before,
+.canvas-focus-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.canvas-focus-shell::before {
+  box-shadow: 0 0 0 9999px var(--canvas-bg);
+}
+
+.canvas-focus-shell::after {
+  border: 1px solid hsla(var(--focus-shell-hue, 210), 84%, 78%, 0.44);
+  box-shadow:
+    inset 0 0 0 1px hsla(var(--focus-shell-hue, 210), 84%, 82%, 0.08),
+    0 0 0 1px hsla(var(--focus-shell-hue, 210), 88%, 82%, 0.06);
+}
+
+.canvas-focus-shell--root::after {
+  border-color: hsla(var(--focus-shell-hue, 210), 88%, 82%, 0.58);
+  box-shadow:
+    inset 0 0 0 1px hsla(var(--focus-shell-hue, 210), 90%, 84%, 0.12),
+    0 0 0 1px hsla(var(--focus-shell-hue, 210), 88%, 82%, 0.08);
+}
+
+.canvas-focus-shell-boundary {
+  position: absolute;
+  top: -15px;
+  left: 16px;
+  right: 16px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.canvas-focus-shell-boundary--root {
+  left: 14px;
+  right: 14px;
+}
+
+.canvas-focus-shell-boundary-label,
+.canvas-focus-shell-boundary-note {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--surface-overlay);
+  border: 1px solid hsla(var(--focus-shell-hue, 210), 88%, 80%, 0.26);
+  backdrop-filter: blur(4px);
+  box-shadow:
+    inset 0 0 0 1px hsla(var(--focus-shell-hue, 210), 90%, 84%, 0.08),
+    0 1px 0 rgba(0, 0, 0, 0.22);
+}
+
+.canvas-focus-shell-boundary-label {
+  font-size: 0.74rem;
+  line-height: 1;
+  font-weight: 500;
+  color: rgba(245, 247, 251, 0.96);
+  white-space: nowrap;
+}
+
+.canvas-focus-shell-boundary--root .canvas-focus-shell-boundary-label {
+  border-color: hsla(var(--focus-shell-hue, 210), 90%, 82%, 0.36);
+  color: hsla(var(--focus-shell-hue, 210), 94%, 86%, 0.98);
+}
+
+.canvas-focus-shell-boundary-note {
+  margin-left: auto;
+  max-width: min(320px, 45%);
+  font-size: 0.7rem;
+  line-height: 1;
+  color: hsla(var(--focus-shell-hue, 210), 88%, 82%, 0.84);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.canvas-focus-shell-boundary-note--active {
+  animation: canvas-focus-boundary-pulse 280ms ease-out;
+}
+
+@keyframes canvas-focus-boundary-pulse {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-1px) scale(1.012);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.canvas-host-hidden .react-flow__nodes,
+.node {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  text-transform: none;
+  position: relative;
+}
+
+.node-body {
+  height: 100%;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: center;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.node-body-rich {
+  justify-content: flex-start;
+}
+
+.react-flow__node {
+  border-radius: 4px;
+  background: var(--node-bg);
+  border: var(--node-border);
+}
+
+.react-flow__node.selected {
+  box-shadow: none;
+  outline: none;
+}
+
+.react-flow__node.selected .node {
+  box-shadow: 0 0 0 2px var(--node-selection-ring, rgba(255, 200, 120, 0.9));
+}
+
+.node.matched {
+  box-shadow: 0 0 0 2px rgba(141, 224, 255, 0.85);
+}
+
+.react-flow__node.selected .node.matched {
+  box-shadow:
+    0 0 0 2px var(--node-selection-ring, rgba(255, 200, 120, 0.9)),
+    0 0 0 4px rgba(141, 224, 255, 0.6);
+}
+
+.node-title {
+  display: block;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.node-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.entity-header .node-title-row {
+  font-size: 0.9rem;
+  line-height: 1.1;
+  font-weight: 600;
+}
+
+.node-title-placeholder {
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.entity-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.node-header-top,
+.group-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.node-subtitle {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.node-tag-pill {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
+  max-width: 34%;
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.node-props {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  max-width: 100%;
+}
+
+.node-prop {
+  display: flex;
+  align-items: center;
+  min-height: 22px;
+  line-height: 22px;
+  max-width: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.node-count {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.node-rich {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  min-height: 0;
+}
+
+.node-rich-markdown {
+  color: rgba(244, 248, 255, 0.86);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.node-rich-heading {
+  font-size: 0.72rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+
+.node-rich-paragraph {
+  margin: 0;
+}
+
+.node-rich-list {
+  margin: 0;
+  padding-left: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.node-rich-list li {
+  margin: 0;
+}
+
+.node-rich-code {
+  font-size: 0.72rem;
+  padding: 0.1rem 0.32rem;
+  border-radius: 0.35rem;
+  background: rgba(7, 13, 20, 0.34);
+  border: 1px solid var(--border-subtle);
+}
+
+.node-rich-image-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  border: 1px solid var(--border-default);
+  background: linear-gradient(180deg, var(--fill-hover), var(--fill-subtle)), rgba(6, 11, 18, 0.42);
+  aspect-ratio: 16 / 9;
+}
+
+.node-rich-image-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.node-rich-caption {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.list-item .node-body {
+  padding: 4px 6px;
+  justify-content: flex-start;
+  border-radius: 3px;
+  border-top: 1px solid var(--border-default);
+}
+
+.react-flow__node.selectable:hover .list-item .node-body {
+  background: var(--fill-subtle);
+}
+
+.react-flow__node.selected .list-item .node-body {
+  background: rgba(255, 200, 120, 0.12);
+}
+
+.list-item.matched .node-body {
+  background: rgba(95, 208, 255, 0.2);
+  border-top-color: rgba(171, 231, 255, 0.42);
+}
+
+.list-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  min-width: 0;
+}
+
+.list-type {
+  font-size: 0.6rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+
+.list-name {
+  display: block;
+  font-size: 0.82rem;
+  line-height: 1.15;
+  font-weight: 600;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-prop {
+  display: block;
+  font-size: 0.72rem;
+  line-height: 1.15;
+  color: var(--text-secondary);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-node {
+  overflow: visible;
+}
+
+.group-node .node-body {
+  justify-content: flex-start;
+  padding: 16px;
+}
+
+.group-node.focus-shell {
+  border-radius: 6px;
+}
+
+.group-node.focus-shell .node-body {
+  height: 100%;
+  padding: 0;
+  justify-content: flex-start;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.react-flow__node.selected .group-node.focus-shell {
+  box-shadow: none;
+}
+
+.group-edge-path {
+  fill: none;
+  stroke: var(--stroke-default);
+  stroke-width: 1.5px;
+}
+
+.group-edge.matched .group-edge-path {
+  stroke: rgba(183, 236, 255, 0.98);
+  stroke-width: 2.35px;
+}
+
+.group-edge-label {
+  fill: var(--text-secondary);
+  font-size: 0.6rem;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.group-edge.matched .group-edge-label {
+  fill: rgba(240, 251, 255, 1);
+}
+
+.debug-panel {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 5;
+  max-width: 360px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  background: var(--surface-overlay);
+  color: var(--text-primary);
+  font-size: 0.65rem;
+  line-height: 1.3;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  pointer-events: auto;
+  user-select: text;
+  white-space: pre-wrap;
+}
+
+.node-debug {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--surface-overlay);
+  color: var(--text-primary);
+  font-size: 0.6rem;
+  line-height: 1.2;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.group-header,
+.group-meta {
+  position: relative;
+  z-index: 2;
+}
+
+.count-zoom {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--fill-hover);
+  border: 1px solid var(--border-default);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.count-text {
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.zoom-buttons {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.zoom-buttons button {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.zoom-buttons .zoom-all {
+  width: 26px;
+  font-size: 0.7rem;
+  letter-spacing: -0.02em;
+}
+
+.bulk-zoom-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--fill-muted);
+  border: 1px solid var(--border-default);
+}
+
+.bulk-zoom-button {
+  padding: 3px 9px;
+  min-height: 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font-size: 0.66rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bulk-zoom-button:hover:not(:disabled) {
+  background: rgba(255, 200, 120, 0.2);
+}
+
+.bulk-zoom-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.zoom-buttons button:hover {
+  background: rgba(255, 200, 120, 0.2);
+}
+
+.zoom-buttons .zoom-hidden {
+  display: none;
+}
+
+.edge-underlay-path-selected {
+  stroke: rgba(255, 220, 170, 0.95);
+  stroke-width: 2px;
+}
+
+.group-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.group-title {
+  display: block;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-header .node-title-row {
+  font-size: 0.8rem;
+  line-height: 1.1;
+  font-weight: 600;
+}
+
+.group-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.group-type {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+}
+
+.node-header-top .node-subtitle,
+.group-header-top .group-type {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.errors {
+  margin: 0 16px 16px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 126, 126, 0.35);
+  background: rgba(56, 16, 16, 0.6);
+  font-size: 0.85rem;
+}
+
+.errors ul {
+  margin: 8px 0 0 18px;
+}
+
+.edge-search {
+  position: fixed;
+  transform: translate(-10px, -10px);
+  width: 280px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 12px;
+  z-index: 20;
+  box-shadow: var(--shadow-dropdown);
+}
+
+.edge-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.edge-overlay-interaction {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.edge-overlay-world {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+}
+
+.edge-overlay-world-labels,
+.edge-overlay-world-handles,
+.edge-overlay-svg-interaction {
+  pointer-events: none;
+}
+
+.transition-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 7;
+}
+
+.transition-overlay-world {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+}
+
+.transition-overlay-svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.transition-overlay-node-layer,
+.transition-overlay-label-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.transition-overlay-label-layer {
+  z-index: 3;
+}
+
+.transition-overlay-node-layer {
+  z-index: 1;
+}
+
+.transition-overlay-node-shell {
+  box-sizing: border-box;
+  border-radius: 4px;
+  background: var(--node-bg);
+  border: var(--node-border);
+}
+
+.transition-overlay-edge-path {
+  fill: none;
+  stroke: var(--stroke-default);
+  stroke-width: 1.5px;
+}
+
+.edge-overlay-svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.edge-underlay-path {
+  fill: none;
+  stroke: var(--stroke-default);
+  stroke-width: 1.35px;
+  opacity: 0.92;
+}
+
+.edge-underlay-path.edge-underlay-path-matched {
+  stroke: rgba(183, 236, 255, 0.98);
+  stroke-width: 2.45px;
+  filter: drop-shadow(0 0 6px rgba(90, 212, 255, 0.38));
+}
+
+.edge-overlay-path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.24);
+  stroke-width: 0.9;
+  stroke-dasharray: 1.1 3.2;
+  stroke-linecap: round;
+  opacity: 0.58;
+}
+
+.edge-overlay-path.edge-overlay-path-selected {
+  stroke: rgba(255, 188, 116, 0.56);
+  stroke-width: 1.02;
+}
+
+.edge-overlay-path.edge-overlay-path-matched {
+  stroke: rgba(232, 248, 255, 0.78);
+  stroke-width: 1.08;
+  filter: drop-shadow(0 0 8px rgba(90, 212, 255, 0.28));
+}
+
+.edge-underlay-path.edge-underlay-path-selected {
+  stroke: rgba(255, 220, 170, 0.95);
+  stroke-width: 2px;
+}
+
+.edge-overlay-path-branch {
+  fill: none;
+  stroke: var(--stroke-default);
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  opacity: 1;
+}
+
+.edge-overlay-path-branch.edge-overlay-path-branch-selected {
+  stroke: rgba(255, 188, 116, 0.58);
+  stroke-width: 1.7px;
+}
+
+.edge-overlay-path-branch.edge-overlay-path-branch-matched {
+  stroke: rgba(203, 238, 255, 0.95);
+  stroke-width: 1.7px;
+  filter: drop-shadow(0 0 10px rgba(90, 212, 255, 0.34));
+}
+
+.edge-hit-path {
+  cursor: pointer;
+}
+
+.edge-draft-path {
+  fill: none;
+  stroke: rgba(255, 220, 170, 0.88);
+  stroke-width: 1.9px;
+  stroke-linecap: round;
+  stroke-dasharray: 6 4;
+}
+
+.edge-search input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  background: var(--fill-muted);
+  color: inherit;
+  margin-bottom: 8px;
+}
+
+.edge-label {
+  position: absolute;
+  appearance: none;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 3px;
+  background: var(--surface-overlay);
+  color: inherit;
+  font-size: 0.68rem;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  pointer-events: all;
+  max-width: none;
+  white-space: nowrap;
+  overflow: visible;
+  z-index: 5;
+}
+
+.edge-label-empty {
+  opacity: 0.5;
+}
+
+.edge-label-dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--text-faint);
+  border: none;
+}
+
+.edge-label-text {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.edge-label-text:hover {
+  color: var(--color-foreground);
+}
+
+.edge-label-matched {
+  color: rgba(200, 235, 255, 1);
+  background: rgba(80, 180, 240, 0.12);
+}
+
+.edge-label-text.edge-label-matched {
+  background: transparent;
+}
+
+.transition-overlay-label-layer .edge-label {
+  pointer-events: none;
+}
+
+.edge-handle-button {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(229, 238, 244, 1);
+  border: none;
+  box-shadow: 0 0 0 1px rgba(8, 18, 26, 0.55);
+  pointer-events: auto;
+}
+
+.edge-handle-button-source {
+  cursor: crosshair;
+}
+
+.edge-handle-button-target {
+  cursor: copy;
+}
+
+.edge-handle-button-highlighted {
+  background: rgba(255, 191, 112, 0.92);
+  border-color: rgba(255, 234, 205, 0.98);
+  box-shadow: 0 0 0 2px rgba(255, 191, 112, 0.2);
+}
+
+.edge-handle-button-hovered {
+  background: rgba(255, 220, 170, 0.95);
+  border-color: rgba(255, 242, 225, 1);
+  box-shadow: 0 0 0 2px rgba(255, 220, 170, 0.18);
+}
+
+.canvas-host-hidden .react-flow__nodes,
+.canvas-host-hidden .edge-overlay--host {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.canvas-host-hidden .edge-overlay--host {
+  display: none;
+}
+
+.canvas-host-hidden .react-flow__node {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------------
+ * Outline mode – transparent node interiors on the regular canvas.
+ * Restores the pre-blueprint "outline only" treatment.
+ * ---------------------------------------------------------------- */
+
+.transition-overlay-visual-outline .transition-overlay-node-shell {
+  background: var(--canvas-bg);
+  border-width: 2px;
+  border-style: solid;
+  box-shadow:
+    0 0 0 1px rgba(150, 212, 255, 0.25) inset,
+    0 8px 20px rgba(2, 8, 16, 0.28);
+}
+
+.transition-overlay-visual-outline .transition-overlay-node-shell .node {
+  background: transparent;
+}
+
+.transition-overlay-visual-outline .transition-overlay-node-shell .node-subtitle,
+.transition-overlay-visual-outline .transition-overlay-node-shell .node-title-placeholder {
+  color: rgba(218, 237, 250, 0.78);
+}
+
+.transition-overlay-visual-outline .transition-overlay-edge-path,
+.transition-overlay-visual-outline .group-edge-path {
+  stroke: rgba(226, 241, 255, 0.22);
+  stroke-width: 1.3px;
+}
+
+.transition-overlay-visual-outline .edge-overlay-path {
+  stroke: rgba(225, 241, 255, 0.13);
+  stroke-width: 0.95;
+  stroke-dasharray: 1.9 6.2;
+}
+
+.transition-overlay-visual-outline .edge-overlay-path.edge-overlay-path-selected {
+  stroke: rgba(255, 191, 112, 0.28);
+  stroke-width: 1.08;
+}
+
+.transition-overlay-visual-outline .edge-overlay-path-branch {
+  stroke: rgba(225, 241, 255, 0.26);
+  stroke-width: 1.25;
+}
+
+.transition-overlay-visual-outline .edge-overlay-path-branch.edge-overlay-path-branch-selected {
+  stroke: rgba(255, 191, 112, 0.32);
+  stroke-width: 1.35;
+}
+
+.canvas-visual-outline .react-flow__node {
+  background: var(--canvas-bg);
+  border-width: 2px;
+  border-style: solid;
+  box-shadow:
+    0 0 0 1px rgba(150, 212, 255, 0.25) inset,
+    0 8px 20px rgba(2, 8, 16, 0.28);
+}
+
+.canvas-visual-outline .react-flow__node .node {
+  background: transparent;
+}
+
+.canvas-visual-outline .react-flow__node .node-subtitle {
+  color: rgba(218, 237, 250, 0.78);
+}
+
+.canvas-visual-outline .react-flow__node .node-title-placeholder {
+  color: rgba(222, 238, 251, 0.74);
+}
+
+.canvas-visual-outline .react-flow__node.selected .node {
+  box-shadow: 0 0 0 2px var(--node-selection-ring, rgba(255, 208, 129, 0.95));
+}
+
+.canvas-visual-outline .react-flow__node.selected .list-item .node-body {
+  background: var(--node-selection-fill, rgba(255, 200, 120, 0.12));
+}
+
+.canvas-visual-outline .edge-overlay-path {
+  stroke: rgba(225, 241, 255, 0.18);
+  stroke-width: 1;
+  stroke-dasharray: 2 6;
+}
+
+.canvas-visual-outline .edge-underlay-path {
+  stroke: rgba(226, 241, 255, 0.18);
+  stroke-width: 1.18px;
+}
+
+.canvas-visual-outline .edge-overlay-path.edge-overlay-path-selected {
+  stroke: rgba(255, 191, 112, 0.28);
+  stroke-width: 1.08;
+}
+
+.canvas-visual-outline .edge-underlay-path.edge-underlay-path-selected {
+  stroke: rgba(255, 191, 112, 0.74);
+  stroke-width: 2.1px;
+}
+
+.canvas-visual-outline .edge-overlay-path-branch {
+  stroke: rgba(225, 241, 255, 0.26);
+  stroke-width: 1.25;
+}
+
+.canvas-visual-outline .edge-overlay-path-branch.edge-overlay-path-branch-selected {
+  stroke: rgba(255, 191, 112, 0.32);
+  stroke-width: 1.35;
+}
+
+/* ----------------------------------------------------------------
+ * Blueprint mode – architectural drawing aesthetic.
+ * Uses a deep navy canvas with thin cyan/white linework throughout.
+ * The same variables drive both live nodes and transition-overlay ghosts.
+ * ---------------------------------------------------------------- */
+
+/* -- Shared blueprint palette (set on both canvas & overlay roots) -- */
+.canvas-visual-transparent,
+.transition-overlay-visual-transparent {
+  --bp-bg: hsl(215, 55%, 14%);
+  --bp-line: hsla(205, 80%, 75%, 0.5);
+  --bp-line-hover: hsla(205, 80%, 80%, 0.7);
+  --bp-line-faint: hsla(205, 60%, 65%, 0.22);
+  --bp-line-ghost: hsla(205, 50%, 60%, 0.1);
+  --bp-text: hsla(205, 70%, 82%, 0.92);
+  --bp-text-faint: hsla(205, 50%, 68%, 0.6);
+  --bp-select: hsla(45, 90%, 72%, 0.85);
+  --bp-select-fill: hsla(45, 80%, 65%, 0.1);
+}
+
+/* Blueprint canvas background with subtle grid */
+.canvas-visual-transparent {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      hsla(205, 50%, 60%, 0.06) 0px,
+      hsla(205, 50%, 60%, 0.06) 1px,
+      transparent 1px,
+      transparent 48px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      hsla(205, 50%, 60%, 0.06) 0px,
+      hsla(205, 50%, 60%, 0.06) 1px,
+      transparent 1px,
+      transparent 48px
+    ),
+    var(--bp-bg);
+}
+
+/* -- Transition overlay (ghost nodes during animation) -- */
+.transition-overlay-visual-transparent .transition-overlay-node-shell {
+  background: var(--bp-bg);
+  border: 1px solid var(--bp-line);
+  border-radius: 2px;
+  box-shadow: none;
+}
+
+.transition-overlay-visual-transparent .transition-overlay-node-shell .node {
+  background: transparent;
+}
+
+.transition-overlay-visual-transparent .transition-overlay-node-shell .node-subtitle,
+.transition-overlay-visual-transparent .transition-overlay-node-shell .node-title-placeholder {
+  color: var(--bp-text-faint);
+  letter-spacing: 0.06em;
+}
+
+.transition-overlay-visual-transparent .transition-overlay-edge-path,
+.transition-overlay-visual-transparent .group-edge-path {
+  stroke: var(--bp-line-faint);
+  stroke-width: 0.75px;
+}
+
+.transition-overlay-visual-transparent .edge-overlay-path {
+  stroke: var(--bp-line-ghost);
+  stroke-width: 0.52;
+  stroke-dasharray: 0.75 3;
+  opacity: 0.34;
+}
+
+.transition-overlay-visual-transparent .edge-overlay-path.edge-overlay-path-selected {
+  stroke: hsla(45, 90%, 72%, 0.42);
+  stroke-width: 0.68;
+}
+
+.transition-overlay-visual-transparent .edge-overlay-path-branch {
+  stroke: var(--bp-line-faint);
+  stroke-width: 0.75px;
+  opacity: 1;
+}
+
+.transition-overlay-visual-transparent .edge-overlay-path-branch.edge-overlay-path-branch-selected {
+  stroke: hsla(45, 90%, 72%, 0.46);
+  stroke-width: 0.88;
+}
+
+/* -- Live canvas nodes -- */
+.canvas-visual-transparent .react-flow__node {
+  background: var(--bp-bg);
+  border: 1px solid var(--bp-line);
+  border-radius: 2px;
+  box-shadow: none;
+}
+
+.canvas-visual-transparent .react-flow__node .node {
+  background: transparent;
+  color: var(--bp-text);
+  letter-spacing: 0.04em;
+}
+
+.canvas-visual-transparent .react-flow__node .node-subtitle,
+.canvas-visual-transparent .react-flow__node .node-title-placeholder {
+  color: var(--bp-text-faint);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.7em;
+}
+
+.canvas-visual-transparent .react-flow__node .node-props,
+.canvas-visual-transparent .react-flow__node .list-prop {
+  color: var(--bp-text-faint);
+  letter-spacing: 0.03em;
+}
+
+.canvas-visual-transparent .react-flow__node .list-type,
+.canvas-visual-transparent .react-flow__node .group-type {
+  color: var(--bp-text-faint);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.65em;
+}
+
+.canvas-visual-transparent .react-flow__node .node-tag-pill {
+  color: var(--bp-text) !important;
+  letter-spacing: 0.06em;
+}
+
+.canvas-visual-transparent .react-flow__node .node-count {
+  color: var(--bp-text-faint);
+}
+
+.canvas-visual-transparent .react-flow__node .node-rich-markdown {
+  color: var(--bp-text);
+  letter-spacing: 0.02em;
+}
+
+.canvas-visual-transparent .react-flow__node .node-rich-heading {
+  color: var(--bp-text-faint);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.canvas-visual-transparent .react-flow__node .node-rich-caption {
+  color: var(--bp-text-faint);
+}
+
+.canvas-visual-transparent .react-flow__node .node-rich-code {
+  background: hsla(205, 50%, 50%, 0.08);
+  border-color: var(--bp-line-faint);
+  color: var(--bp-text);
+}
+
+/* Selection in blueprint mode uses warm accent for contrast */
+.canvas-visual-transparent .react-flow__node.selected .node {
+  box-shadow: 0 0 0 1.5px var(--bp-select);
+}
+
+.canvas-visual-transparent .react-flow__node.selected .list-item .node-body {
+  background: var(--bp-select-fill);
+}
+
+/* List item borders */
+.canvas-visual-transparent .list-item .node-body {
+  border-top-color: var(--bp-line-faint);
+}
+
+.canvas-visual-transparent .react-flow__node.selectable:hover .list-item .node-body {
+  background: hsla(205, 60%, 60%, 0.06);
+}
+
+/* Buttons inside nodes */
+.canvas-visual-transparent .zoom-buttons button,
+.canvas-visual-transparent .bulk-zoom-button {
+  border-color: var(--bp-line-faint);
+  background: transparent;
+  color: var(--bp-text-faint);
+}
+
+.canvas-visual-transparent .zoom-buttons button:hover,
+.canvas-visual-transparent .bulk-zoom-button:hover:not(:disabled) {
+  border-color: var(--bp-line);
+  color: var(--bp-text);
+}
+
+.canvas-visual-transparent .count-zoom {
+  background: transparent;
+  border-color: var(--bp-line-faint);
+  color: var(--bp-text-faint);
+}
+
+.canvas-visual-transparent .bulk-zoom-buttons {
+  background: transparent;
+  border-color: var(--bp-line-faint);
+}
+
+.canvas-visual-transparent .edge-underlay-path-selected {
+  stroke: var(--bp-select);
+  stroke-width: 1.2px;
+}
+
+.canvas-visual-transparent .edge-underlay-path {
+  stroke: hsla(205, 60%, 74%, 0.18);
+  stroke-width: 0.7px;
+}
+
+.canvas-visual-transparent .group-edge-path {
+  stroke: var(--bp-line-faint);
+  stroke-width: 0.75px;
+}
+
+.canvas-visual-transparent .group-edge-label {
+  fill: var(--bp-text-faint);
+  letter-spacing: 0.04em;
+}
+
+/* Hidden/ghosted edges */
+.canvas-visual-transparent .edge-overlay-path {
+  stroke: hsla(205, 62%, 74%, 0.2);
+  stroke-width: 0.62;
+  stroke-dasharray: 0.9 2.9;
+  opacity: 0.46;
+}
+
+.canvas-visual-transparent .edge-overlay-path.edge-overlay-path-selected {
+  stroke: hsla(45, 90%, 72%, 0.42);
+  stroke-width: 0.68;
+}
+
+.canvas-visual-transparent .edge-overlay-path-branch {
+  stroke: var(--bp-line-faint);
+  stroke-width: 0.75px;
+  opacity: 1;
+}
+
+.canvas-visual-transparent .edge-overlay-path-branch.edge-overlay-path-branch-selected {
+  stroke: hsla(45, 90%, 72%, 0.46);
+  stroke-width: 0.88;
+}
+
+/* Edge labels in blueprint mode */
+.canvas-visual-transparent .edge-label {
+  background: var(--bp-bg);
+}
+
+.canvas-visual-transparent .edge-label-dot {
+  background: var(--bp-line);
+}
+
+.canvas-visual-transparent .edge-label-text {
+  background: transparent;
+  color: var(--bp-text-faint);
+  letter-spacing: 0.04em;
+}
+
+.canvas-visual-transparent .edge-label-text:hover {
+  color: var(--bp-text);
+}
+
+/* Focus shell in blueprint mode */
+.canvas-visual-transparent .canvas-focus-shell::after {
+  border-color: var(--bp-line-faint);
+  box-shadow: none;
+}
+
+.canvas-visual-transparent .canvas-focus-shell--root::after {
+  border-color: var(--bp-line);
+}
+
+.canvas-visual-transparent .canvas-focus-shell-boundary-label,
+.canvas-visual-transparent .canvas-focus-shell-boundary-note {
+  background: var(--bp-bg);
+  border-color: var(--bp-line-faint);
+  box-shadow: none;
+}
+
+.canvas-visual-transparent .canvas-focus-shell-boundary-label {
+  color: var(--bp-text);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.7em;
+}
+
+.canvas-visual-transparent .canvas-focus-shell-boundary-note {
+  color: var(--bp-text-faint);
+  letter-spacing: 0.04em;
+}
+
+/* Matched node highlights */
+.canvas-visual-transparent .node.matched {
+  box-shadow: 0 0 0 1.5px hsla(205, 85%, 70%, 0.85);
+}
+
+@media (prefers-color-scheme: light) {
+  .transition-overlay-visual-outline .transition-overlay-node-shell .node-subtitle,
+  .transition-overlay-visual-outline .transition-overlay-node-shell .node-title-placeholder,
+  .canvas-visual-outline .react-flow__node .node-subtitle,
+  .canvas-visual-outline .react-flow__node .node-title-placeholder {
+    color: rgba(28, 57, 84, 0.74);
+  }
+
+  .transition-overlay-visual-outline .transition-overlay-edge-path {
+    stroke: rgba(31, 63, 93, 0.22);
+  }
+
+  .transition-overlay-visual-outline .edge-overlay-path,
+  .canvas-visual-outline .edge-overlay-path {
+    stroke: rgba(31, 63, 93, 0.095);
+  }
+
+  .transition-overlay-visual-outline .edge-overlay-path-branch,
+  .canvas-visual-outline .edge-overlay-path-branch {
+    stroke: rgba(31, 63, 93, 0.24);
+  }
+
+  :root {
+    --canvas-bg: rgba(245, 247, 250, 0.9);
+    --node-text: hsla(220, 20%, 15%, 0.95);
+    --node-bg-s: 50%;
+    --node-bg-l: 93%;
+    --node-bg-l-group: 95%;
+    --node-border-s: 30%;
+    --node-border-l: 78%;
+    --node-border-a: 0.5;
+    --tag-pill-s: 72%;
+    --tag-pill-l: 38%;
+    --text-primary: rgba(15, 23, 42, 0.9);
+    --text-secondary: rgba(15, 23, 42, 0.72);
+    --text-tertiary: rgba(15, 23, 42, 0.55);
+    --text-faint: rgba(15, 23, 42, 0.4);
+    --border-subtle: rgba(0, 0, 0, 0.07);
+    --border-default: rgba(0, 0, 0, 0.1);
+    --border-strong: rgba(0, 0, 0, 0.18);
+    --fill-subtle: rgba(0, 0, 0, 0.03);
+    --fill-muted: rgba(0, 0, 0, 0.04);
+    --fill-hover: rgba(0, 0, 0, 0.06);
+    --stroke-primary: rgba(0, 0, 0, 1);
+    --stroke-default: rgba(0, 0, 0, 0.3);
+    --stroke-muted: rgba(0, 0, 0, 0.1);
+    --surface-overlay: rgba(255, 255, 255, 0.92);
+    --surface-elevated: rgba(255, 255, 255, 0.7);
+  }
+
+  body {
+    background: linear-gradient(160deg, #f5f7fa 0%, #eef1f5 40%, #f0f3f7 100%);
+  }
+
+  /* Focus shell */
+  .canvas-focus-shell::after {
+    border-color: hsla(var(--focus-shell-hue, 210), 65%, 50%, 0.3);
+    box-shadow:
+      inset 0 0 0 1px hsla(var(--focus-shell-hue, 210), 65%, 50%, 0.06),
+      0 0 0 1px hsla(var(--focus-shell-hue, 210), 65%, 50%, 0.04);
+  }
+
+  .canvas-focus-shell--root::after {
+    border-color: hsla(var(--focus-shell-hue, 210), 70%, 45%, 0.42);
+    box-shadow:
+      inset 0 0 0 1px hsla(var(--focus-shell-hue, 210), 70%, 45%, 0.08),
+      0 0 0 1px hsla(var(--focus-shell-hue, 210), 70%, 45%, 0.05);
+  }
+
+  .canvas-focus-shell-boundary-label,
+  .canvas-focus-shell-boundary-note {
+    border-color: hsla(var(--focus-shell-hue, 210), 55%, 50%, 0.2);
+    box-shadow:
+      inset 0 0 0 1px hsla(var(--focus-shell-hue, 210), 55%, 50%, 0.05),
+      0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+
+  .canvas-focus-shell-boundary-label {
+    color: var(--text-primary);
+  }
+
+  .canvas-focus-shell-boundary--root .canvas-focus-shell-boundary-label {
+    border-color: hsla(var(--focus-shell-hue, 210), 60%, 45%, 0.28);
+    color: hsla(var(--focus-shell-hue, 210), 75%, 32%, 0.95);
+  }
+
+  .canvas-focus-shell-boundary-note {
+    color: hsla(var(--focus-shell-hue, 210), 55%, 35%, 0.8);
+  }
+
+  /* Node text (element-specific) */
+  .node-rich-markdown {
+    color: var(--text-primary);
+  }
+
+  /* Node backgrounds (element-specific) */
+  .node-rich-code {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .node-rich-image-frame {
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.01)), rgba(245, 247, 250, 0.5);
+  }
+
+  /* List item accent highlights */
+  .react-flow__node.selected .list-item .node-body {
+    background: rgba(37, 99, 235, 0.08);
+  }
+
+  .list-item.matched .node-body {
+    background: rgba(14, 165, 233, 0.1);
+    border-top-color: rgba(14, 165, 233, 0.22);
+  }
+
+  /* Selection rings */
+  .react-flow__node.selected .node {
+    box-shadow: 0 0 0 2px var(--node-selection-ring, rgba(37, 99, 235, 0.7));
+  }
+
+  .node.matched {
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.65);
+  }
+
+  .react-flow__node.selected .node.matched {
+    box-shadow:
+      0 0 0 2px var(--node-selection-ring, rgba(37, 99, 235, 0.7)),
+      0 0 0 4px rgba(14, 165, 233, 0.4);
+  }
+
+  /* Accent hover states */
+  .zoom-buttons button:hover {
+    background: rgba(37, 99, 235, 0.1);
+  }
+
+  .bulk-zoom-button:hover:not(:disabled) {
+    background: rgba(37, 99, 235, 0.1);
+  }
+
+  .group-edge.matched .group-edge-path {
+    stroke: rgba(14, 165, 233, 0.8);
+  }
+
+  .group-edge.matched .group-edge-label {
+    fill: rgba(14, 165, 233, 0.95);
+  }
+
+  .edge-label-matched {
+    color: rgba(14, 165, 233, 0.9);
+    background: rgba(14, 165, 233, 0.08);
+  }
+
+  /* Errors */
+  .errors {
+    border-color: rgba(220, 38, 38, 0.28);
+    background: rgba(254, 226, 226, 0.65);
+  }
+
+  /* Blueprint mode is always dark – no light-mode overrides needed */
+}
+
+.edge-search-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.edge-search-section {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+  margin-top: 6px;
+}
+
+.edge-search button {
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--fill-subtle);
+  color: inherit;
+  cursor: pointer;
+}
+
+.edge-menu {
+  position: fixed;
+  transform: translate(-10px, -10px);
+  width: 240px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 12px;
+  z-index: 21;
+  box-shadow: var(--shadow-dropdown);
+}
+
+.edge-menu input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  background: var(--fill-muted);
+  color: inherit;
+  margin-bottom: 8px;
+}
+
+.edge-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.edge-menu button {
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--fill-subtle);
+  color: inherit;
+  cursor: pointer;
+}
+
+.edge-menu button:hover {
+  border-color: var(--border-strong);
+}
+
+.edge-search button:hover {
+  border-color: var(--border-strong);
+}
+
+.edge-search-empty {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+}
+
+.react-flow__controls button {
+  background: var(--surface-overlay);
+  color: inherit;
+  border: 1px solid var(--panel-border);
+}
+
+.react-flow__minimap {
+  background: var(--surface-overlay);
+  border: 1px solid var(--panel-border);
+}

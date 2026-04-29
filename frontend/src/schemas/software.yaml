@@ -1,0 +1,277 @@
+owner: core
+name: software
+version: "0.1"
+description: Shared software architecture primitives for runtime interaction, persistence, messaging, and flow-aware software boundaries.
+use:
+  - schema: core/base@0.1
+    alias: base
+
+tags:
+  - id: data
+    label: Data Layer
+    color: "#2ecf8f"
+  - id: deployment
+    label: Deployment
+    color: "#8f7dff"
+  - id: service
+    label: Service
+    color: "#ffb454"
+  - id: integration
+    label: Integration
+    color: "#d67bff"
+
+traits:
+  - id: compute
+    label: Compute
+    relationParticipation:
+      - relation: reads
+        endpoint: from
+      - relation: writes
+        endpoint: from
+      - relation: read-writes
+        endpoint: from
+      - relation: calls
+        endpoint: from
+      - relation: calls
+        endpoint: to
+      - relation: publishes-to
+        endpoint: from
+      - relation: consumes-from
+        endpoint: from
+
+  - id: interface
+    label: Interface
+    analysis:
+      mayTerminate: true
+    relationParticipation:
+      - relation: calls
+        endpoint: to
+
+  - id: storage-boundary
+    label: Storage Boundary
+    analysis:
+      flowType: through
+      expectedRelationIds: [reads, writes, read-writes]
+    relationParticipation:
+      - relation: reads
+        endpoint: to
+      - relation: writes
+        endpoint: to
+      - relation: read-writes
+        endpoint: to
+
+  - id: storage
+    label: Storage
+    analysis:
+      flowType: sink
+      mayTerminate: true
+      expectedRelationIds: [reads, writes, read-writes]
+    relationParticipation:
+      - relation: reads
+        endpoint: to
+      - relation: writes
+        endpoint: to
+      - relation: read-writes
+        endpoint: to
+
+  - id: relational-storage
+    label: Relational Storage
+    extends: storage
+
+  - id: queueing
+    label: Queueing
+    analysis:
+      flowType: through
+      expectedRelationIds: [publishes-to, consumes-from]
+    relationParticipation:
+      - relation: writes
+        endpoint: to
+      - relation: publishes-to
+        endpoint: to
+      - relation: consumes-from
+        endpoint: to
+
+  - id: table-like
+    label: Table-Like
+    extends: core/base.traits.containable
+    analysis:
+      flowType: sink
+      mayTerminate: true
+      expectedRelationIds: [reads, writes, read-writes]
+    relationParticipation:
+      - relation: reads
+        endpoint: to
+      - relation: writes
+        endpoint: to
+      - relation: read-writes
+        endpoint: to
+
+  - id: api-like
+    label: API
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+    relationParticipation:
+      - relation: calls
+        endpoint: to
+
+  - id: endpoint-like
+    label: Endpoint
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      mayTerminate: true
+    relationParticipation:
+      - relation: calls
+        endpoint: from
+      - relation: calls
+        endpoint: to
+
+  - id: service-like
+    label: Service
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+
+  - id: topic-like
+    label: Topic
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds: [publishes-to, consumes-from]
+    relationParticipation:
+      - relation: publishes-to
+        endpoint: to
+      - relation: consumes-from
+        endpoint: to
+
+  - id: subscription-like
+    label: Subscription
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+
+  - id: cache-space-like
+    label: Cache Space
+    extends: core/base.traits.containable
+
+  - id: scheduler-like
+    label: Scheduler
+    extends: core/base.traits.containable
+    analysis:
+      flowType: source
+
+  - id: job-like
+    label: Job
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+
+types:
+  - id: system
+    label: System
+    description: Cohesive repo-owned software runtime chunk for cases where application or service is too web-app-specific but you still need a substantial container that explains major runtime parts and their interaction, such as a database engine, broker, daemon, compiler, or large networking/runtime subsystem. Do not use this for people, browsers, external context, generic ecosystems, or other surrounding-system/C4 context nodes.
+    traits:
+      [core/software.traits.service-like, core/software.traits.compute, core/base.traits.container]
+    analysis:
+      topLevelBias: avoid
+    defaultTags: [service]
+    containment:
+      allowedChildTraits:
+        [
+          core/base.traits.containable,
+          core/software.traits.compute,
+          core/software.traits.storage-boundary,
+          core/software.traits.storage,
+          core/software.traits.queueing,
+        ]
+    display:
+      primaryTag: service
+      defaultSize:
+        width: 210
+        height: 100
+      style:
+        hue: 205
+    properties:
+      - id: runtime
+        type: enum
+        description: Primary execution environment for this node or subtree. Populate it when one runtime is uniformly true for the boundary. If major children would have different runtimes, prefer separate boundaries instead of mixing them under one node.
+        values: [browser, server, worker, edge, cli, external]
+        allowOther: true
+        display:
+          priority: 1
+      - id: framework
+        type: enum
+        description: Dominant framework or runtime stack for this node or subtree when one choice is uniformly true. Prefer it on the highest boundary where it stays accurate instead of repeating it across every descendant.
+        values: [react, nextjs, vue, svelte, express, fastify, koa, nestjs, socketio]
+        allowOther: true
+        display:
+          priority: 2
+
+relations:
+  - id: reads
+    label: reads
+    shortLabel: read
+    priority: 3
+    display:
+      flowDirection: reverse
+    defaultTags: [data]
+    analysis:
+      fulfills:
+        from: [ingress]
+        to: [egress]
+
+  - id: writes
+    label: writes
+    shortLabel: write
+    priority: 2
+    defaultTags: [data]
+    analysis:
+      fulfills:
+        from: [egress]
+        to: [ingress]
+
+  - id: read-writes
+    label: read-writes
+    shortLabel: rw
+    priority: 2
+    defaultTags: [data]
+    analysis:
+      fulfills:
+        from: [ingress, egress]
+        to: [ingress, egress]
+
+  - id: calls
+    label: calls
+    shortLabel: call
+    priority: 4
+    analysis:
+      fulfills:
+        from: [egress]
+        to: [ingress]
+
+  - id: publishes-to
+    label: publishes-to
+    shortLabel: pub
+    priority: 3
+    defaultTags: [data]
+    analysis:
+      fulfills:
+        from: [egress]
+        to: [ingress]
+
+  - id: consumes-from
+    label: consumes-from
+    shortLabel: sub
+    priority: 3
+    display:
+      flowDirection: reverse
+    defaultTags: [data]
+    analysis:
+      fulfills:
+        from: [ingress]
+        to: [egress]
+
+  - id: contains
+    label: contains
+    priority: 100

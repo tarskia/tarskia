@@ -1,0 +1,50 @@
+owner: user
+name: add-client
+version: 0.1.0
+use:
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/frontend@0.3
+    alias: fe
+
+traits:
+  - id: client-like
+    label: Client-like
+    description: Component initiates calls to endpoint-like services.
+    analysis:
+      flowType: through
+    relationParticipation:
+      - relation: client-calls-endpoint
+        endpoint: from
+
+types:
+  - id: http-client
+    label: HTTP Client
+    extends: fe.types.frontend
+    traits: [client-like]
+    properties:
+      - id: base_url
+        type: string
+        description: Base URL used by the client.
+
+relations:
+  - id: client-calls-endpoint
+    label: Calls
+    shortLabel: call
+    directed: true
+    analysis:
+      fulfills:
+        from: [egress]
+        to: [ingress]
+
+update:
+  fe.traits.client-like:
+    add:
+      relationParticipation:
+        - relation: user/add-client.relations.client-calls-endpoint
+          endpoint: from
+  sw.traits.endpoint-like:
+    add:
+      relationParticipation:
+        - relation: user/add-client.relations.client-calls-endpoint
+          endpoint: to

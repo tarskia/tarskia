@@ -1,0 +1,46 @@
+version: "3"
+
+vars:
+  FRONTEND_DIR: '{{.TASKFILE_DIR}}'
+
+tasks:
+  default:
+    desc: List available frontend tasks
+    cmds:
+      - task --list-all
+
+  dev:
+    desc: Run the frontend dev server
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - npm run dev
+
+  build:
+    desc: Build the frontend
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - npm run build
+
+  test:
+    desc: Run the frontend test suite
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - npm run test
+
+  lint:
+    desc: Run frontend lint checks
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - npm run lint
+
+  format:
+    desc: Format frontend sources
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - npm run format
+
+  validate:schemas:
+    desc: Run the frontend schema validation checks
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - npm run validate:schemas

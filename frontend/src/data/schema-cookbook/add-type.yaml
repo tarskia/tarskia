@@ -1,0 +1,18 @@
+owner: user
+name: cookbook-add-type
+version: "1.0"
+use:
+  - schema: core/web-app@0.3
+    alias: web
+
+types:
+  - id: background-worker
+    label: Background Worker
+    extends: application
+    defaultTags: [service]
+    properties:
+      - id: queue_name
+        type: string
+        description: Queue consumed by the worker.
+
+relations: []

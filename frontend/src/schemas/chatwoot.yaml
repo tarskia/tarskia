@@ -1,0 +1,310 @@
+owner: gallery
+name: chatwoot
+version: "0.1"
+description: >-
+  Chatwoot-shaped architectural wrappers for the browser portal, Rails control plane, and Sidekiq
+  worker runtime, aligned to the repository's dashboard, widget, API, webhook, and background job
+  surfaces.
+use:
+  - schema: core/base@0.1
+    alias: base
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/frontend@0.3
+    alias: fe
+  - schema: core/web-app@0.3
+    alias: web
+  - schema: core/code@0.1
+    alias: code
+traits:
+  - id: chatwoot-runtime-like
+    label: Chatwoot Runtime
+    description: Top-level Chatwoot application boundary spanning browser, Rails, and worker flows.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+        - publishes-to
+        - consumes-from
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+      - relation: core/software.relations.publishes-to
+        endpoint: from
+      - relation: core/software.relations.consumes-from
+        endpoint: from
+  - id: control-plane-like
+    label: Control Plane
+    description: >-
+      Rails runtime boundary that serves the app shell, API, auth, webhooks, integrations, and
+      public support surfaces.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+        - publishes-to
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+      - relation: core/software.relations.publishes-to
+        endpoint: from
+  - id: worker-service-like
+    label: Worker Service
+    description: >-
+      Sidekiq runtime boundary that consumes queued work and continues into retries, scheduled work,
+      and follow-on processing.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+        - consumes-from
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+      - relation: core/software.relations.consumes-from
+        endpoint: from
+types:
+  - id: chatwoot
+    label: Chatwoot
+    description: >-
+      Top-level Chatwoot application boundary spanning browser portal, Rails control plane, and
+      Sidekiq worker runtime.
+    extends: core/web-app.types.application
+    traits:
+      - gallery/chatwoot.traits.chatwoot-runtime-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - portal-app
+        - control-plane
+        - worker-service
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 320
+        height: 176
+      style:
+        hue: 210
+      count:
+        childTypes:
+          - portal-app
+          - control-plane
+          - worker-service
+        label: components
+  - id: portal-app
+    label: Portal App
+    description: >-
+      Browser-facing Chatwoot UI surface for the operator dashboard, embedded widget, help center
+      portal, survey pages, and super-admin entrypoints.
+    extends: core/frontend.types.frontend
+    traits:
+      - core/frontend.traits.client-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - module
+        - group
+      allowedChildTraits:
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 230
+        height: 104
+      style:
+        hue: 188
+      count:
+        childTypes:
+          - module
+          - group
+        label: components
+    properties:
+      - id: runtime
+        type: enum
+        description: >-
+          Primary execution environment for this node or subtree. Populate it when one runtime is
+          uniformly true for the boundary. If major children would have different runtimes, prefer
+          separate boundaries instead of mixing them under one node.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true. Prefer it on the highest boundary where it stays accurate instead of repeating it
+          across every descendant.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
+  - id: control-plane
+    label: Control Plane
+    description: >-
+      Main Rails runtime that serves the app shell, API, auth, webhooks, integrations, and public
+      support surfaces.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/chatwoot.traits.control-plane-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - api
+        - module
+        - group
+      allowedChildTraits:
+        - core/software.traits.api-like
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 240
+        height: 120
+      style:
+        hue: 214
+      count:
+        childTypes:
+          - api
+          - module
+          - group
+        label: components
+    properties:
+      - id: deployability
+        type: enum
+        description: Whether this service is independently deployable or embedded inside another runtime.
+        values:
+          - embedded
+          - deployable
+      - id: runtime
+        type: enum
+        description: >-
+          Primary execution environment for this node or subtree. Populate it when one runtime is
+          uniformly true for the boundary. If major children would have different runtimes, prefer
+          separate boundaries instead of mixing them under one node.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true. Prefer it on the highest boundary where it stays accurate instead of repeating it
+          across every descendant.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
+  - id: worker-service
+    label: Worker Service
+    description: >-
+      Sidekiq runtime for background jobs, scheduled work, retries, and asynchronous maintenance
+      tasks.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/chatwoot.traits.worker-service-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - scheduler
+        - scheduled-job
+        - module
+        - group
+      allowedChildTraits:
+        - core/software.traits.scheduler-like
+        - core/software.traits.job-like
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 230
+        height: 112
+      style:
+        hue: 30
+      count:
+        childTypes:
+          - scheduler
+          - scheduled-job
+          - module
+          - group
+        label: jobs
+    properties:
+      - id: deployability
+        type: enum
+        description: Whether this service is independently deployable or embedded inside another runtime.
+        values:
+          - embedded
+          - deployable
+      - id: runtime
+        type: enum
+        description: >-
+          Primary execution environment for this node or subtree. Populate it when one runtime is
+          uniformly true for the boundary. If major children would have different runtimes, prefer
+          separate boundaries instead of mixing them under one node.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true. Prefer it on the highest boundary where it stays accurate instead of repeating it
+          across every descendant.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
+relations: []

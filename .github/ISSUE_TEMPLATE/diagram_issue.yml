@@ -1,0 +1,34 @@
+name: Diagram issue
+description: Report missing, incorrect, or confusing structure in a gallery diagram.
+title: "Diagram issue: "
+labels: ["diagram-feedback"]
+body:
+  - type: input
+    id: diagram-url
+    attributes:
+      label: Diagram URL
+      description: Link to the Tarskia gallery diagram.
+      placeholder: https://www.tarskia.io/gallery/...
+    validations:
+      required: true
+  - type: input
+    id: repository
+    attributes:
+      label: Source repository
+      placeholder: https://github.com/org/repo
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What looks wrong?
+      description: Name the missing, incorrect, or confusing nodes/relations.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected structure
+      description: Describe what the diagram should show instead.
+    validations:
+      required: false

@@ -1,0 +1,49 @@
+owner: user
+name: cookbook-remove-deprecated-elements
+version: "1.0"
+use:
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/web-app@0.3
+    alias: web
+
+types: []
+relations: []
+
+update:
+  sw.traits.compute:
+    remove:
+      relationParticipation:
+        - relation: read-writes
+          endpoint: from
+
+  sw.traits.storage:
+    remove:
+      relationParticipation:
+        - relation: read-writes
+          endpoint: to
+      analysis.expectedRelationIds:
+        - read-writes
+
+  sw.traits.storage-boundary:
+    remove:
+      relationParticipation:
+        - relation: read-writes
+          endpoint: to
+      analysis.expectedRelationIds:
+        - read-writes
+
+  sw.traits.table-like:
+    remove:
+      relationParticipation:
+        - relation: read-writes
+          endpoint: to
+      analysis.expectedRelationIds:
+        - read-writes
+
+remove:
+  sw.relations:
+    - read-writes
+
+  web.types.topic.properties:
+    - retentionHours

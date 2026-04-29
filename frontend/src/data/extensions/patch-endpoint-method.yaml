@@ -1,0 +1,22 @@
+owner: user
+name: patch-endpoint-method
+version: 0.1.0
+use:
+  - schema: core/web-app@0.3
+    alias: web
+
+types: []
+relations: []
+
+update:
+  web.types.api-endpoint:
+    set:
+      label: API Endpoint
+      display.primaryTag: service
+    add:
+      traits: [endpoint-like]
+      properties:
+        - id: auth_mode
+          type: enum
+          values: [none, api-key, bearer]
+          description: Supported authentication mechanism.

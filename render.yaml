@@ -1,0 +1,68 @@
+version: "1"
+
+projects:
+  - name: Tarskia
+    environments:
+      - name: staging
+        services:
+          - type: web
+            name: frontend
+            runtime: static
+            repo: https://github.com/tarskia/tarskia
+            branch: main
+            buildCommand: npm install && npm install --no-save @tailwindcss/oxide-linux-x64-gnu@4.2.2 && npm run build -w @tarskia/frontend
+            staticPublishPath: ./frontend/dist
+            routes:
+              - type: rewrite
+                source: /*
+                destination: /index.html
+            envVars:
+              - key: NODE_VERSION
+                value: 22.22.0
+              - key: SKIP_INSTALL_DEPS
+                value: "true"
+              - key: VITE_API_BASE_URL
+                value: https://backend-qjo6.onrender.com
+            autoDeployTrigger: checksPass
+            buildFilter:
+              paths:
+                - frontend/**
+                - packages/diagram-semantics/**
+                - scripts/build-semantics.mjs
+                - openapi/**
+                - .node-version
+                - package.json
+                - package-lock.json
+
+      - name: Production
+        services:
+          - type: web
+            name: frontend-prod
+            runtime: static
+            repo: https://github.com/tarskia/tarskia
+            branch: main
+            buildCommand: npm install && npm install --no-save @tailwindcss/oxide-linux-x64-gnu@4.2.2 && npm run build -w @tarskia/frontend
+            staticPublishPath: ./frontend/dist
+            routes:
+              - type: rewrite
+                source: /*
+                destination: /index.html
+            envVars:
+              - key: NODE_VERSION
+                value: 22.22.0
+              - key: ENV
+                value: production
+              - key: SKIP_INSTALL_DEPS
+                value: "true"
+              - key: VITE_API_BASE_URL
+                value: https://backend-prod-4z0g.onrender.com
+            autoDeployTrigger: off
+            buildFilter:
+              paths:
+                - frontend/**
+                - packages/diagram-semantics/**
+                - scripts/build-semantics.mjs
+                - openapi/**
+                - .node-version
+                - package.json
+                - package-lock.json

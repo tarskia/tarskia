@@ -1,0 +1,23 @@
+owner: user
+name: cookbook-update-imported-type
+version: "1.0"
+use:
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/web-app@0.3
+    alias: web
+
+types: []
+relations: []
+
+update:
+  web.types.api-endpoint:
+    set:
+      label: API Endpoint
+      display.primaryTag: core/software.tags.service
+    add:
+      properties:
+        - id: auth_mode
+          type: enum
+          values: [none, api-key, bearer]
+          description: Supported authentication mechanism.

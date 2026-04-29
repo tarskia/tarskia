@@ -1,0 +1,136 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { AnimationSettings } from '../canvas/rendering/transition/animation-constants';
+import type { ViewportState } from '../model/types';
+import { resolveNavigationPolicy, resolveNavigationViewport } from './camera-navigation';
+import type { DiagramCameraPolicy, DiagramCameraRect, NavigationIntent } from './motion-types';
+
+const MIN_BOOTSTRAP_CANVAS_LENGTH = 32;
+
+export const isBootstrapCanvasSizeUsable = (canvasSize: { width: number; height: number } | null) =>
+  Boolean(
+    canvasSize &&
+      canvasSize.width >= MIN_BOOTSTRAP_CANVAS_LENGTH &&
+      canvasSize.height >= MIN_BOOTSTRAP_CANVAS_LENGTH,
+  );
+
+interface UseCanvasBootstrapControllerArgs {
+  initialViewportKey?: string;
+  savedViewport?: ViewportState;
+  canvasSize: { width: number; height: number } | null;
+  sceneBounds: DiagramCameraRect | null;
+  minZoom: number;
+  maxZoom: number;
+  animationSettings: AnimationSettings;
+  cameraPolicy?: DiagramCameraPolicy;
+  getLeftOcclusion: () => number;
+  canvasReady: boolean;
+  requestNavigation: (intent: NavigationIntent) => void;
+}
+
+export interface CanvasBootstrapControllerResult {
+  defaultViewport?: ViewportState;
+  initialViewportPending: boolean;
+}
+
+export function useCanvasBootstrapController({
+  initialViewportKey,
+  savedViewport,
+  canvasSize,
+  sceneBounds,
+  minZoom,
+  maxZoom,
+  animationSettings,
+  cameraPolicy,
+  getLeftOcclusion,
+  canvasReady,
+  requestNavigation,
+}: UseCanvasBootstrapControllerArgs): CanvasBootstrapControllerResult {
+  const initializeIntent = useMemo<NavigationIntent>(
+    () => ({
+      kind: 'initialize-diagram',
+      mode: cameraPolicy?.openingMode,
+      persist: true,
+      waitForHostSettle: false,
+    }),
+    [cameraPolicy?.openingMode],
+  );
+  const initializePolicy = useMemo(
+    () => resolveNavigationPolicy(initializeIntent, animationSettings, cameraPolicy),
+    [animationSettings, cameraPolicy, initializeIntent],
+  );
+  const defaultViewport = useMemo(() => {
+    const usableCanvasSize = isBootstrapCanvasSizeUsable(canvasSize) ? canvasSize : null;
+    const leftOcclusion = getLeftOcclusion();
+    return (
+      resolveNavigationViewport({
+        intent: initializeIntent,
+        policy: {
+          ...initializePolicy,
+          persist: false,
+        },
+        savedViewport,
+        canvasSize: usableCanvasSize,
+        sceneBounds,
+        currentViewport: savedViewport ?? { x: 0, y: 0, zoom: 1 },
+        leftOcclusion,
+        minZoom,
+        maxZoom,
+        getNodeSetBounds: () => null,
+      }) ?? undefined
+    );
+  }, [
+    canvasSize,
+    getLeftOcclusion,
+    initializeIntent,
+    initializePolicy,
+    maxZoom,
+    minZoom,
+    savedViewport,
+    sceneBounds,
+  ]);
+  const [pendingKey, setPendingKey] = useState<string | undefined>(initialViewportKey);
+  const lastObservedKeyRef = useRef<string | undefined>(initialViewportKey);
+
+  useEffect(() => {
+    if (lastObservedKeyRef.current === initialViewportKey) {
+      return;
+    }
+    lastObservedKeyRef.current = initialViewportKey;
+    setPendingKey(initialViewportKey);
+  }, [initialViewportKey]);
+
+  useEffect(() => {
+    if (!initialViewportKey || pendingKey !== initialViewportKey) {
+      return;
+    }
+    if (!isBootstrapCanvasSizeUsable(canvasSize)) {
+      return;
+    }
+    if (!defaultViewport) {
+      if (!savedViewport && !sceneBounds) {
+        setPendingKey((current) => (current === initialViewportKey ? undefined : current));
+      }
+      return;
+    }
+    if (!canvasReady) {
+      return;
+    }
+    requestNavigation(initializeIntent);
+    setPendingKey((current) => (current === initialViewportKey ? undefined : current));
+  }, [
+    canvasReady,
+    canvasSize,
+    defaultViewport,
+    initialViewportKey,
+    initializeIntent,
+    pendingKey,
+    requestNavigation,
+    savedViewport,
+    sceneBounds,
+  ]);
+
+  return {
+    defaultViewport,
+    initialViewportPending: initialViewportKey !== undefined && pendingKey === initialViewportKey,
+  };
+}

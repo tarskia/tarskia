@@ -1,0 +1,330 @@
+owner: gallery
+name: outline
+version: "0.1"
+description: >-
+  Outline-shaped architectural wrappers for the browser app, Koa HTTP host, realtime collaboration
+  and websocket services, async workers, plugin surfaces, and shared code.
+use:
+  - schema: core/base@0.1
+    alias: base
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/frontend@0.3
+    alias: fe
+  - schema: core/code@0.1
+    alias: code
+  - schema: core/web-app@0.3
+    alias: web
+traits:
+  - id: outline-runtime-like
+    label: Outline Runtime
+    description: >-
+      Top-level Outline application boundary spanning browser UI, HTTP host, realtime services,
+      async workers, plugin suite, and shared code.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+        - publishes-to
+        - consumes-from
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+      - relation: core/software.relations.publishes-to
+        endpoint: from
+      - relation: core/software.relations.consumes-from
+        endpoint: from
+  - id: browser-client-like
+    label: Browser Client
+    description: Browser-side application boundary that originates user-driven flow into repo-owned services.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: source
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+  - id: web-host-like
+    label: Web Host
+    description: Koa-based HTTP boundary that serves the app shell, API, auth, MCP, OAuth, and static assets.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+      - relation: core/software.relations.calls
+        endpoint: to
+  - id: collaboration-hub-like
+    label: Collaboration Hub
+    description: >-
+      Realtime collaboration boundary that accepts live editor connections and manages sync and
+      presence.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+      - relation: core/software.relations.calls
+        endpoint: to
+  - id: socket-hub-like
+    label: Realtime Hub
+    description: >-
+      Socket-facing runtime boundary that accepts realtime client connections and drains
+      queue-backed outbound work.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+        - consumes-from
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+      - relation: core/software.relations.calls
+        endpoint: to
+      - relation: core/software.relations.consumes-from
+        endpoint: from
+  - id: async-plane-like
+    label: Async Plane
+    description: >-
+      Background queue-processing boundary that consumes upstream jobs and emits follow-on work to
+      downstream queues or processors.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - consumes-from
+        - publishes-to
+    relationParticipation:
+      - relation: core/software.relations.consumes-from
+        endpoint: from
+      - relation: core/software.relations.publishes-to
+        endpoint: from
+types:
+  - id: outline
+    label: Outline
+    description: >-
+      Top-level Outline application boundary spanning the browser UI, HTTP host, realtime services,
+      async workers, plugin suite, and shared code.
+    extends: core/web-app.types.application
+    traits:
+      - gallery/outline.traits.outline-runtime-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - client-app
+        - web-service
+        - collaboration-service
+        - websocket-service
+        - worker-service
+        - plugin-suite
+        - shared-kernel
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 280
+        height: 160
+      style:
+        hue: 210
+      count:
+        childTypes:
+          - client-app
+          - web-service
+          - collaboration-service
+          - websocket-service
+          - worker-service
+          - plugin-suite
+          - shared-kernel
+        label: components
+  - id: client-app
+    label: Client App
+    description: Browser-facing React application shell and feature surface.
+    extends: core/frontend.types.frontend
+    traits:
+      - gallery/outline.traits.browser-client-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 220
+        height: 96
+      style:
+        hue: 188
+      count:
+        childTypes:
+          - group
+        label: components
+  - id: web-service
+    label: Web Service
+    description: Main Koa host that serves the app shell, API, auth, MCP, OAuth, and static assets.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/outline.traits.web-host-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/software.traits.api-like
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 230
+        height: 110
+      style:
+        hue: 214
+      count:
+        childTypes:
+          - api
+          - module
+          - group
+        label: components
+  - id: collaboration-service
+    label: Collaboration Service
+    description: Realtime collaboration runtime for document sync, presence, and collaborative editing.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/outline.traits.collaboration-hub-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.integration
+    containment:
+      allowedChildTraits:
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.integration
+      defaultSize:
+        width: 220
+        height: 100
+      style:
+        hue: 196
+      count:
+        childTypes:
+          - module
+          - group
+        label: components
+  - id: websocket-service
+    label: Websocket Service
+    description: Socket.IO runtime for non-collaborative realtime events and websocket fanout.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/outline.traits.socket-hub-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.integration
+    containment:
+      allowedChildTraits:
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.integration
+      defaultSize:
+        width: 220
+        height: 100
+      style:
+        hue: 204
+      count:
+        childTypes:
+          - module
+          - group
+        label: components
+  - id: worker-service
+    label: Worker Service
+    description: Background runtime for global events, task execution, queue processors, and scheduled work.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/outline.traits.async-plane-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/code.traits.code-like
+        - core/software.traits.queueing
+        - core/software.traits.job-like
+        - core/software.traits.scheduler-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 220
+        height: 104
+      style:
+        hue: 34
+      count:
+        childTypes:
+          - scheduler
+          - scheduled-job
+          - module
+          - group
+        label: jobs
+  - id: plugin-suite
+    label: Plugin Suite
+    description: >-
+      Extension package boundary for the integration plugins under `plugins/`, including client,
+      server, and shared subtrees.
+    extends: core/code.types.module
+    analysis:
+      topLevelBias: neutral
+    defaultTags:
+      - core/software.tags.integration
+    containment:
+      allowedChildTraits:
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.integration
+      defaultSize:
+        width: 220
+        height: 110
+      style:
+        hue: 302
+      count:
+        childTypes:
+          - module
+        label: plugins
+  - id: shared-kernel
+    label: Shared Kernel
+    description: Shared editor, i18n, styles, and utility code used by both browser and server code.
+    extends: core/code.types.module
+    analysis:
+      topLevelBias: avoid
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 220
+        height: 100
+      style:
+        hue: 286
+relations: []

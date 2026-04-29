@@ -1,0 +1,263 @@
+owner: gallery
+name: n8n
+version: "0.1"
+description: >-
+  n8n-shaped architectural wrappers for the browser editor, main server/control plane, queue worker
+  runtime, and external task runner, aligned to the repository's deployable runtime surfaces rather
+  than internal code packages.
+use:
+  - schema: core/base@0.1
+    alias: base
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/frontend@0.3
+    alias: fe
+  - schema: core/code@0.1
+    alias: code
+  - schema: core/web-app@0.3
+    alias: web
+traits:
+  - id: n8n-runtime-like
+    label: n8n Runtime
+    description: Top-level n8n application boundary spanning browser, server, worker, and task-runner flows.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+        - publishes-to
+        - consumes-from
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+      - relation: core/software.relations.publishes-to
+        endpoint: from
+      - relation: core/software.relations.consumes-from
+        endpoint: from
+  - id: portal-boundary-like
+    label: Portal Boundary
+    description: Browser-facing editor surface that originates user-driven flow into the repo-owned runtime.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: source
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+  - id: control-plane-like
+    label: Control Plane
+    description: >-
+      Main Node runtime that serves the app shell, REST API, webhooks, auth, and orchestration
+      flows.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+        - publishes-to
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+      - relation: core/software.relations.publishes-to
+        endpoint: from
+  - id: worker-service-like
+    label: Worker Service
+    description: Queue-processing runtime for workflow execution, retries, and asynchronous maintenance work.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+        - consumes-from
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+      - relation: core/software.relations.consumes-from
+        endpoint: from
+  - id: task-runner-like
+    label: Task Runner
+    description: >-
+      External task runner runtime that executes delegated workflow tasks and returns results
+      through the broker.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+        - consumes-from
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+      - relation: core/software.relations.consumes-from
+        endpoint: from
+types:
+  - id: n8n
+    label: n8n
+    description: >-
+      Top-level n8n application boundary spanning browser editor, main server/control plane, queue
+      worker runtime, and task runner processes.
+    extends: core/web-app.types.application
+    traits:
+      - gallery/n8n.traits.n8n-runtime-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - portal-app
+        - control-plane
+        - worker-service
+        - task-runner
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 340
+        height: 184
+      style:
+        hue: 210
+      count:
+        childTypes:
+          - portal-app
+          - control-plane
+          - worker-service
+          - task-runner
+        label: components
+  - id: portal-app
+    label: Portal App
+    description: Browser-facing n8n editor UI and related client surfaces.
+    extends: core/frontend.types.frontend
+    traits:
+      - gallery/n8n.traits.portal-boundary-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - module
+        - group
+      allowedChildTraits:
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 228
+        height: 108
+      style:
+        hue: 188
+      count:
+        childTypes:
+          - module
+          - group
+        label: components
+  - id: control-plane
+    label: Control Plane
+    description: >-
+      Main server runtime that serves the editor shell, API, webhooks, auth, and orchestration
+      flows.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/n8n.traits.control-plane-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - api
+        - module
+        - scheduler
+        - scheduled-job
+        - group
+      allowedChildTraits:
+        - core/software.traits.api-like
+        - core/software.traits.scheduler-like
+        - core/software.traits.job-like
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 250
+        height: 124
+      style:
+        hue: 214
+      count:
+        childTypes:
+          - api
+          - scheduler
+          - scheduled-job
+          - module
+          - group
+        label: components
+  - id: worker-service
+    label: Worker Service
+    description: Queue-processing runtime for workflow execution, retries, and asynchronous maintenance work.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/n8n.traits.worker-service-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - scheduler
+        - scheduled-job
+        - module
+        - group
+      allowedChildTraits:
+        - core/software.traits.scheduler-like
+        - core/software.traits.job-like
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 236
+        height: 112
+      style:
+        hue: 32
+      count:
+        childTypes:
+          - scheduler
+          - scheduled-job
+          - module
+          - group
+        label: jobs
+  - id: task-runner
+    label: Task Runner
+    description: >-
+      External task runner runtime that executes delegated workflow tasks and returns results
+      through the broker.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/n8n.traits.task-runner-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - module
+        - group
+      allowedChildTraits:
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 220
+        height: 102
+      style:
+        hue: 26
+      count:
+        childTypes:
+          - module
+          - group
+        label: components
+relations: []
+tags: []

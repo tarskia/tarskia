@@ -1,0 +1,35 @@
+owner: user
+name: cookbook-add-relation
+version: "1.0"
+use:
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/data-model@0.3
+    alias: data
+
+types: []
+
+relations:
+  - id: endpoint-reads-table
+    label: Reads
+    shortLabel: read
+    directed: true
+    display:
+      flowDirection: reverse
+    analysis:
+      fulfills:
+        from: [ingress]
+        to: [egress]
+    defaultTags: [data]
+
+update:
+  sw.traits.endpoint-like:
+    add:
+      relationParticipation:
+        - relation: user/cookbook-add-relation.relations.endpoint-reads-table
+          endpoint: from
+  sw.traits.table-like:
+    add:
+      relationParticipation:
+        - relation: user/cookbook-add-relation.relations.endpoint-reads-table
+          endpoint: to

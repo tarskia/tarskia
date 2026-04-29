@@ -1,0 +1,14 @@
+owner: user
+name: cookbook-add-trait
+version: "1.0"
+use:
+  - schema: core/web-app@0.3
+    alias: web
+
+traits:
+  - id: batch-capable
+    label: Batch Capable
+    extends: compute
+
+types: []
+relations: []

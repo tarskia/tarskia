@@ -1,0 +1,219 @@
+owner: gallery
+name: harbor
+version: "0.1"
+description: >-
+  Harbor-shaped architectural wrappers for the browser portal, backend control plane, async job
+  service, and registry/storage plane, aligned to the deployed runtime surfaces rather than internal
+  code packages.
+use:
+  - schema: core/base@0.1
+    alias: base
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/frontend@0.3
+    alias: fe
+  - schema: core/web-app@0.3
+    alias: web
+traits:
+  - id: portal-boundary-like
+    label: Portal Boundary
+    description: Browser-facing UI boundary that originates user-driven flow into repo-owned services.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: source
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+  - id: control-plane-like
+    label: Control Plane
+    description: >-
+      Backend runtime boundary that accepts inbound calls and continues flow into orchestration,
+      APIs, and data access.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+      - relation: core/software.relations.calls
+        endpoint: to
+  - id: job-service-like
+    label: Job Service
+    description: >-
+      Async worker boundary that accepts work from the control plane and drains queue-backed
+      background execution.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+        - consumes-from
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+      - relation: core/software.relations.calls
+        endpoint: to
+      - relation: core/software.relations.consumes-from
+        endpoint: from
+  - id: registry-stack-like
+    label: Registry Stack
+    description: >-
+      Storage-facing artifact registry boundary that serves push/pull traffic and anchors
+      registry-side persistence flow.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: sink
+      mayTerminate: true
+      expectedRelationIds:
+        - calls
+        - reads
+        - writes
+        - read-writes
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: to
+      - relation: core/software.relations.reads
+        endpoint: to
+      - relation: core/software.relations.writes
+        endpoint: to
+      - relation: core/software.relations.read-writes
+        endpoint: to
+types:
+  - id: harbor
+    label: Harbor
+    description: >-
+      Top-level Harbor application boundary spanning the browser portal, backend control plane,
+      async job service, registry plane, and supporting queue/storage infrastructure.
+    extends: core/web-app.types.application
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - portal-app
+        - core-service
+        - job-service
+        - registry-stack
+      allowedChildTraits:
+        - core/software.traits.api-like
+        - core/software.traits.service-like
+        - core/software.traits.storage-boundary
+        - core/software.traits.storage
+        - core/software.traits.queueing
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 280
+        height: 160
+      style:
+        hue: 208
+      count:
+        childTypes:
+          - portal-app
+          - core-service
+          - job-service
+          - registry-stack
+        label: components
+  - id: portal-app
+    label: Portal App
+    description: Browser UI boundary for repository browsing, project management, and operator workflows.
+    extends: core/frontend.types.frontend
+    traits:
+      - gallery/harbor.traits.portal-boundary-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/base.traits.group-like
+    display:
+      defaultSize:
+        width: 220
+        height: 96
+      style:
+        hue: 188
+      count:
+        childTypes:
+          - group
+        label: components
+  - id: core-service
+    label: Core Service
+    description: Main Harbor backend service that serves the REST API and control-plane flows.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/harbor.traits.control-plane-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 230
+        height: 110
+      style:
+        hue: 214
+  - id: job-service
+    label: Job Service
+    description: Async worker service that schedules and executes Harbor background jobs.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/harbor.traits.job-service-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/software.traits.api-like
+        - core/software.traits.service-like
+        - core/software.traits.job-like
+        - core/software.traits.scheduler-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 230
+        height: 110
+      style:
+        hue: 30
+  - id: registry-stack
+    label: Registry Stack
+    description: Artifact registry boundary for push/pull traffic and registry-side storage behavior.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/harbor.traits.registry-stack-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.data
+    containment:
+      allowedChildTraits:
+        - core/software.traits.api-like
+        - core/software.traits.service-like
+        - core/software.traits.storage-boundary
+        - core/software.traits.storage
+        - core/software.traits.compute
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.data
+      defaultSize:
+        width: 240
+        height: 120
+      style:
+        hue: 165
+      count:
+        childTypes:
+          - api
+          - service
+          - datastore
+          - group
+        label: components
+relations: []
