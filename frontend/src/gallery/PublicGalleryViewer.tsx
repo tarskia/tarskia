@@ -35,7 +35,7 @@ import { GalleryInspector } from '../ui/GalleryInspector';
 import {
   GALLERY_QUERY_STALE_TIME_MS,
   galleryRetryDelay,
-  getGalleryDiagramWithRetryableFailures,
+  getGalleryDiagramWithLocalFallback,
   retryGalleryQuery,
 } from './gallery-query';
 import { coerceSuccessfulResponseBody } from './gallery-response';
@@ -59,7 +59,7 @@ export default function PublicGalleryViewer() {
       staleTime: GALLERY_QUERY_STALE_TIME_MS,
       retry: retryGalleryQuery,
       retryDelay: galleryRetryDelay,
-      queryFn: ({ signal }) => getGalleryDiagramWithRetryableFailures(namespace, slug, { signal }),
+      queryFn: ({ signal }) => getGalleryDiagramWithLocalFallback(namespace, slug, { signal }),
     },
   });
 

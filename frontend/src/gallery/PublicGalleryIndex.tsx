@@ -5,6 +5,11 @@ import { useListGalleryDiagrams } from '../api/generated/gallery/gallery';
 import type { DtoGalleryDiagramSummaryResponse } from '../api/generated/model';
 import { Input } from '../components/ui/input';
 import { LoadingState } from '../components/ui/loading-state';
+import {
+  galleryRetryDelay,
+  listGalleryDiagramsWithLocalFallback,
+  retryGalleryQuery,
+} from './gallery-query';
 import { coerceGallerySummaryArray, coerceSuccessfulResponseBody } from './gallery-response';
 import { describePublicGalleryRepository } from './public-gallery-repository';
 import { formatCompactNumber } from './worker-build-summary';
@@ -126,6 +131,9 @@ export default function PublicGalleryIndex() {
   const galleryQuery = useListGalleryDiagrams({
     query: {
       staleTime: 30_000,
+      retry: retryGalleryQuery,
+      retryDelay: galleryRetryDelay,
+      queryFn: ({ signal }) => listGalleryDiagramsWithLocalFallback({ signal }),
     },
   });
 

@@ -1,0 +1,1418 @@
+version: 0.1.0
+schemaRefs:
+  - schema: gallery/harbor@0.1
+    layer: 0
+  - schema: core/frontend@0.3
+    layer: 0
+  - schema: core/web-app@0.3
+    layer: 0
+  - schema: core/software@0.1
+    layer: 0
+  - schema: core/code@0.1
+    layer: 1
+entities:
+  - id: harbor-browser-portal
+    type: core/frontend.types.frontend
+    name: Harbor Browser Portal
+    description: Angular browser portal for Harbor workflows.
+    props:
+      framework: angular
+      runtime: browser
+    provenance:
+      locations:
+        - input: primary
+          path: src/portal/src/main.ts
+        - input: primary
+          path: src/portal/src/app
+        - input: primary
+          path: src/portal/src/environments/environment.ts
+    children:
+      - id: harbor-browser-portal/portal-entry-router
+        type: core/web-app.types.group
+        name: Portal Entry Router
+        description: Portal app shell and route config.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: src/portal/src/main.ts
+            - input: primary
+              path: src/portal/src/app/app.module.ts
+            - input: primary
+              path: src/portal/src/app/harbor-routing.module.ts
+        children:
+          - id: harbor-browser-portal/portal-entry-router/portal-app-shell
+            type: core/frontend.types.frontend
+            name: Portal App Shell
+            description: Browser app shell.
+            props:
+              framework: angular
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: src/portal/src/main.ts
+                - input: primary
+                  path: src/portal/src/app/app.module.ts
+            children:
+              - id: harbor-browser-portal/portal-entry-router/portal-app-shell/browser-entrypoint
+                type: core/code.types.module
+                name: Browser Entrypoint
+                description: Angular startup in the browser.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/portal/src/main.ts
+              - id: harbor-browser-portal/portal-entry-router/portal-app-shell/app-module-shell
+                type: core/code.types.module
+                name: App Module Shell
+                description: Browser module wiring and route integration.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/portal/src/app/app.module.ts
+          - id: harbor-browser-portal/portal-entry-router/portal-route-config
+            type: core/code.types.module
+            name: Portal Route Config
+            description: Top-level browser routing module.
+            props:
+              language: typescript
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: src/portal/src/app/harbor-routing.module.ts
+      - id: harbor-browser-portal/portal-session-entry
+        type: core/web-app.types.group
+        name: Portal Session Entry
+        description: Auth entry shell and sign-in flow.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: src/portal/src/app/account/account.module.ts
+            - input: primary
+              path: src/portal/src/app/oidc-onboard/oidc-onboard.module.ts
+            - input: primary
+              path: src/portal/src/app/account/sign-in/sign-in.component.ts
+        children:
+          - id: harbor-browser-portal/portal-session-entry/session-auth-shell
+            type: core/frontend.types.frontend
+            name: Session Auth Shell
+            description: Session auth route surface.
+            props:
+              framework: angular
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: src/portal/src/app/account/account.module.ts
+                - input: primary
+                  path: src/portal/src/app/oidc-onboard/oidc-onboard.module.ts
+            children:
+              - id: harbor-browser-portal/portal-session-entry/session-auth-shell/account-module-shell
+                type: core/code.types.module
+                name: Account Module Shell
+                description: Sign-in route surface and account entry flow.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/portal/src/app/account/account.module.ts
+          - id: harbor-browser-portal/portal-session-entry/sign-in-flow
+            type: core/code.types.module
+            name: Sign-In Flow
+            description: Credential entry implementation.
+            props:
+              language: typescript
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: src/portal/src/app/account/sign-in/sign-in.component.ts
+      - id: harbor-browser-portal/portal-shared-services
+        type: core/web-app.types.group
+        name: Portal Shared Services
+        description: Shared browser support shell and implementation pack.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: src/portal/src/app/shared/shared.module.ts
+            - input: primary
+              path: src/portal/src/app/services/app-config.service.ts
+            - input: primary
+              path: src/portal/src/app/services/intercept-http.service.ts
+            - input: primary
+              path: src/portal/src/app/route-reuse-strategy/harbor-route-reuse-strategy.ts
+        children:
+          - id: harbor-browser-portal/portal-shared-services/shared-support-shell
+            type: core/frontend.types.frontend
+            name: Shared Support Shell
+            description: Shared support shell.
+            props:
+              framework: angular
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: src/portal/src/app/shared/shared.module.ts
+            children:
+              - id: harbor-browser-portal/portal-shared-services/shared-support-shell/shared-module
+                type: core/code.types.module
+                name: Shared Module
+                description: Shared browser support module.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/portal/src/app/shared/shared.module.ts
+          - id: harbor-browser-portal/portal-shared-services/shared-support-impl
+            type: core/web-app.types.group
+            name: Shared Support Implementation
+            description: Shared browser support implementation.
+            props:
+              mode: typed
+              groupType: core/code.types.module
+            provenance:
+              locations:
+                - input: primary
+                  path: src/portal/src/app/services/app-config.service.ts
+                - input: primary
+                  path: src/portal/src/app/services/intercept-http.service.ts
+                - input: primary
+                  path: src/portal/src/app/route-reuse-strategy/harbor-route-reuse-strategy.ts
+            children:
+              - id: >-
+                  harbor-browser-portal/portal-shared-services/shared-support-impl/app-config-service
+                type: core/code.types.module
+                name: App Config Service
+                description: Bootstrap configuration loader.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/portal/src/app/services/app-config.service.ts
+              - id: >-
+                  harbor-browser-portal/portal-shared-services/shared-support-impl/http-interceptor-service
+                type: core/code.types.module
+                name: HTTP Interceptor Service
+                description: CSRF and session HTTP interceptor.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/portal/src/app/services/intercept-http.service.ts
+              - id: >-
+                  harbor-browser-portal/portal-shared-services/shared-support-impl/route-reuse-strategy
+                type: core/code.types.module
+                name: Route Reuse Strategy
+                description: Route-level browser reuse policy.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/portal/src/app/route-reuse-strategy/harbor-route-reuse-strategy.ts
+  - id: harbor-core-control-plane
+    type: core/web-app.types.service
+    name: Harbor Core Control Plane
+    description: Core route shell plus registry surface.
+    props:
+      deployability: deployable
+      framework: beego
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: src/core/main.go
+        - input: primary
+          path: src/server/server.go
+        - input: primary
+          path: src/server/route.go
+        - input: primary
+          path: src/server/v2.0/handler
+    children:
+      - id: harbor-core-control-plane/core-service-shell
+        type: gallery/harbor.types.core-service
+        name: Core Service Shell
+        description: Core route surface and v2 handler suite.
+        provenance:
+          locations:
+            - input: primary
+              path: src/core/main.go
+            - input: primary
+              path: src/server/server.go
+            - input: primary
+              path: src/server/route.go
+            - input: primary
+              path: src/server/v2.0/handler
+        children:
+          - id: harbor-core-control-plane/core-service-shell/core-route-surface
+            type: core/code.types.module
+            name: Core Route Surface
+            description: Startup wiring and HTTP routes.
+            provenance:
+              locations:
+                - input: primary
+                  path: src/core/main.go
+                - input: primary
+                  path: src/server/server.go
+                - input: primary
+                  path: src/server/route.go
+          - id: harbor-core-control-plane/core-service-shell/v2-handler-suite
+            type: core/web-app.types.group
+            name: V2 Handler Suite
+            description: V2 handler suite split into entry, API modules, and shared models.
+            props:
+              mode: typed
+              groupType: core/code.types.module
+            provenance:
+              locations:
+                - input: primary
+                  path: src/server/v2.0/handler
+            children:
+              - id: harbor-core-control-plane/core-service-shell/v2-handler-suite/v2-handler-pack
+                type: core/code.types.module
+                name: V2 Handler Entry
+                description: Bootstrap and API assembly.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/server/v2.0/handler/handler.go
+              - id: harbor-core-control-plane/core-service-shell/v2-handler-suite/v2-handler-apis
+                type: core/code.types.module
+                name: V2 API Implementations
+                description: Concrete API handler modules.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/server/v2.0/handler/handler.go
+                    - input: primary
+                      path: src/server/v2.0/handler/artifact.go
+                    - input: primary
+                      path: src/server/v2.0/handler/project.go
+                    - input: primary
+                      path: src/server/v2.0/handler/user.go
+              - id: harbor-core-control-plane/core-service-shell/v2-handler-suite/v2-handler-model
+                type: core/code.types.module
+                name: V2 Handler Models
+                description: Shared request and response model package.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/server/v2.0/handler/model/project.go
+                    - input: primary
+                      path: src/server/v2.0/handler/model/artifact.go
+                    - input: primary
+                      path: src/server/v2.0/handler/model/user.go
+      - id: harbor-core-control-plane/core-registry-surface
+        type: gallery/harbor.types.registry-stack
+        name: Registry Surface
+        description: Registry route and callback surface.
+        provenance:
+          locations:
+            - input: primary
+              path: src/server/server.go
+            - input: primary
+              path: src/server/route.go
+        children:
+          - id: harbor-core-control-plane/core-registry-surface/registry-route-surface
+            type: core/code.types.module
+            name: Registry Route Surface
+            description: Registry-facing HTTP routes and callbacks.
+            provenance:
+              locations:
+                - input: primary
+                  path: src/server/server.go
+                - input: primary
+                  path: src/server/route.go
+  - id: harbor-jobservice-async-plane
+    type: core/web-app.types.service
+    name: Harbor Jobservice Async Plane
+    description: Job runtime shell plus implementation suite.
+    props:
+      deployability: deployable
+      framework: go
+      runtime: worker
+    provenance:
+      locations:
+        - input: primary
+          path: src/jobservice/main.go
+        - input: primary
+          path: src/jobservice/api/server.go
+        - input: primary
+          path: src/jobservice/api/router.go
+        - input: primary
+          path: src/jobservice/job/impl
+    children:
+      - id: harbor-jobservice-async-plane/job-runtime-shell
+        type: gallery/harbor.types.job-service
+        name: Job Runtime Shell
+        description: Job runtime surface and route shell.
+        provenance:
+          locations:
+            - input: primary
+              path: src/jobservice/main.go
+            - input: primary
+              path: src/jobservice/api/router.go
+            - input: primary
+              path: src/jobservice/api/server.go
+        children:
+          - id: harbor-jobservice-async-plane/job-runtime-shell/job-runtime-surface
+            type: core/code.types.module
+            name: Job Runtime Surface
+            description: Job API routes and startup wiring.
+            provenance:
+              locations:
+                - input: primary
+                  path: src/jobservice/main.go
+                - input: primary
+                  path: src/jobservice/api/router.go
+                - input: primary
+                  path: src/jobservice/api/server.go
+      - id: harbor-jobservice-async-plane/job-impl-suite
+        type: core/web-app.types.group
+        name: Job Implementation Suite
+        description: Shared job context and concrete implementations.
+        props:
+          mode: typed
+          groupType: core/code.types.module
+        provenance:
+          locations:
+            - input: primary
+              path: src/jobservice/job/impl
+            - input: primary
+              path: src/jobservice/job/impl/gc/garbage_collection.go
+            - input: primary
+              path: src/jobservice/job/impl/replication/replication.go
+            - input: primary
+              path: src/jobservice/job/impl/notification/webhook_job.go
+            - input: primary
+              path: src/jobservice/job/impl/purge/purge.go
+            - input: primary
+              path: src/jobservice/job/impl/scandataexport/scan_data_export.go
+            - input: primary
+              path: src/jobservice/job/impl/gdpr/audit_logs_data_masking.go
+        children:
+          - id: harbor-jobservice-async-plane/job-impl-suite/job-common-context
+            type: core/web-app.types.group
+            name: Job Common Context
+            description: >-
+              Shared job context split into the common runtime context and the default
+              implementation.
+            props:
+              mode: typed
+              groupType: core/code.types.module
+            provenance:
+              locations:
+                - input: primary
+                  path: src/jobservice/job/impl/context.go
+                - input: primary
+                  path: src/jobservice/job/impl/default_context.go
+            children:
+              - id: harbor-jobservice-async-plane/job-impl-suite/job-common-context/shared-job-context
+                type: core/code.types.module
+                name: Shared Job Context
+                description: Shared execution context and helpers.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/jobservice/job/impl/context.go
+              - id: >-
+                  harbor-jobservice-async-plane/job-impl-suite/job-common-context/default-job-context
+                type: core/code.types.module
+                name: Default Job Context
+                description: Basic context implementation.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/jobservice/job/impl/default_context.go
+          - id: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages
+            type: core/web-app.types.group
+            name: Job Implementation Packages
+            description: Job implementation package suite split into the shipped runtime job modules.
+            props:
+              mode: typed
+              groupType: core/code.types.module
+            provenance:
+              locations:
+                - input: primary
+                  path: src/jobservice/job/impl
+                - input: primary
+                  path: src/jobservice/job/impl/gc/garbage_collection.go
+                - input: primary
+                  path: src/jobservice/job/impl/replication/replication.go
+                - input: primary
+                  path: src/jobservice/job/impl/notification/webhook_job.go
+                - input: primary
+                  path: src/jobservice/job/impl/purge/purge.go
+                - input: primary
+                  path: src/jobservice/job/impl/scandataexport/scan_data_export.go
+                - input: primary
+                  path: src/jobservice/job/impl/gdpr/audit_logs_data_masking.go
+            children:
+              - id: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gc
+                type: core/code.types.module
+                name: Garbage Collection
+                description: Garbage collection job package.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/jobservice/job/impl/gc/garbage_collection.go
+              - id: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/replication
+                type: core/code.types.module
+                name: Replication
+                description: Replication job package.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/jobservice/job/impl/replication/replication.go
+              - id: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/notification
+                type: core/code.types.module
+                name: Notification
+                description: Outbound callback jobs.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/jobservice/job/impl/notification/webhook_job.go
+                    - input: primary
+                      path: src/jobservice/job/impl/notification/slack_job.go
+              - id: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/purge
+                type: core/code.types.module
+                name: Purge
+                description: Audit purge job package.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/jobservice/job/impl/purge/purge.go
+              - id: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/scandataexport
+                type: core/code.types.module
+                name: Scan Data Export
+                description: Scan export job package.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/jobservice/job/impl/scandataexport/scan_data_export.go
+              - id: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gdpr
+                type: core/code.types.module
+                name: GDPR
+                description: Audit masking job package.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/jobservice/job/impl/gdpr/audit_logs_data_masking.go
+              - id: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/systemartifact
+                type: core/code.types.module
+                name: System Artifact Cleanup
+                description: System artifact cleanup job package.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/jobservice/job/impl/systemartifact/cleanup.go
+  - id: harbor-registry-protocol-surface
+    type: core/web-app.types.service
+    name: Harbor Registry Protocol Surface
+    description: Registry protocol shell plus adapter and blob paths.
+    props:
+      deployability: deployable
+      framework: go
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: src/registryctl/main.go
+        - input: primary
+          path: src/server/registry
+        - input: primary
+          path: src/controller/registry/controller.go
+        - input: primary
+          path: src/server/middleware/blob
+    children:
+      - id: harbor-registry-protocol-surface/registry-protocol-shell
+        type: gallery/harbor.types.registry-stack
+        name: Registry Protocol Shell
+        description: Registry runtime surface and route wiring.
+        provenance:
+          locations:
+            - input: primary
+              path: src/registryctl/main.go
+            - input: primary
+              path: src/server/registry
+            - input: primary
+              path: tools/systemd/harbor.service
+        children:
+          - id: harbor-registry-protocol-surface/registry-protocol-shell/registry-runtime-surface
+            type: core/code.types.module
+            name: Registry Runtime Surface
+            description: Registry controller startup and route wiring.
+            provenance:
+              locations:
+                - input: primary
+                  path: src/registryctl/main.go
+                - input: primary
+                  path: src/server/registry
+                - input: primary
+                  path: tools/systemd/harbor.service
+      - id: harbor-registry-protocol-surface/registry-provider-adapters
+        type: core/web-app.types.group
+        name: Registry Provider Adapters
+        description: Provider manager and adapter pack.
+        props:
+          mode: typed
+          groupType: core/code.types.module
+        provenance:
+          locations:
+            - input: primary
+              path: src/controller/registry/controller.go
+            - input: primary
+              path: src/pkg/reg/adapter
+            - input: primary
+              path: src/pkg/reg/manager.go
+        children:
+          - id: harbor-registry-protocol-surface/registry-provider-adapters/registry-provider-manager
+            type: core/code.types.module
+            name: Registry Provider Manager
+            description: Registry health and provider info coordinator.
+            provenance:
+              locations:
+                - input: primary
+                  path: src/controller/registry/controller.go
+                - input: primary
+                  path: src/pkg/reg/manager.go
+          - id: harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack
+            type: core/web-app.types.group
+            name: Provider Adapter Pack
+            description: Provider adapter families split by registry ecosystem.
+            props:
+              mode: typed
+              groupType: core/code.types.module
+            provenance:
+              locations:
+                - input: primary
+                  path: src/pkg/reg/adapter
+                - input: primary
+                  path: src/pkg/reg/adapter/dockerhub/adapter.go
+                - input: primary
+                  path: src/pkg/reg/adapter/jfrog/adapter.go
+                - input: primary
+                  path: src/pkg/reg/adapter/awsecr/adapter.go
+            children:
+              - id: >-
+                  harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors
+                type: core/web-app.types.group
+                name: Cloud Vendors
+                description: Cloud provider registry adapters.
+                props:
+                  mode: typed
+                  groupType: core/code.types.module
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/pkg/reg/adapter
+                    - input: primary
+                      path: src/pkg/reg/adapter/awsecr/adapter.go
+                    - input: primary
+                      path: src/pkg/reg/adapter/azurecr/adapter.go
+                    - input: primary
+                      path: src/pkg/reg/adapter/googlegcr/adapter.go
+                children:
+                  - id: >-
+                      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/awsecr
+                    type: core/code.types.module
+                    name: AWS ECR
+                    description: AWS ECR adapter.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/pkg/reg/adapter/awsecr/adapter.go
+                  - id: >-
+                      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/azurecr
+                    type: core/code.types.module
+                    name: Azure CR
+                    description: Azure Container Registry adapter.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/pkg/reg/adapter/azurecr/adapter.go
+                  - id: >-
+                      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/googlegcr
+                    type: core/code.types.module
+                    name: Google GCR
+                    description: Google GCR adapter.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/pkg/reg/adapter/googlegcr/adapter.go
+              - id: >-
+                  harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting
+                type: core/web-app.types.group
+                name: Code Hosting
+                description: Hosted registry adapters.
+                props:
+                  mode: typed
+                  groupType: core/code.types.module
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/pkg/reg/adapter
+                    - input: primary
+                      path: src/pkg/reg/adapter/dockerhub/adapter.go
+                    - input: primary
+                      path: src/pkg/reg/adapter/jfrog/adapter.go
+                    - input: primary
+                      path: src/pkg/reg/adapter/gitlab/adapter.go
+                    - input: primary
+                      path: src/pkg/reg/adapter/quay/adapter.go
+                children:
+                  - id: >-
+                      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/dockerhub
+                    type: core/code.types.module
+                    name: Docker Hub
+                    description: Docker Hub adapter.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/pkg/reg/adapter/dockerhub/adapter.go
+                  - id: >-
+                      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/jfrog
+                    type: core/code.types.module
+                    name: JFrog
+                    description: JFrog adapter.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/pkg/reg/adapter/jfrog/adapter.go
+                  - id: >-
+                      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/gitlab
+                    type: core/code.types.module
+                    name: GitLab
+                    description: GitLab adapter.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/pkg/reg/adapter/gitlab/adapter.go
+                  - id: >-
+                      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/quay
+                    type: core/code.types.module
+                    name: Quay
+                    description: Quay adapter.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/pkg/reg/adapter/quay/adapter.go
+              - id: >-
+                  harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native
+                type: core/web-app.types.group
+                name: Harbor and Native
+                description: Harbor-specific and native registry adapters.
+                props:
+                  mode: typed
+                  groupType: core/code.types.module
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/pkg/reg/adapter
+                    - input: primary
+                      path: src/pkg/reg/adapter/harbor/base/adapter.go
+                    - input: primary
+                      path: src/pkg/reg/adapter/harbor/v1/adapter.go
+                    - input: primary
+                      path: src/pkg/reg/adapter/harbor/v2/adapter.go
+                    - input: primary
+                      path: src/pkg/reg/adapter/native/adapter.go
+                children:
+                  - id: >-
+                      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/harbor-base
+                    type: core/code.types.module
+                    name: Harbor Base
+                    description: Shared Harbor adapter base.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/pkg/reg/adapter/harbor/base/adapter.go
+                  - id: >-
+                      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/harbor-v1
+                    type: core/code.types.module
+                    name: Harbor v1
+                    description: Harbor v1 adapter.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/pkg/reg/adapter/harbor/v1/adapter.go
+                  - id: >-
+                      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/harbor-v2
+                    type: core/code.types.module
+                    name: Harbor v2
+                    description: Harbor v2 adapter.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/pkg/reg/adapter/harbor/v2/adapter.go
+                  - id: >-
+                      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/native
+                    type: core/code.types.module
+                    name: Native
+                    description: Native adapter.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/pkg/reg/adapter/native/adapter.go
+      - id: harbor-registry-protocol-surface/registry-blob-path
+        type: core/web-app.types.group
+        name: Registry Blob Path
+        description: Blob middleware and lifecycle manager.
+        props:
+          mode: typed
+          groupType: core/code.types.module
+        provenance:
+          locations:
+            - input: primary
+              path: src/server/middleware/blob
+            - input: primary
+              path: src/pkg/blob/manager.go
+        children:
+          - id: harbor-registry-protocol-surface/registry-blob-path/blob-middleware
+            type: core/code.types.module
+            name: Blob Middleware
+            description: Registry upload and manifest path middleware.
+            provenance:
+              locations:
+                - input: primary
+                  path: src/server/middleware/blob
+                - input: primary
+                  path: src/server/middleware/blob/put_manifest.go
+                - input: primary
+                  path: src/server/middleware/blob/put_blob_upload.go
+                - input: primary
+                  path: src/server/middleware/blob/head_blob.go
+          - id: harbor-registry-protocol-surface/registry-blob-path/blob-manager
+            type: core/code.types.module
+            name: Blob Manager
+            description: Blob lifecycle and association manager.
+            provenance:
+              locations:
+                - input: primary
+                  path: src/pkg/blob/manager.go
+  - id: harbor-artifact-storage-plane
+    type: core/web-app.types.object-store
+    name: Harbor Artifact Storage Plane
+    description: Blob storage backing registry persistence.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/blob/manager.go
+        - input: primary
+          path: src/server/middleware/blob
+        - input: primary
+          path: src/registryctl/main.go
+        - input: primary
+          path: tools/systemd/harbor.service
+relations:
+  - id: portal-calls-control-plane
+    from: harbor-browser-portal/portal-entry-router/portal-app-shell/browser-entrypoint
+    to: harbor-core-control-plane/core-service-shell/core-route-surface
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/portal/src/main.ts
+        - input: primary
+          path: src/server/route.go
+  - id: control-plane-calls-jobservice
+    from: harbor-core-control-plane/core-service-shell/core-route-surface
+    to: harbor-jobservice-async-plane/job-runtime-shell/job-runtime-surface
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/core/main.go
+        - input: primary
+          path: src/common/job/client.go
+        - input: primary
+          path: src/jobservice/api/router.go
+  - id: jobservice-calls-control-plane
+    from: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/notification
+    to: harbor-core-control-plane/core-service-shell/core-route-surface
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/jobservice/job/impl/notification/webhook_job.go
+        - input: primary
+          path: src/server/route.go
+  - id: control-plane-calls-registry-stack
+    from: harbor-core-control-plane/core-registry-surface/registry-route-surface
+    to: harbor-registry-protocol-surface/registry-protocol-shell/registry-runtime-surface
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/core/main.go
+        - input: primary
+          path: src/server/server.go
+        - input: primary
+          path: src/controller/registry/controller.go
+        - input: primary
+          path: src/server/registry/manifest.go
+        - input: primary
+          path: src/server/route.go
+  - id: registry-stack-reads-storage
+    from: harbor-registry-protocol-surface/registry-blob-path/blob-manager
+    to: harbor-artifact-storage-plane
+    type: core/software.relations.read-writes
+    provenance:
+      locations:
+        - input: primary
+          path: src/server/middleware/blob
+        - input: primary
+          path: src/pkg/blob/manager.go
+        - input: primary
+          path: src/registryctl/main.go
+  - id: harbor-browser-portal--harbor-browser-portal-entry-router-calls-session-entry
+    from: harbor-browser-portal/portal-entry-router/portal-route-config
+    to: harbor-browser-portal/portal-session-entry/session-auth-shell/account-module-shell
+    type: core/software.relations.calls
+    description: Top-level routing loads entry pages.
+    provenance:
+      locations:
+        - input: primary
+          path: src/portal/src/app/harbor-routing.module.ts
+        - input: primary
+          path: src/portal/src/app/account/account.module.ts
+  - id: harbor-browser-portal--harbor-browser-portal-entry-router-calls-shared-services
+    from: harbor-browser-portal/portal-entry-router/portal-app-shell/browser-entrypoint
+    to: harbor-browser-portal/portal-shared-services/shared-support-shell/shared-module
+    type: core/software.relations.calls
+    description: Browser shell wires shared support services.
+    provenance:
+      locations:
+        - input: primary
+          path: src/portal/src/app/app.module.ts
+        - input: primary
+          path: src/portal/src/app/services/app-config.service.ts
+  - id: harbor-browser-portal--harbor-browser-portal-session-entry-calls-shared-services
+    from: harbor-browser-portal/portal-session-entry/sign-in-flow
+    to: harbor-browser-portal/portal-shared-services/shared-support-shell/shared-module
+    type: core/software.relations.calls
+    description: Entry pages use the shared browser support layer.
+    provenance:
+      locations:
+        - input: primary
+          path: src/portal/src/app/account/account.module.ts
+        - input: primary
+          path: src/portal/src/app/oidc-onboard/oidc-onboard.module.ts
+  - id: harbor-core-control-plane--core-service-shell-calls-registry-surface
+    from: harbor-core-control-plane/core-service-shell/core-route-surface
+    to: harbor-core-control-plane/core-registry-surface/registry-route-surface
+    type: core/software.relations.calls
+    description: Core shell wires registry routes.
+    provenance:
+      locations:
+        - input: primary
+          path: src/server/server.go
+        - input: primary
+          path: src/server/route.go
+  - id: harbor-jobservice-async-plane--job-runtime-shell-calls-job-impl-suite
+    from: harbor-jobservice-async-plane/job-runtime-shell/job-runtime-surface
+    to: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gc
+    type: core/software.relations.calls
+    description: Shell dispatches work to implementation modules.
+    provenance:
+      locations:
+        - input: primary
+          path: src/jobservice/api/router.go
+        - input: primary
+          path: src/jobservice/job/impl
+  - id: harbor-registry-protocol-surface--registry-protocol-shell-calls-registry-provider-adapters
+    from: harbor-registry-protocol-surface/registry-protocol-shell/registry-runtime-surface
+    to: harbor-registry-protocol-surface/registry-provider-adapters/registry-provider-manager
+    type: core/software.relations.calls
+    description: Registry shell consults provider adapters.
+    provenance:
+      locations:
+        - input: primary
+          path: src/registryctl/main.go
+        - input: primary
+          path: src/controller/registry/controller.go
+  - id: harbor-registry-protocol-surface--registry-protocol-shell-calls-registry-blob-path
+    from: harbor-registry-protocol-surface/registry-protocol-shell/registry-runtime-surface
+    to: harbor-registry-protocol-surface/registry-blob-path/blob-middleware
+    type: core/software.relations.calls
+    description: Registry shell dispatches blob path work.
+    provenance:
+      locations:
+        - input: primary
+          path: src/server/middleware/blob
+        - input: primary
+          path: src/pkg/blob/manager.go
+  - id: harbor-browser-portal--portal-entry-router--portal-app-shell-calls-portal-route-config
+    from: harbor-browser-portal/portal-entry-router/portal-app-shell/browser-entrypoint
+    to: harbor-browser-portal/portal-entry-router/portal-route-config
+    type: core/software.relations.calls
+    description: App shell wires the router module.
+    provenance:
+      locations:
+        - input: primary
+          path: src/portal/src/app/app.module.ts
+        - input: primary
+          path: src/portal/src/app/harbor-routing.module.ts
+  - id: harbor-browser-portal--portal-session-entry--session-auth-shell-calls-sign-in-flow
+    from: harbor-browser-portal/portal-session-entry/session-auth-shell/account-module-shell
+    to: harbor-browser-portal/portal-session-entry/sign-in-flow
+    type: core/software.relations.calls
+    description: Auth shell renders the sign-in flow implementation.
+    provenance:
+      locations:
+        - input: primary
+          path: src/portal/src/app/account/account.module.ts
+        - input: primary
+          path: src/portal/src/app/account/sign-in/sign-in.component.ts
+  - id: harbor-browser-portal--portal-shared-services--shared-support-shell-calls-shared-support-impl
+    from: harbor-browser-portal/portal-shared-services/shared-support-shell/shared-module
+    to: harbor-browser-portal/portal-shared-services/shared-support-impl/app-config-service
+    type: core/software.relations.calls
+    description: Shared shell wires shared service implementations.
+    provenance:
+      locations:
+        - input: primary
+          path: src/portal/src/app/shared/shared.module.ts
+        - input: primary
+          path: src/portal/src/app/services/app-config.service.ts
+        - input: primary
+          path: src/portal/src/app/services/intercept-http.service.ts
+        - input: primary
+          path: src/portal/src/app/route-reuse-strategy/harbor-route-reuse-strategy.ts
+  - id: harbor-core-control-plane--core-service-shell--core-route-surface-calls-v2-handler-suite
+    from: harbor-core-control-plane/core-service-shell/core-route-surface
+    to: harbor-core-control-plane/core-service-shell/v2-handler-suite/v2-handler-pack
+    type: core/software.relations.calls
+    description: Route surface delegates v2 APIs.
+    provenance:
+      locations:
+        - input: primary
+          path: src/server/server.go
+        - input: primary
+          path: src/server/v2.0/handler
+  - id: harbor-jobservice-async-plane--job-impl-suite--job-impl-packages-calls-job-common-context
+    from: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gc
+    to: harbor-jobservice-async-plane/job-impl-suite/job-common-context/shared-job-context
+    type: core/software.relations.calls
+    description: Implementation packages share the common context.
+    provenance:
+      locations:
+        - input: primary
+          path: src/jobservice/job/impl/context.go
+        - input: primary
+          path: src/jobservice/job/impl/default_context.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--registry-provider-manager-calls-provider-adapter-pack
+    from: harbor-registry-protocol-surface/registry-provider-adapters/registry-provider-manager
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/dockerhub
+    type: core/software.relations.calls
+    description: Manager consults adapter implementations.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/manager.go
+        - input: primary
+          path: src/pkg/reg/adapter
+  - id: harbor-registry-protocol-surface--registry-blob-path--blob-middleware-calls-blob-manager
+    from: harbor-registry-protocol-surface/registry-blob-path/blob-middleware
+    to: harbor-registry-protocol-surface/registry-blob-path/blob-manager
+    type: core/software.relations.calls
+    description: Middleware delegates lifecycle operations to the manager.
+    provenance:
+      locations:
+        - input: primary
+          path: src/server/middleware/blob
+        - input: primary
+          path: src/pkg/blob/manager.go
+  - id: >-
+      harbor-browser-portal--portal-entry-router--portal-app-shell--app-module-shell-calls-browser-entrypoint
+    from: harbor-browser-portal/portal-entry-router/portal-app-shell/app-module-shell
+    to: harbor-browser-portal/portal-entry-router/portal-app-shell/browser-entrypoint
+    type: core/software.relations.calls
+    description: App module feeds the bootstrap path.
+    provenance:
+      locations:
+        - input: primary
+          path: src/portal/src/app/app.module.ts
+        - input: primary
+          path: src/portal/src/main.ts
+  - id: >-
+      harbor-browser-portal--portal-shared-services--shared-support-impl--app-config-service-calls-http-interceptor-service
+    from: harbor-browser-portal/portal-shared-services/shared-support-impl/app-config-service
+    to: harbor-browser-portal/portal-shared-services/shared-support-impl/http-interceptor-service
+    type: core/software.relations.calls
+    description: Config loading feeds HTTP support wiring.
+    provenance:
+      locations:
+        - input: primary
+          path: src/portal/src/app/shared/shared.module.ts
+        - input: primary
+          path: src/portal/src/app/services/app-config.service.ts
+        - input: primary
+          path: src/portal/src/app/services/intercept-http.service.ts
+  - id: >-
+      harbor-browser-portal--portal-shared-services--shared-support-impl--http-interceptor-service-calls-route-reuse-strategy
+    from: harbor-browser-portal/portal-shared-services/shared-support-impl/http-interceptor-service
+    to: harbor-browser-portal/portal-shared-services/shared-support-impl/route-reuse-strategy
+    type: core/software.relations.calls
+    description: HTTP support feeds route-level runtime behavior.
+    provenance:
+      locations:
+        - input: primary
+          path: src/portal/src/app/shared/shared.module.ts
+        - input: primary
+          path: src/portal/src/app/services/intercept-http.service.ts
+        - input: primary
+          path: src/portal/src/app/route-reuse-strategy/harbor-route-reuse-strategy.ts
+  - id: >-
+      harbor-browser-portal--portal-shared-services--shared-support-impl--route-reuse-strategy-calls-app-config-service
+    from: harbor-browser-portal/portal-shared-services/shared-support-impl/route-reuse-strategy
+    to: harbor-browser-portal/portal-shared-services/shared-support-impl/app-config-service
+    type: core/software.relations.calls
+    description: Route behavior cycles back into config loading.
+    provenance:
+      locations:
+        - input: primary
+          path: src/portal/src/app/shared/shared.module.ts
+        - input: primary
+          path: src/portal/src/app/route-reuse-strategy/harbor-route-reuse-strategy.ts
+        - input: primary
+          path: src/portal/src/app/services/app-config.service.ts
+  - id: >-
+      harbor-core-control-plane--core-service-shell--v2-handler-suite--v2-handler-pack-calls-v2-handler-apis
+    from: harbor-core-control-plane/core-service-shell/v2-handler-suite/v2-handler-pack
+    to: harbor-core-control-plane/core-service-shell/v2-handler-suite/v2-handler-apis
+    type: core/software.relations.calls
+    description: Bootstrap composes the API implementations.
+    provenance:
+      locations:
+        - input: primary
+          path: src/server/v2.0/handler/handler.go
+  - id: >-
+      harbor-core-control-plane--core-service-shell--v2-handler-suite--v2-handler-apis-calls-v2-handler-model
+    from: harbor-core-control-plane/core-service-shell/v2-handler-suite/v2-handler-apis
+    to: harbor-core-control-plane/core-service-shell/v2-handler-suite/v2-handler-model
+    type: core/software.relations.calls
+    description: API modules depend on shared models.
+    provenance:
+      locations:
+        - input: primary
+          path: src/server/v2.0/handler/artifact.go
+        - input: primary
+          path: src/server/v2.0/handler/project.go
+        - input: primary
+          path: src/server/v2.0/handler/user.go
+        - input: primary
+          path: src/server/v2.0/handler/purge.go
+  - id: >-
+      harbor-jobservice-async-plane--job-impl-suite--job-common-context--shared-job-context-calls-default-job-context
+    from: harbor-jobservice-async-plane/job-impl-suite/job-common-context/shared-job-context
+    to: harbor-jobservice-async-plane/job-impl-suite/job-common-context/default-job-context
+    type: core/software.relations.calls
+    description: Shared context feeds the default implementation.
+    provenance:
+      locations:
+        - input: primary
+          path: src/jobservice/job/impl/context.go
+        - input: primary
+          path: src/jobservice/job/impl/default_context.go
+  - id: harbor-jobservice-async-plane--job-impl-suite--job-impl-packages--gc-calls-replication
+    from: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gc
+    to: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/replication
+    type: core/software.relations.calls
+    description: Garbage collection passes work onward.
+    provenance:
+      locations:
+        - input: primary
+          path: src/jobservice/job/impl/gc/garbage_collection.go
+        - input: primary
+          path: src/jobservice/job/impl/replication/replication.go
+  - id: >-
+      harbor-jobservice-async-plane--job-impl-suite--job-impl-packages--replication-calls-notification
+    from: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/replication
+    to: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/notification
+    type: core/software.relations.calls
+    description: Replication hands off to notification jobs.
+    provenance:
+      locations:
+        - input: primary
+          path: src/jobservice/job/impl/replication/replication.go
+        - input: primary
+          path: src/jobservice/job/impl/notification/webhook_job.go
+  - id: harbor-jobservice-async-plane--job-impl-suite--job-impl-packages--notification-calls-purge
+    from: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/notification
+    to: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/purge
+    type: core/software.relations.calls
+    description: Notification flows into purge handling.
+    provenance:
+      locations:
+        - input: primary
+          path: src/jobservice/job/impl/notification/webhook_job.go
+        - input: primary
+          path: src/jobservice/job/impl/purge/purge.go
+  - id: harbor-jobservice-async-plane--job-impl-suite--job-impl-packages--purge-calls-scandataexport
+    from: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/purge
+    to: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/scandataexport
+    type: core/software.relations.calls
+    description: Purge continues into scan export work.
+    provenance:
+      locations:
+        - input: primary
+          path: src/jobservice/job/impl/purge/purge.go
+        - input: primary
+          path: src/jobservice/job/impl/scandataexport/scan_data_export.go
+  - id: harbor-jobservice-async-plane--job-impl-suite--job-impl-packages--scandataexport-calls-gdpr
+    from: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/scandataexport
+    to: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gdpr
+    type: core/software.relations.calls
+    description: Scan export flows into GDPR masking.
+    provenance:
+      locations:
+        - input: primary
+          path: src/jobservice/job/impl/scandataexport/scan_data_export.go
+        - input: primary
+          path: src/jobservice/job/impl/gdpr/audit_logs_data_masking.go
+  - id: harbor-jobservice-async-plane--job-impl-suite--job-impl-packages--gdpr-calls-systemartifact
+    from: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gdpr
+    to: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/systemartifact
+    type: core/software.relations.calls
+    description: GDPR masking continues to system cleanup.
+    provenance:
+      locations:
+        - input: primary
+          path: src/jobservice/job/impl/gdpr/audit_logs_data_masking.go
+        - input: primary
+          path: src/jobservice/job/impl/systemartifact/cleanup.go
+  - id: harbor-jobservice-async-plane--job-impl-suite--job-impl-packages--systemartifact-calls-gc
+    from: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/systemartifact
+    to: harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gc
+    type: core/software.relations.calls
+    description: Cleanup loops back to garbage collection.
+    provenance:
+      locations:
+        - input: primary
+          path: src/jobservice/job/impl/systemartifact/cleanup.go
+        - input: primary
+          path: src/jobservice/job/impl/gc/garbage_collection.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--cloud-vendors-calls-code-hosting
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/azurecr
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/dockerhub
+    type: core/software.relations.calls
+    description: Cloud vendor family feeds hosted registry family.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/awsecr/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/dockerhub/adapter.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--code-hosting-calls-harbor-native
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/quay
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/harbor-base
+    type: core/software.relations.calls
+    description: Hosted family feeds Harbor/native family.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/dockerhub/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/harbor/base/adapter.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--harbor-native-calls-cloud-vendors
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/native
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/awsecr
+    type: core/software.relations.calls
+    description: Harbor/native family loops back to cloud vendors.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/harbor/v2/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/azurecr/adapter.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--cloud-vendors--awsecr-calls-azurecr
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/awsecr
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/azurecr
+    type: core/software.relations.calls
+    description: AWS vendor adapter feeds Azure vendor adapter.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/awsecr/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/azurecr/adapter.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--cloud-vendors--azurecr-calls-googlegcr
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/azurecr
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/googlegcr
+    type: core/software.relations.calls
+    description: Azure vendor adapter feeds Google vendor adapter.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/azurecr/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/googlegcr/adapter.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--cloud-vendors--googlegcr-calls-awsecr
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/googlegcr
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/awsecr
+    type: core/software.relations.calls
+    description: Google vendor adapter loops back to AWS vendor adapter.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/googlegcr/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/awsecr/adapter.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--code-hosting--dockerhub-calls-jfrog
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/dockerhub
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/jfrog
+    type: core/software.relations.calls
+    description: Docker Hub adapter feeds JFrog adapter.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/dockerhub/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/jfrog/adapter.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--code-hosting--jfrog-calls-gitlab
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/jfrog
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/gitlab
+    type: core/software.relations.calls
+    description: JFrog adapter feeds GitLab adapter.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/jfrog/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/gitlab/adapter.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--code-hosting--gitlab-calls-quay
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/gitlab
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/quay
+    type: core/software.relations.calls
+    description: GitLab adapter feeds Quay adapter.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/gitlab/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/quay/adapter.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--code-hosting--quay-calls-dockerhub
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/quay
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/code-hosting/dockerhub
+    type: core/software.relations.calls
+    description: Quay adapter loops back to Docker Hub adapter.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/quay/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/dockerhub/adapter.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--harbor-native--harbor-base-calls-harbor-v1
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/harbor-base
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/harbor-v1
+    type: core/software.relations.calls
+    description: Harbor base feeds Harbor v1.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/harbor/base/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/harbor/v1/adapter.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--harbor-native--harbor-v1-calls-harbor-v2
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/harbor-v1
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/harbor-v2
+    type: core/software.relations.calls
+    description: Harbor v1 feeds Harbor v2.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/harbor/v1/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/harbor/v2/adapter.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--harbor-native--harbor-v2-calls-native
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/harbor-v2
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/native
+    type: core/software.relations.calls
+    description: Harbor v2 feeds native.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/harbor/v2/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/native/adapter.go
+  - id: >-
+      harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--harbor-native--native-calls-harbor-base
+    from: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/native
+    to: >-
+      harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/harbor-base
+    type: core/software.relations.calls
+    description: Native loops back to Harbor base.
+    provenance:
+      locations:
+        - input: primary
+          path: src/pkg/reg/adapter/native/adapter.go
+        - input: primary
+          path: src/pkg/reg/adapter/harbor/base/adapter.go
+inputs:
+  - id: primary
+    kind: git
+    repo: https://github.com/goharbor/harbor
+    revision: 88ab66244ef0d6c5fad21039084b017241896dc4
+    role: primary
+metadata:
+  workerBuild:
+    inputTokens: 18937960
+    cachedInputTokens: 17106944
+    outputTokens: 305073
+    approxTotalTokens: 36349977
+    mode: advanced
+    model: gpt-5.4-mini
+    builtAt: "2026-04-28T12:04:31.109Z"
+    durationMs: 3199846
+    turns: 38
+    nodes: 65
+    edges: 47
+  sourceRepository:
+    repo: https://github.com/goharbor/harbor
+    url: https://github.com/goharbor/harbor
+    commit: 88ab66244ef0d6c5fad21039084b017241896dc4
+  name: Harbor

@@ -1,0 +1,1544 @@
+version: 0.1.0
+schemaRefs:
+  - schema: gallery/outline@0.1
+    layer: 0
+  - schema: core/frontend@0.3
+    layer: 0
+  - schema: core/web-app@0.3
+    layer: 1
+  - schema: core/software@0.1
+    layer: 1
+  - schema: core/code@0.1
+    layer: 2
+  - schema: core/web-app@0.3
+    layer: 0
+  - schema: core/software@0.1
+    layer: 0
+  - schema: core/code@0.1
+    layer: 1
+entities:
+  - id: browser-product-app
+    type: gallery/outline.types.client-app
+    name: Browser Product App
+    description: Browser app runtime split into the bootstrap boundary and route surface.
+    props:
+      framework: react
+      runtime: browser
+    provenance:
+      locations:
+        - input: primary
+          path: app/index.tsx
+        - input: primary
+          path: app/routes/index.tsx
+    children:
+      - id: browser-product-app/app-bootstrap
+        type: core/web-app.types.group
+        name: App Bootstrap
+        description: Browser bootstrap shell and service worker setup.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: app/index.tsx
+        children:
+          - id: browser-product-app/app-bootstrap/app-shell
+            type: core/frontend.types.frontend
+            name: App Shell
+            description: Browser bootstrap shell.
+            props:
+              framework: react
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: app/index.tsx
+                - input: primary
+                  path: app/index.tsx
+          - id: browser-product-app/app-bootstrap/service-worker
+            type: core/code.types.module
+            name: Service Worker
+            description: Worker registration.
+            provenance:
+              locations:
+                - input: primary
+                  path: app/index.tsx
+      - id: browser-product-app/route-tree
+        type: core/web-app.types.group
+        name: Route Tree
+        description: Browser route split between public documents and authenticated app surfaces.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: app/routes/index.tsx
+        children:
+          - id: browser-product-app/route-tree/shared-document-routes
+            type: core/web-app.types.group
+            name: Shared Document Routes
+            description: Shared-document routing branches for public document access.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: app/routes/index.tsx
+            children:
+              - id: browser-product-app/route-tree/shared-document-routes/root-share-routes
+                type: core/code.types.module
+                name: Root Share Routes
+                description: Root-share document entry routes.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/routes/index.tsx
+              - id: >-
+                  browser-product-app/route-tree/shared-document-routes/shared-document-routes-branch
+                type: core/code.types.module
+                name: Shared Document Routes Branch
+                description: Shared-document routes and redirects.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/routes/index.tsx
+          - id: browser-product-app/route-tree/authenticated-routes
+            type: core/web-app.types.group
+            name: Authenticated Routes
+            description: Authenticated route branch for auth entry points and the main app surface.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: app/routes/index.tsx
+            children:
+              - id: browser-product-app/route-tree/authenticated-routes/auth-session-routes
+                type: core/code.types.module
+                name: Auth Session Routes
+                description: Login, logout, desktop, and OAuth routes.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/routes/index.tsx
+              - id: browser-product-app/route-tree/authenticated-routes/authenticated-app-routes
+                type: core/frontend.types.frontend
+                name: Authenticated App Routes
+                description: Authenticated browser app surface.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/routes/index.tsx
+              - id: browser-product-app/route-tree/authenticated-routes/authenticated-app-shell
+                type: core/web-app.types.application
+                name: Authenticated App Shell
+                description: Rendered authenticated application boundary.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/routes/index.tsx
+  - id: koa-web-host
+    type: gallery/outline.types.web-service
+    name: Koa Web Host
+    description: Koa host split between process startup and mounted HTTP surface.
+    props:
+      deployability: deployable
+      framework: koa
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: server/index.ts
+        - input: primary
+          path: server/services/index.ts
+        - input: primary
+          path: server/services/web.ts
+        - input: primary
+          path: server/routes/index.ts
+        - input: primary
+          path: server/routes/api/index.ts
+        - input: primary
+          path: server/routes/auth/index.ts
+        - input: primary
+          path: server/routes/mcp/index.ts
+    children:
+      - id: koa-web-host/service-startup
+        type: core/code.types.module
+        name: Service Startup
+        description: Process bootstrap and service registry.
+        props:
+          language: typescript
+          runtime: server
+          framework: koa
+        provenance:
+          locations:
+            - input: primary
+              path: server/index.ts
+            - input: primary
+              path: server/services/index.ts
+      - id: koa-web-host/http-surface
+        type: core/web-app.types.group
+        name: HTTP Surface
+        description: Browser, API, auth, OAuth, and MCP surfaces mounted into the Koa host.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: server/services/web.ts
+            - input: primary
+              path: server/routes/index.ts
+            - input: primary
+              path: server/routes/api/index.ts
+            - input: primary
+              path: server/routes/auth/index.ts
+            - input: primary
+              path: server/routes/mcp/index.ts
+        children:
+          - id: koa-web-host/http-surface/browser-surface
+            type: core/frontend.types.frontend
+            name: Browser Surface
+            description: Public browser-rendered surface.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/routes/index.ts
+                - input: primary
+                  path: server/services/web.ts
+          - id: koa-web-host/http-surface/api-surface
+            type: core/web-app.types.api
+            name: API Surface
+            description: Main JSON API boundary.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/routes/api/index.ts
+                - input: primary
+                  path: server/services/web.ts
+          - id: koa-web-host/http-surface/auth-surface
+            type: core/web-app.types.api-endpoint
+            name: Auth Surface
+            description: Browser authentication redirect flow.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/routes/auth/index.ts
+                - input: primary
+                  path: server/services/web.ts
+          - id: koa-web-host/http-surface/mcp-surface
+            type: core/web-app.types.api-endpoint
+            name: MCP Surface
+            description: Scoped MCP protocol endpoint.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/routes/mcp/index.ts
+                - input: primary
+                  path: server/services/web.ts
+          - id: koa-web-host/http-surface/oauth-surface
+            type: core/web-app.types.api-endpoint
+            name: OAuth Surface
+            description: OAuth discovery and protocol endpoints.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/routes/index.ts
+                - input: primary
+                  path: server/services/web.ts
+  - id: collaboration-service
+    type: gallery/outline.types.collaboration-service
+    name: Realtime Collaboration Service
+    description: Realtime collaboration plane split into runtime and persistence hook.
+    props:
+      deployability: deployable
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/collaboration.ts
+        - input: primary
+          path: server/collaboration/AuthenticationExtension.ts
+        - input: primary
+          path: server/collaboration/PersistenceExtension.ts
+    children:
+      - id: collaboration-service/collaboration-runtime
+        type: core/web-app.types.group
+        name: Collaboration Runtime
+        description: WebSocket collaboration runtime and its authentication extension wiring.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: server/services/collaboration.ts
+            - input: primary
+              path: server/collaboration/AuthenticationExtension.ts
+        children:
+          - id: collaboration-service/collaboration-runtime/hocuspocus-runtime
+            type: core/web-app.types.group
+            name: Hocuspocus Runtime
+            description: Hocuspocus WebSocket runtime for collaboration connections and extension wiring.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: server/services/collaboration.ts
+            children:
+              - id: >-
+                  collaboration-service/collaboration-runtime/hocuspocus-runtime/collaboration-websocket-upgrade
+                type: core/web-app.types.api-endpoint
+                name: Collaboration WebSocket Upgrade
+                description: Handles the /collaboration upgrade entrypoint.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: server/services/collaboration.ts
+              - id: >-
+                  collaboration-service/collaboration-runtime/hocuspocus-runtime/hocuspocus-extension-stack
+                type: core/web-app.types.group
+                name: Hocuspocus Extension Stack
+                description: Hocuspocus collaboration extensions for authentication and persistence.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: server/services/collaboration.ts
+                children:
+                  - id: >-
+                      collaboration-service/collaboration-runtime/hocuspocus-runtime/hocuspocus-extension-stack/authentication-extension
+                    type: core/code.types.module
+                    name: Authentication Extension
+                    description: Resolves the collaboration user context.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: server/services/collaboration.ts
+                        - input: primary
+                          path: server/collaboration/AuthenticationExtension.ts
+                  - id: >-
+                      collaboration-service/collaboration-runtime/hocuspocus-runtime/hocuspocus-extension-stack/persistence-extension
+                    type: core/code.types.module
+                    name: Persistence Extension
+                    description: Stores collaboration document updates.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: server/services/collaboration.ts
+                        - input: primary
+                          path: server/collaboration/PersistenceExtension.ts
+          - id: collaboration-service/collaboration-runtime/authentication-extension
+            type: core/code.types.module
+            name: Authentication Extension
+            description: Collaboration auth hook.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/collaboration/AuthenticationExtension.ts
+      - id: collaboration-service/persistence-extension
+        type: core/code.types.module
+        name: Persistence Extension
+        description: Document persistence hook.
+        props:
+          language: typescript
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: server/collaboration/PersistenceExtension.ts
+  - id: websocket-event-plane
+    type: gallery/outline.types.websocket-service
+    name: Websocket Event Plane
+    description: Realtime websocket plane split into socket handling and queue-driven delivery.
+    props:
+      deployability: deployable
+      framework: socketio
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+        - input: primary
+          path: server/queues/processors/WebsocketsProcessor.ts
+        - input: primary
+          path: server/queues/index.ts
+    children:
+      - id: websocket-event-plane/socket-runtime
+        type: core/code.types.module
+        name: Socket Runtime
+        description: Realtime Socket.IO runtime and authenticated room membership handling.
+        props:
+          framework: socketio
+          runtime: server
+          language: typescript
+        provenance:
+          locations:
+            - input: primary
+              path: server/services/websockets.ts
+            - input: primary
+              path: server/queues/index.ts
+        children:
+          - id: websocket-event-plane/socket-runtime/realtime-socket-server
+            type: core/web-app.types.group
+            name: Realtime Socket Server
+            description: >-
+              Realtime Socket.IO runtime for collaboration fanout, room access, and queue
+              processing.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: server/services/websockets.ts
+                - input: primary
+                  path: server/queues/index.ts
+            children:
+              - id: websocket-event-plane/socket-runtime/realtime-socket-server/realtime-socket-entry
+                type: core/web-app.types.api-endpoint
+                name: Realtime Socket Entry
+                description: Handles the /realtime Socket.IO upgrade entrypoint.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: server/services/websockets.ts
+              - id: websocket-event-plane/socket-runtime/realtime-socket-server/socket-room-access
+                type: core/code.types.module
+                name: Socket Room Access
+                description: Resolves room membership and access for realtime connections.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: server/services/websockets.ts
+                    - input: primary
+                      path: server/models/Collection.ts
+                    - input: primary
+                      path: server/models/Group.ts
+              - id: >-
+                  websocket-event-plane/socket-runtime/realtime-socket-server/websocket-queue-processing
+                type: core/code.types.module
+                name: Websocket Queue Processing
+                description: Starts websocket queue processing and delivery wiring.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: server/services/websockets.ts
+                    - input: primary
+                      path: server/queues/index.ts
+          - id: websocket-event-plane/socket-runtime/authenticated-room-access
+            type: core/web-app.types.group
+            name: Authenticated Room Access
+            description: >-
+              Socket authentication and room membership lifecycle for authenticated websocket
+              sessions.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: server/services/websockets.ts
+            children:
+              - id: >-
+                  websocket-event-plane/socket-runtime/authenticated-room-access/socket-authentication
+                type: core/code.types.module
+                name: Socket Authentication
+                description: Validates the access token and attaches the user.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: server/services/websockets.ts
+              - id: >-
+                  websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session
+                type: core/web-app.types.group
+                name: Room Membership Session
+                description: Authenticated socket room membership session.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: server/services/websockets.ts
+                children:
+                  - id: >-
+                      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/room-membership-controller
+                    type: core/code.types.module
+                    name: Room Membership Controller
+                    description: Manages authenticated room joins and leaves.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: server/services/websockets.ts
+                  - id: >-
+                      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/team-room
+                    type: core/web-app.types.topic
+                    name: Team Room
+                    description: Authenticated team room channel.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: server/services/websockets.ts
+                  - id: >-
+                      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/user-room
+                    type: core/web-app.types.topic
+                    name: User Room
+                    description: Authenticated user room channel.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: server/services/websockets.ts
+                  - id: >-
+                      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/collection-room
+                    type: core/web-app.types.topic
+                    name: Collection Room
+                    description: Collection membership channel.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: server/services/websockets.ts
+                  - id: >-
+                      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/group-room
+                    type: core/web-app.types.topic
+                    name: Group Room
+                    description: Group membership channel.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: server/services/websockets.ts
+      - id: websocket-event-plane/delivery-processor
+        type: core/code.types.module
+        name: Delivery Processor
+        description: Queue-driven websocket delivery worker.
+        props:
+          runtime: worker
+          language: typescript
+        provenance:
+          locations:
+            - input: primary
+              path: server/queues/processors/WebsocketsProcessor.ts
+            - input: primary
+              path: server/queues/index.ts
+  - id: async-worker-plane
+    type: gallery/outline.types.worker-service
+    name: Async Worker Plane
+    description: Background worker plane split into orchestration, processors, tasks, and monitoring.
+    props:
+      deployability: deployable
+      runtime: worker
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+        - input: primary
+          path: server/queues/processors/BacklinksProcessor.ts
+        - input: primary
+          path: server/queues/tasks/ImportTask.ts
+        - input: primary
+          path: server/queues/HealthMonitor.ts
+    children:
+      - id: async-worker-plane/worker-runtime
+        type: core/code.types.module
+        name: Worker Runtime
+        description: Queue routing, processor and task execution, and health monitoring.
+        props:
+          language: typescript
+          runtime: worker
+        provenance:
+          locations:
+            - input: primary
+              path: server/services/worker.ts
+        children:
+          - id: async-worker-plane/worker-runtime/queue-router
+            type: core/web-app.types.group
+            name: Queue Router
+            description: Worker runtime queue routing for global events and downstream queue fanout.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: server/services/worker.ts
+                - input: primary
+                  path: server/queues/index.ts
+            children:
+              - id: async-worker-plane/worker-runtime/queue-router/queue-dispatcher
+                type: core/code.types.module
+                name: Queue Dispatcher
+                description: Consumes global events and fans them out to worker queues.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: server/services/worker.ts
+                    - input: primary
+                      path: server/queues/index.ts
+              - id: async-worker-plane/worker-runtime/queue-router/global-events
+                type: core/web-app.types.topic
+                name: Global Events Queue
+                description: Inbound event bus for the worker plane.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: server/queues/index.ts
+              - id: async-worker-plane/worker-runtime/queue-router/processor-events
+                type: core/web-app.types.topic
+                name: Processor Events Queue
+                description: Queued jobs for registered processors.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: server/services/worker.ts
+                    - input: primary
+                      path: server/queues/index.ts
+              - id: async-worker-plane/worker-runtime/queue-router/websocket-delivery
+                type: core/web-app.types.topic
+                name: Websocket Delivery Queue
+                description: Dedicated queue for websocket delivery jobs.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: server/services/worker.ts
+                    - input: primary
+                      path: server/queues/index.ts
+          - id: async-worker-plane/worker-runtime/processor-execution
+            type: core/code.types.module
+            name: Processor Execution
+            description: Event processor loop.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/services/worker.ts
+          - id: async-worker-plane/worker-runtime/task-execution
+            type: core/code.types.module
+            name: Task Execution
+            description: Async task loop.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/services/worker.ts
+          - id: async-worker-plane/worker-runtime/health-monitoring
+            type: core/code.types.module
+            name: Health Monitoring
+            description: Queue health checks.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/services/worker.ts
+                - input: primary
+                  path: server/queues/HealthMonitor.ts
+      - id: async-worker-plane/backlinks-processor
+        type: core/code.types.module
+        name: Backlinks Processor
+        description: Event-driven state processor.
+        props:
+          language: typescript
+          runtime: worker
+        provenance:
+          locations:
+            - input: primary
+              path: server/queues/processors/BacklinksProcessor.ts
+      - id: async-worker-plane/import-task
+        type: core/code.types.module
+        name: Import Task
+        description: Asynchronous import work.
+        props:
+          language: typescript
+          runtime: worker
+        provenance:
+          locations:
+            - input: primary
+              path: server/queues/tasks/ImportTask.ts
+      - id: async-worker-plane/health-monitor
+        type: core/code.types.module
+        name: Health Monitor
+        description: Queue health helper.
+        props:
+          language: typescript
+          runtime: worker
+        provenance:
+          locations:
+            - input: primary
+              path: server/queues/HealthMonitor.ts
+  - id: plugin-and-integration-surface
+    type: gallery/outline.types.plugin-suite
+    name: Plugin and Integration Surface
+    description: Plugin loader plus grouped external integration families.
+    provenance:
+      locations:
+        - input: primary
+          path: server/utils/PluginManager.ts
+        - input: primary
+          path: plugins/github/plugin.json
+        - input: primary
+          path: plugins/slack/plugin.json
+        - input: primary
+          path: plugins/notion/server/index.ts
+        - input: primary
+          path: plugins/figma/server/figma.ts
+    children:
+      - id: plugin-and-integration-surface/plugin-manager
+        type: core/code.types.module
+        name: Plugin Manager
+        description: Plugin loader and hook registry.
+        props:
+          language: typescript
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: server/utils/PluginManager.ts
+      - id: plugin-and-integration-surface/integration-families
+        type: core/web-app.types.group
+        name: Integration Families
+        description: Plugin-packaged integration families and plugin-specific runtime families.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: plugins/github/plugin.json
+            - input: primary
+              path: plugins/slack/plugin.json
+            - input: primary
+              path: plugins/notion/server/index.ts
+            - input: primary
+              path: plugins/figma/server/figma.ts
+        children:
+          - id: plugin-and-integration-surface/integration-families/github-integration
+            type: core/code.types.module
+            name: GitHub Integration
+            description: GitHub link unfurling family.
+            provenance:
+              locations:
+                - input: primary
+                  path: plugins/github/plugin.json
+          - id: plugin-and-integration-surface/integration-families/slack-integration
+            type: core/code.types.module
+            name: Slack Integration
+            description: Slack auth, slash command, and unfurling family.
+            provenance:
+              locations:
+                - input: primary
+                  path: plugins/slack/plugin.json
+          - id: plugin-and-integration-surface/integration-families/notion-integration
+            type: core/code.types.module
+            name: Notion Integration
+            description: Notion import integration.
+            provenance:
+              locations:
+                - input: primary
+                  path: plugins/notion/server/index.ts
+          - id: plugin-and-integration-surface/integration-families/figma-integration
+            type: core/code.types.module
+            name: Figma Integration
+            description: Figma API integration.
+            provenance:
+              locations:
+                - input: primary
+                  path: plugins/figma/server/figma.ts
+  - id: global-event-queue
+    type: core/web-app.types.queue
+    name: Global Event Queue
+    description: Global queue boundary split into queue management and the queue topic.
+    provenance:
+      locations:
+        - input: primary
+          path: server/queues/index.ts
+        - input: primary
+          path: server/services/worker.ts
+    children:
+      - id: global-event-queue/queue-manager
+        type: core/code.types.module
+        name: Queue Manager
+        description: Global queue control surface.
+        props:
+          language: typescript
+        provenance:
+          locations:
+            - input: primary
+              path: server/queues/index.ts
+            - input: primary
+              path: server/services/worker.ts
+      - id: global-event-queue/global-events
+        type: core/web-app.types.topic
+        name: Global Events
+        description: Shared queue topic.
+        provenance:
+          locations:
+            - input: primary
+              path: server/queues/index.ts
+            - input: primary
+              path: server/services/worker.ts
+  - id: websocket-queue
+    type: core/web-app.types.queue
+    name: Websocket Queue
+    description: Websocket queue split into queue wiring and the delivery topic.
+    provenance:
+      locations:
+        - input: primary
+          path: server/queues/index.ts
+        - input: primary
+          path: server/services/worker.ts
+        - input: primary
+          path: server/services/websockets.ts
+    children:
+      - id: websocket-queue/queue-manager
+        type: core/code.types.module
+        name: Queue Manager
+        description: Websocket queue control surface.
+        props:
+          language: typescript
+        provenance:
+          locations:
+            - input: primary
+              path: server/queues/index.ts
+            - input: primary
+              path: server/services/worker.ts
+            - input: primary
+              path: server/services/websockets.ts
+      - id: websocket-queue/websocket-delivery
+        type: core/web-app.types.topic
+        name: Websocket Delivery
+        description: Shared queue topic.
+        provenance:
+          locations:
+            - input: primary
+              path: server/queues/index.ts
+            - input: primary
+              path: server/queues/processors/WebsocketsProcessor.ts
+            - input: primary
+              path: server/services/websockets.ts
+  - id: relational-cache-persistence
+    type: core/web-app.types.datastore
+    name: Relational and Cache Persistence
+    description: Relational state and Redis coordination split into primary persistence and cache runtime.
+    provenance:
+      locations:
+        - input: primary
+          path: server/storage/database.ts
+        - input: primary
+          path: server/models/index.ts
+        - input: primary
+          path: server/models/Document.ts
+        - input: primary
+          path: server/storage/redis.ts
+    children:
+      - id: relational-cache-persistence/primary-database
+        type: core/web-app.types.relational-db
+        name: Primary Database
+        description: Relational application store.
+        props:
+          implementation: postgres
+        provenance:
+          locations:
+            - input: primary
+              path: server/storage/database.ts
+            - input: primary
+              path: server/models/index.ts
+            - input: primary
+              path: server/models/Document.ts
+      - id: relational-cache-persistence/redis-cache
+        type: core/web-app.types.cache
+        name: Redis Cache
+        description: Coordination cache.
+        provenance:
+          locations:
+            - input: primary
+              path: server/storage/redis.ts
+  - id: object-storage-plane
+    type: core/web-app.types.object-store
+    name: Object and File Storage Plane
+    description: Attachment storage boundary split into filesystem and S3 implementations.
+    provenance:
+      locations:
+        - input: primary
+          path: server/storage/files/index.ts
+        - input: primary
+          path: server/storage/files/LocalStorage.ts
+        - input: primary
+          path: server/storage/files/S3Storage.ts
+        - input: primary
+          path: server/routes/api/attachments/attachments.ts
+    children:
+      - id: object-storage-plane/local-storage
+        type: core/code.types.module
+        name: Local Storage
+        description: Filesystem-backed attachment storage implementation.
+        props:
+          language: typescript
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: server/storage/files/LocalStorage.ts
+            - input: primary
+              path: server/storage/files/index.ts
+      - id: object-storage-plane/s3-storage
+        type: core/code.types.module
+        name: S3 Storage
+        description: S3-backed attachment storage implementation.
+        props:
+          language: typescript
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: server/storage/files/S3Storage.ts
+            - input: primary
+              path: server/storage/files/index.ts
+  - id: external-integrations-api
+    type: core/web-app.types.external-api
+    name: External Integrations API
+    description: Third-party services reached by plugins.
+    provenance:
+      locations:
+        - input: primary
+          path: plugins/github/plugin.json
+        - input: primary
+          path: plugins/slack/plugin.json
+        - input: primary
+          path: plugins/notion/server/index.ts
+        - input: primary
+          path: plugins/figma/server/figma.ts
+relations:
+  - id: rel-browser-product-app-calls-koa-web-host
+    from: browser-product-app/app-bootstrap/app-shell
+    to: koa-web-host/http-surface
+    type: core/software.relations.calls
+    description: Browser client reaches the main HTTP host.
+    provenance:
+      locations:
+        - input: primary
+          path: app/index.tsx
+        - input: primary
+          path: app/routes/index.tsx
+        - input: primary
+          path: server/services/web.ts
+  - id: rel-koa-web-host-calls-collaboration-service
+    from: koa-web-host/service-startup
+    to: collaboration-service/collaboration-runtime/hocuspocus-runtime/collaboration-websocket-upgrade
+    type: core/software.relations.calls
+    description: Web host starts the collaboration runtime.
+    provenance:
+      locations:
+        - input: primary
+          path: server/index.ts
+        - input: primary
+          path: server/services/collaboration.ts
+  - id: rel-koa-web-host-calls-websocket-event-plane
+    from: koa-web-host/service-startup
+    to: websocket-event-plane/socket-runtime/realtime-socket-server/realtime-socket-entry
+    type: core/software.relations.calls
+    description: Web host starts the realtime fanout service.
+    provenance:
+      locations:
+        - input: primary
+          path: server/index.ts
+        - input: primary
+          path: server/services/websockets.ts
+  - id: rel-koa-web-host-calls-async-worker-plane
+    from: koa-web-host/service-startup
+    to: async-worker-plane/worker-runtime/queue-router/queue-dispatcher
+    type: core/software.relations.calls
+    description: Web host starts the background worker plane.
+    provenance:
+      locations:
+        - input: primary
+          path: server/index.ts
+        - input: primary
+          path: server/services/worker.ts
+  - id: rel-koa-web-host-calls-plugin-and-integration-surface
+    from: koa-web-host/service-startup
+    to: plugin-and-integration-surface/plugin-manager
+    type: core/software.relations.calls
+    description: Web host loads server plugins.
+    provenance:
+      locations:
+        - input: primary
+          path: server/index.ts
+        - input: primary
+          path: server/utils/PluginManager.ts
+        - input: primary
+          path: plugins/github/plugin.json
+  - id: rel-plugin-and-integration-surface-calls-external-integrations-api
+    from: plugin-and-integration-surface
+    to: external-integrations-api
+    type: core/software.relations.calls
+    description: Plugin surface reaches third-party service APIs.
+    provenance:
+      locations:
+        - input: primary
+          path: server/utils/PluginManager.ts
+        - input: primary
+          path: plugins/github/plugin.json
+        - input: primary
+          path: plugins/slack/plugin.json
+        - input: primary
+          path: plugins/notion/server/index.ts
+        - input: primary
+          path: plugins/figma/server/figma.ts
+  - id: rel-async-worker-plane-consumes-from-global-event-queue
+    from: async-worker-plane/worker-runtime/queue-router/queue-dispatcher
+    to: global-event-queue/global-events
+    type: core/software.relations.consumes-from
+    description: Worker plane consumes the global event queue.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+        - input: primary
+          path: server/queues/index.ts
+  - id: rel-async-worker-plane-publishes-to-global-event-queue
+    from: async-worker-plane/worker-runtime/queue-router
+    to: global-event-queue/global-events
+    type: core/software.relations.publishes-to
+    description: Worker plane publishes events to the global queue.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+        - input: primary
+          path: server/queues/index.ts
+  - id: rel-async-worker-plane-publishes-to-websocket-queue
+    from: async-worker-plane/worker-runtime/queue-router/queue-dispatcher
+    to: websocket-queue/websocket-delivery
+    type: core/software.relations.publishes-to
+    description: Worker plane publishes websocket delivery jobs.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+        - input: primary
+          path: server/queues/index.ts
+  - id: rel-websocket-event-plane-consumes-from-websocket-queue
+    from: websocket-event-plane/delivery-processor
+    to: websocket-queue/websocket-delivery
+    type: core/software.relations.consumes-from
+    description: Realtime service consumes websocket delivery jobs.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+        - input: primary
+          path: server/queues/processors/WebsocketsProcessor.ts
+        - input: primary
+          path: server/queues/index.ts
+  - id: rel-websocket-event-plane-publishes-to-websocket-queue
+    from: websocket-event-plane
+    to: websocket-queue/websocket-delivery
+    type: core/software.relations.publishes-to
+    description: Realtime service publishes websocket delivery jobs.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+        - input: primary
+          path: server/queues/processors/WebsocketsProcessor.ts
+        - input: primary
+          path: server/queues/index.ts
+  - id: rel-koa-web-host-writes-relational-cache-persistence
+    from: koa-web-host
+    to: relational-cache-persistence/primary-database
+    type: core/software.relations.writes
+    description: HTTP handlers write primary application state.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/web.ts
+        - input: primary
+          path: server/storage/database.ts
+        - input: primary
+          path: server/routes/api/index.ts
+  - id: rel-collaboration-service-read-writes-relational-cache-persistence
+    from: collaboration-service/persistence-extension
+    to: relational-cache-persistence/primary-database
+    type: core/software.relations.read-writes
+    description: Collaboration sessions persist document state.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/collaboration.ts
+        - input: primary
+          path: server/collaboration/PersistenceExtension.ts
+        - input: primary
+          path: server/storage/database.ts
+  - id: rel-websocket-event-plane-reads-relational-cache-persistence
+    from: websocket-event-plane/socket-runtime/realtime-socket-server/socket-room-access
+    to: relational-cache-persistence/primary-database
+    type: core/software.relations.reads
+    description: Realtime fanout resolves membership from primary state.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+        - input: primary
+          path: server/models/Collection.ts
+        - input: primary
+          path: server/models/Group.ts
+  - id: rel-async-worker-plane-read-writes-relational-cache-persistence
+    from: async-worker-plane/backlinks-processor
+    to: relational-cache-persistence/primary-database
+    type: core/software.relations.read-writes
+    description: Worker jobs update durable application state.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+        - input: primary
+          path: server/queues/tasks/ImportTask.ts
+        - input: primary
+          path: server/queues/processors/BacklinksProcessor.ts
+  - id: rel-koa-web-host-reads-object-storage-plane
+    from: koa-web-host
+    to: object-storage-plane
+    type: core/software.relations.reads
+    description: HTTP handlers read attachments and assets.
+    provenance:
+      locations:
+        - input: primary
+          path: server/routes/api/attachments/attachments.ts
+        - input: primary
+          path: server/storage/files/S3Storage.ts
+        - input: primary
+          path: server/storage/files/LocalStorage.ts
+  - id: rel-async-worker-plane-writes-object-storage-plane
+    from: async-worker-plane
+    to: object-storage-plane
+    type: core/software.relations.writes
+    description: Worker jobs write imported or generated files.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+        - input: primary
+          path: server/queues/tasks/ImportTask.ts
+        - input: primary
+          path: server/queues/tasks/ExportTask.ts
+        - input: primary
+          path: server/storage/files/S3Storage.ts
+        - input: primary
+          path: server/storage/files/LocalStorage.ts
+  - id: browser-product-app--rel-app-bootstrap-calls-route-tree
+    from: browser-product-app/app-bootstrap/app-shell
+    to: browser-product-app/route-tree/shared-document-routes/root-share-routes
+    type: core/software.relations.calls
+    description: Bootstrap renders the route tree.
+    provenance:
+      locations:
+        - input: primary
+          path: app/index.tsx
+        - input: primary
+          path: app/routes/index.tsx
+  - id: koa-web-host--rel-service-startup-calls-http-surface
+    from: koa-web-host/service-startup
+    to: koa-web-host/http-surface/browser-surface
+    type: core/software.relations.calls
+    description: Startup wires the HTTP host.
+    provenance:
+      locations:
+        - input: primary
+          path: server/index.ts
+        - input: primary
+          path: server/services/web.ts
+  - id: collaboration-service--rel-collaboration-runtime-calls-persistence-extension
+    from: >-
+      collaboration-service/collaboration-runtime/hocuspocus-runtime/hocuspocus-extension-stack/persistence-extension
+    to: collaboration-service/persistence-extension
+    type: core/software.relations.calls
+    description: Runtime delegates persistence work.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/collaboration.ts
+        - input: primary
+          path: server/collaboration/PersistenceExtension.ts
+  - id: websocket-event-plane--rel-socket-runtime-calls-delivery-processor
+    from: websocket-event-plane/socket-runtime/realtime-socket-server/websocket-queue-processing
+    to: websocket-event-plane/delivery-processor
+    type: core/software.relations.calls
+    description: Socket runtime delegates delivery work.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+        - input: primary
+          path: server/queues/processors/WebsocketsProcessor.ts
+  - id: async-worker-plane--rel-worker-runtime-calls-backlinks-processor
+    from: async-worker-plane/worker-runtime/processor-execution
+    to: async-worker-plane/backlinks-processor
+    type: core/software.relations.calls
+    description: Worker runtime dispatches processor work.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+        - input: primary
+          path: server/queues/processors/BacklinksProcessor.ts
+  - id: async-worker-plane--rel-worker-runtime-calls-import-task
+    from: async-worker-plane/worker-runtime/task-execution
+    to: async-worker-plane/import-task
+    type: core/software.relations.calls
+    description: Worker runtime dispatches import work.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+        - input: primary
+          path: server/queues/tasks/ImportTask.ts
+  - id: async-worker-plane--rel-worker-runtime-calls-health-monitor
+    from: async-worker-plane/worker-runtime/health-monitoring
+    to: async-worker-plane/health-monitor
+    type: core/software.relations.calls
+    description: Worker runtime starts health monitoring.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+        - input: primary
+          path: server/queues/HealthMonitor.ts
+  - id: plugin-and-integration-surface--rel-plugin-manager-calls-integration-families
+    from: plugin-and-integration-surface/plugin-manager
+    to: plugin-and-integration-surface/integration-families
+    type: core/software.relations.calls
+    description: Plugin manager loads the integration families.
+    provenance:
+      locations:
+        - input: primary
+          path: server/utils/PluginManager.ts
+        - input: primary
+          path: plugins/github/plugin.json
+  - id: global-event-queue--rel-queue-manager-consumes-from-global-events
+    from: global-event-queue/queue-manager
+    to: global-event-queue/global-events
+    type: core/software.relations.consumes-from
+    description: Queue manager reads queue events.
+    provenance:
+      locations:
+        - input: primary
+          path: server/queues/index.ts
+        - input: primary
+          path: server/services/worker.ts
+  - id: global-event-queue--rel-queue-manager-publishes-to-global-events
+    from: global-event-queue/queue-manager
+    to: global-event-queue/global-events
+    type: core/software.relations.publishes-to
+    description: Queue manager writes queue events.
+    provenance:
+      locations:
+        - input: primary
+          path: server/queues/index.ts
+        - input: primary
+          path: server/services/worker.ts
+  - id: websocket-queue--rel-queue-manager-consumes-from-websocket-delivery
+    from: websocket-queue/queue-manager
+    to: websocket-queue/websocket-delivery
+    type: core/software.relations.consumes-from
+    description: Queue manager reads delivery work.
+    provenance:
+      locations:
+        - input: primary
+          path: server/queues/index.ts
+        - input: primary
+          path: server/queues/processors/WebsocketsProcessor.ts
+  - id: websocket-queue--rel-queue-manager-publishes-to-websocket-delivery
+    from: websocket-queue/queue-manager
+    to: websocket-queue/websocket-delivery
+    type: core/software.relations.publishes-to
+    description: Queue manager writes delivery work.
+    provenance:
+      locations:
+        - input: primary
+          path: server/queues/index.ts
+        - input: primary
+          path: server/services/worker.ts
+  - id: browser-product-app--route-tree--route-tree-shared-to-auth
+    from: browser-product-app/route-tree/shared-document-routes/shared-document-routes-branch
+    to: browser-product-app/route-tree/authenticated-routes/auth-session-routes
+    type: core/software.relations.calls
+    description: Public routes hand off to authenticated routes.
+    provenance:
+      locations:
+        - input: primary
+          path: app/routes/index.tsx
+  - id: koa-web-host--http-surface--browser-to-api
+    from: koa-web-host/http-surface/browser-surface
+    to: koa-web-host/http-surface/api-surface
+    type: core/software.relations.calls
+    description: Browser surface reaches the JSON API.
+    provenance:
+      locations:
+        - input: primary
+          path: server/routes/index.ts
+        - input: primary
+          path: server/routes/api/index.ts
+  - id: collaboration-service--collaboration-runtime--runtime-auth-extension
+    from: >-
+      collaboration-service/collaboration-runtime/hocuspocus-runtime/hocuspocus-extension-stack/authentication-extension
+    to: collaboration-service/collaboration-runtime/authentication-extension
+    type: core/software.relations.calls
+    description: Runtime invokes auth extension logic.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/collaboration.ts
+        - input: primary
+          path: server/collaboration/AuthenticationExtension.ts
+  - id: websocket-event-plane--socket-runtime--realtime-to-authenticated-room-access
+    from: websocket-event-plane/socket-runtime/realtime-socket-server/socket-room-access
+    to: websocket-event-plane/socket-runtime/authenticated-room-access/socket-authentication
+    type: core/software.relations.calls
+    description: Socket server uses the room access helper.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+  - id: async-worker-plane--worker-runtime--router-to-processor-execution
+    from: async-worker-plane/worker-runtime/queue-router
+    to: async-worker-plane/worker-runtime/processor-execution
+    type: core/software.relations.calls
+    description: Router fans out processor jobs.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+  - id: async-worker-plane--worker-runtime--router-to-task-execution
+    from: async-worker-plane/worker-runtime/queue-router
+    to: async-worker-plane/worker-runtime/task-execution
+    type: core/software.relations.calls
+    description: Router fans out task jobs.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+  - id: async-worker-plane--worker-runtime--router-to-health-monitoring
+    from: async-worker-plane/worker-runtime/queue-router
+    to: async-worker-plane/worker-runtime/health-monitoring
+    type: core/software.relations.calls
+    description: Router starts health monitoring.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+  - id: browser-product-app--route-tree--shared-document-routes--route-tree-share-handoff
+    from: browser-product-app/route-tree/shared-document-routes/root-share-routes
+    to: browser-product-app/route-tree/shared-document-routes/shared-document-routes-branch
+    type: core/software.relations.calls
+    description: Share entry routes hand off to the shared-document branch.
+    provenance:
+      locations:
+        - input: primary
+          path: app/routes/index.tsx
+  - id: browser-product-app--route-tree--authenticated-routes--auth-session-to-app-routes
+    from: browser-product-app/route-tree/authenticated-routes/auth-session-routes
+    to: browser-product-app/route-tree/authenticated-routes/authenticated-app-routes
+    type: core/software.relations.calls
+    description: Auth session routes flow into the authenticated app surface.
+    provenance:
+      locations:
+        - input: primary
+          path: app/routes/index.tsx
+  - id: browser-product-app--route-tree--authenticated-routes--app-routes-to-app-shell
+    from: browser-product-app/route-tree/authenticated-routes/authenticated-app-routes
+    to: browser-product-app/route-tree/authenticated-routes/authenticated-app-shell
+    type: core/software.relations.calls
+    description: Authenticated app routes reach the app shell.
+    provenance:
+      locations:
+        - input: primary
+          path: app/routes/index.tsx
+  - id: collaboration-service--collaboration-runtime--hocuspocus-runtime--upgrade-to-extension-stack
+    from: collaboration-service/collaboration-runtime/hocuspocus-runtime/collaboration-websocket-upgrade
+    to: >-
+      collaboration-service/collaboration-runtime/hocuspocus-runtime/hocuspocus-extension-stack/authentication-extension
+    type: core/software.relations.calls
+    description: Upgrade entry hands off into the runtime extension stack.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/collaboration.ts
+  - id: websocket-event-plane--socket-runtime--realtime-socket-server--entry-to-room-access
+    from: websocket-event-plane/socket-runtime/realtime-socket-server/realtime-socket-entry
+    to: websocket-event-plane/socket-runtime/realtime-socket-server/socket-room-access
+    type: core/software.relations.calls
+    description: Socket entry hands off to room access checks.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+  - id: websocket-event-plane--socket-runtime--realtime-socket-server--room-access-to-queue-processing
+    from: websocket-event-plane/socket-runtime/realtime-socket-server/socket-room-access
+    to: websocket-event-plane/socket-runtime/realtime-socket-server/websocket-queue-processing
+    type: core/software.relations.calls
+    description: Room access gates queue processing.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+  - id: websocket-event-plane--socket-runtime--authenticated-room-access--authentication-to-session
+    from: websocket-event-plane/socket-runtime/authenticated-room-access/socket-authentication
+    to: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/room-membership-controller
+    type: core/software.relations.calls
+    description: Authentication hands off to room membership management.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+  - id: async-worker-plane--worker-runtime--queue-router--dispatcher-consumes-global
+    from: async-worker-plane/worker-runtime/queue-router/queue-dispatcher
+    to: async-worker-plane/worker-runtime/queue-router/global-events
+    type: core/software.relations.consumes-from
+    description: Dispatcher consumes the global event bus.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+  - id: async-worker-plane--worker-runtime--queue-router--dispatcher-publishes-processors
+    from: async-worker-plane/worker-runtime/queue-router/queue-dispatcher
+    to: async-worker-plane/worker-runtime/queue-router/processor-events
+    type: core/software.relations.publishes-to
+    description: Dispatcher enqueues processor work.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+  - id: async-worker-plane--worker-runtime--queue-router--dispatcher-publishes-websockets
+    from: async-worker-plane/worker-runtime/queue-router/queue-dispatcher
+    to: async-worker-plane/worker-runtime/queue-router/websocket-delivery
+    type: core/software.relations.publishes-to
+    description: Dispatcher enqueues websocket work.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/worker.ts
+  - id: >-
+      collaboration-service--collaboration-runtime--hocuspocus-runtime--hocuspocus-extension-stack--auth-to-persistence
+    from: >-
+      collaboration-service/collaboration-runtime/hocuspocus-runtime/hocuspocus-extension-stack/authentication-extension
+    to: >-
+      collaboration-service/collaboration-runtime/hocuspocus-runtime/hocuspocus-extension-stack/persistence-extension
+    type: core/software.relations.calls
+    description: Authentication hands off to persistence wiring.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/collaboration.ts
+  - id: >-
+      websocket-event-plane--socket-runtime--authenticated-room-access--room-membership-session--controller-consumes-team-room
+    from: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/room-membership-controller
+    to: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/team-room
+    type: core/software.relations.consumes-from
+    description: Controller consumes the team room.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+  - id: >-
+      websocket-event-plane--socket-runtime--authenticated-room-access--room-membership-session--controller-publishes-team-room
+    from: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/room-membership-controller
+    to: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/team-room
+    type: core/software.relations.publishes-to
+    description: Controller publishes to the team room.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+  - id: >-
+      websocket-event-plane--socket-runtime--authenticated-room-access--room-membership-session--controller-consumes-user-room
+    from: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/room-membership-controller
+    to: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/user-room
+    type: core/software.relations.consumes-from
+    description: Controller consumes the user room.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+  - id: >-
+      websocket-event-plane--socket-runtime--authenticated-room-access--room-membership-session--controller-publishes-user-room
+    from: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/room-membership-controller
+    to: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/user-room
+    type: core/software.relations.publishes-to
+    description: Controller publishes to the user room.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+  - id: >-
+      websocket-event-plane--socket-runtime--authenticated-room-access--room-membership-session--controller-consumes-collection-room
+    from: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/room-membership-controller
+    to: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/collection-room
+    type: core/software.relations.consumes-from
+    description: Controller consumes collection rooms.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+  - id: >-
+      websocket-event-plane--socket-runtime--authenticated-room-access--room-membership-session--controller-publishes-collection-room
+    from: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/room-membership-controller
+    to: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/collection-room
+    type: core/software.relations.publishes-to
+    description: Controller publishes to collection rooms.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+  - id: >-
+      websocket-event-plane--socket-runtime--authenticated-room-access--room-membership-session--controller-consumes-group-room
+    from: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/room-membership-controller
+    to: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/group-room
+    type: core/software.relations.consumes-from
+    description: Controller consumes group rooms.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+  - id: >-
+      websocket-event-plane--socket-runtime--authenticated-room-access--room-membership-session--controller-publishes-group-room
+    from: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/room-membership-controller
+    to: >-
+      websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/group-room
+    type: core/software.relations.publishes-to
+    description: Controller publishes to group rooms.
+    provenance:
+      locations:
+        - input: primary
+          path: server/services/websockets.ts
+inputs:
+  - id: primary
+    kind: git
+    repo: https://github.com/outline/outline
+    revision: af77bd6474abf4d1f731af281c2d3b34e88b2773
+    role: primary
+metadata:
+  workerBuild:
+    inputTokens: 21799489
+    cachedInputTokens: 18652160
+    outputTokens: 333162
+    approxTotalTokens: 40784811
+    mode: advanced
+    model: gpt-5.4-mini
+    builtAt: "2026-04-28T15:38:09.753Z"
+    durationMs: 2364783
+    turns: 54
+    nodes: 77
+    edges: 55
+  sourceRepository:
+    repo: https://github.com/outline/outline
+    url: https://github.com/outline/outline
+    commit: af77bd6474abf4d1f731af281c2d3b34e88b2773
+    committedAt: "2026-04-27T22:55:16-04:00"
+  name: Outline

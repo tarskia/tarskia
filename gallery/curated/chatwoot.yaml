@@ -1,0 +1,2775 @@
+version: "0.1"
+schemaRefs:
+  - schema: core/base@0.1
+    layer: 0
+  - schema: core/software@0.1
+    layer: 1
+  - schema: core/code@0.1
+    layer: 1
+  - schema: core/frontend@0.3
+    layer: 1
+  - schema: core/web-app@0.3
+    layer: 1
+  - schema: gallery/chatwoot@0.1
+    layer: 2
+  - schema: core/software@0.1
+    layer: 0
+  - schema: core/frontend@0.3
+    layer: 0
+  - schema: core/web-app@0.3
+    layer: 0
+  - schema: gallery/chatwoot@0.1
+    layer: 0
+entities:
+  - id: portal-app
+    type: gallery/chatwoot.types.portal-app
+    name: Portal App
+    description: >-
+      Top-level browser surfaces for Chatwoot's operator, customer, public portal, survey, and admin
+      experiences.
+    props:
+      runtime: browser
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/entrypoints/dashboard.js
+        - input: primary
+          path: app/javascript/entrypoints/v3app.js
+        - input: primary
+          path: app/javascript/entrypoints/widget.js
+        - input: primary
+          path: app/javascript/entrypoints/sdk.js
+        - input: primary
+          path: app/javascript/entrypoints/portal.js
+        - input: primary
+          path: app/javascript/entrypoints/survey.js
+        - input: primary
+          path: app/javascript/entrypoints/superadmin.js
+        - input: primary
+          path: app/javascript/entrypoints/superadmin_pages.js
+        - input: primary
+          path: app/javascript/dashboard/store/index.js
+        - input: primary
+          path: app/javascript/v3/views/index.js
+        - input: primary
+          path: app/controllers/dashboard_controller.rb
+        - input: primary
+          path: app/controllers/widgets_controller.rb
+        - input: primary
+          path: app/controllers/survey/responses_controller.rb
+        - input: primary
+          path: app/controllers/super_admin/application_controller.rb
+        - input: primary
+          path: app/views/widgets/show.html.erb
+        - input: primary
+          path: app/views/survey/responses/show.html.erb
+        - input: primary
+          path: app/views/public/api/v1/portals/show.html.erb
+        - input: primary
+          path: app/views/super_admin/application/index.html.erb
+    children:
+      - id: portal-app/operator-browser-client
+        type: core/web-app.types.group
+        name: Operator Browser Client
+        description: Browser-facing operator shell boundary for the dashboard client.
+        props:
+          runtime: browser
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: app/controllers/dashboard_controller.rb
+            - input: primary
+              path: app/javascript/entrypoints/dashboard.js
+            - input: primary
+              path: config/routes.rb
+        children:
+          - id: portal-app/operator-browser-client/dashboard-shell-host
+            type: core/code.types.module
+            name: Dashboard Shell Host
+            description: Rails controller boundary that serves the operator shell.
+            props:
+              language: ruby
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/controllers/dashboard_controller.rb
+                - input: primary
+                  path: config/routes.rb
+          - id: portal-app/operator-browser-client/dashboard-shell-ui
+            type: core/frontend.types.frontend
+            name: Dashboard Shell UI
+            description: Browser entrypoint for the operator client.
+            props:
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: app/javascript/entrypoints/dashboard.js
+      - id: portal-app/operator-portal-routing
+        type: core/code.types.module
+        name: Operator Portal Routing
+        description: Routes and serves the operator shell.
+        props:
+          language: ruby
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: app/controllers/dashboard_controller.rb
+            - input: primary
+              path: config/routes.rb
+      - id: portal-app/operator-portal-frontend
+        type: core/code.types.module
+        name: Operator Portal Frontend
+        description: Dashboard and v3 browser shell.
+        props:
+          language: javascript
+          runtime: browser
+        provenance:
+          locations:
+            - input: primary
+              path: app/javascript/entrypoints/dashboard.js
+            - input: primary
+              path: app/javascript/entrypoints/v3app.js
+            - input: primary
+              path: app/javascript/dashboard/store/index.js
+            - input: primary
+              path: app/javascript/v3/views/index.js
+      - id: portal-app/embedded-widget-sdk
+        type: core/web-app.types.group
+        name: Embedded Widget and SDK
+        description: Embeddable widget host, browser runtime, and public SDK surface.
+        props:
+          runtime: browser
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: app/javascript/entrypoints/widget.js
+            - input: primary
+              path: app/javascript/entrypoints/sdk.js
+            - input: primary
+              path: app/controllers/widgets_controller.rb
+            - input: primary
+              path: app/views/widgets/show.html.erb
+        children:
+          - id: portal-app/embedded-widget-sdk/widget-host-shell
+            type: core/code.types.module
+            name: Widget Host Shell
+            description: Rails host page and widget controller.
+            props:
+              language: ruby
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/controllers/widgets_controller.rb
+                - input: primary
+                  path: app/views/widgets/show.html.erb
+          - id: portal-app/embedded-widget-sdk/widget-runtime
+            type: core/frontend.types.frontend
+            name: Widget Runtime
+            description: Widget bootstrap, UI, and state runtime.
+            props:
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: app/javascript/entrypoints/widget.js
+                - input: primary
+                  path: app/javascript/widget/App.vue
+                - input: primary
+                  path: app/javascript/widget/store/index.js
+            children:
+              - id: portal-app/embedded-widget-sdk/widget-runtime/widget-entrypoint
+                type: core/code.types.module
+                name: Widget Entrypoint
+                description: Browser bootstrap and connector wiring.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/javascript/entrypoints/widget.js
+              - id: portal-app/embedded-widget-sdk/widget-runtime/widget-ui
+                type: core/web-app.types.group
+                name: Widget UI
+                description: Widget UI shell and its state store.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/javascript/widget/App.vue
+                    - input: primary
+                      path: app/javascript/widget/store/index.js
+                children:
+                  - id: portal-app/embedded-widget-sdk/widget-runtime/widget-ui/widget-shell
+                    type: core/frontend.types.frontend
+                    name: Widget Shell
+                    description: Widget shell runtime module.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/javascript/widget/App.vue
+                    children:
+                      - id: >-
+                          portal-app/embedded-widget-sdk/widget-runtime/widget-ui/widget-shell/widget-shell-module
+                        type: core/code.types.module
+                        name: Widget Shell Module
+                        description: Vue runtime module for the widget shell.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: app/javascript/widget/App.vue
+                  - id: portal-app/embedded-widget-sdk/widget-runtime/widget-ui/widget-store
+                    type: core/web-app.types.cache-space
+                    name: Widget Store
+                    description: Widget state space.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/javascript/widget/store/index.js
+          - id: portal-app/embedded-widget-sdk/sdk-surface
+            type: core/code.types.module
+            name: SDK Surface
+            description: Embeddable JavaScript SDK entrypoint.
+            props:
+              language: javascript
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: app/javascript/entrypoints/sdk.js
+                - input: primary
+                  path: app/javascript/sdk/IFrameHelper.js
+                - input: primary
+                  path: app/javascript/sdk/sdk.js
+      - id: portal-app/public-help-center-portal
+        type: core/web-app.types.group
+        name: Public Help-Center Portal
+        description: Public help-center portal shell, browser runtime, and article search client.
+        props:
+          runtime: browser
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: app/javascript/entrypoints/portal.js
+            - input: primary
+              path: app/javascript/portal/api/article.js
+            - input: primary
+              path: app/javascript/portal/components/PublicArticleSearch.vue
+            - input: primary
+              path: app/controllers/dashboard_controller.rb
+        children:
+          - id: portal-app/public-help-center-portal/portal-host-shell
+            type: core/code.types.module
+            name: Portal Host Shell
+            description: Server-rendered help-center page and portal layout.
+            props:
+              language: ruby
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/controllers/dashboard_controller.rb
+                - input: primary
+                  path: app/views/public/api/v1/portals/show.html.erb
+          - id: portal-app/public-help-center-portal/portal-runtime
+            type: core/frontend.types.frontend
+            name: Portal Runtime
+            description: Bootstrap and browser runtime for the public help-center portal.
+            props:
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: app/javascript/entrypoints/portal.js
+                - input: primary
+                  path: app/javascript/portal/components/PublicArticleSearch.vue
+                - input: primary
+                  path: app/javascript/portal/components/SearchSuggestions.vue
+                - input: primary
+                  path: app/javascript/portal/portalHelpers.js
+            children:
+              - id: portal-app/public-help-center-portal/portal-runtime/portal-bootstrap
+                type: core/code.types.module
+                name: Portal Bootstrap
+                description: Entry point and shell initialization.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/javascript/entrypoints/portal.js
+                    - input: primary
+                      path: app/javascript/portal/portalHelpers.js
+              - id: portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime
+                type: core/web-app.types.group
+                name: Portal Browser Runtime
+                description: Portal browser runtime for public article search.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/javascript/portal/components/PublicArticleSearch.vue
+                    - input: primary
+                      path: app/javascript/portal/components/SearchSuggestions.vue
+                    - input: primary
+                      path: app/javascript/portal/application.scss
+                children:
+                  - id: >-
+                      portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/portal-search-shell
+                    type: core/frontend.types.frontend
+                    name: Portal Search Shell
+                    description: Portal browser search shell.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/javascript/portal/components/PublicArticleSearch.vue
+                        - input: primary
+                          path: app/javascript/portal/application.scss
+                    children:
+                      - id: >-
+                          portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/portal-search-shell/public-article-search
+                        type: core/code.types.module
+                        name: Public Article Search
+                        description: Browser module for public article search.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: app/javascript/portal/components/PublicArticleSearch.vue
+                            - input: primary
+                              path: app/javascript/portal/application.scss
+                  - id: >-
+                      portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/search-suggestions
+                    type: core/web-app.types.group
+                    name: Search Suggestions
+                    description: Portal search suggestions.
+                    props:
+                      mode: mixed
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/javascript/portal/components/SearchSuggestions.vue
+                    children:
+                      - id: >-
+                          portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/search-suggestions/search-suggestions-module
+                        type: core/code.types.module
+                        name: Search Suggestions Module
+                        description: Search suggestions module.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: app/javascript/portal/components/SearchSuggestions.vue
+                      - id: >-
+                          portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/search-suggestions/suggestion-item
+                        type: core/code.types.module
+                        name: Suggestion Item
+                        description: Suggestion row component.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: app/javascript/portal/components/SearchSuggestions.vue
+          - id: portal-app/public-help-center-portal/portal-articles-api
+            type: core/code.types.module
+            name: Portal Articles API
+            description: Browser-side article lookup client.
+            props:
+              language: javascript
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: app/javascript/portal/api/article.js
+      - id: portal-app/csat-survey-frontend
+        type: core/web-app.types.group
+        name: CSAT Survey Frontend
+        description: Public survey shell, browser runtime, and survey API client.
+        props:
+          runtime: browser
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: app/javascript/entrypoints/survey.js
+            - input: primary
+              path: app/controllers/survey/responses_controller.rb
+            - input: primary
+              path: app/views/survey/responses/show.html.erb
+            - input: primary
+              path: app/javascript/survey/store/index.js
+        children:
+          - id: portal-app/csat-survey-frontend/survey-host-shell
+            type: core/code.types.module
+            name: Survey Host Shell
+            description: Server-rendered survey response page.
+            props:
+              language: ruby
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/controllers/survey/responses_controller.rb
+                - input: primary
+                  path: app/views/survey/responses/show.html.erb
+          - id: portal-app/csat-survey-frontend/survey-runtime
+            type: core/frontend.types.frontend
+            name: Survey Runtime
+            description: Survey bootstrap, browser UI, and client state runtime.
+            props:
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: app/javascript/entrypoints/survey.js
+                - input: primary
+                  path: app/javascript/survey/App.vue
+                - input: primary
+                  path: app/javascript/survey/store/index.js
+            children:
+              - id: portal-app/csat-survey-frontend/survey-runtime/survey-bootstrap
+                type: core/code.types.module
+                name: Survey Bootstrap
+                description: Entry point and app mount.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/javascript/entrypoints/survey.js
+              - id: portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime
+                type: core/web-app.types.group
+                name: Survey Browser Runtime
+                description: Survey browser runtime and client state.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/javascript/survey/App.vue
+                    - input: primary
+                      path: app/javascript/survey/store/index.js
+                children:
+                  - id: >-
+                      portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-shell
+                    type: core/frontend.types.frontend
+                    name: Survey Shell
+                    description: Survey shell runtime module.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/javascript/survey/App.vue
+                    children:
+                      - id: >-
+                          portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-shell/survey-shell-module
+                        type: core/code.types.module
+                        name: Survey Shell Module
+                        description: Vue runtime module for the survey shell.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: app/javascript/survey/App.vue
+                      - id: >-
+                          portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-shell/survey-api-client
+                        type: core/code.types.module
+                        name: Survey API Client
+                        description: Browser-side survey API helper.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: app/javascript/survey/App.vue
+                            - input: primary
+                              path: app/javascript/survey/helpers/axios.js
+                  - id: >-
+                      portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-store
+                    type: core/web-app.types.cache-space
+                    name: Survey Store
+                    description: Survey state space.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/javascript/survey/store/index.js
+          - id: portal-app/csat-survey-frontend/survey-api
+            type: core/code.types.module
+            name: Survey API Client
+            description: Browser-side survey request helper.
+            props:
+              language: javascript
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: app/javascript/survey/helpers/axios.js
+      - id: portal-app/superadmin-console
+        type: core/web-app.types.group
+        name: Super-Admin Console
+        description: Authenticated super-admin shell and Vue admin pages.
+        props:
+          runtime: browser
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: app/controllers/super_admin/application_controller.rb
+            - input: primary
+              path: app/controllers/super_admin/dashboard_controller.rb
+            - input: primary
+              path: app/javascript/entrypoints/superadmin_pages.js
+            - input: primary
+              path: app/views/super_admin/application/index.html.erb
+        children:
+          - id: portal-app/superadmin-console/superadmin-host-shell
+            type: core/code.types.module
+            name: Super-Admin Host Shell
+            description: Authenticated admin shell and overview controller.
+            props:
+              language: ruby
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/controllers/super_admin/application_controller.rb
+                - input: primary
+                  path: app/controllers/super_admin/dashboard_controller.rb
+                - input: primary
+                  path: app/views/super_admin/application/index.html.erb
+          - id: portal-app/superadmin-console/superadmin-pages-runtime
+            type: core/frontend.types.frontend
+            name: Super-Admin Pages Runtime
+            description: Vue bootstrap for the super-admin pages.
+            props:
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: app/javascript/entrypoints/superadmin_pages.js
+            children:
+              - id: portal-app/superadmin-console/superadmin-pages-runtime/superadmin-pages-entrypoint
+                type: core/code.types.module
+                name: Super-Admin Pages Entrypoint
+                description: Vue page bootstrap.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/javascript/entrypoints/superadmin_pages.js
+  - id: rails-control-plane
+    type: gallery/chatwoot.types.control-plane
+    name: Rails Control Plane
+    description: >-
+      Main Rails runtime for APIs, browser shell delivery, realtime updates, provider integrations,
+      and enterprise behavior.
+    props:
+      deployability: deployable
+      framework: rails
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: config/routes.rb
+        - input: primary
+          path: app/controllers/api/base_controller.rb
+        - input: primary
+          path: app/controllers/api/v1/accounts_controller.rb
+        - input: primary
+          path: app/controllers/api/v1/accounts/conversations/messages_controller.rb
+        - input: primary
+          path: app/channels/application_cable/connection.rb
+        - input: primary
+          path: app/channels/room_channel.rb
+        - input: primary
+          path: config/initializers/actioncable.rb
+        - input: primary
+          path: lib/online_status_tracker.rb
+        - input: primary
+          path: app/controllers/webhooks/whatsapp_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/instagram_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/tiktok_controller.rb
+        - input: primary
+          path: app/controllers/twilio/callback_controller.rb
+        - input: primary
+          path: app/controllers/google/callbacks_controller.rb
+        - input: primary
+          path: app/controllers/linear/callbacks_controller.rb
+        - input: primary
+          path: app/services/whatsapp/send_on_whatsapp_service.rb
+        - input: primary
+          path: app/services/whatsapp/webhook_setup_service.rb
+        - input: primary
+          path: app/services/twilio/webhook_setup_service.rb
+        - input: primary
+          path: app/services/instagram/send_on_instagram_service.rb
+        - input: primary
+          path: app/services/tiktok/send_on_tiktok_service.rb
+        - input: primary
+          path: app/services/telegram/send_on_telegram_service.rb
+        - input: primary
+          path: config/initializers/01_inject_enterprise_edition_module.rb
+        - input: primary
+          path: enterprise/lib/enterprise.rb
+        - input: primary
+          path: enterprise/lib/enterprise/captain/reply_suggestion_service.rb
+        - input: primary
+          path: enterprise/app/services/twilio/voice_webhook_setup_service.rb
+        - input: primary
+          path: enterprise/app/services/voice/status_update_service.rb
+    children:
+      - id: rails-control-plane/browser-shell
+        type: core/web-app.types.group
+        name: Browser Shell
+        description: Rails-hosted dashboard shell with main SPA and v3 browser runtime.
+        props:
+          runtime: browser
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: app/controllers/dashboard_controller.rb
+            - input: primary
+              path: app/javascript/entrypoints/dashboard.js
+            - input: primary
+              path: app/javascript/entrypoints/v3app.js
+            - input: primary
+              path: config/routes.rb
+        children:
+          - id: rails-control-plane/browser-shell/dashboard-shell-host
+            type: core/code.types.module
+            name: Dashboard Shell Host
+            description: Rails front door for dashboard and v3 packs.
+            props:
+              language: ruby
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/controllers/dashboard_controller.rb
+                - input: primary
+                  path: config/routes.rb
+          - id: rails-control-plane/browser-shell/dashboard-spa-runtime
+            type: core/frontend.types.frontend
+            name: Dashboard SPA Runtime
+            description: Main dashboard browser application.
+            props:
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: app/javascript/entrypoints/dashboard.js
+                - input: primary
+                  path: app/javascript/dashboard/store/index.js
+          - id: rails-control-plane/browser-shell/v3-shell-runtime
+            type: core/frontend.types.frontend
+            name: V3 Shell Runtime
+            description: V3 auth and login browser shell.
+            props:
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: app/javascript/entrypoints/v3app.js
+                - input: primary
+                  path: app/javascript/v3/views/index.js
+      - id: rails-control-plane/api-surface
+        type: core/web-app.types.group
+        name: API Surface
+        description: API authentication, account lifecycle, and conversation message endpoints.
+        props:
+          runtime: server
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: app/controllers/api/base_controller.rb
+            - input: primary
+              path: app/controllers/api/v1/accounts_controller.rb
+            - input: primary
+              path: app/controllers/api/v1/accounts/conversations/messages_controller.rb
+            - input: primary
+              path: app/services/messages/markdown_renderer_service.rb
+        children:
+          - id: rails-control-plane/api-surface/api-auth-gate
+            type: core/code.types.module
+            name: API Auth Gate
+            description: Shared API authentication split and authorization helpers.
+            props:
+              language: ruby
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/controllers/api/base_controller.rb
+          - id: rails-control-plane/api-surface/accounts-lifecycle-api
+            type: core/code.types.module
+            name: Accounts Lifecycle API
+            description: Account signup and lifecycle endpoints.
+            props:
+              language: ruby
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/controllers/api/v1/accounts_controller.rb
+          - id: rails-control-plane/api-surface/conversation-messages-api
+            type: core/code.types.module
+            name: Conversation Messages API
+            description: Message actions, translations, and rendering helpers.
+            props:
+              language: ruby
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/controllers/api/v1/accounts/conversations/messages_controller.rb
+                - input: primary
+                  path: app/services/messages/markdown_renderer_service.rb
+      - id: rails-control-plane/realtime-plane
+        type: core/web-app.types.group
+        name: Realtime Plane
+        description: ActionCable live updates, presence tracking, and completion notifications.
+        props:
+          runtime: server
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: app/channels/application_cable/connection.rb
+            - input: primary
+              path: app/channels/room_channel.rb
+            - input: primary
+              path: config/initializers/actioncable.rb
+            - input: primary
+              path: lib/online_status_tracker.rb
+        children:
+          - id: rails-control-plane/realtime-plane/room-channel
+            type: core/code.types.module
+            name: Room Channel
+            description: ActionCable connection and live broadcast runtime.
+            props:
+              language: ruby
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/channels/application_cable/connection.rb
+                - input: primary
+                  path: app/channels/room_channel.rb
+                - input: primary
+                  path: config/initializers/actioncable.rb
+                - input: primary
+                  path: lib/online_status_tracker.rb
+          - id: rails-control-plane/realtime-plane/branding-enrichment-job
+            type: core/web-app.types.scheduled-job
+            name: Branding Enrichment Job
+            description: Background enrichment job that notifies the UI.
+            provenance:
+              locations:
+                - input: primary
+                  path: app/jobs/account/branding_enrichment_job.rb
+      - id: rails-control-plane/integration-gateway
+        type: core/web-app.types.group
+        name: Integration Gateway
+        description: Inbound provider callbacks and outbound provider integrations.
+        props:
+          runtime: server
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: app/controllers/webhooks/whatsapp_controller.rb
+            - input: primary
+              path: app/controllers/twilio/callback_controller.rb
+            - input: primary
+              path: config/integration/apps.yml
+            - input: primary
+              path: app/services/whatsapp/incoming_message_service.rb
+            - input: primary
+              path: app/services/twilio/webhook_setup_service.rb
+        children:
+          - id: rails-control-plane/integration-gateway/provider-ingress
+            type: core/web-app.types.group
+            name: Provider Ingress
+            description: Provider callback and webhook ingress into Rails.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: app/controllers/webhooks/whatsapp_controller.rb
+                - input: primary
+                  path: app/controllers/twilio/callback_controller.rb
+                - input: primary
+                  path: app/services/whatsapp/incoming_message_service.rb
+            children:
+              - id: rails-control-plane/integration-gateway/provider-ingress/callback-controllers
+                type: core/web-app.types.group
+                name: Callback Controllers
+                description: Provider callback and OAuth endpoints.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/controllers/twilio/callback_controller.rb
+                    - input: primary
+                      path: app/controllers/google/callbacks_controller.rb
+                children:
+                  - id: >-
+                      rails-control-plane/integration-gateway/provider-ingress/callback-controllers/twilio-callback-controller
+                    type: core/web-app.types.api-endpoint
+                    name: Twilio Callback Controller
+                    description: Twilio callback endpoint.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/controllers/twilio/callback_controller.rb
+                  - id: >-
+                      rails-control-plane/integration-gateway/provider-ingress/callback-controllers/twilio-delivery-status-controller
+                    type: core/web-app.types.api-endpoint
+                    name: Twilio Delivery Status Controller
+                    description: Twilio delivery-status endpoint.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/controllers/twilio/delivery_status_controller.rb
+                  - id: >-
+                      rails-control-plane/integration-gateway/provider-ingress/callback-controllers/google-callbacks-controller
+                    type: core/web-app.types.api-endpoint
+                    name: Google Callbacks Controller
+                    description: Google OAuth callback endpoint.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/controllers/google/callbacks_controller.rb
+                  - id: >-
+                      rails-control-plane/integration-gateway/provider-ingress/callback-controllers/linear-callbacks-controller
+                    type: core/web-app.types.api-endpoint
+                    name: Linear Callbacks Controller
+                    description: Linear OAuth callback endpoint.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/controllers/linear/callbacks_controller.rb
+              - id: rails-control-plane/integration-gateway/provider-ingress/webhook-ingress
+                type: core/web-app.types.group
+                name: Webhook Ingress
+                description: Provider webhook ingress for social channels.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/controllers/webhooks/whatsapp_controller.rb
+                    - input: primary
+                      path: app/controllers/webhooks/instagram_controller.rb
+                    - input: primary
+                      path: app/services/whatsapp/incoming_message_service.rb
+                children:
+                  - id: >-
+                      rails-control-plane/integration-gateway/provider-ingress/webhook-ingress/whatsapp-webhook-endpoint
+                    type: core/web-app.types.api-endpoint
+                    name: WhatsApp Webhook Endpoint
+                    description: WhatsApp webhook ingress.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/controllers/webhooks/whatsapp_controller.rb
+                  - id: >-
+                      rails-control-plane/integration-gateway/provider-ingress/webhook-ingress/instagram-webhook-endpoint
+                    type: core/web-app.types.api-endpoint
+                    name: Instagram Webhook Endpoint
+                    description: Instagram webhook ingress.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/controllers/webhooks/instagram_controller.rb
+                  - id: >-
+                      rails-control-plane/integration-gateway/provider-ingress/webhook-ingress/tiktok-webhook-endpoint
+                    type: core/web-app.types.api-endpoint
+                    name: TikTok Webhook Endpoint
+                    description: TikTok webhook ingress.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/controllers/webhooks/tiktok_controller.rb
+          - id: rails-control-plane/integration-gateway/provider-egress
+            type: core/web-app.types.group
+            name: Provider Egress
+            description: Provider sends, setup, and maintenance flows.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: app/services/whatsapp/send_on_whatsapp_service.rb
+                - input: primary
+                  path: app/services/twilio/webhook_setup_service.rb
+                - input: primary
+                  path: config/integration/apps.yml
+            children:
+              - id: rails-control-plane/integration-gateway/provider-egress/provider-send-jobs
+                type: core/web-app.types.group
+                name: Provider Send Jobs
+                description: Provider send dispatcher and concrete provider send services.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/services/whatsapp/send_on_whatsapp_service.rb
+                    - input: primary
+                      path: app/services/instagram/send_on_instagram_service.rb
+                    - input: primary
+                      path: config/integration/apps.yml
+                children:
+                  - id: >-
+                      rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/send-reply-job
+                    type: core/web-app.types.scheduled-job
+                    name: Send Reply Job
+                    description: Send reply job.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/jobs/send_reply_job.rb
+                        - input: primary
+                          path: app/controllers/api/v1/accounts/conversations/messages_controller.rb
+                        - input: primary
+                          path: app/models/message.rb
+                  - id: >-
+                      rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/whatsapp-send-service
+                    type: core/web-app.types.service
+                    name: WhatsApp Send Service
+                    description: Outbound WhatsApp send flow.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/services/whatsapp/send_on_whatsapp_service.rb
+                  - id: >-
+                      rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/instagram-send-service
+                    type: core/web-app.types.service
+                    name: Instagram Send Service
+                    description: Outbound Instagram send flow.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/services/instagram/send_on_instagram_service.rb
+                  - id: >-
+                      rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/tiktok-send-service
+                    type: core/web-app.types.service
+                    name: TikTok Send Service
+                    description: Outbound TikTok send flow.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/services/tiktok/send_on_tiktok_service.rb
+              - id: rails-control-plane/integration-gateway/provider-egress/provider-setup-jobs
+                type: core/web-app.types.group
+                name: Provider Setup Jobs
+                description: Provider webhook setup services.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/services/twilio/webhook_setup_service.rb
+                    - input: primary
+                      path: config/integration/apps.yml
+                children:
+                  - id: >-
+                      rails-control-plane/integration-gateway/provider-egress/provider-setup-jobs/twilio-webhook-setup-service
+                    type: core/web-app.types.service
+                    name: Twilio Webhook Setup Service
+                    description: Outbound Twilio webhook setup.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/services/twilio/webhook_setup_service.rb
+      - id: rails-control-plane/enterprise-overlay
+        type: core/code.types.module
+        name: Enterprise Overlay
+        description: Enterprise-specific Rails behavior and services.
+        props:
+          language: ruby
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: config/initializers/01_inject_enterprise_edition_module.rb
+            - input: primary
+              path: enterprise/lib/enterprise.rb
+            - input: primary
+              path: enterprise/app/services/twilio/voice_webhook_setup_service.rb
+            - input: primary
+              path: app/controllers/api/v1/accounts_controller.rb
+  - id: sidekiq-job-queue
+    type: core/web-app.types.queue
+    name: Sidekiq Job Queue
+    description: Sidekiq queues for low-priority and scheduled background work.
+    provenance:
+      locations:
+        - input: primary
+          path: config/sidekiq.yml
+        - input: primary
+          path: config/schedule.yml
+        - input: primary
+          path: app/jobs/application_job.rb
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+        - input: primary
+          path: app/jobs/account/branding_enrichment_job.rb
+        - input: primary
+          path: app/jobs/migration/add_search_indexes_job.rb
+    children:
+      - id: sidekiq-job-queue/low
+        type: core/web-app.types.topic
+        name: Low Queue
+        description: Low-priority background work lane.
+        provenance:
+          locations:
+            - input: primary
+              path: app/jobs/account/branding_enrichment_job.rb
+            - input: primary
+              path: app/jobs/webhooks/whatsapp_events_job.rb
+            - input: primary
+              path: config/sidekiq.yml
+      - id: sidekiq-job-queue/scheduled-jobs
+        type: core/web-app.types.topic
+        name: Scheduled Jobs Queue
+        description: Cron-triggered maintenance lane.
+        provenance:
+          locations:
+            - input: primary
+              path: app/jobs/migration/add_search_indexes_job.rb
+            - input: primary
+              path: config/schedule.yml
+            - input: primary
+              path: config/sidekiq.yml
+  - id: sidekiq-worker-plane
+    type: gallery/chatwoot.types.worker-service
+    name: Sidekiq Worker Plane
+    description: Sidekiq worker runtime for delivery jobs, enrichment work, and scheduled maintenance.
+    props:
+      deployability: deployable
+      framework: sidekiq
+      runtime: worker
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/application_job.rb
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+        - input: primary
+          path: app/jobs/account/branding_enrichment_job.rb
+        - input: primary
+          path: app/jobs/migration/add_search_indexes_job.rb
+        - input: primary
+          path: app/jobs/send_on_slack_job.rb
+        - input: primary
+          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+        - input: primary
+          path: app/jobs/webhooks/facebook_delivery_job.rb
+        - input: primary
+          path: app/jobs/webhooks/instagram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/telegram_events_job.rb
+        - input: primary
+          path: config/sidekiq.yml
+        - input: primary
+          path: config/schedule.yml
+    children:
+      - id: sidekiq-worker-plane/delivery-jobs
+        type: core/web-app.types.group
+        name: Delivery Jobs
+        description: Outbound delivery work and provider callback processing.
+        props:
+          runtime: worker
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: app/jobs/webhooks/whatsapp_events_job.rb
+            - input: primary
+              path: app/jobs/webhooks/instagram_events_job.rb
+            - input: primary
+              path: app/jobs/send_on_slack_job.rb
+            - input: primary
+              path: config/sidekiq.yml
+        children:
+          - id: sidekiq-worker-plane/delivery-jobs/delivery-send-jobs
+            type: core/web-app.types.group
+            name: Delivery Send Jobs
+            description: Sidekiq delivery runtime and outbound Slack job.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: app/jobs/send_on_slack_job.rb
+                - input: primary
+                  path: config/sidekiq.yml
+            children:
+              - id: sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/sidekiq-runtime
+                type: core/web-app.types.group
+                name: Sidekiq Runtime
+                description: Sidekiq runtime for Slack delivery jobs.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: config/sidekiq.yml
+                children:
+                  - id: >-
+                      sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/sidekiq-runtime/sidekiq-worker
+                    type: core/web-app.types.scheduler
+                    name: Sidekiq Worker
+                    description: Worker runtime config.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: config/sidekiq.yml
+                  - id: >-
+                      sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/sidekiq-runtime/send-on-slack-job
+                    type: core/web-app.types.scheduled-job
+                    name: Send on Slack Job
+                    description: Send on Slack job.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/jobs/send_on_slack_job.rb
+                  - id: >-
+                      sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/sidekiq-runtime/slack-api
+                    type: core/web-app.types.external-api
+                    name: Slack API
+                    description: Outbound Slack provider boundary.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/jobs/send_on_slack_job.rb
+              - id: sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/send-on-slack-job
+                type: core/web-app.types.scheduled-job
+                name: Send on Slack Job
+                description: Outbound Slack delivery job.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/jobs/send_on_slack_job.rb
+          - id: sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs
+            type: core/web-app.types.group
+            name: Delivery Callback Jobs
+            description: Sidekiq runtime plus provider callback handling.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: app/jobs/webhooks/whatsapp_events_job.rb
+                - input: primary
+                  path: app/jobs/webhooks/instagram_events_job.rb
+                - input: primary
+                  path: app/jobs/webhooks/telegram_events_job.rb
+                - input: primary
+                  path: app/jobs/webhooks/twilio_delivery_status_job.rb
+                - input: primary
+                  path: app/jobs/webhooks/facebook_delivery_job.rb
+                - input: primary
+                  path: config/sidekiq.yml
+            children:
+              - id: sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/sidekiq-runtime
+                type: core/web-app.types.group
+                name: Sidekiq Runtime
+                description: Sidekiq runtime for callback jobs.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: config/sidekiq.yml
+                children:
+                  - id: >-
+                      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/sidekiq-runtime/sidekiq-worker
+                    type: core/web-app.types.scheduler
+                    name: Sidekiq Worker
+                    description: Worker runtime config.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: config/sidekiq.yml
+              - id: sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs
+                type: core/web-app.types.group
+                name: Provider Callback Jobs
+                description: Provider callback job set and provider API boundary.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/jobs/webhooks/facebook_delivery_job.rb
+                    - input: primary
+                      path: app/jobs/webhooks/instagram_events_job.rb
+                    - input: primary
+                      path: app/jobs/webhooks/telegram_events_job.rb
+                    - input: primary
+                      path: app/jobs/webhooks/twilio_delivery_status_job.rb
+                    - input: primary
+                      path: app/jobs/webhooks/whatsapp_events_job.rb
+                children:
+                  - id: >-
+                      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set
+                    type: core/web-app.types.group
+                    name: Callback Job Set
+                    description: Provider callback job set.
+                    props:
+                      mode: mixed
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/jobs/webhooks/facebook_delivery_job.rb
+                        - input: primary
+                          path: app/jobs/webhooks/instagram_events_job.rb
+                        - input: primary
+                          path: app/jobs/webhooks/telegram_events_job.rb
+                        - input: primary
+                          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+                        - input: primary
+                          path: app/jobs/webhooks/whatsapp_events_job.rb
+                    children:
+                      - id: >-
+                          sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/whatsapp-events-job
+                        type: core/web-app.types.scheduled-job
+                        name: WhatsApp Events Job
+                        description: Callback job for WhatsApp events.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: app/jobs/webhooks/whatsapp_events_job.rb
+                      - id: >-
+                          sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/facebook-delivery-job
+                        type: core/web-app.types.scheduled-job
+                        name: Facebook Delivery Job
+                        description: Callback job for Facebook delivery events.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: app/jobs/webhooks/facebook_delivery_job.rb
+                      - id: >-
+                          sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs
+                        type: core/web-app.types.group
+                        name: Other Callback Jobs
+                        description: Remaining callback jobs.
+                        props:
+                          mode: mixed
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: app/jobs/webhooks/instagram_events_job.rb
+                            - input: primary
+                              path: app/jobs/webhooks/telegram_events_job.rb
+                            - input: primary
+                              path: app/jobs/webhooks/twilio_delivery_status_job.rb
+                        children:
+                          - id: >-
+                              sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs/instagram-events-job
+                            type: core/web-app.types.scheduled-job
+                            name: Instagram Events Job
+                            description: Callback job for Instagram events.
+                            provenance:
+                              locations:
+                                - input: primary
+                                  path: app/jobs/webhooks/instagram_events_job.rb
+                          - id: >-
+                              sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs/telegram-events-job
+                            type: core/web-app.types.scheduled-job
+                            name: Telegram Events Job
+                            description: Callback job for Telegram events.
+                            provenance:
+                              locations:
+                                - input: primary
+                                  path: app/jobs/webhooks/telegram_events_job.rb
+                          - id: >-
+                              sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs/twilio-delivery-status-job
+                            type: core/web-app.types.scheduled-job
+                            name: Twilio Delivery Status Job
+                            description: Callback job for Twilio delivery status.
+                            provenance:
+                              locations:
+                                - input: primary
+                                  path: app/jobs/webhooks/twilio_delivery_status_job.rb
+                  - id: >-
+                      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/channel-providers
+                    type: core/web-app.types.external-api
+                    name: Channel Providers
+                    description: Outbound provider API boundary.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/jobs/webhooks/facebook_delivery_job.rb
+                        - input: primary
+                          path: app/jobs/webhooks/instagram_events_job.rb
+                        - input: primary
+                          path: app/jobs/webhooks/telegram_events_job.rb
+                        - input: primary
+                          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+                        - input: primary
+                          path: app/jobs/webhooks/whatsapp_events_job.rb
+      - id: sidekiq-worker-plane/account-enrichment-job
+        type: core/code.types.module
+        name: Account Enrichment Job
+        description: Background account enrichment and completion handling.
+        props:
+          language: ruby
+          runtime: worker
+        provenance:
+          locations:
+            - input: primary
+              path: app/jobs/account/branding_enrichment_job.rb
+            - input: primary
+              path: config/sidekiq.yml
+      - id: sidekiq-worker-plane/search-index-maintenance
+        type: core/web-app.types.scheduled-job
+        name: Search Index Maintenance Job
+        description: Scheduled maintenance lane for index backfills.
+        provenance:
+          locations:
+            - input: primary
+              path: app/jobs/migration/add_search_indexes_job.rb
+            - input: primary
+              path: config/schedule.yml
+            - input: primary
+              path: config/sidekiq.yml
+      - id: sidekiq-worker-plane/sidekiq-scheduler
+        type: core/web-app.types.scheduler
+        name: Sidekiq Scheduler
+        description: Cron-driven scheduler for recurring worker jobs.
+        provenance:
+          locations:
+            - input: primary
+              path: config/schedule.yml
+  - id: persistence-state-plane
+    type: core/web-app.types.datastore
+    name: Persistence, Cache, and Search
+    description: Core persistence plane spanning PostgreSQL, Redis, object storage, and search.
+    provenance:
+      locations:
+        - input: primary
+          path: config/database.yml
+        - input: primary
+          path: config/storage.yml
+        - input: primary
+          path: config/initializers/01_redis.rb
+        - input: primary
+          path: lib/redis/config.rb
+        - input: primary
+          path: lib/redis/alfred.rb
+        - input: primary
+          path: config/initializers/searchkick.rb
+    children:
+      - id: persistence-state-plane/primary-database
+        type: core/web-app.types.relational-db
+        name: Primary PostgreSQL
+        description: Main relational store for persisted application state.
+        props:
+          implementation: postgres
+        provenance:
+          locations:
+            - input: primary
+              path: config/database.yml
+      - id: persistence-state-plane/redis-plane
+        type: core/web-app.types.cache
+        name: Redis Cache
+        description: Redis-backed coordination and presence store.
+        provenance:
+          locations:
+            - input: primary
+              path: config/initializers/01_redis.rb
+            - input: primary
+              path: lib/redis/config.rb
+            - input: primary
+              path: lib/redis/alfred.rb
+      - id: persistence-state-plane/object-storage
+        type: core/web-app.types.object-store
+        name: Object Storage
+        description: Blob storage backend for attachments and uploaded assets.
+        provenance:
+          locations:
+            - input: primary
+              path: config/storage.yml
+      - id: persistence-state-plane/search-index-store
+        type: core/web-app.types.datastore
+        name: Search Index Store
+        description: OpenSearch-backed search datastore.
+        provenance:
+          locations:
+            - input: primary
+              path: config/initializers/searchkick.rb
+  - id: channel-providers
+    type: core/web-app.types.external-api
+    name: Channel Integrations and Webhooks
+    description: External messaging, identity, and webhook provider APIs.
+    provenance:
+      locations:
+        - input: primary
+          path: config/integration/apps.yml
+        - input: primary
+          path: app/controllers/webhooks/whatsapp_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/instagram_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/tiktok_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/sms_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/line_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/shopify_controller.rb
+        - input: primary
+          path: app/controllers/instagram/callbacks_controller.rb
+        - input: primary
+          path: app/controllers/tiktok/callbacks_controller.rb
+        - input: primary
+          path: app/controllers/twilio/callback_controller.rb
+        - input: primary
+          path: app/controllers/twilio/delivery_status_controller.rb
+        - input: primary
+          path: app/controllers/google/callbacks_controller.rb
+        - input: primary
+          path: app/controllers/linear/callbacks_controller.rb
+        - input: primary
+          path: app/services/whatsapp/incoming_message_service.rb
+        - input: primary
+          path: app/services/twilio/webhook_setup_service.rb
+relations:
+  - id: >-
+      rel-portal-app-calls-rails-control-plane--core--software-relations-calls--portal-app--operator-portal-frontend--to--rails-control-plane
+    from: portal-app/operator-portal-frontend
+    to: rails-control-plane
+    type: core/software.relations.calls
+    description: Browser surfaces call the Rails APIs and support endpoints.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/entrypoints/dashboard.js
+        - input: primary
+          path: app/javascript/entrypoints/widget.js
+        - input: primary
+          path: app/javascript/entrypoints/portal.js
+        - input: primary
+          path: app/javascript/entrypoints/survey.js
+        - input: primary
+          path: app/javascript/entrypoints/superadmin_pages.js
+        - input: primary
+          path: app/javascript/widget/api/endPoints.js
+        - input: primary
+          path: app/javascript/portal/api/article.js
+        - input: primary
+          path: app/javascript/survey/helpers/axios.js
+        - input: primary
+          path: app/controllers/api/base_controller.rb
+  - id: >-
+      rel-portal-app-calls-rails-control-plane--core--software-relations-calls--portal-app--embedded-widget-sdk--to--rails-control-plane
+    from: portal-app/embedded-widget-sdk/widget-runtime/widget-ui/widget-shell/widget-shell-module
+    to: rails-control-plane
+    type: core/software.relations.calls
+    description: Browser surfaces call the Rails APIs and support endpoints.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/entrypoints/dashboard.js
+        - input: primary
+          path: app/javascript/entrypoints/widget.js
+        - input: primary
+          path: app/javascript/entrypoints/portal.js
+        - input: primary
+          path: app/javascript/entrypoints/survey.js
+        - input: primary
+          path: app/javascript/entrypoints/superadmin_pages.js
+        - input: primary
+          path: app/javascript/widget/api/endPoints.js
+        - input: primary
+          path: app/javascript/portal/api/article.js
+        - input: primary
+          path: app/javascript/survey/helpers/axios.js
+        - input: primary
+          path: app/controllers/api/base_controller.rb
+  - id: >-
+      rel-portal-app-calls-rails-control-plane--core--software-relations-calls--portal-app--public-help-center-portal--to--rails-control-plane
+    from: portal-app/public-help-center-portal/portal-articles-api
+    to: rails-control-plane
+    type: core/software.relations.calls
+    description: Browser surfaces call the Rails APIs and support endpoints.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/entrypoints/dashboard.js
+        - input: primary
+          path: app/javascript/entrypoints/widget.js
+        - input: primary
+          path: app/javascript/entrypoints/portal.js
+        - input: primary
+          path: app/javascript/entrypoints/survey.js
+        - input: primary
+          path: app/javascript/entrypoints/superadmin_pages.js
+        - input: primary
+          path: app/javascript/widget/api/endPoints.js
+        - input: primary
+          path: app/javascript/portal/api/article.js
+        - input: primary
+          path: app/javascript/survey/helpers/axios.js
+        - input: primary
+          path: app/controllers/api/base_controller.rb
+  - id: >-
+      rel-portal-app-calls-rails-control-plane--core--software-relations-calls--portal-app--csat-survey-frontend--to--rails-control-plane
+    from: portal-app/csat-survey-frontend/survey-api
+    to: rails-control-plane
+    type: core/software.relations.calls
+    description: Browser surfaces call the Rails APIs and support endpoints.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/entrypoints/dashboard.js
+        - input: primary
+          path: app/javascript/entrypoints/widget.js
+        - input: primary
+          path: app/javascript/entrypoints/portal.js
+        - input: primary
+          path: app/javascript/entrypoints/survey.js
+        - input: primary
+          path: app/javascript/entrypoints/superadmin_pages.js
+        - input: primary
+          path: app/javascript/widget/api/endPoints.js
+        - input: primary
+          path: app/javascript/portal/api/article.js
+        - input: primary
+          path: app/javascript/survey/helpers/axios.js
+        - input: primary
+          path: app/controllers/api/base_controller.rb
+  - id: >-
+      rel-portal-app-calls-rails-control-plane--core--software-relations-calls--portal-app--superadmin-console--to--rails-control-plane
+    from: portal-app/superadmin-console/superadmin-pages-runtime/superadmin-pages-entrypoint
+    to: rails-control-plane
+    type: core/software.relations.calls
+    description: Browser surfaces call the Rails APIs and support endpoints.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/entrypoints/dashboard.js
+        - input: primary
+          path: app/javascript/entrypoints/widget.js
+        - input: primary
+          path: app/javascript/entrypoints/portal.js
+        - input: primary
+          path: app/javascript/entrypoints/survey.js
+        - input: primary
+          path: app/javascript/entrypoints/superadmin_pages.js
+        - input: primary
+          path: app/javascript/widget/api/endPoints.js
+        - input: primary
+          path: app/javascript/portal/api/article.js
+        - input: primary
+          path: app/javascript/survey/helpers/axios.js
+        - input: primary
+          path: app/controllers/api/base_controller.rb
+  - id: >-
+      rel-rails-control-plane-publishes-to-sidekiq-job-queue--core--software-relations-publishes-to--rails-control-plane--api-surface--to--sidekiq-job-queue--low
+    from: rails-control-plane/api-surface/accounts-lifecycle-api
+    to: sidekiq-job-queue/low
+    type: core/software.relations.publishes-to
+    description: Rails enqueues background work onto Sidekiq.
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/api/v1/accounts_controller.rb
+        - input: primary
+          path: app/jobs/application_job.rb
+        - input: primary
+          path: app/jobs/account/branding_enrichment_job.rb
+        - input: primary
+          path: config/sidekiq.yml
+        - input: primary
+          path: config/schedule.yml
+  - id: >-
+      rel-rails-control-plane-publishes-to-sidekiq-job-queue--core--software-relations-publishes-to--rails-control-plane--api-surface--to--sidekiq-job-queue--scheduled-jobs
+    from: rails-control-plane/api-surface/accounts-lifecycle-api
+    to: sidekiq-job-queue/scheduled-jobs
+    type: core/software.relations.publishes-to
+    description: Rails enqueues background work onto Sidekiq.
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/api/v1/accounts_controller.rb
+        - input: primary
+          path: app/jobs/application_job.rb
+        - input: primary
+          path: app/jobs/account/branding_enrichment_job.rb
+        - input: primary
+          path: config/sidekiq.yml
+        - input: primary
+          path: config/schedule.yml
+  - id: >-
+      rel-sidekiq-worker-plane-consumes-from-sidekiq-job-queue--core--software-relations-consumes-from--sidekiq-worker-plane--to--sidekiq-job-queue--low
+    from: sidekiq-worker-plane
+    to: sidekiq-job-queue/low
+    type: core/software.relations.consumes-from
+    description: Worker consumes queued jobs for async processing.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/application_job.rb
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+        - input: primary
+          path: app/jobs/account/branding_enrichment_job.rb
+        - input: primary
+          path: config/sidekiq.yml
+  - id: >-
+      rel-sidekiq-worker-plane-consumes-from-sidekiq-job-queue--core--software-relations-consumes-from--sidekiq-worker-plane--to--sidekiq-job-queue--scheduled-jobs
+    from: sidekiq-worker-plane
+    to: sidekiq-job-queue/scheduled-jobs
+    type: core/software.relations.consumes-from
+    description: Worker consumes queued jobs for async processing.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/application_job.rb
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+        - input: primary
+          path: app/jobs/account/branding_enrichment_job.rb
+        - input: primary
+          path: config/sidekiq.yml
+  - id: >-
+      rel-rails-control-plane-read-writes-persistence-state-plane--core--software-relations-read-writes--rails-control-plane--api-surface--to--persistence-state-plane--primary-database
+    from: rails-control-plane/api-surface/accounts-lifecycle-api
+    to: persistence-state-plane/primary-database
+    type: core/software.relations.read-writes
+    description: Rails reads and writes the main state stores.
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/api/v1/accounts_controller.rb
+        - input: primary
+          path: app/controllers/api/v1/accounts/conversations/messages_controller.rb
+        - input: primary
+          path: app/channels/application_cable/connection.rb
+        - input: primary
+          path: lib/online_status_tracker.rb
+        - input: primary
+          path: config/database.yml
+        - input: primary
+          path: config/storage.yml
+        - input: primary
+          path: config/initializers/01_redis.rb
+        - input: primary
+          path: lib/redis/alfred.rb
+  - id: >-
+      rel-rails-control-plane-read-writes-persistence-state-plane--core--software-relations-read-writes--rails-control-plane--api-surface--to--persistence-state-plane--redis-plane
+    from: rails-control-plane/api-surface/accounts-lifecycle-api
+    to: persistence-state-plane/redis-plane
+    type: core/software.relations.read-writes
+    description: Rails reads and writes the main state stores.
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/api/v1/accounts_controller.rb
+        - input: primary
+          path: app/controllers/api/v1/accounts/conversations/messages_controller.rb
+        - input: primary
+          path: app/channels/application_cable/connection.rb
+        - input: primary
+          path: lib/online_status_tracker.rb
+        - input: primary
+          path: config/database.yml
+        - input: primary
+          path: config/storage.yml
+        - input: primary
+          path: config/initializers/01_redis.rb
+        - input: primary
+          path: lib/redis/alfred.rb
+  - id: >-
+      rel-rails-control-plane-read-writes-persistence-state-plane--core--software-relations-read-writes--rails-control-plane--api-surface--to--persistence-state-plane--object-storage
+    from: rails-control-plane/api-surface/conversation-messages-api
+    to: persistence-state-plane/object-storage
+    type: core/software.relations.read-writes
+    description: Rails reads and writes the main state stores.
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/api/v1/accounts_controller.rb
+        - input: primary
+          path: app/controllers/api/v1/accounts/conversations/messages_controller.rb
+        - input: primary
+          path: app/channels/application_cable/connection.rb
+        - input: primary
+          path: lib/online_status_tracker.rb
+        - input: primary
+          path: config/database.yml
+        - input: primary
+          path: config/storage.yml
+        - input: primary
+          path: config/initializers/01_redis.rb
+        - input: primary
+          path: lib/redis/alfred.rb
+  - id: >-
+      rel-sidekiq-worker-plane-read-writes-persistence-state-plane--core--software-relations-read-writes--sidekiq-worker-plane--account-enrichment-job--to--persistence-state-plane
+    from: sidekiq-worker-plane/account-enrichment-job
+    to: persistence-state-plane
+    type: core/software.relations.read-writes
+    description: Worker reads and writes shared state stores.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/account/branding_enrichment_job.rb
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+        - input: primary
+          path: app/jobs/migration/add_search_indexes_job.rb
+        - input: primary
+          path: config/database.yml
+        - input: primary
+          path: config/initializers/01_redis.rb
+        - input: primary
+          path: config/initializers/searchkick.rb
+  - id: >-
+      rel-sidekiq-worker-plane-read-writes-persistence-state-plane--core--software-relations-read-writes--sidekiq-worker-plane--search-index-maintenance--to--persistence-state-plane
+    from: sidekiq-worker-plane/search-index-maintenance
+    to: persistence-state-plane
+    type: core/software.relations.read-writes
+    description: Worker reads and writes shared state stores.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/account/branding_enrichment_job.rb
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+        - input: primary
+          path: app/jobs/migration/add_search_indexes_job.rb
+        - input: primary
+          path: config/database.yml
+        - input: primary
+          path: config/initializers/01_redis.rb
+        - input: primary
+          path: config/initializers/searchkick.rb
+  - id: >-
+      rel-channel-providers-calls-rails-control-plane--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--callback-controllers--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--callback-controllers--twilio-callback-controller
+    from: channel-providers
+    to: >-
+      rails-control-plane/integration-gateway/provider-ingress/callback-controllers/twilio-callback-controller
+    type: core/software.relations.calls
+    description: Provider webhooks and callbacks land in Rails.
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/webhooks/whatsapp_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/instagram_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/tiktok_controller.rb
+        - input: primary
+          path: app/controllers/twilio/callback_controller.rb
+        - input: primary
+          path: app/controllers/twilio/delivery_status_controller.rb
+        - input: primary
+          path: app/controllers/google/callbacks_controller.rb
+        - input: primary
+          path: app/controllers/linear/callbacks_controller.rb
+  - id: >-
+      rel-channel-providers-calls-rails-control-plane--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--callback-controllers--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--callback-controllers--twilio-delivery-status-controller
+    from: channel-providers
+    to: >-
+      rails-control-plane/integration-gateway/provider-ingress/callback-controllers/twilio-delivery-status-controller
+    type: core/software.relations.calls
+    description: Provider webhooks and callbacks land in Rails.
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/webhooks/whatsapp_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/instagram_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/tiktok_controller.rb
+        - input: primary
+          path: app/controllers/twilio/callback_controller.rb
+        - input: primary
+          path: app/controllers/twilio/delivery_status_controller.rb
+        - input: primary
+          path: app/controllers/google/callbacks_controller.rb
+        - input: primary
+          path: app/controllers/linear/callbacks_controller.rb
+  - id: >-
+      rel-channel-providers-calls-rails-control-plane--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--callback-controllers--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--callback-controllers--google-callbacks-controller
+    from: channel-providers
+    to: >-
+      rails-control-plane/integration-gateway/provider-ingress/callback-controllers/google-callbacks-controller
+    type: core/software.relations.calls
+    description: Provider webhooks and callbacks land in Rails.
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/webhooks/whatsapp_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/instagram_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/tiktok_controller.rb
+        - input: primary
+          path: app/controllers/twilio/callback_controller.rb
+        - input: primary
+          path: app/controllers/twilio/delivery_status_controller.rb
+        - input: primary
+          path: app/controllers/google/callbacks_controller.rb
+        - input: primary
+          path: app/controllers/linear/callbacks_controller.rb
+  - id: >-
+      rel-channel-providers-calls-rails-control-plane--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--webhook-ingress--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--webhook-ingress--whatsapp-webhook-endpoint
+    from: channel-providers
+    to: >-
+      rails-control-plane/integration-gateway/provider-ingress/webhook-ingress/whatsapp-webhook-endpoint
+    type: core/software.relations.calls
+    description: Provider webhooks and callbacks land in Rails.
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/webhooks/whatsapp_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/instagram_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/tiktok_controller.rb
+        - input: primary
+          path: app/controllers/twilio/callback_controller.rb
+        - input: primary
+          path: app/controllers/twilio/delivery_status_controller.rb
+        - input: primary
+          path: app/controllers/google/callbacks_controller.rb
+        - input: primary
+          path: app/controllers/linear/callbacks_controller.rb
+  - id: >-
+      rel-channel-providers-calls-rails-control-plane--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--webhook-ingress--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--webhook-ingress--instagram-webhook-endpoint
+    from: channel-providers
+    to: >-
+      rails-control-plane/integration-gateway/provider-ingress/webhook-ingress/instagram-webhook-endpoint
+    type: core/software.relations.calls
+    description: Provider webhooks and callbacks land in Rails.
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/webhooks/whatsapp_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/instagram_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/tiktok_controller.rb
+        - input: primary
+          path: app/controllers/twilio/callback_controller.rb
+        - input: primary
+          path: app/controllers/twilio/delivery_status_controller.rb
+        - input: primary
+          path: app/controllers/google/callbacks_controller.rb
+        - input: primary
+          path: app/controllers/linear/callbacks_controller.rb
+  - id: >-
+      rel-channel-providers-calls-rails-control-plane--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--webhook-ingress--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--webhook-ingress--tiktok-webhook-endpoint
+    from: channel-providers
+    to: >-
+      rails-control-plane/integration-gateway/provider-ingress/webhook-ingress/tiktok-webhook-endpoint
+    type: core/software.relations.calls
+    description: Provider webhooks and callbacks land in Rails.
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/webhooks/whatsapp_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/instagram_controller.rb
+        - input: primary
+          path: app/controllers/webhooks/tiktok_controller.rb
+        - input: primary
+          path: app/controllers/twilio/callback_controller.rb
+        - input: primary
+          path: app/controllers/twilio/delivery_status_controller.rb
+        - input: primary
+          path: app/controllers/google/callbacks_controller.rb
+        - input: primary
+          path: app/controllers/linear/callbacks_controller.rb
+  - id: >-
+      rel-rails-control-plane-calls-channel-providers--core--software-relations-calls--rails-control-plane--integration-gateway--provider-egress--provider-send-jobs--to--channel-providers--core--software-relations-calls--rails-control-plane--integration-gateway--provider-egress--provider-send-jobs--whatsapp-send-service--to--channel-providers
+    from: >-
+      rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/whatsapp-send-service
+    to: channel-providers
+    type: core/software.relations.calls
+    description: Rails calls provider APIs for send and setup flows.
+    provenance:
+      locations:
+        - input: primary
+          path: app/services/whatsapp/send_on_whatsapp_service.rb
+        - input: primary
+          path: app/services/whatsapp/webhook_setup_service.rb
+        - input: primary
+          path: app/services/twilio/webhook_setup_service.rb
+        - input: primary
+          path: app/services/instagram/send_on_instagram_service.rb
+        - input: primary
+          path: app/services/tiktok/send_on_tiktok_service.rb
+        - input: primary
+          path: app/services/telegram/send_on_telegram_service.rb
+        - input: primary
+          path: app/services/google/refresh_oauth_token_service.rb
+        - input: primary
+          path: app/services/linear/activity_message_service.rb
+  - id: >-
+      rel-rails-control-plane-calls-channel-providers--core--software-relations-calls--rails-control-plane--integration-gateway--provider-egress--provider-send-jobs--to--channel-providers--core--software-relations-calls--rails-control-plane--integration-gateway--provider-egress--provider-send-jobs--instagram-send-service--to--channel-providers
+    from: >-
+      rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/instagram-send-service
+    to: channel-providers
+    type: core/software.relations.calls
+    description: Rails calls provider APIs for send and setup flows.
+    provenance:
+      locations:
+        - input: primary
+          path: app/services/whatsapp/send_on_whatsapp_service.rb
+        - input: primary
+          path: app/services/whatsapp/webhook_setup_service.rb
+        - input: primary
+          path: app/services/twilio/webhook_setup_service.rb
+        - input: primary
+          path: app/services/instagram/send_on_instagram_service.rb
+        - input: primary
+          path: app/services/tiktok/send_on_tiktok_service.rb
+        - input: primary
+          path: app/services/telegram/send_on_telegram_service.rb
+        - input: primary
+          path: app/services/google/refresh_oauth_token_service.rb
+        - input: primary
+          path: app/services/linear/activity_message_service.rb
+  - id: >-
+      rel-rails-control-plane-calls-channel-providers--core--software-relations-calls--rails-control-plane--integration-gateway--provider-egress--provider-send-jobs--to--channel-providers--core--software-relations-calls--rails-control-plane--integration-gateway--provider-egress--provider-send-jobs--tiktok-send-service--to--channel-providers
+    from: rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/tiktok-send-service
+    to: channel-providers
+    type: core/software.relations.calls
+    description: Rails calls provider APIs for send and setup flows.
+    provenance:
+      locations:
+        - input: primary
+          path: app/services/whatsapp/send_on_whatsapp_service.rb
+        - input: primary
+          path: app/services/whatsapp/webhook_setup_service.rb
+        - input: primary
+          path: app/services/twilio/webhook_setup_service.rb
+        - input: primary
+          path: app/services/instagram/send_on_instagram_service.rb
+        - input: primary
+          path: app/services/tiktok/send_on_tiktok_service.rb
+        - input: primary
+          path: app/services/telegram/send_on_telegram_service.rb
+        - input: primary
+          path: app/services/google/refresh_oauth_token_service.rb
+        - input: primary
+          path: app/services/linear/activity_message_service.rb
+  - id: >-
+      rel-rails-control-plane-calls-channel-providers--core--software-relations-calls--rails-control-plane--integration-gateway--provider-egress--provider-setup-jobs--to--channel-providers
+    from: >-
+      rails-control-plane/integration-gateway/provider-egress/provider-setup-jobs/twilio-webhook-setup-service
+    to: channel-providers
+    type: core/software.relations.calls
+    description: Rails calls provider APIs for send and setup flows.
+    provenance:
+      locations:
+        - input: primary
+          path: app/services/whatsapp/send_on_whatsapp_service.rb
+        - input: primary
+          path: app/services/whatsapp/webhook_setup_service.rb
+        - input: primary
+          path: app/services/twilio/webhook_setup_service.rb
+        - input: primary
+          path: app/services/instagram/send_on_instagram_service.rb
+        - input: primary
+          path: app/services/tiktok/send_on_tiktok_service.rb
+        - input: primary
+          path: app/services/telegram/send_on_telegram_service.rb
+        - input: primary
+          path: app/services/google/refresh_oauth_token_service.rb
+        - input: primary
+          path: app/services/linear/activity_message_service.rb
+  - id: >-
+      rel-sidekiq-worker-plane-calls-channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-send-jobs--to--channel-providers
+    from: sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/send-on-slack-job
+    to: channel-providers
+    type: core/software.relations.calls
+    description: Async jobs call provider APIs for delivery work.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+        - input: primary
+          path: app/jobs/send_on_slack_job.rb
+        - input: primary
+          path: app/jobs/webhooks/facebook_delivery_job.rb
+        - input: primary
+          path: app/jobs/webhooks/instagram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/telegram_events_job.rb
+  - id: >-
+      rel-sidekiq-worker-plane-calls-channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--to--channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--whatsapp-events-job--to--channel-providers
+    from: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/whatsapp-events-job
+    to: channel-providers
+    type: core/software.relations.calls
+    description: Async jobs call provider APIs for delivery work.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+        - input: primary
+          path: app/jobs/send_on_slack_job.rb
+        - input: primary
+          path: app/jobs/webhooks/facebook_delivery_job.rb
+        - input: primary
+          path: app/jobs/webhooks/instagram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/telegram_events_job.rb
+  - id: >-
+      rel-sidekiq-worker-plane-calls-channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--to--channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--facebook-delivery-job--to--channel-providers
+    from: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/facebook-delivery-job
+    to: channel-providers
+    type: core/software.relations.calls
+    description: Async jobs call provider APIs for delivery work.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+        - input: primary
+          path: app/jobs/send_on_slack_job.rb
+        - input: primary
+          path: app/jobs/webhooks/facebook_delivery_job.rb
+        - input: primary
+          path: app/jobs/webhooks/instagram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/telegram_events_job.rb
+  - id: >-
+      rel-sidekiq-worker-plane-calls-channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--to--channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--to--channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--instagram-events-job--to--channel-providers
+    from: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs/instagram-events-job
+    to: channel-providers
+    type: core/software.relations.calls
+    description: Async jobs call provider APIs for delivery work.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+        - input: primary
+          path: app/jobs/send_on_slack_job.rb
+        - input: primary
+          path: app/jobs/webhooks/facebook_delivery_job.rb
+        - input: primary
+          path: app/jobs/webhooks/instagram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/telegram_events_job.rb
+  - id: >-
+      rel-sidekiq-worker-plane-calls-channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--to--channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--to--channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--telegram-events-job--to--channel-providers
+    from: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs/telegram-events-job
+    to: channel-providers
+    type: core/software.relations.calls
+    description: Async jobs call provider APIs for delivery work.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+        - input: primary
+          path: app/jobs/send_on_slack_job.rb
+        - input: primary
+          path: app/jobs/webhooks/facebook_delivery_job.rb
+        - input: primary
+          path: app/jobs/webhooks/instagram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/telegram_events_job.rb
+  - id: >-
+      rel-sidekiq-worker-plane-calls-channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--to--channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--to--channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--twilio-delivery-status-job--to--channel-providers
+    from: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs/twilio-delivery-status-job
+    to: channel-providers
+    type: core/software.relations.calls
+    description: Async jobs call provider APIs for delivery work.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+        - input: primary
+          path: app/jobs/send_on_slack_job.rb
+        - input: primary
+          path: app/jobs/webhooks/facebook_delivery_job.rb
+        - input: primary
+          path: app/jobs/webhooks/instagram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/telegram_events_job.rb
+  - id: portal-app--operator-browser-client-calls-operator-portal-routing
+    from: portal-app/operator-browser-client/dashboard-shell-host
+    to: portal-app/operator-portal-routing
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/dashboard_controller.rb
+        - input: primary
+          path: config/routes.rb
+  - id: portal-app--operator-portal-routing-calls-operator-portal-frontend
+    from: portal-app/operator-portal-routing
+    to: portal-app/operator-portal-frontend
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/dashboard_controller.rb
+        - input: primary
+          path: app/javascript/entrypoints/dashboard.js
+  - id: rails-control-plane--browser-shell-calls-api-surface
+    from: rails-control-plane/browser-shell/dashboard-spa-runtime
+    to: rails-control-plane/api-surface/api-auth-gate
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/dashboard_controller.rb
+        - input: primary
+          path: app/javascript/entrypoints/dashboard.js
+  - id: rails-control-plane--api-surface-calls-realtime-plane
+    from: rails-control-plane/api-surface
+    to: rails-control-plane/realtime-plane/room-channel
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/api/v1/accounts/conversations/messages_controller.rb
+        - input: primary
+          path: app/jobs/account/branding_enrichment_job.rb
+  - id: rails-control-plane--api-surface-calls-integration-gateway
+    from: rails-control-plane/api-surface
+    to: rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/send-reply-job
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/services/whatsapp/send_on_whatsapp_service.rb
+        - input: primary
+          path: app/services/twilio/webhook_setup_service.rb
+  - id: rails-control-plane--api-surface-calls-enterprise-overlay
+    from: rails-control-plane/api-surface
+    to: rails-control-plane/enterprise-overlay
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/api/v1/accounts_controller.rb
+        - input: primary
+          path: enterprise/lib/enterprise.rb
+  - id: rails-control-plane--enterprise-overlay-calls-integration-gateway
+    from: rails-control-plane/enterprise-overlay
+    to: >-
+      rails-control-plane/integration-gateway/provider-egress/provider-setup-jobs/twilio-webhook-setup-service
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: enterprise/app/services/twilio/voice_webhook_setup_service.rb
+        - input: primary
+          path: enterprise/app/services/voice/status_update_service.rb
+  - id: sidekiq-worker-plane--sidekiq-scheduler-calls-search-index-maintenance
+    from: sidekiq-worker-plane/sidekiq-scheduler
+    to: sidekiq-worker-plane/search-index-maintenance
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: config/schedule.yml
+        - input: primary
+          path: app/jobs/migration/add_search_indexes_job.rb
+  - id: portal-app--operator-browser-client--dashboard-shell-ui-calls-dashboard-shell-host
+    from: portal-app/operator-browser-client/dashboard-shell-ui
+    to: portal-app/operator-browser-client/dashboard-shell-host
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/dashboard_controller.rb
+        - input: primary
+          path: app/javascript/entrypoints/dashboard.js
+  - id: portal-app--embedded-widget-sdk--widget-host-shell-calls-widget-runtime
+    from: portal-app/embedded-widget-sdk/widget-host-shell
+    to: portal-app/embedded-widget-sdk/widget-runtime/widget-entrypoint
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/views/widgets/show.html.erb
+        - input: primary
+          path: app/javascript/entrypoints/widget.js
+  - id: portal-app--embedded-widget-sdk--sdk-surface-calls-widget-runtime
+    from: portal-app/embedded-widget-sdk/sdk-surface
+    to: portal-app/embedded-widget-sdk/widget-runtime/widget-entrypoint
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/entrypoints/sdk.js
+        - input: primary
+          path: app/javascript/sdk/IFrameHelper.js
+  - id: portal-app--embedded-widget-sdk--widget-runtime-calls-widget-host-shell
+    from: portal-app/embedded-widget-sdk/widget-runtime
+    to: portal-app/embedded-widget-sdk/widget-host-shell
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/sdk/IFrameHelper.js
+        - input: primary
+          path: app/views/widgets/show.html.erb
+  - id: portal-app--embedded-widget-sdk--widget-runtime-calls-sdk-surface
+    from: portal-app/embedded-widget-sdk/widget-runtime
+    to: portal-app/embedded-widget-sdk/sdk-surface
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/entrypoints/widget.js
+        - input: primary
+          path: app/javascript/sdk/IFrameHelper.js
+  - id: portal-app--public-help-center-portal--portal-host-shell-calls-portal-runtime
+    from: portal-app/public-help-center-portal/portal-host-shell
+    to: portal-app/public-help-center-portal/portal-runtime/portal-bootstrap
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/dashboard_controller.rb
+        - input: primary
+          path: app/javascript/entrypoints/portal.js
+        - input: primary
+          path: app/views/public/api/v1/portals/show.html.erb
+  - id: portal-app--public-help-center-portal--portal-runtime-calls-portal-articles-api
+    from: >-
+      portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/portal-search-shell/public-article-search
+    to: portal-app/public-help-center-portal/portal-articles-api
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/portal/components/PublicArticleSearch.vue
+        - input: primary
+          path: app/javascript/portal/api/article.js
+  - id: portal-app--public-help-center-portal--portal-articles-api-calls-portal-runtime
+    from: portal-app/public-help-center-portal/portal-articles-api
+    to: portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/portal/api/article.js
+        - input: primary
+          path: app/javascript/portal/components/SearchSuggestions.vue
+  - id: portal-app--csat-survey-frontend--survey-host-shell-calls-survey-runtime
+    from: portal-app/csat-survey-frontend/survey-host-shell
+    to: portal-app/csat-survey-frontend/survey-runtime/survey-bootstrap
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/views/survey/responses/show.html.erb
+        - input: primary
+          path: app/javascript/entrypoints/survey.js
+  - id: portal-app--csat-survey-frontend--survey-runtime-calls-survey-api
+    from: >-
+      portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-shell/survey-api-client
+    to: portal-app/csat-survey-frontend/survey-api
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/survey/App.vue
+        - input: primary
+          path: app/javascript/survey/helpers/axios.js
+  - id: portal-app--csat-survey-frontend--survey-api-calls-survey-runtime
+    from: portal-app/csat-survey-frontend/survey-api
+    to: >-
+      portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-shell/survey-shell-module
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/survey/helpers/axios.js
+        - input: primary
+          path: app/javascript/survey/store/index.js
+  - id: portal-app--superadmin-console--superadmin-host-shell-calls-superadmin-pages-runtime
+    from: portal-app/superadmin-console/superadmin-host-shell
+    to: portal-app/superadmin-console/superadmin-pages-runtime/superadmin-pages-entrypoint
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/super_admin/application_controller.rb
+        - input: primary
+          path: app/javascript/entrypoints/superadmin_pages.js
+        - input: primary
+          path: app/views/super_admin/application/index.html.erb
+  - id: rails-control-plane--browser-shell--dashboard-shell-host-calls-dashboard-spa-runtime
+    from: rails-control-plane/browser-shell/dashboard-shell-host
+    to: rails-control-plane/browser-shell/dashboard-spa-runtime
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/dashboard_controller.rb
+        - input: primary
+          path: app/javascript/entrypoints/dashboard.js
+        - input: primary
+          path: config/routes.rb
+  - id: rails-control-plane--browser-shell--dashboard-shell-host-calls-v3-shell-runtime
+    from: rails-control-plane/browser-shell/dashboard-shell-host
+    to: rails-control-plane/browser-shell/v3-shell-runtime
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/dashboard_controller.rb
+        - input: primary
+          path: app/javascript/entrypoints/v3app.js
+        - input: primary
+          path: app/javascript/v3/views/index.js
+  - id: rails-control-plane--api-surface--api-auth-gate-calls-accounts-lifecycle-api
+    from: rails-control-plane/api-surface/api-auth-gate
+    to: rails-control-plane/api-surface/accounts-lifecycle-api
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/api/base_controller.rb
+        - input: primary
+          path: app/controllers/api/v1/accounts_controller.rb
+  - id: rails-control-plane--api-surface--api-auth-gate-calls-conversation-messages-api
+    from: rails-control-plane/api-surface/api-auth-gate
+    to: rails-control-plane/api-surface/conversation-messages-api
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/controllers/api/base_controller.rb
+        - input: primary
+          path: app/controllers/api/v1/accounts/conversations/messages_controller.rb
+  - id: rails-control-plane--realtime-plane--room-channel-calls-branding-enrichment-job
+    from: rails-control-plane/realtime-plane/room-channel
+    to: rails-control-plane/realtime-plane/branding-enrichment-job
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: app/channels/room_channel.rb
+        - input: primary
+          path: app/jobs/account/branding_enrichment_job.rb
+  - id: portal-app--embedded-widget-sdk--widget-runtime--widget-entrypoint-calls-widget-ui
+    from: portal-app/embedded-widget-sdk/widget-runtime/widget-entrypoint
+    to: portal-app/embedded-widget-sdk/widget-runtime/widget-ui/widget-shell/widget-shell-module
+    type: core/software.relations.calls
+    description: Bootstraps into the widget app.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/entrypoints/widget.js
+        - input: primary
+          path: app/javascript/widget/App.vue
+  - id: >-
+      portal-app--public-help-center-portal--portal-runtime--portal-bootstrap-calls-portal-browser-runtime
+    from: portal-app/public-help-center-portal/portal-runtime/portal-bootstrap
+    to: >-
+      portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/portal-search-shell/public-article-search
+    type: core/software.relations.calls
+    description: Bootstraps the browser runtime.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/entrypoints/portal.js
+        - input: primary
+          path: app/javascript/portal/components/PublicArticleSearch.vue
+  - id: >-
+      portal-app--csat-survey-frontend--survey-runtime--survey-bootstrap-calls-survey-browser-runtime
+    from: portal-app/csat-survey-frontend/survey-runtime/survey-bootstrap
+    to: portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-shell
+    type: core/software.relations.calls
+    description: Bootstraps into the survey app.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/entrypoints/survey.js
+        - input: primary
+          path: app/javascript/survey/App.vue
+  - id: >-
+      sidekiq-worker-plane--delivery-jobs--delivery-send-jobs--sidekiq-runtime-calls-send-on-slack-job
+    from: sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/sidekiq-runtime/sidekiq-worker
+    to: sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/send-on-slack-job
+    type: core/software.relations.calls
+    description: Runtime invokes the delivery job.
+    provenance:
+      locations:
+        - input: primary
+          path: config/sidekiq.yml
+        - input: primary
+          path: app/jobs/send_on_slack_job.rb
+  - id: >-
+      sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--sidekiq-runtime-calls-provider-callback-jobs--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--sidekiq-runtime--sidekiq-worker--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--whatsapp-events-job
+    from: sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/sidekiq-runtime/sidekiq-worker
+    to: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/whatsapp-events-job
+    type: core/software.relations.calls
+    description: Runtime invokes callback jobs.
+    provenance:
+      locations:
+        - input: primary
+          path: config/sidekiq.yml
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+  - id: >-
+      sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--sidekiq-runtime-calls-provider-callback-jobs--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--sidekiq-runtime--sidekiq-worker--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--facebook-delivery-job
+    from: sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/sidekiq-runtime/sidekiq-worker
+    to: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/facebook-delivery-job
+    type: core/software.relations.calls
+    description: Runtime invokes callback jobs.
+    provenance:
+      locations:
+        - input: primary
+          path: config/sidekiq.yml
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+  - id: >-
+      sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--sidekiq-runtime-calls-provider-callback-jobs--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--sidekiq-runtime--sidekiq-worker--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--sidekiq-runtime--sidekiq-worker--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--instagram-events-job
+    from: sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/sidekiq-runtime/sidekiq-worker
+    to: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs/instagram-events-job
+    type: core/software.relations.calls
+    description: Runtime invokes callback jobs.
+    provenance:
+      locations:
+        - input: primary
+          path: config/sidekiq.yml
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+  - id: >-
+      sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--sidekiq-runtime-calls-provider-callback-jobs--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--sidekiq-runtime--sidekiq-worker--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--sidekiq-runtime--sidekiq-worker--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--telegram-events-job
+    from: sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/sidekiq-runtime/sidekiq-worker
+    to: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs/telegram-events-job
+    type: core/software.relations.calls
+    description: Runtime invokes callback jobs.
+    provenance:
+      locations:
+        - input: primary
+          path: config/sidekiq.yml
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+  - id: >-
+      sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--sidekiq-runtime-calls-provider-callback-jobs--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--sidekiq-runtime--sidekiq-worker--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--sidekiq-runtime--sidekiq-worker--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--twilio-delivery-status-job
+    from: sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/sidekiq-runtime/sidekiq-worker
+    to: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs/twilio-delivery-status-job
+    type: core/software.relations.calls
+    description: Runtime invokes callback jobs.
+    provenance:
+      locations:
+        - input: primary
+          path: config/sidekiq.yml
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+  - id: portal-app--embedded-widget-sdk--widget-runtime--widget-ui--widget-shell-reads-widget-store
+    from: portal-app/embedded-widget-sdk/widget-runtime/widget-ui/widget-shell
+    to: portal-app/embedded-widget-sdk/widget-runtime/widget-ui/widget-store
+    type: core/software.relations.reads
+    description: Shell reads widget state.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/widget/App.vue
+        - input: primary
+          path: app/javascript/widget/store/index.js
+  - id: portal-app--embedded-widget-sdk--widget-runtime--widget-ui--widget-shell-writes-widget-store
+    from: portal-app/embedded-widget-sdk/widget-runtime/widget-ui/widget-shell
+    to: portal-app/embedded-widget-sdk/widget-runtime/widget-ui/widget-store
+    type: core/software.relations.writes
+    description: Shell updates widget state.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/widget/App.vue
+        - input: primary
+          path: app/javascript/widget/store/index.js
+  - id: >-
+      portal-app--embedded-widget-sdk--widget-runtime--widget-ui--widget-shell-read-writes-widget-store
+    from: portal-app/embedded-widget-sdk/widget-runtime/widget-ui/widget-shell
+    to: portal-app/embedded-widget-sdk/widget-runtime/widget-ui/widget-store
+    type: core/software.relations.read-writes
+    description: Shell reads and updates widget state.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/widget/App.vue
+        - input: primary
+          path: app/javascript/widget/store/index.js
+  - id: >-
+      portal-app--public-help-center-portal--portal-runtime--portal-browser-runtime--portal-search-shell-calls-search-suggestions
+    from: portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/portal-search-shell
+    to: >-
+      portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/search-suggestions/search-suggestions-module
+    type: core/software.relations.calls
+    description: Shell renders suggestions component.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/portal/components/PublicArticleSearch.vue
+        - input: primary
+          path: app/javascript/portal/components/SearchSuggestions.vue
+  - id: >-
+      portal-app--csat-survey-frontend--survey-runtime--survey-browser-runtime--survey-shell-reads-survey-store
+    from: portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-shell
+    to: portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-store
+    type: core/software.relations.reads
+    description: Shell reads survey state.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/survey/App.vue
+        - input: primary
+          path: app/javascript/survey/store/index.js
+  - id: >-
+      portal-app--csat-survey-frontend--survey-runtime--survey-browser-runtime--survey-shell-writes-survey-store
+    from: portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-shell
+    to: portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-store
+    type: core/software.relations.writes
+    description: Shell updates survey state.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/survey/App.vue
+        - input: primary
+          path: app/javascript/survey/store/index.js
+  - id: >-
+      portal-app--csat-survey-frontend--survey-runtime--survey-browser-runtime--survey-shell-read-writes-survey-store
+    from: portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-shell
+    to: portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-store
+    type: core/software.relations.read-writes
+    description: Shell reads and updates survey state.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/survey/App.vue
+        - input: primary
+          path: app/javascript/survey/store/index.js
+  - id: >-
+      rails-control-plane--integration-gateway--provider-egress--provider-send-jobs--send-reply-job-calls-whatsapp-send-service
+    from: rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/send-reply-job
+    to: >-
+      rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/whatsapp-send-service
+    type: core/software.relations.calls
+    description: Job dispatches WhatsApp sends.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/send_reply_job.rb
+  - id: >-
+      rails-control-plane--integration-gateway--provider-egress--provider-send-jobs--send-reply-job-calls-instagram-send-service
+    from: rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/send-reply-job
+    to: >-
+      rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/instagram-send-service
+    type: core/software.relations.calls
+    description: Job dispatches Instagram sends.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/send_reply_job.rb
+  - id: >-
+      rails-control-plane--integration-gateway--provider-egress--provider-send-jobs--send-reply-job-calls-tiktok-send-service
+    from: rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/send-reply-job
+    to: rails-control-plane/integration-gateway/provider-egress/provider-send-jobs/tiktok-send-service
+    type: core/software.relations.calls
+    description: Job dispatches TikTok sends.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/send_reply_job.rb
+  - id: >-
+      sidekiq-worker-plane--delivery-jobs--delivery-send-jobs--sidekiq-runtime--sidekiq-worker-calls-send-on-slack-job
+    from: sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/sidekiq-runtime/sidekiq-worker
+    to: sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/sidekiq-runtime/send-on-slack-job
+    type: core/software.relations.calls
+    description: Worker invokes the Slack delivery job.
+    provenance:
+      locations:
+        - input: primary
+          path: config/sidekiq.yml
+        - input: primary
+          path: app/jobs/send_on_slack_job.rb
+  - id: >-
+      sidekiq-worker-plane--delivery-jobs--delivery-send-jobs--sidekiq-runtime--send-on-slack-job-calls-slack-api
+    from: sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/sidekiq-runtime/send-on-slack-job
+    to: sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/sidekiq-runtime/slack-api
+    type: core/software.relations.calls
+    description: Job calls Slack.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/send_on_slack_job.rb
+  - id: >-
+      sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set-calls-channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--whatsapp-events-job--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--channel-providers
+    from: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/whatsapp-events-job
+    to: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/channel-providers
+    type: core/software.relations.calls
+    description: Callback jobs call providers.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/webhooks/facebook_delivery_job.rb
+        - input: primary
+          path: app/jobs/webhooks/instagram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/telegram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+  - id: >-
+      sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set-calls-channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--facebook-delivery-job--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--channel-providers
+    from: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/facebook-delivery-job
+    to: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/channel-providers
+    type: core/software.relations.calls
+    description: Callback jobs call providers.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/webhooks/facebook_delivery_job.rb
+        - input: primary
+          path: app/jobs/webhooks/instagram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/telegram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+  - id: >-
+      sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set-calls-channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--instagram-events-job--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--channel-providers
+    from: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs/instagram-events-job
+    to: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/channel-providers
+    type: core/software.relations.calls
+    description: Callback jobs call providers.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/webhooks/facebook_delivery_job.rb
+        - input: primary
+          path: app/jobs/webhooks/instagram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/telegram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+  - id: >-
+      sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set-calls-channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--telegram-events-job--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--channel-providers
+    from: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs/telegram-events-job
+    to: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/channel-providers
+    type: core/software.relations.calls
+    description: Callback jobs call providers.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/webhooks/facebook_delivery_job.rb
+        - input: primary
+          path: app/jobs/webhooks/instagram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/telegram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+  - id: >-
+      sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set-calls-channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--other-callback-jobs--twilio-delivery-status-job--to--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--channel-providers
+    from: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs/twilio-delivery-status-job
+    to: >-
+      sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/channel-providers
+    type: core/software.relations.calls
+    description: Callback jobs call providers.
+    provenance:
+      locations:
+        - input: primary
+          path: app/jobs/webhooks/facebook_delivery_job.rb
+        - input: primary
+          path: app/jobs/webhooks/instagram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/telegram_events_job.rb
+        - input: primary
+          path: app/jobs/webhooks/twilio_delivery_status_job.rb
+        - input: primary
+          path: app/jobs/webhooks/whatsapp_events_job.rb
+  - id: >-
+      portal-app--public-help-center-portal--portal-runtime--portal-browser-runtime--search-suggestions--search-suggestions-module-calls-suggestion-item
+    from: >-
+      portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/search-suggestions/search-suggestions-module
+    to: >-
+      portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/search-suggestions/suggestion-item
+    type: core/software.relations.calls
+    description: Shell component composes suggestion rows.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/portal/components/SearchSuggestions.vue
+  - id: >-
+      portal-app--csat-survey-frontend--survey-runtime--survey-browser-runtime--survey-shell--survey-shell-module-calls-survey-api-client
+    from: >-
+      portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-shell/survey-shell-module
+    to: >-
+      portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-shell/survey-api-client
+    type: core/software.relations.calls
+    description: Shell composes the API client.
+    provenance:
+      locations:
+        - input: primary
+          path: app/javascript/survey/App.vue
+        - input: primary
+          path: app/javascript/survey/helpers/axios.js
+inputs:
+  - id: primary
+    kind: git
+    repo: https://github.com/chatwoot/chatwoot
+    revision: 7c7d67fd066e49b61abb9156e76c91aee3ce164c
+    role: primary
+metadata:
+  workerBuild:
+    inputTokens: 30150756
+    cachedInputTokens: 26101760
+    outputTokens: 557823
+    approxTotalTokens: 56810339
+    mode: advanced
+    model: gpt-5.4-mini
+    builtAt: "2026-04-29T10:55:03.708Z"
+    durationMs: 6679883
+    turns: 73
+    nodes: 104
+    edges: 83
+  sourceRepository:
+    repo: https://github.com/chatwoot/chatwoot
+    url: https://github.com/chatwoot/chatwoot
+    commit: 7c7d67fd066e49b61abb9156e76c91aee3ce164c
+    committedAt: "2026-04-29T14:15:37+05:30"
+  name: Chatwoot

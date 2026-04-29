@@ -1,0 +1,1125 @@
+version: 0.1.0
+schemaRefs:
+  - schema: core/base@0.1
+    layer: 0
+  - schema: core/software@0.1
+    layer: 1
+  - schema: core/code@0.1
+    layer: 1
+  - schema: core/frontend@0.3
+    layer: 2
+  - schema: core/web-app@0.3
+    layer: 2
+  - schema: gallery/n8n@0.1
+    layer: 3
+  - schema: core/software@0.1
+    layer: 0
+  - schema: core/frontend@0.3
+    layer: 0
+  - schema: core/web-app@0.3
+    layer: 0
+  - schema: gallery/n8n@0.1
+    layer: 0
+entities:
+  - id: browser-editor-app
+    type: gallery/n8n.types.portal-app
+    name: Browser workflow editor
+    description: Browser app split into a workflow-facing surface and a shared frontend kernel.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/frontend/editor-ui/src/main.ts
+        - input: primary
+          path: packages/frontend/editor-ui/src/app/views/WorkflowsView.vue
+        - input: primary
+          path: packages/frontend/editor-ui/src/app/moduleInitializer/moduleInitializer.ts
+        - input: primary
+          path: packages/frontend/editor-ui/src/app/workers/index.ts
+    children:
+      - id: browser-editor-app/workflows-view
+        type: core/code.types.module
+        name: Browser editor surface
+        description: Browser app entrypoint, route wiring, and workflow UI.
+        props:
+          runtime: browser
+          framework: vue
+          language: typescript
+        provenance:
+          locations:
+            - input: primary
+              path: packages/frontend/editor-ui/src/main.ts
+            - input: primary
+              path: packages/frontend/editor-ui/src/app/moduleInitializer/moduleInitializer.ts
+            - input: primary
+              path: packages/frontend/editor-ui/src/app/views/WorkflowsView.vue
+            - input: primary
+              path: packages/frontend/editor-ui/src/app/workers/index.ts
+      - id: browser-editor-app/shared-frontend-kernel
+        type: core/web-app.types.group
+        name: Shared frontend kernel
+        description: Shared frontend kernel for UI foundation, localization, state, and client access.
+        props:
+          runtime: browser
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: packages/frontend/@n8n/design-system/src/index.ts
+            - input: primary
+              path: packages/frontend/@n8n/stores/src/index.ts
+            - input: primary
+              path: packages/frontend/@n8n/i18n/src/index.ts
+            - input: primary
+              path: packages/frontend/@n8n/rest-api-client/package.json
+        children:
+          - id: browser-editor-app/shared-frontend-kernel/shared-frontend-foundation
+            type: core/web-app.types.group
+            name: Shared frontend foundation
+            description: Shared UI foundation and browser state for the editor kernel.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/frontend/@n8n/design-system/src/index.ts
+                - input: primary
+                  path: packages/frontend/@n8n/stores/src/index.ts
+                - input: primary
+                  path: packages/frontend/@n8n/i18n/src/index.ts
+            children:
+              - id: browser-editor-app/shared-frontend-kernel/shared-frontend-foundation/ui-foundation
+                type: core/web-app.types.group
+                name: UI foundation
+                description: Shared UI runtime for the editor kernel.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: packages/frontend/@n8n/design-system/src/index.ts
+                    - input: primary
+                      path: packages/frontend/@n8n/i18n/src/index.ts
+                children:
+                  - id: >-
+                      browser-editor-app/shared-frontend-kernel/shared-frontend-foundation/ui-foundation/design-system
+                    type: core/code.types.module
+                    name: Design system
+                    description: Shared component runtime.
+                    props:
+                      runtime: client
+                      language: typescript
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: packages/frontend/@n8n/design-system/src/index.ts
+                        - input: primary
+                          path: packages/frontend/editor-ui/src/app/views/WorkflowsView.vue
+                  - id: >-
+                      browser-editor-app/shared-frontend-kernel/shared-frontend-foundation/ui-foundation/i18n
+                    type: core/code.types.module
+                    name: I18n
+                    description: Shared localization runtime.
+                    props:
+                      runtime: client
+                      language: typescript
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: packages/frontend/@n8n/i18n/src/index.ts
+                        - input: primary
+                          path: packages/frontend/editor-ui/src/app/views/WorkflowsView.vue
+              - id: browser-editor-app/shared-frontend-kernel/shared-frontend-foundation/stores
+                type: core/code.types.module
+                name: Stores
+                description: Shared browser state layer.
+                props:
+                  runtime: client
+                  language: typescript
+                provenance:
+                  locations:
+                    - input: primary
+                      path: packages/frontend/@n8n/stores/src/index.ts
+          - id: browser-editor-app/shared-frontend-kernel/rest-api-client
+            type: core/code.types.module
+            name: REST API client
+            description: Shared server client package.
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/frontend/@n8n/rest-api-client/package.json
+  - id: main-control-plane
+    type: gallery/n8n.types.control-plane
+    name: Main server control plane
+    description: Main server runtime and controller surfaces.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/server.ts
+        - input: primary
+          path: packages/cli/src/commands/webhook.ts
+        - input: primary
+          path: packages/cli/src/webhooks/webhook-server.ts
+        - input: primary
+          path: packages/cli/src/controllers/workflows.controller.ts
+        - input: primary
+          path: packages/cli/src/executions/executions.controller.ts
+        - input: primary
+          path: packages/cli/src/webhooks/webhooks.controller.ts
+    children:
+      - id: main-control-plane/server-runtime
+        type: core/code.types.module
+        name: Server runtime
+        description: Server runtime that wires APIs, queue publishing, and persistence.
+        props:
+          runtime: server
+          framework: express
+          language: typescript
+        provenance:
+          locations:
+            - input: primary
+              path: packages/cli/src/server.ts
+        children:
+          - id: main-control-plane/server-runtime/server-bootstrap
+            type: core/code.types.module
+            name: Server bootstrap
+            description: Bootstrap wiring for the main server runtime.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/cli/src/server.ts
+            children:
+              - id: main-control-plane/server-runtime/server-bootstrap/controller-imports
+                type: core/code.types.module
+                name: Controller imports
+                description: API controller bootstrap.
+                props:
+                  runtime: server
+                  language: typescript
+                provenance:
+                  locations:
+                    - input: primary
+                      path: packages/cli/src/server.ts
+              - id: main-control-plane/server-runtime/server-bootstrap/queue-wiring
+                type: core/code.types.module
+                name: Queue wiring
+                description: Queue publishing bootstrap.
+                props:
+                  runtime: server
+                  language: typescript
+                provenance:
+                  locations:
+                    - input: primary
+                      path: packages/cli/src/server.ts
+                    - input: primary
+                      path: packages/cli/src/scaling/scaling.service.ts
+              - id: main-control-plane/server-runtime/server-bootstrap/state-wiring
+                type: core/code.types.module
+                name: State wiring
+                description: Persistence access bootstrap.
+                props:
+                  runtime: server
+                  language: typescript
+                provenance:
+                  locations:
+                    - input: primary
+                      path: packages/cli/src/server.ts
+                    - input: primary
+                      path: packages/@n8n/db/src/index.ts
+          - id: main-control-plane/server-runtime/api-wiring
+            type: core/code.types.module
+            name: API wiring
+            description: Controller composition layer.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/cli/src/server.ts
+          - id: main-control-plane/server-runtime/queue-publisher
+            type: core/code.types.module
+            name: Queue publisher
+            description: Workflow job publisher.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/cli/src/server.ts
+                - input: primary
+                  path: packages/cli/src/scaling/scaling.service.ts
+          - id: main-control-plane/server-runtime/persistence-access
+            type: core/code.types.module
+            name: Persistence access
+            description: Application state access layer.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/cli/src/server.ts
+                - input: primary
+                  path: packages/@n8n/db/src/index.ts
+      - id: main-control-plane/workflows-api
+        type: core/web-app.types.api
+        name: Workflows API
+        description: Workflow management API surface.
+        provenance:
+          locations:
+            - input: primary
+              path: packages/cli/src/workflows/workflows.controller.ts
+            - input: primary
+              path: packages/cli/src/server.ts
+      - id: main-control-plane/executions-api
+        type: core/web-app.types.api
+        name: Executions API
+        description: Execution history API surface.
+        provenance:
+          locations:
+            - input: primary
+              path: packages/cli/src/executions/executions.controller.ts
+            - input: primary
+              path: packages/cli/src/server.ts
+      - id: main-control-plane/webhooks-api
+        type: core/web-app.types.api
+        name: Webhooks API
+        description: Webhook lookup API surface.
+        provenance:
+          locations:
+            - input: primary
+              path: packages/cli/src/webhooks/webhooks.controller.ts
+            - input: primary
+              path: packages/cli/src/server.ts
+  - id: workflow-queue
+    type: core/web-app.types.queue
+    name: Workflow queue
+    description: Workflow execution queue and its shared jobs channel.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/scaling/scaling.service.ts
+        - input: primary
+          path: packages/cli/src/commands/worker.ts
+        - input: primary
+          path: packages/cli/src/scaling/pubsub/publisher.service.ts
+        - input: primary
+          path: packages/cli/src/scaling/pubsub/subscriber.service.ts
+    children:
+      - id: workflow-queue/jobs
+        type: core/web-app.types.topic
+        name: Jobs channel
+        description: Shared workflow execution topic.
+        provenance:
+          locations:
+            - input: primary
+              path: packages/cli/src/scaling/scaling.service.ts
+            - input: primary
+              path: packages/cli/src/commands/worker.ts
+            - input: primary
+              path: packages/cli/src/commands/webhook.ts
+            - input: primary
+              path: packages/cli/src/scaling/pubsub/publisher.service.ts
+            - input: primary
+              path: packages/cli/src/scaling/pubsub/subscriber.service.ts
+  - id: queue-worker-plane
+    type: gallery/n8n.types.worker-service
+    name: Queue worker execution plane
+    description: Queue worker orchestration and job processing path.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/commands/worker.ts
+        - input: primary
+          path: packages/cli/src/scaling/worker-server.ts
+        - input: primary
+          path: packages/cli/src/scaling/scaling.service.ts
+    children:
+      - id: queue-worker-plane/scaling-service
+        type: core/code.types.module
+        name: Scaling service
+        description: Scaling and queue orchestration for worker job intake and dispatch.
+        props:
+          runtime: server
+          language: typescript
+        provenance:
+          locations:
+            - input: primary
+              path: packages/cli/src/scaling/scaling.service.ts
+            - input: primary
+              path: packages/cli/src/commands/worker.ts
+        children:
+          - id: queue-worker-plane/scaling-service/queue-orchestration
+            type: core/web-app.types.group
+            name: Queue orchestration
+            description: Queue setup and job dispatch wiring for the worker plane.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/cli/src/scaling/scaling.service.ts
+                - input: primary
+                  path: packages/cli/src/commands/worker.ts
+            children:
+              - id: queue-worker-plane/scaling-service/queue-orchestration/worker-entry
+                type: core/code.types.module
+                name: Worker entry
+                description: Worker command startup path.
+                props:
+                  runtime: server
+                  language: typescript
+                provenance:
+                  locations:
+                    - input: primary
+                      path: packages/cli/src/commands/worker.ts
+              - id: queue-worker-plane/scaling-service/queue-orchestration/worker-bootstrap
+                type: core/code.types.module
+                name: Worker bootstrap
+                description: Worker startup path.
+                props:
+                  runtime: server
+                  language: typescript
+                provenance:
+                  locations:
+                    - input: primary
+                      path: packages/cli/src/commands/worker.ts
+                    - input: primary
+                      path: packages/cli/src/scaling/scaling.service.ts
+              - id: queue-worker-plane/scaling-service/queue-orchestration/queue-wiring
+                type: core/code.types.module
+                name: Queue wiring
+                description: Bull queue setup.
+                props:
+                  runtime: server
+                  language: typescript
+                provenance:
+                  locations:
+                    - input: primary
+                      path: packages/cli/src/scaling/scaling.service.ts
+                    - input: primary
+                      path: packages/cli/src/commands/worker.ts
+              - id: queue-worker-plane/scaling-service/queue-orchestration/job-dispatch
+                type: core/code.types.module
+                name: Job dispatch
+                description: Processed job handoff.
+                props:
+                  runtime: server
+                  language: typescript
+                provenance:
+                  locations:
+                    - input: primary
+                      path: packages/cli/src/scaling/scaling.service.ts
+          - id: queue-worker-plane/scaling-service/job-dispatch
+            type: core/code.types.module
+            name: Job dispatch
+            description: Dequeue callback bridge.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/cli/src/scaling/scaling.service.ts
+      - id: queue-worker-plane/job-processor
+        type: core/code.types.module
+        name: Job processor
+        description: Job loading and workflow execution orchestration.
+        props:
+          runtime: server
+          language: typescript
+        provenance:
+          locations:
+            - input: primary
+              path: packages/cli/src/scaling/job-processor.ts
+            - input: primary
+              path: packages/cli/src/scaling/scaling.service.ts
+        children:
+          - id: queue-worker-plane/job-processor/job-orchestration
+            type: core/web-app.types.group
+            name: Job orchestration
+            description: Job loading and workflow execution for queued work.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/cli/src/scaling/job-processor.ts
+            children:
+              - id: queue-worker-plane/job-processor/job-orchestration/job-preparation
+                type: core/code.types.module
+                name: Job preparation
+                description: Loads workflow and execution data.
+                props:
+                  runtime: server
+                  language: typescript
+                provenance:
+                  locations:
+                    - input: primary
+                      path: packages/cli/src/scaling/job-processor.ts
+              - id: queue-worker-plane/job-processor/job-orchestration/workflow-execution
+                type: core/code.types.module
+                name: Workflow execution
+                description: Runs the prepared workflow.
+                props:
+                  runtime: server
+                  language: typescript
+                provenance:
+                  locations:
+                    - input: primary
+                      path: packages/cli/src/scaling/job-processor.ts
+          - id: queue-worker-plane/job-processor/task-runner-client
+            type: core/code.types.module
+            name: Task runner client
+            description: Task execution delegate.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/cli/src/scaling/job-processor.ts
+                - input: primary
+                  path: packages/cli/src/scaling/scaling.service.ts
+  - id: task-runner-runtime
+    type: gallery/n8n.types.task-runner
+    name: Task runner runtime
+    description: Task runner process and broker-facing core.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/task-runner/src/start.ts
+        - input: primary
+          path: packages/@n8n/task-runner/src/task-runner.ts
+        - input: primary
+          path: packages/@n8n/task-runner/src/js-task-runner/js-task-runner.ts
+        - input: primary
+          path: packages/@n8n/task-runner/src/health-check-server.ts
+    children:
+      - id: task-runner-runtime/task-runner-entrypoint
+        type: core/code.types.module
+        name: Task runner entrypoint
+        description: Entrypoint bootstrap, signal handling, and handoff to the task runner core.
+        props:
+          runtime: server
+          language: typescript
+        provenance:
+          locations:
+            - input: primary
+              path: packages/@n8n/task-runner/src/start.ts
+        children:
+          - id: task-runner-runtime/task-runner-entrypoint/bootstrap-control
+            type: core/web-app.types.group
+            name: Bootstrap control
+            description: Startup control for the task runner process.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/@n8n/task-runner/src/start.ts
+            children:
+              - id: task-runner-runtime/task-runner-entrypoint/bootstrap-control/signal-handling
+                type: core/code.types.module
+                name: Signal handling
+                description: Process signal setup.
+                props:
+                  runtime: server
+                  language: typescript
+                provenance:
+                  locations:
+                    - input: primary
+                      path: packages/@n8n/task-runner/src/start.ts
+              - id: task-runner-runtime/task-runner-entrypoint/bootstrap-control/process-bootstrap
+                type: core/code.types.module
+                name: Process bootstrap
+                description: Task runner startup path.
+                props:
+                  runtime: server
+                  language: typescript
+                provenance:
+                  locations:
+                    - input: primary
+                      path: packages/@n8n/task-runner/src/start.ts
+          - id: task-runner-runtime/task-runner-entrypoint/task-runner-handoff
+            type: core/code.types.module
+            name: Task runner handoff
+            description: Delegation bridge to core.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/@n8n/task-runner/src/start.ts
+      - id: task-runner-runtime/task-runner-core
+        type: core/code.types.module
+        name: Task runner core
+        description: Core task runner broker transport and execution loop.
+        props:
+          runtime: server
+          language: typescript
+        provenance:
+          locations:
+            - input: primary
+              path: packages/@n8n/task-runner/src/task-runner.ts
+        children:
+          - id: task-runner-runtime/task-runner-core/broker-transport
+            type: core/code.types.module
+            name: Broker transport
+            description: WebSocket broker layer.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/@n8n/task-runner/src/task-runner.ts
+          - id: task-runner-runtime/task-runner-core/task-offer-handler
+            type: core/code.types.module
+            name: Task offer handler
+            description: Offer processing loop.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/@n8n/task-runner/src/task-runner.ts
+          - id: task-runner-runtime/task-runner-core/result-publisher
+            type: core/code.types.module
+            name: Result publisher
+            description: Broker response writer.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/@n8n/task-runner/src/task-runner.ts
+  - id: task-broker
+    type: core/web-app.types.queue
+    name: Task broker
+    description: Internal task broker queue for task runner coordination.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/task-runners/task-broker/task-broker-server.ts
+        - input: primary
+          path: packages/cli/src/task-runners/task-broker/task-broker.service.ts
+        - input: primary
+          path: packages/@n8n/task-runner/src/task-runner.ts
+  - id: primary-database
+    type: core/web-app.types.relational-db
+    name: Primary database
+    description: Persistence package surface for entities, repositories, and migrations.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/db/src/index.ts
+        - input: primary
+          path: packages/@n8n/db/src/entities/index.ts
+        - input: primary
+          path: packages/@n8n/db/src/repositories/index.ts
+        - input: primary
+          path: packages/@n8n/db/src/migrations/postgresdb/index.ts
+    children:
+      - id: primary-database/persistence-surface
+        type: core/web-app.types.group
+        name: Persistence surface
+        description: Persistence package entrypoint, repositories, entities, and migration history.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: packages/@n8n/db/src/index.ts
+            - input: primary
+              path: packages/@n8n/db/src/entities/index.ts
+            - input: primary
+              path: packages/@n8n/db/src/repositories/index.ts
+            - input: primary
+              path: packages/@n8n/db/src/migrations/postgresdb/index.ts
+        children:
+          - id: primary-database/persistence-surface/db-index
+            type: core/code.types.module
+            name: DB index
+            description: Package entrypoint for the database surface.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/@n8n/db/src/index.ts
+          - id: primary-database/persistence-surface/repositories-index
+            type: core/code.types.module
+            name: Repositories index
+            description: Repository layer surface.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/@n8n/db/src/repositories/index.ts
+          - id: primary-database/persistence-surface/entities-index
+            type: core/code.types.module
+            name: Entities index
+            description: Persisted domain model catalog.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/@n8n/db/src/entities/index.ts
+          - id: primary-database/persistence-surface/migrations-index
+            type: core/code.types.module
+            name: Migrations index
+            description: Schema evolution history.
+            props:
+              runtime: server
+              language: typescript
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/@n8n/db/src/migrations/postgresdb/index.ts
+relations:
+  - id: rel-browser-editor-app-calls-main-control-plane
+    from: browser-editor-app/workflows-view
+    to: main-control-plane/server-runtime/server-bootstrap/controller-imports
+    type: core/software.relations.calls
+    description: Browser editor drives the main API and orchestration server.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/frontend/editor-ui/src/main.ts
+        - input: primary
+          path: packages/cli/src/server.ts
+  - id: rel-main-control-plane-publishes-workflow-queue
+    from: main-control-plane/server-runtime/queue-publisher
+    to: workflow-queue/jobs
+    type: core/software.relations.publishes-to
+    description: Server publishes workflow jobs into the queue.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/server.ts
+        - input: primary
+          path: packages/cli/src/scaling/scaling.service.ts
+  - id: rel-queue-worker-plane-consumes-workflow-queue
+    from: queue-worker-plane/scaling-service/queue-orchestration/queue-wiring
+    to: workflow-queue/jobs
+    type: core/software.relations.consumes-from
+    description: Worker consumes workflow jobs from the queue.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/commands/worker.ts
+        - input: primary
+          path: packages/cli/src/scaling/pubsub/subscriber.service.ts
+  - id: rel-queue-worker-plane-calls-task-runner-runtime
+    from: queue-worker-plane/job-processor/task-runner-client
+    to: task-runner-runtime/task-runner-entrypoint/task-runner-handoff
+    type: core/software.relations.calls
+    description: Worker delegates task execution to the task runner.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/commands/worker.ts
+        - input: primary
+          path: packages/@n8n/task-runner/src/start.ts
+  - id: rel-task-runner-runtime-consumes-from-task-broker
+    from: task-runner-runtime/task-runner-core/broker-transport
+    to: task-broker
+    type: core/software.relations.consumes-from
+    description: Task runner receives work through the broker.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/task-runner/src/task-runner.ts
+        - input: primary
+          path: packages/cli/src/task-runners/task-broker/task-broker-server.ts
+        - input: primary
+          path: packages/cli/src/task-runners/task-broker/task-broker.service.ts
+  - id: rel-task-runner-runtime-publishes-to-task-broker
+    from: task-runner-runtime/task-runner-core/broker-transport
+    to: task-broker
+    type: core/software.relations.publishes-to
+    description: Task runner returns results through the broker.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/task-runner/src/task-runner.ts
+        - input: primary
+          path: packages/cli/src/task-runners/task-broker/task-broker-server.ts
+        - input: primary
+          path: packages/cli/src/task-runners/task-broker/task-broker.service.ts
+  - id: rel-main-control-plane-read-writes-primary-database
+    from: main-control-plane/server-runtime/persistence-access
+    to: primary-database/persistence-surface/db-index
+    type: core/software.relations.calls
+    description: Server reads and writes application state.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/server.ts
+        - input: primary
+          path: packages/@n8n/db/src/index.ts
+  - id: browser-editor-app--rel-shared-frontend-kernel-calls-workflows-view
+    from: >-
+      browser-editor-app/shared-frontend-kernel/shared-frontend-foundation/ui-foundation/design-system
+    to: browser-editor-app/workflows-view
+    type: core/software.relations.calls
+    description: Shared frontend kernel feeds the editor surface.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/frontend/editor-ui/src/main.ts
+        - input: primary
+          path: packages/frontend/editor-ui/src/app/moduleInitializer/moduleInitializer.ts
+        - input: primary
+          path: packages/frontend/editor-ui/src/app/views/WorkflowsView.vue
+  - id: main-control-plane--rel-server-runtime-calls-workflows-api
+    from: main-control-plane/server-runtime/api-wiring
+    to: main-control-plane/workflows-api
+    type: core/software.relations.calls
+    description: Runtime wires the workflows API.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/server.ts
+  - id: main-control-plane--rel-server-runtime-calls-executions-api
+    from: main-control-plane/server-runtime/api-wiring
+    to: main-control-plane/executions-api
+    type: core/software.relations.calls
+    description: Runtime wires the executions API.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/server.ts
+  - id: main-control-plane--rel-server-runtime-calls-webhooks-api
+    from: main-control-plane/server-runtime/api-wiring
+    to: main-control-plane/webhooks-api
+    type: core/software.relations.calls
+    description: Runtime wires the webhook lookup API.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/server.ts
+  - id: queue-worker-plane--rel-scaling-service-calls-job-processor
+    from: queue-worker-plane/scaling-service/job-dispatch
+    to: queue-worker-plane/job-processor/job-orchestration/job-preparation
+    type: core/software.relations.calls
+    description: Queue orchestration delegates dequeued jobs to the processor.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/scaling/scaling.service.ts
+  - id: task-runner-runtime--rel-task-runner-entrypoint-calls-task-runner-core
+    from: task-runner-runtime/task-runner-entrypoint/task-runner-handoff
+    to: task-runner-runtime/task-runner-core/broker-transport
+    type: core/software.relations.calls
+    description: Bootstrap hands off to the core runner.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/task-runner/src/start.ts
+  - id: >-
+      browser-editor-app--shared-frontend-kernel--rel-shared-frontend-foundation-calls-rest-api-client
+    from: >-
+      browser-editor-app/shared-frontend-kernel/shared-frontend-foundation/ui-foundation/design-system
+    to: browser-editor-app/shared-frontend-kernel/rest-api-client
+    type: core/software.relations.calls
+    description: Shared kernel wires in the API client.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/frontend/@n8n/rest-api-client/package.json
+  - id: main-control-plane--server-runtime--rel-server-bootstrap-calls-api-wiring
+    from: main-control-plane/server-runtime/server-bootstrap/controller-imports
+    to: main-control-plane/server-runtime/api-wiring
+    type: core/software.relations.calls
+    description: Bootstrap composes the APIs.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/server.ts
+  - id: main-control-plane--server-runtime--rel-server-bootstrap-calls-queue-publisher
+    from: main-control-plane/server-runtime/server-bootstrap/queue-wiring
+    to: main-control-plane/server-runtime/queue-publisher
+    type: core/software.relations.calls
+    description: Bootstrap composes queue publishing.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/server.ts
+        - input: primary
+          path: packages/cli/src/scaling/scaling.service.ts
+  - id: main-control-plane--server-runtime--rel-server-bootstrap-calls-persistence-access
+    from: main-control-plane/server-runtime/server-bootstrap/state-wiring
+    to: main-control-plane/server-runtime/persistence-access
+    type: core/software.relations.calls
+    description: Bootstrap composes state access.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/server.ts
+        - input: primary
+          path: packages/@n8n/db/src/index.ts
+  - id: queue-worker-plane--scaling-service--rel-queue-orchestration-calls-job-dispatch
+    from: queue-worker-plane/scaling-service/queue-orchestration/job-dispatch
+    to: queue-worker-plane/scaling-service/job-dispatch
+    type: core/software.relations.calls
+    description: Queue setup delegates processed jobs.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/scaling/scaling.service.ts
+  - id: queue-worker-plane--job-processor--rel-job-orchestration-calls-task-runner-client
+    from: queue-worker-plane/job-processor/job-orchestration/workflow-execution
+    to: queue-worker-plane/job-processor/task-runner-client
+    type: core/software.relations.calls
+    description: Prepared jobs are handed to the task runner delegate.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/scaling/job-processor.ts
+  - id: task-runner-runtime--task-runner-entrypoint--rel-bootstrap-control-calls-task-runner-handoff
+    from: task-runner-runtime/task-runner-entrypoint/bootstrap-control/process-bootstrap
+    to: task-runner-runtime/task-runner-entrypoint/task-runner-handoff
+    type: core/software.relations.calls
+    description: Bootstrap hands off into the runner path.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/task-runner/src/start.ts
+  - id: task-runner-runtime--task-runner-core--rel-broker-transport-calls-task-offer-handler
+    from: task-runner-runtime/task-runner-core/broker-transport
+    to: task-runner-runtime/task-runner-core/task-offer-handler
+    type: core/software.relations.calls
+    description: Transport hands offers to the execution loop.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/task-runner/src/task-runner.ts
+  - id: task-runner-runtime--task-runner-core--rel-task-offer-handler-calls-result-publisher
+    from: task-runner-runtime/task-runner-core/task-offer-handler
+    to: task-runner-runtime/task-runner-core/result-publisher
+    type: core/software.relations.calls
+    description: Execution loop forwards results to publishing.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/task-runner/src/task-runner.ts
+  - id: task-runner-runtime--task-runner-core--rel-result-publisher-calls-broker-transport
+    from: task-runner-runtime/task-runner-core/result-publisher
+    to: task-runner-runtime/task-runner-core/broker-transport
+    type: core/software.relations.calls
+    description: Published results flow back through the broker transport.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/task-runner/src/task-runner.ts
+  - id: primary-database--persistence-surface--rel-db-index-calls-repositories-index
+    from: primary-database/persistence-surface/db-index
+    to: primary-database/persistence-surface/repositories-index
+    type: core/software.relations.calls
+    description: Package entrypoint exposes repository APIs.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/db/src/index.ts
+        - input: primary
+          path: packages/@n8n/db/src/repositories/index.ts
+  - id: primary-database--persistence-surface--rel-db-index-calls-migrations-index
+    from: primary-database/persistence-surface/db-index
+    to: primary-database/persistence-surface/migrations-index
+    type: core/software.relations.calls
+    description: Package entrypoint exposes migrations.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/db/src/index.ts
+        - input: primary
+          path: packages/@n8n/db/src/migrations/postgresdb/index.ts
+  - id: primary-database--persistence-surface--rel-repositories-index-calls-entities-index
+    from: primary-database/persistence-surface/repositories-index
+    to: primary-database/persistence-surface/entities-index
+    type: core/software.relations.calls
+    description: Repositories build on persisted entities.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/db/src/repositories/index.ts
+        - input: primary
+          path: packages/@n8n/db/src/entities/index.ts
+  - id: primary-database--persistence-surface--rel-entities-index-calls-db-index
+    from: primary-database/persistence-surface/entities-index
+    to: primary-database/persistence-surface/db-index
+    type: core/software.relations.calls
+    description: Entity surface flows back into the package entrypoint.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/db/src/entities/index.ts
+        - input: primary
+          path: packages/@n8n/db/src/index.ts
+  - id: >-
+      browser-editor-app--shared-frontend-kernel--shared-frontend-foundation--rel-ui-foundation-calls-stores
+    from: browser-editor-app/shared-frontend-kernel/shared-frontend-foundation/ui-foundation
+    to: browser-editor-app/shared-frontend-kernel/shared-frontend-foundation/stores
+    type: core/software.relations.calls
+    description: UI runtime uses shared state.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/frontend/editor-ui/src/app/moduleInitializer/moduleInitializer.ts
+        - input: primary
+          path: packages/frontend/@n8n/stores/src/index.ts
+  - id: >-
+      browser-editor-app--shared-frontend-kernel--shared-frontend-foundation--rel-stores-calls-ui-foundation
+    from: browser-editor-app/shared-frontend-kernel/shared-frontend-foundation/stores
+    to: >-
+      browser-editor-app/shared-frontend-kernel/shared-frontend-foundation/ui-foundation/design-system
+    type: core/software.relations.calls
+    description: Shared state feeds the UI runtime.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/frontend/editor-ui/src/app/views/WorkflowsView.vue
+        - input: primary
+          path: packages/frontend/@n8n/design-system/src/index.ts
+  - id: >-
+      main-control-plane--server-runtime--server-bootstrap--rel-controller-imports-calls-queue-wiring
+    from: main-control-plane/server-runtime/server-bootstrap/controller-imports
+    to: main-control-plane/server-runtime/server-bootstrap/queue-wiring
+    type: core/software.relations.calls
+    description: Controller bootstrap hands off to queue wiring.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/server.ts
+        - input: primary
+          path: packages/cli/src/scaling/scaling.service.ts
+  - id: >-
+      main-control-plane--server-runtime--server-bootstrap--rel-controller-imports-calls-state-wiring
+    from: main-control-plane/server-runtime/server-bootstrap/controller-imports
+    to: main-control-plane/server-runtime/server-bootstrap/state-wiring
+    type: core/software.relations.calls
+    description: Controller bootstrap hands off to persistence wiring.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/server.ts
+        - input: primary
+          path: packages/@n8n/db/src/index.ts
+  - id: >-
+      queue-worker-plane--scaling-service--queue-orchestration--rel-worker-entry-calls-worker-bootstrap
+    from: queue-worker-plane/scaling-service/queue-orchestration/worker-entry
+    to: queue-worker-plane/scaling-service/queue-orchestration/worker-bootstrap
+    type: core/software.relations.calls
+    description: Worker command hands off to bootstrap.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/commands/worker.ts
+  - id: >-
+      queue-worker-plane--scaling-service--queue-orchestration--rel-worker-bootstrap-calls-queue-wiring
+    from: queue-worker-plane/scaling-service/queue-orchestration/worker-bootstrap
+    to: queue-worker-plane/scaling-service/queue-orchestration/queue-wiring
+    type: core/software.relations.calls
+    description: Bootstrap hands off to queue setup.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/commands/worker.ts
+        - input: primary
+          path: packages/cli/src/scaling/scaling.service.ts
+  - id: queue-worker-plane--scaling-service--queue-orchestration--rel-queue-wiring-calls-job-dispatch
+    from: queue-worker-plane/scaling-service/queue-orchestration/queue-wiring
+    to: queue-worker-plane/scaling-service/queue-orchestration/job-dispatch
+    type: core/software.relations.calls
+    description: Queue setup hands off processed jobs.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/scaling/scaling.service.ts
+  - id: queue-worker-plane--scaling-service--queue-orchestration--rel-job-dispatch-calls-worker-entry
+    from: queue-worker-plane/scaling-service/queue-orchestration/job-dispatch
+    to: queue-worker-plane/scaling-service/queue-orchestration/worker-entry
+    type: core/software.relations.calls
+    description: Job dispatch loops back to worker startup.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/scaling/scaling.service.ts
+        - input: primary
+          path: packages/cli/src/commands/worker.ts
+  - id: >-
+      queue-worker-plane--job-processor--job-orchestration--rel-job-preparation-calls-workflow-execution
+    from: queue-worker-plane/job-processor/job-orchestration/job-preparation
+    to: queue-worker-plane/job-processor/job-orchestration/workflow-execution
+    type: core/software.relations.calls
+    description: Prepared data hands off to workflow execution.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/cli/src/scaling/job-processor.ts
+  - id: >-
+      task-runner-runtime--task-runner-entrypoint--bootstrap-control--rel-signal-handling-calls-process-bootstrap
+    from: task-runner-runtime/task-runner-entrypoint/bootstrap-control/signal-handling
+    to: task-runner-runtime/task-runner-entrypoint/bootstrap-control/process-bootstrap
+    type: core/software.relations.calls
+    description: Signal setup feeds process bootstrap.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/@n8n/task-runner/src/start.ts
+  - id: >-
+      browser-editor-app--shared-frontend-kernel--shared-frontend-foundation--ui-foundation--rel-design-system-calls-i18n
+    from: >-
+      browser-editor-app/shared-frontend-kernel/shared-frontend-foundation/ui-foundation/design-system
+    to: browser-editor-app/shared-frontend-kernel/shared-frontend-foundation/ui-foundation/i18n
+    type: core/software.relations.calls
+    description: UI runtime uses localization.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/frontend/editor-ui/src/main.ts
+        - input: primary
+          path: packages/frontend/@n8n/design-system/src/index.ts
+        - input: primary
+          path: packages/frontend/@n8n/i18n/src/index.ts
+        - input: primary
+          path: packages/frontend/editor-ui/src/app/views/WorkflowsView.vue
+inputs:
+  - id: primary
+    kind: git
+    repo: https://github.com/n8n-io/n8n
+    revision: 98e24baf64c38918abe99e04f28bbf9e58a5aa99
+    role: primary
+metadata:
+  workerBuild:
+    inputTokens: 25882929
+    cachedInputTokens: 23424512
+    outputTokens: 482301
+    approxTotalTokens: 49789742
+    mode: advanced
+    model: gpt-5.4-mini
+    builtAt: "2026-04-29T11:55:18.637Z"
+    durationMs: 1454195
+    turns: 47
+    nodes: 53
+    edges: 38
+  sourceRepository:
+    repo: https://github.com/n8n-io/n8n
+    url: https://github.com/n8n-io/n8n
+    commit: 98e24baf64c38918abe99e04f28bbf9e58a5aa99
+    committedAt: "2026-04-29T08:32:50Z"
+  name: N8n

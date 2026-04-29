@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL?: string;
   readonly VITE_FORCE_GUEST_MODE?: string;
+  readonly VITE_GALLERY_SOURCE?: 'api' | 'local';
 }
 
 interface ImportMeta {

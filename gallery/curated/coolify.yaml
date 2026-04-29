@@ -1,0 +1,761 @@
+version: 0.1.0
+schemaRefs:
+  - schema: gallery/coolify@0.1
+    layer: 0
+  - schema: core/frontend@0.3
+    layer: 0
+  - schema: core/web-app@0.3
+    layer: 0
+  - schema: core/software@0.1
+    layer: 0
+  - schema: core/base@0.1
+    layer: 0
+  - schema: core/code@0.1
+    layer: 1
+entities:
+  - id: portal-app
+    type: gallery/coolify.types.portal-app
+    name: Portal App
+    description: Browser-facing Livewire portal for operator workflows.
+    provenance:
+      locations:
+        - input: primary
+          path: routes/web.php
+        - input: primary
+          path: public/index.php
+        - input: primary
+          path: public/js/echo.js
+    children:
+      - id: portal-app/web-routes
+        type: core/code.types.module
+        name: Web Routes
+        description: Browser bootstrap and route surface.
+        provenance:
+          locations:
+            - input: primary
+              path: routes/web.php
+            - input: primary
+              path: public/index.php
+        children:
+          - id: portal-app/web-routes/browser-bootstrap
+            type: core/web-app.types.group
+            name: Browser Bootstrap
+            description: Bootstrap runtime and front controller.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: public/index.php
+            children:
+              - id: portal-app/web-routes/browser-bootstrap/php-runtime
+                type: core/software.types.system
+                name: PHP Runtime
+                description: Request execution boundary.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: public/index.php
+              - id: portal-app/web-routes/browser-bootstrap/entrypoint
+                type: core/code.types.module
+                name: Front Controller
+                description: Browser request bootstrap.
+                props:
+                  language: php
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: public/index.php
+          - id: portal-app/web-routes/route-definitions
+            type: core/code.types.module
+            name: Route Definitions
+            description: Authenticated browser route surface.
+            props:
+              language: php
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: routes/web.php
+            children:
+              - id: portal-app/web-routes/route-definitions/authenticated-browser-routes
+                type: core/code.types.module
+                name: Authenticated Browser Routes
+                description: Dashboard and terminal route surface.
+                props:
+                  language: php
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: routes/web.php
+      - id: portal-app/realtime-client
+        type: core/code.types.module
+        name: Realtime Bridge
+        description: Browser realtime client.
+        provenance:
+          locations:
+            - input: primary
+              path: public/js/echo.js
+  - id: control-plane-core
+    type: gallery/coolify.types.control-plane
+    name: Control Plane
+    description: >-
+      Main Laravel runtime that serves the operator UI, REST API, provisioning templates,
+      authentication, webhook handling, and orchestration workflows.
+    provenance:
+      locations:
+        - input: primary
+          path: routes/api.php
+        - input: primary
+          path: app/Http/Controllers/Api/DeployController.php
+        - input: primary
+          path: app/Console/Kernel.php
+    children:
+      - id: control-plane-core/api-surface
+        type: core/code.types.module
+        name: API Surface
+        description: Authenticated API routes and contract documentation.
+        props:
+          language: php
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: routes/api.php
+            - input: primary
+              path: openapi.yaml
+            - input: primary
+              path: openapi.json
+        children:
+          - id: control-plane-core/api-surface/route-dispatch
+            type: core/code.types.module
+            name: Route Dispatch
+            description: Authenticated API route surface.
+            props:
+              language: php
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: routes/api.php
+          - id: control-plane-core/api-surface/api-contract
+            type: core/code.types.module
+            name: API Contract Docs
+            description: Machine-readable contract docs.
+            provenance:
+              locations:
+                - input: primary
+                  path: openapi.yaml
+                - input: primary
+                  path: openapi.json
+      - id: control-plane-core/deploy-controller
+        type: core/code.types.module
+        name: Deploy Controller
+        description: Deployment lifecycle and provider bridge.
+        props:
+          language: php
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: app/Http/Controllers/Api/DeployController.php
+        children:
+          - id: control-plane-core/deploy-controller/deployment-lifecycle
+            type: core/code.types.module
+            name: Deployment Lifecycle
+            description: Request entry, lifecycle actions, state access, and provider handoff.
+            props:
+              language: php
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/Http/Controllers/Api/DeployController.php
+            children:
+              - id: control-plane-core/deploy-controller/deployment-lifecycle/controller-entry
+                type: core/code.types.module
+                name: Controller Entry
+                description: HTTP request entrypoint.
+                props:
+                  language: php
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/Http/Controllers/Api/DeployController.php
+              - id: control-plane-core/deploy-controller/deployment-lifecycle/request-dispatch
+                type: core/code.types.module
+                name: Request Dispatch
+                description: Controller entrypoint.
+                props:
+                  language: php
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/Http/Controllers/Api/DeployController.php
+              - id: control-plane-core/deploy-controller/deployment-lifecycle/lifecycle-actions
+                type: core/code.types.module
+                name: Lifecycle Actions
+                description: Lifecycle action coordination.
+                props:
+                  language: php
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/Http/Controllers/Api/DeployController.php
+                children:
+                  - id: >-
+                      control-plane-core/deploy-controller/deployment-lifecycle/lifecycle-actions/action-execution
+                    type: core/code.types.module
+                    name: Action Execution
+                    description: Lifecycle branch coordinator.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: app/Http/Controllers/Api/DeployController.php
+              - id: control-plane-core/deploy-controller/deployment-lifecycle/state-access
+                type: core/code.types.module
+                name: State Access
+                description: Persistence read/write layer.
+                props:
+                  language: php
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/Http/Controllers/Api/DeployController.php
+              - id: control-plane-core/deploy-controller/deployment-lifecycle/provider-handoff
+                type: core/code.types.module
+                name: Provider Handoff
+                description: Provider-specific orchestration bridge.
+                props:
+                  language: php
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/Http/Controllers/Api/DeployController.php
+          - id: control-plane-core/deploy-controller/provider-adapter
+            type: core/code.types.module
+            name: Provider Adapter
+            description: Outbound provider integration bridge.
+            props:
+              language: php
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/Http/Controllers/Api/DeployController.php
+      - id: control-plane-core/console-kernel
+        type: core/code.types.module
+        name: Console Kernel
+        description: Scheduler wiring module.
+        props:
+          language: php
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: app/Console/Kernel.php
+  - id: scheduler-queue-plane
+    type: gallery/coolify.types.worker-service
+    name: Scheduler and Queue Plane
+    description: Queue-processing and scheduled-task runtime for maintenance jobs and background orchestration.
+    provenance:
+      locations:
+        - input: primary
+          path: app/Console/Kernel.php
+        - input: primary
+          path: app/Jobs/ApplicationDeploymentJob.php
+        - input: primary
+          path: app/Jobs/ScheduledJobManager.php
+        - input: primary
+          path: app/Console/Commands/CleanupRedis.php
+    children:
+      - id: scheduler-queue-plane/queue-runtime
+        type: core/web-app.types.scheduler
+        name: Queue Runtime
+        description: Scheduler coordination, queued deployment work, and Redis maintenance.
+        provenance:
+          locations:
+            - input: primary
+              path: app/Console/Kernel.php
+            - input: primary
+              path: app/Jobs/ApplicationDeploymentJob.php
+            - input: primary
+              path: app/Jobs/ScheduledJobManager.php
+            - input: primary
+              path: app/Console/Commands/CleanupRedis.php
+        children:
+          - id: scheduler-queue-plane/queue-runtime/scheduled-job-manager
+            type: core/code.types.module
+            name: Scheduled Job Manager
+            description: Scheduled job registration and dispatch.
+            props:
+              language: php
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/Console/Kernel.php
+                - input: primary
+                  path: app/Jobs/ScheduledJobManager.php
+            children:
+              - id: scheduler-queue-plane/queue-runtime/scheduled-job-manager/schedule-registration
+                type: core/code.types.module
+                name: Schedule Registration
+                description: Kernel scheduling setup.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/Console/Kernel.php
+              - id: scheduler-queue-plane/queue-runtime/scheduled-job-manager/request-dispatch
+                type: core/code.types.module
+                name: Job Dispatch
+                description: Scheduled job coordinator.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: app/Jobs/ScheduledJobManager.php
+          - id: scheduler-queue-plane/queue-runtime/application-deployment-job
+            type: core/web-app.types.scheduled-job
+            name: Application Deployment Job
+            description: Queued deployment work.
+            provenance:
+              locations:
+                - input: primary
+                  path: app/Jobs/ApplicationDeploymentJob.php
+          - id: scheduler-queue-plane/queue-runtime/cleanup-redis
+            type: core/code.types.module
+            name: Cleanup Redis
+            description: Redis maintenance command.
+            props:
+              language: php
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/Console/Commands/CleanupRedis.php
+  - id: realtime-service
+    type: gallery/coolify.types.realtime-service
+    name: Realtime Service
+    description: Separate Node/Soketi runtime for browser terminal sessions and realtime broadcasts.
+    provenance:
+      locations:
+        - input: primary
+          path: docker-compose.prod.yml
+        - input: primary
+          path: routes/channels.php
+        - input: primary
+          path: public/js/pusher.js
+        - input: primary
+          path: app/Jobs/PushServerUpdateJob.php
+    children:
+      - id: realtime-service/realtime-stack
+        type: core/code.types.module
+        name: Realtime Stack
+        description: Realtime transport, broadcast bridge, and server update job.
+        props:
+          language: javascript
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: docker-compose.prod.yml
+            - input: primary
+              path: routes/channels.php
+            - input: primary
+              path: public/js/pusher.js
+            - input: primary
+              path: app/Jobs/PushServerUpdateJob.php
+        children:
+          - id: realtime-service/realtime-stack/broadcast-bridge
+            type: core/code.types.module
+            name: Broadcast Bridge
+            description: Realtime client bridge and channel authorization.
+            provenance:
+              locations:
+                - input: primary
+                  path: public/js/pusher.js
+                - input: primary
+                  path: routes/channels.php
+            children:
+              - id: realtime-service/realtime-stack/broadcast-bridge/client-realtime
+                type: core/code.types.module
+                name: Realtime Client
+                description: Browser-side transport bridge.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: public/js/pusher.js
+              - id: realtime-service/realtime-stack/broadcast-bridge/channel-authorization
+                type: core/code.types.module
+                name: Channel Authorization
+                description: Broadcast channel guard.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: routes/channels.php
+          - id: realtime-service/realtime-stack/soketi-service
+            type: core/code.types.module
+            name: Soketi Service
+            description: Realtime transport service.
+            provenance:
+              locations:
+                - input: primary
+                  path: docker-compose.prod.yml
+          - id: realtime-service/realtime-stack/server-update-job
+            type: core/code.types.module
+            name: Server Update Job
+            description: Pushes platform updates.
+            props:
+              language: php
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: app/Jobs/PushServerUpdateJob.php
+  - id: persistence-plane
+    type: core/web-app.types.datastore
+    name: Persistence Plane
+    description: Postgres and Redis state plane for domain data, queueing, and coordination.
+    provenance:
+      locations:
+        - input: primary
+          path: database/migrations/2014_10_12_000000_create_users_table.php
+        - input: primary
+          path: database/migrations/2023_03_20_112811_create_teams_table.php
+        - input: primary
+          path: docker-compose.prod.yml
+    children:
+      - id: persistence-plane/primary-database
+        type: core/web-app.types.relational-db
+        name: Primary Database
+        description: Postgres relational store.
+        props:
+          implementation: postgres
+        provenance:
+          locations:
+            - input: primary
+              path: database/migrations/2014_10_12_000000_create_users_table.php
+            - input: primary
+              path: database/migrations/2023_03_20_112811_create_teams_table.php
+            - input: primary
+              path: docker-compose.prod.yml
+      - id: persistence-plane/redis-cache
+        type: core/web-app.types.cache
+        name: Redis Cache
+        description: Redis-backed cache and queue state.
+        provenance:
+          locations:
+            - input: primary
+              path: docker-compose.prod.yml
+            - input: primary
+              path: app/Console/Commands/CleanupRedis.php
+  - id: external-integrations
+    type: core/web-app.types.external-api
+    name: External Integrations
+    description: External API boundary for source control, cloud providers, payments, and OAuth-based identity.
+    provenance:
+      locations:
+        - input: primary
+          path: routes/webhooks.php
+        - input: primary
+          path: app/Http/Controllers/Webhook/Github.php
+        - input: primary
+          path: app/Http/Controllers/Api/HetznerController.php
+        - input: primary
+          path: app/Http/Controllers/OauthController.php
+relations:
+  - id: rel-portal-app-calls-control-plane
+    from: portal-app/web-routes/route-definitions/authenticated-browser-routes
+    to: control-plane-core/api-surface/route-dispatch
+    type: core/software.relations.calls
+    description: Operator interaction flow.
+    provenance:
+      locations:
+        - input: primary
+          path: routes/web.php
+  - id: rel-portal-app-calls-realtime-service
+    from: portal-app/realtime-client
+    to: realtime-service/realtime-stack/soketi-service
+    type: core/software.relations.calls
+    description: Browser terminal and broadcast flow.
+    provenance:
+      locations:
+        - input: primary
+          path: public/js/pusher.js
+        - input: primary
+          path: routes/channels.php
+        - input: primary
+          path: docker-compose.prod.yml
+  - id: rel-realtime-service-calls-control-plane-core
+    from: realtime-service/realtime-stack/server-update-job
+    to: control-plane-core/api-surface/route-dispatch
+    type: core/software.relations.calls
+    description: Terminal and broadcast handoff.
+    provenance:
+      locations:
+        - input: primary
+          path: docker-compose.prod.yml
+        - input: primary
+          path: routes/channels.php
+        - input: primary
+          path: app/Jobs/PushServerUpdateJob.php
+  - id: rel-control-plane-core-calls-scheduler-queue-plane
+    from: control-plane-core/console-kernel
+    to: scheduler-queue-plane/queue-runtime/scheduled-job-manager/schedule-registration
+    type: core/software.relations.calls
+    description: Background job dispatch.
+    provenance:
+      locations:
+        - input: primary
+          path: app/Console/Kernel.php
+        - input: primary
+          path: app/Jobs/ApplicationDeploymentJob.php
+  - id: rel-control-plane-core-reads-persistence-plane
+    from: control-plane-core/deploy-controller/deployment-lifecycle/state-access
+    to: persistence-plane/primary-database
+    type: core/software.relations.reads
+    description: Domain state reads.
+    provenance:
+      locations:
+        - input: primary
+          path: database/migrations/2014_10_12_000000_create_users_table.php
+        - input: primary
+          path: docker-compose.prod.yml
+  - id: rel-control-plane-core-writes-persistence-plane
+    from: control-plane-core/deploy-controller/deployment-lifecycle/state-access
+    to: persistence-plane/primary-database
+    type: core/software.relations.writes
+    description: Domain state writes.
+    provenance:
+      locations:
+        - input: primary
+          path: database/migrations/2014_10_12_000000_create_users_table.php
+        - input: primary
+          path: docker-compose.prod.yml
+  - id: rel-scheduler-queue-plane-read-writes-persistence-plane
+    from: scheduler-queue-plane/queue-runtime/cleanup-redis
+    to: persistence-plane/redis-cache
+    type: core/software.relations.read-writes
+    description: Job and scheduler state access.
+    provenance:
+      locations:
+        - input: primary
+          path: app/Console/Commands/CleanupRedis.php
+  - id: rel-control-plane-core-calls-external-integrations
+    from: control-plane-core/deploy-controller/provider-adapter
+    to: external-integrations
+    type: core/software.relations.calls
+    description: Outbound provider calls.
+    provenance:
+      locations:
+        - input: primary
+          path: app/Http/Controllers/Api/HetznerController.php
+        - input: primary
+          path: app/Http/Controllers/OauthController.php
+        - input: primary
+          path: routes/webhooks.php
+  - id: rel-external-integrations-calls-control-plane-core
+    from: external-integrations
+    to: control-plane-core/api-surface/route-dispatch
+    type: core/software.relations.calls
+    description: Inbound webhooks and callbacks.
+    provenance:
+      locations:
+        - input: primary
+          path: routes/webhooks.php
+        - input: primary
+          path: app/Http/Controllers/Webhook/Github.php
+  - id: portal-app--rel-web-routes-calls-realtime-client
+    from: portal-app/web-routes/route-definitions/authenticated-browser-routes
+    to: portal-app/realtime-client
+    type: core/software.relations.calls
+    description: Realtime page wiring.
+    provenance:
+      locations:
+        - input: primary
+          path: routes/web.php
+        - input: primary
+          path: public/js/echo.js
+  - id: portal-app--web-routes--rel-browser-bootstrap-calls-route-definitions
+    from: portal-app/web-routes/browser-bootstrap/entrypoint
+    to: portal-app/web-routes/route-definitions/authenticated-browser-routes
+    type: core/software.relations.calls
+    description: Bootstrap handoff.
+    provenance:
+      locations:
+        - input: primary
+          path: public/index.php
+        - input: primary
+          path: routes/web.php
+  - id: control-plane-core--api-surface--rel-route-dispatch-calls-api-contract
+    from: control-plane-core/api-surface/route-dispatch
+    to: control-plane-core/api-surface/api-contract
+    type: core/software.relations.calls
+    description: Route contract linkage.
+    provenance:
+      locations:
+        - input: primary
+          path: routes/api.php
+        - input: primary
+          path: openapi.yaml
+        - input: primary
+          path: openapi.json
+  - id: control-plane-core--deploy-controller--rel-deployment-lifecycle-calls-provider-adapter
+    from: control-plane-core/deploy-controller/deployment-lifecycle/provider-handoff
+    to: control-plane-core/deploy-controller/provider-adapter
+    type: core/software.relations.calls
+    description: Provider handoff.
+    provenance:
+      locations:
+        - input: primary
+          path: app/Http/Controllers/Api/DeployController.php
+  - id: >-
+      scheduler-queue-plane--queue-runtime--rel-scheduled-job-manager-calls-application-deployment-job
+    from: scheduler-queue-plane/queue-runtime/scheduled-job-manager/request-dispatch
+    to: scheduler-queue-plane/queue-runtime/application-deployment-job
+    type: core/software.relations.calls
+    description: Deployment job dispatch.
+    provenance:
+      locations:
+        - input: primary
+          path: app/Console/Kernel.php
+        - input: primary
+          path: app/Jobs/ApplicationDeploymentJob.php
+  - id: scheduler-queue-plane--queue-runtime--rel-application-deployment-job-calls-cleanup-redis
+    from: scheduler-queue-plane/queue-runtime/application-deployment-job
+    to: scheduler-queue-plane/queue-runtime/cleanup-redis
+    type: core/software.relations.calls
+    description: Redis state handoff.
+    provenance:
+      locations:
+        - input: primary
+          path: app/Jobs/ApplicationDeploymentJob.php
+        - input: primary
+          path: app/Console/Commands/CleanupRedis.php
+  - id: realtime-service--realtime-stack--rel-soketi-service-calls-broadcast-bridge
+    from: realtime-service/realtime-stack/soketi-service
+    to: realtime-service/realtime-stack/broadcast-bridge/client-realtime
+    type: core/software.relations.calls
+    description: Transport handoff.
+    provenance:
+      locations:
+        - input: primary
+          path: docker-compose.prod.yml
+        - input: primary
+          path: public/js/pusher.js
+  - id: realtime-service--realtime-stack--rel-broadcast-bridge-calls-server-update-job
+    from: realtime-service/realtime-stack/broadcast-bridge/channel-authorization
+    to: realtime-service/realtime-stack/server-update-job
+    type: core/software.relations.calls
+    description: Update handoff.
+    provenance:
+      locations:
+        - input: primary
+          path: routes/channels.php
+        - input: primary
+          path: app/Jobs/PushServerUpdateJob.php
+  - id: portal-app--web-routes--browser-bootstrap--rel-php-runtime-calls-entrypoint
+    from: portal-app/web-routes/browser-bootstrap/php-runtime
+    to: portal-app/web-routes/browser-bootstrap/entrypoint
+    type: core/software.relations.calls
+    description: Runtime handoff.
+    provenance:
+      locations:
+        - input: primary
+          path: public/index.php
+  - id: >-
+      control-plane-core--deploy-controller--deployment-lifecycle--rel-controller-entry-calls-request-dispatch
+    from: control-plane-core/deploy-controller/deployment-lifecycle/controller-entry
+    to: control-plane-core/deploy-controller/deployment-lifecycle/request-dispatch
+    type: core/software.relations.calls
+    description: Entry handoff.
+    provenance:
+      locations:
+        - input: primary
+          path: app/Http/Controllers/Api/DeployController.php
+  - id: >-
+      control-plane-core--deploy-controller--deployment-lifecycle--rel-request-dispatch-calls-lifecycle-actions
+    from: control-plane-core/deploy-controller/deployment-lifecycle/request-dispatch
+    to: control-plane-core/deploy-controller/deployment-lifecycle/lifecycle-actions/action-execution
+    type: core/software.relations.calls
+    description: Controller dispatch.
+    provenance:
+      locations:
+        - input: primary
+          path: app/Http/Controllers/Api/DeployController.php
+  - id: >-
+      control-plane-core--deploy-controller--deployment-lifecycle--rel-lifecycle-actions-calls-state-access
+    from: control-plane-core/deploy-controller/deployment-lifecycle/lifecycle-actions/action-execution
+    to: control-plane-core/deploy-controller/deployment-lifecycle/state-access
+    type: core/software.relations.calls
+    description: State access coordination.
+    provenance:
+      locations:
+        - input: primary
+          path: app/Http/Controllers/Api/DeployController.php
+  - id: >-
+      control-plane-core--deploy-controller--deployment-lifecycle--rel-lifecycle-actions-calls-provider-handoff
+    from: control-plane-core/deploy-controller/deployment-lifecycle/lifecycle-actions/action-execution
+    to: control-plane-core/deploy-controller/deployment-lifecycle/provider-handoff
+    type: core/software.relations.calls
+    description: Provider coordination.
+    provenance:
+      locations:
+        - input: primary
+          path: app/Http/Controllers/Api/DeployController.php
+  - id: >-
+      scheduler-queue-plane--queue-runtime--scheduled-job-manager--rel-schedule-registration-calls-request-dispatch
+    from: scheduler-queue-plane/queue-runtime/scheduled-job-manager/schedule-registration
+    to: scheduler-queue-plane/queue-runtime/scheduled-job-manager/request-dispatch
+    type: core/software.relations.calls
+    description: Schedule handoff.
+    provenance:
+      locations:
+        - input: primary
+          path: app/Console/Kernel.php
+        - input: primary
+          path: app/Jobs/ScheduledJobManager.php
+  - id: >-
+      realtime-service--realtime-stack--broadcast-bridge--rel-client-realtime-calls-channel-authorization
+    from: realtime-service/realtime-stack/broadcast-bridge/client-realtime
+    to: realtime-service/realtime-stack/broadcast-bridge/channel-authorization
+    type: core/software.relations.calls
+    description: Authorization handoff.
+    provenance:
+      locations:
+        - input: primary
+          path: public/js/pusher.js
+        - input: primary
+          path: routes/channels.php
+inputs:
+  - id: primary
+    kind: git
+    repo: https://github.com/coollabsio/coolify
+    revision: 96bfc14543c893f0b0156b12c40250d3f8cc96a2
+    role: primary
+metadata:
+  workerBuild:
+    inputTokens: 7087050
+    cachedInputTokens: 6115840
+    outputTokens: 260048
+    approxTotalTokens: 13462938
+    mode: advanced
+    model: gpt-5.4-mini
+    builtAt: "2026-04-28T12:15:38.592Z"
+    durationMs: 2379665
+    turns: 40
+    nodes: 40
+    edges: 24
+  sourceRepository:
+    repo: https://github.com/coollabsio/coolify
+    url: https://github.com/coollabsio/coolify
+    commit: 96bfc14543c893f0b0156b12c40250d3f8cc96a2
+    committedAt: "2026-04-27T10:51:15+02:00"
+  name: Coolify

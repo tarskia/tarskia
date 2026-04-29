@@ -4,6 +4,12 @@ import {
   listGalleryDiagrams,
   type listGalleryDiagramsResponse,
 } from '../api/generated/gallery/gallery';
+import {
+  getLocalGalleryDiagram,
+  listLocalGalleryDiagrams,
+  shouldUseLocalGalleryFallback,
+  shouldUseLocalGallerySource,
+} from './local-gallery';
 
 export const GALLERY_QUERY_STALE_TIME_MS = 30_000;
 
@@ -82,3 +88,41 @@ export const getGalleryDiagramWithRetryableFailures = async (
   options?: RequestInit,
 ): Promise<getGalleryDiagramResponse> =>
   assertRetryableGalleryStatus(await getGalleryDiagram(namespace, slug, options));
+
+export const listGalleryDiagramsWithLocalFallback = async (
+  options?: RequestInit,
+): Promise<listGalleryDiagramsResponse> => {
+  if (shouldUseLocalGallerySource()) {
+    return listLocalGalleryDiagrams();
+  }
+  try {
+    return await listGalleryDiagramsWithRetryableFailures(options);
+  } catch (error) {
+    if (shouldUseLocalGalleryFallback()) {
+      return listLocalGalleryDiagrams();
+    }
+    throw error;
+  }
+};
+
+export const getGalleryDiagramWithLocalFallback = async (
+  namespace: string,
+  slug: string,
+  options?: RequestInit,
+): Promise<getGalleryDiagramResponse> => {
+  if (shouldUseLocalGallerySource()) {
+    return getLocalGalleryDiagram(namespace, slug);
+  }
+  try {
+    const response = await getGalleryDiagramWithRetryableFailures(namespace, slug, options);
+    if (response.status === 404 && shouldUseLocalGalleryFallback()) {
+      return getLocalGalleryDiagram(namespace, slug);
+    }
+    return response;
+  } catch (error) {
+    if (shouldUseLocalGalleryFallback()) {
+      return getLocalGalleryDiagram(namespace, slug);
+    }
+    throw error;
+  }
+};

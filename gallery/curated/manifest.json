@@ -1,0 +1,42 @@
+[
+  {
+    "namespace": "tarskia",
+    "slug": "outline",
+    "title": "Outline",
+    "file": "outline.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "harbor",
+    "title": "Harbor",
+    "file": "harbor.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "coolify",
+    "title": "Coolify",
+    "file": "coolify.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "chatwoot",
+    "title": "Chatwoot",
+    "file": "chatwoot.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "n8n",
+    "title": "N8n",
+    "file": "n8n.yaml",
+    "visibility": "listed",
+    "starter": false
+  }
+]
