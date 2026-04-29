@@ -469,6 +469,12 @@ types:
 
   - id: external-api
     label: External API
+    description: >-
+      External integration boundary for APIs, SaaS products, cloud provider services, partner
+      systems, or dynamic user/plugin-selected outbound services outside the repository. Use a
+      concrete provider when evidence names one; otherwise use a generic node such as External
+      Services or External Integrations to terminate visible flow at the system boundary. Prefer
+      this over inventing an internal queue, broker, or runtime solely to continue a flow.
     traits: [core/software.traits.compute, core/software.traits.interface]
     defaultTags: [core/software.tags.integration]
     display:
@@ -478,5 +484,44 @@ types:
         height: 70
       style:
         hue: 300
+    properties:
+      - id: specificity
+        type: enum
+        description: How precisely the external target is known from the available evidence.
+        values: [named-provider, provider-family, dynamic, unknown]
+        display:
+          priority: 1
+      - id: category
+        type: enum
+        description: Functional class of the external integration.
+        values:
+          [
+            third-party-api,
+            external-service,
+            saas,
+            cloud-provider,
+            payment,
+            messaging,
+            storage,
+            observability,
+            identity,
+            ai,
+            webhook-target,
+          ]
+        allowOther: true
+        display:
+          priority: 2
+      - id: protocol
+        type: enum
+        description: Primary protocol or integration surface when known.
+        values: [http, rest, graphql, grpc, webhook, sdk, websocket, smtp, amqp]
+        allowOther: true
+      - id: direction
+        type: enum
+        description: Direction of interaction relative to the repo-owned system.
+        values: [inbound, outbound, bidirectional]
+      - id: provider
+        type: string
+        description: Named provider, product, or integration family when known.
 
 relations: []

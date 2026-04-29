@@ -262,6 +262,7 @@ const WorkspaceDiagramPaneInner = forwardRef<
     addEntity,
     commitDoc,
     deleteEntities,
+    showInspector,
     showDebug,
     nodeVisualMode,
     triggerEntityZoom,

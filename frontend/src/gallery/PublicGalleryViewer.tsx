@@ -337,6 +337,7 @@ export default function PublicGalleryViewer() {
     addEntity: () => '',
     commitDoc,
     deleteEntities: () => {},
+    showInspector,
     showDebug: false,
     nodeVisualMode: 'outline',
     triggerEntityZoom,

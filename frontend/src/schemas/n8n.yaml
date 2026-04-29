@@ -3,8 +3,8 @@ name: n8n
 version: "0.1"
 description: >-
   n8n-shaped architectural wrappers for the browser editor, main server/control plane, queue worker
-  runtime, and external task runner, aligned to the repository's deployable runtime surfaces rather
-  than internal code packages.
+  runtime, task runner processes, and local gateway, aligned to the repository's deployable runtime
+  surfaces rather than internal code packages.
 use:
   - schema: core/base@0.1
     alias: base
@@ -19,7 +19,9 @@ use:
 traits:
   - id: n8n-runtime-like
     label: n8n Runtime
-    description: Top-level n8n application boundary spanning browser, server, worker, and task-runner flows.
+    description: >-
+      Top-level n8n application boundary spanning browser, server, worker, task-runner, and
+      local-gateway flows.
     extends: core/base.traits.containable
     analysis:
       flowType: through
@@ -48,7 +50,7 @@ traits:
   - id: control-plane-like
     label: Control Plane
     description: >-
-      Main Node runtime that serves the app shell, REST API, webhooks, auth, and orchestration
+      Main Node/Express runtime that serves the app shell, API, webhooks, auth, and orchestration
       flows.
     extends: core/base.traits.containable
     analysis:
@@ -69,17 +71,20 @@ traits:
       flowType: through
       expectedRelationIds:
         - calls
+        - publishes-to
         - consumes-from
     relationParticipation:
       - relation: core/software.relations.calls
         endpoint: both
+      - relation: core/software.relations.publishes-to
+        endpoint: from
       - relation: core/software.relations.consumes-from
         endpoint: from
   - id: task-runner-like
     label: Task Runner
     description: >-
-      External task runner runtime that executes delegated workflow tasks and returns results
-      through the broker.
+      External runtime that executes delegated workflow code and can call back into the control
+      plane or out to external integrations.
     extends: core/base.traits.containable
     analysis:
       flowType: through
@@ -91,12 +96,25 @@ traits:
         endpoint: both
       - relation: core/software.relations.consumes-from
         endpoint: from
+  - id: local-gateway-like
+    label: Local Gateway
+    description: >-
+      Desktop tray runtime that exposes a secure local HTTP gateway and continues into the
+      computer-use daemon and renderer flows.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
 types:
   - id: n8n
     label: n8n
     description: >-
       Top-level n8n application boundary spanning browser editor, main server/control plane, queue
-      worker runtime, and task runner processes.
+      worker runtime, task runner processes, and local gateway.
     extends: core/web-app.types.application
     traits:
       - gallery/n8n.traits.n8n-runtime-like
@@ -110,11 +128,12 @@ types:
         - control-plane
         - worker-service
         - task-runner
+        - local-gateway
     display:
       primaryTag: core/software.tags.service
       defaultSize:
-        width: 340
-        height: 184
+        width: 380
+        height: 208
       style:
         hue: 210
       count:
@@ -123,6 +142,7 @@ types:
           - control-plane
           - worker-service
           - task-runner
+          - local-gateway
         label: components
   - id: portal-app
     label: Portal App
@@ -153,11 +173,41 @@ types:
           - module
           - group
         label: components
+    properties:
+      - id: runtime
+        type: enum
+        description: >-
+          Primary execution environment for this node or subtree. Populate it when one runtime is
+          uniformly true for the boundary. If major children would have different runtimes, prefer
+          separate boundaries instead of mixing them under one node.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true. Prefer it on the highest boundary where it stays accurate instead of repeating it
+          across every descendant.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
   - id: control-plane
     label: Control Plane
-    description: >-
-      Main server runtime that serves the editor shell, API, webhooks, auth, and orchestration
-      flows.
+    description: Main Node runtime that serves the editor shell, API, webhooks, auth, and orchestration flows.
     extends: core/web-app.types.service
     traits:
       - gallery/n8n.traits.control-plane-like
@@ -193,6 +243,38 @@ types:
           - module
           - group
         label: components
+    properties:
+      - id: runtime
+        type: enum
+        description: >-
+          Primary execution environment for this node or subtree. Populate it when one runtime is
+          uniformly true for the boundary. If major children would have different runtimes, prefer
+          separate boundaries instead of mixing them under one node.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true. Prefer it on the highest boundary where it stays accurate instead of repeating it
+          across every descendant.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
   - id: worker-service
     label: Worker Service
     description: Queue-processing runtime for workflow execution, retries, and asynchronous maintenance work.
@@ -228,11 +310,26 @@ types:
           - module
           - group
         label: jobs
+    properties:
+      - id: runtime
+        type: enum
+        description: >-
+          Primary execution environment for this node or subtree. Populate it when one runtime is
+          uniformly true for the boundary. If major children would have different runtimes, prefer
+          separate boundaries instead of mixing them under one node.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
   - id: task-runner
     label: Task Runner
     description: >-
-      External task runner runtime that executes delegated workflow tasks and returns results
-      through the broker.
+      External runtime that executes delegated workflow code and can call back into the control
+      plane or out to external integrations.
     extends: core/web-app.types.service
     traits:
       - gallery/n8n.traits.task-runner-like
@@ -259,5 +356,83 @@ types:
           - module
           - group
         label: components
+    properties:
+      - id: runtime
+        type: enum
+        description: >-
+          Primary execution environment for this node or subtree. Populate it when one runtime is
+          uniformly true for the boundary. If major children would have different runtimes, prefer
+          separate boundaries instead of mixing them under one node.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+  - id: local-gateway
+    label: Local Gateway
+    description: >-
+      Desktop tray runtime that exposes a secure local HTTP gateway and continues into the
+      computer-use daemon and renderer flows.
+    extends: core/software.types.system
+    traits:
+      - gallery/n8n.traits.local-gateway-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.integration
+    containment:
+      allowedChildTypes:
+        - module
+        - group
+      allowedChildTraits:
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.integration
+      defaultSize:
+        width: 230
+        height: 108
+      style:
+        hue: 170
+      count:
+        childTypes:
+          - module
+          - group
+        label: components
+    properties:
+      - id: runtime
+        type: enum
+        description: >-
+          Primary execution environment for this node or subtree. Populate it when one runtime is
+          uniformly true for the boundary. If major children would have different runtimes, prefer
+          separate boundaries instead of mixing them under one node.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true. Prefer it on the highest boundary where it stays accurate instead of repeating it
+          across every descendant.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
 relations: []
 tags: []

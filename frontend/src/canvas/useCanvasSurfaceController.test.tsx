@@ -11,6 +11,7 @@ import {
   shouldHandleViewportGestureEvent,
   shouldSuppressHostEdgeChrome,
   shouldSuppressHostInteractiveControls,
+  shouldWaitForSelectionRevealCanvasResize,
 } from './useCanvasSurfaceController';
 
 type EdgeSearchSeed = {
@@ -483,6 +484,42 @@ describe('useCanvasSurfaceController', () => {
         canvasSize: null,
       }),
     ).toBeNull();
+  });
+
+  it('waits for the inspector-open canvas shrink before auto-revealing selection', () => {
+    expect(
+      shouldWaitForSelectionRevealCanvasResize({
+        waitForInspectorResize: true,
+        previousCanvasWidth: 1200,
+        currentCanvasWidth: 1200,
+        waitFrames: 0,
+      }),
+    ).toBe(true);
+    expect(
+      shouldWaitForSelectionRevealCanvasResize({
+        waitForInspectorResize: true,
+        previousCanvasWidth: 1200,
+        currentCanvasWidth: 880,
+        waitFrames: 1,
+      }),
+    ).toBe(true);
+    expect(
+      shouldWaitForSelectionRevealCanvasResize({
+        waitForInspectorResize: true,
+        previousCanvasWidth: 1200,
+        currentCanvasWidth: 880,
+        waitFrames: 1,
+        resizeSettleFrames: 1,
+      }),
+    ).toBe(false);
+    expect(
+      shouldWaitForSelectionRevealCanvasResize({
+        waitForInspectorResize: false,
+        previousCanvasWidth: 1200,
+        currentCanvasWidth: 1200,
+        waitFrames: 0,
+      }),
+    ).toBe(false);
   });
 
   it('treats semantically identical host render states as equal even when handlers are recreated', () => {
