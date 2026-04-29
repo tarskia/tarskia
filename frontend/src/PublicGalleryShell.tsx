@@ -9,8 +9,8 @@ import { Input } from './components/ui/input';
 import {
   GALLERY_QUERY_STALE_TIME_MS,
   galleryRetryDelay,
-  getGalleryDiagramWithRetryableFailures,
-  listGalleryDiagramsWithRetryableFailures,
+  getGalleryDiagramWithLocalFallback,
+  listGalleryDiagramsWithLocalFallback,
   retryGalleryQuery,
 } from './gallery/gallery-query';
 import {
@@ -51,7 +51,7 @@ export default function PublicGalleryShell() {
       staleTime: GALLERY_QUERY_STALE_TIME_MS,
       retry: retryGalleryQuery,
       retryDelay: galleryRetryDelay,
-      queryFn: ({ signal }) => getGalleryDiagramWithRetryableFailures(namespace, slug, { signal }),
+      queryFn: ({ signal }) => getGalleryDiagramWithLocalFallback(namespace, slug, { signal }),
     },
   });
   const galleryQuery = useListGalleryDiagrams({
@@ -60,7 +60,7 @@ export default function PublicGalleryShell() {
       staleTime: GALLERY_QUERY_STALE_TIME_MS,
       retry: retryGalleryQuery,
       retryDelay: galleryRetryDelay,
-      queryFn: ({ signal }) => listGalleryDiagramsWithRetryableFailures({ signal }),
+      queryFn: ({ signal }) => listGalleryDiagramsWithLocalFallback({ signal }),
     },
   });
   const detail = coerceSuccessfulResponseBody<DtoGalleryDiagramDetailResponse>(detailQuery.data);

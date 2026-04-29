@@ -1,12 +1,20 @@
 # Tarskia
 
-Tarskia is a semantic architecture diagram system. This repository contains the
-open-source frontend, gallery/studio renderer, and the shared semantic model used
-to validate and render diagrams.
+Tarskia is a semantic architecture diagram system for inspecting software
+repositories as structured, schema-validated diagrams.
 
-The public gallery shows AI-generated, schema-validated diagrams for open-source
-repositories. The generation worker and production backend are private while the
-worker pipeline is still experimental.
+This repository contains the open-source frontend, diagram renderer, curated
+gallery source, and shared semantic model. The generation worker and production
+backend are private while the worker pipeline is still experimental.
+
+## What You Can Run Locally
+
+The public gallery and renderer run from this repository without the private
+backend. In local dev, the gallery loads checked-in YAML diagrams from
+`gallery/curated` if the backend API is unavailable.
+
+The studio UI is included, but persistence, auth, and hosted account features
+depend on the private backend.
 
 ## Repository Layout
 
@@ -16,21 +24,16 @@ worker pipeline is still experimental.
 - `openapi/`: public API contract snapshot for the hosted backend.
 - `scripts/`: shared build scripts.
 
-## Development
+## Quick Start
 
 ```sh
 npm ci
-npm run build:semantics
-npm run test -w @tarskia/diagram-semantics
-npm run test -w @tarskia/frontend
-npm run build -w @tarskia/frontend
-```
-
-Run the local frontend:
-
-```sh
 npm run dev -w @tarskia/frontend
 ```
+
+Open the Vite URL and go to `/gallery`.
+
+## Backend Configuration
 
 Set `VITE_API_BASE_URL` to point the frontend at a backend API. If it is not set,
 the Vite dev server proxies API paths to `http://localhost:8082`. The public
@@ -47,6 +50,15 @@ Force local gallery data without trying the API:
 
 ```sh
 VITE_GALLERY_SOURCE=local npm run dev -w @tarskia/frontend
+```
+
+## Verification
+
+```sh
+npm run build:semantics
+npm run test -w @tarskia/diagram-semantics
+npm run test -w @tarskia/frontend
+npm run build -w @tarskia/frontend
 ```
 
 ## API Client

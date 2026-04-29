@@ -150,6 +150,9 @@ export default function PublicGalleryIndex() {
     () => sortPublicGalleryRows(filteredRows, { sortKey, sortDirection }),
     [filteredRows, sortDirection, sortKey],
   );
+  const totalRowLabel = rows.length === 1 ? '1 diagram' : `${rows.length} diagrams`;
+  const visibleRowLabel =
+    sortedRows.length === rows.length ? totalRowLabel : `${sortedRows.length} of ${totalRowLabel}`;
 
   const toggleSort = (nextSortKey: SortKey) => {
     if (nextSortKey === sortKey) {
@@ -180,43 +183,48 @@ export default function PublicGalleryIndex() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col px-5 py-6">
-      <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-        AI-generated, schema-validated architecture diagrams for open-source repositories. Each
-        diagram is built from public source at a captured commit and may miss or misclassify
-        implementation details.
-      </p>
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-        <a
-          href={DIAGRAM_ISSUE_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <span>Report diagram issue</span>
-          <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-        </a>
-        <a
-          href={REPO_REQUEST_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <span>Request a repo</span>
-          <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-        </a>
-      </div>
+      <div className="flex flex-col gap-5 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+            AI-generated, schema-validated architecture diagrams for open-source repositories. Each
+            diagram is built from public source at a captured commit and may miss or misclassify
+            implementation details.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+            <a
+              href={DIAGRAM_ISSUE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <span>Report diagram issue</span>
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
+            <a
+              href={REPO_REQUEST_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <span>Request a repo</span>
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
+          </div>
+        </div>
 
-      <div className="mt-5 max-w-sm">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search gallery"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            aria-label="Search gallery"
-            className="bg-transparent py-1.5 pl-8 pr-3"
-          />
+        <div className="w-full max-w-sm md:w-[320px]">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search gallery"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              aria-label="Search gallery"
+              className="bg-transparent py-1.5 pl-8 pr-3"
+            />
+          </div>
+          <div className="mt-2 text-xs text-muted-foreground md:text-right">{visibleRowLabel}</div>
         </div>
       </div>
 
@@ -227,15 +235,15 @@ export default function PublicGalleryIndex() {
       ) : null}
 
       {rows.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-border bg-surface px-5 py-8 text-sm text-muted-foreground">
+        <div className="mt-6 rounded-lg border border-border bg-surface px-5 py-8 text-sm text-muted-foreground">
           No gallery diagrams are available.
         </div>
       ) : sortedRows.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-border bg-surface px-5 py-8 text-sm text-muted-foreground">
+        <div className="mt-6 rounded-lg border border-border bg-surface px-5 py-8 text-sm text-muted-foreground">
           No matching diagrams.
         </div>
       ) : (
-        <div className="mt-8 overflow-x-auto">
+        <div className="mt-6 overflow-x-auto">
           <table className="min-w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-border">

@@ -82,6 +82,7 @@ describe('PublicGalleryIndex', () => {
     expect(html).toContain('Repository');
     expect(html).toContain('Nodes');
     expect(html).toContain('Tokens');
+    expect(html).toContain('3 diagrams');
     expect(html).toContain('outline/outline');
     expect(html).toContain('>GitHub<');
     expect(html).toContain('href="https://github.com/outline/outline"');
