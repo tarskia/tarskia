@@ -273,6 +273,7 @@ describe('TransitionOverlay', () => {
 
     expect(markup).toContain('<clipPath');
     expect(markup).toContain('edge-underlay-path');
+    expect(markup).toContain('fill="none"');
     expect(markup).not.toContain('edge-overlay-path-branch');
   });
 
