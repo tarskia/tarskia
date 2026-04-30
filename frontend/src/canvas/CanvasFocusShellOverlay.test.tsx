@@ -14,7 +14,7 @@ describe('CanvasFocusShellOverlay', () => {
             typeLabel: 'Datastore',
             hue: 32,
             isRoot: true,
-            frame: { left: 16, top: 16, right: 1584, bottom: 884 },
+            frame: { left: 16, top: 16, right: 16, bottom: 16 },
           },
           {
             id: 'table-group',
@@ -22,7 +22,7 @@ describe('CanvasFocusShellOverlay', () => {
             displayName: 'Core tables',
             typeLabel: 'Table Group',
             hue: 32,
-            frame: { left: 42, top: 40, right: 1558, bottom: 860 },
+            frame: { left: 42, top: 40, right: 42, bottom: 40 },
           },
         ]}
         onSelectShell={vi.fn()}
@@ -45,7 +45,7 @@ describe('CanvasFocusShellOverlay', () => {
             typeLabel: 'Datastore',
             hue: 32,
             isRoot: true,
-            frame: { left: 16, top: 16, right: 1584, bottom: 884 },
+            frame: { left: 16, top: 16, right: 16, bottom: 16 },
           },
         ]}
         leftOcclusion={260}

@@ -33,13 +33,14 @@ import type {
 
 const MIN_VIEW_ZOOM = 0.05;
 const MAX_VIEW_ZOOM = 2;
-const INSPECTOR_PANEL_WIDTH = 320;
+const INSPECTOR_PANEL_WIDTH = 420;
 const INSPECTOR_CENTER_OFFSET = INSPECTOR_PANEL_WIDTH / 2;
 
 export const shouldDelayWorkspaceCanvasMount = (params: {
   hasContent: boolean;
   defaultViewport?: { x: number; y: number; zoom: number };
-}) => params.hasContent && !params.defaultViewport;
+  isLiveCanvasVisible?: boolean;
+}) => params.hasContent && !params.defaultViewport && !params.isLiveCanvasVisible;
 
 export interface WorkspaceDiagramPaneProps {
   model: WorkspaceDiagramModel;
@@ -132,6 +133,7 @@ const WorkspaceDiagramPaneInner = forwardRef<
   const shouldDelayCanvasMount = shouldDelayWorkspaceCanvasMount({
     hasContent: hasSceneContent,
     defaultViewport,
+    isLiveCanvasVisible,
   });
   const expanded = useMemo(() => getDiagramViewExpandedMap(doc.view), [doc.view]);
   const selectedEntity = useMemo(
@@ -262,7 +264,6 @@ const WorkspaceDiagramPaneInner = forwardRef<
     addEntity,
     commitDoc,
     deleteEntities,
-    showInspector,
     showDebug,
     nodeVisualMode,
     triggerEntityZoom,
@@ -324,7 +325,8 @@ const WorkspaceDiagramPaneInner = forwardRef<
   const { clearFocus, focusViewOnEntity } = useFocusViewController({
     sceneTree: compiled.scene.tree,
     expanded,
-    canvasSize: diagramEngine.canvasSize,
+    getCurrentCanvasSize: diagramEngine.getCurrentCanvasSize,
+    canvasLayoutVersion: diagramEngine.canvasLayoutVersion,
     skipTransitions,
     showInspector,
     commitDoc,
@@ -423,7 +425,7 @@ const WorkspaceDiagramPaneInner = forwardRef<
       </div>
 
       {showInspector ? (
-        <aside className="w-[320px] shrink-0 border-l border-border overflow-hidden flex flex-col">
+        <aside className="w-[420px] shrink-0 border-l border-border overflow-hidden flex flex-col">
           <Inspector
             viewModel={inspectorViewModel}
             onUpdateName={updateEntityName}

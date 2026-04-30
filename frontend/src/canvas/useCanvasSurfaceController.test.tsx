@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type { NavigationIntent, NavigationRequestResult } from '../diagram/motion-types';
 import type { UseCanvasSurfaceControllerArgs } from './useCanvasSurfaceController';
 import {
   buildAutoVisibleSelectionKey,
@@ -8,10 +9,10 @@ import {
   resolveSelectedEdgeEndpointHighlights,
   resolveVisibleHostOverlayEdges,
   shouldAcknowledgeDisplayGenerationImmediately,
+  shouldCommitAutoVisibleSelectionKey,
   shouldHandleViewportGestureEvent,
   shouldSuppressHostEdgeChrome,
   shouldSuppressHostInteractiveControls,
-  shouldWaitForSelectionRevealCanvasResize,
 } from './useCanvasSurfaceController';
 
 type EdgeSearchSeed = {
@@ -112,7 +113,7 @@ async function renderController(params?: {
   readOnly?: boolean;
   graphQueryOverrides?: Partial<UseCanvasSurfaceControllerTestGraphQueries>;
   graphActionOverrides?: Partial<UseCanvasSurfaceControllerTestGraphActions>;
-  canvasSize?: { width: number; height: number } | null;
+  canvasLayoutVersion?: number;
   onLeftOcclusionChange?: (leftOcclusion: number) => void;
 }) {
   vi.resetModules();
@@ -181,7 +182,9 @@ async function renderController(params?: {
   };
   const reportUserGestureMoveSpy = params?.transitionOverrides?.reportUserGestureMove ?? vi.fn();
   const reportUserGestureEndSpy = params?.transitionOverrides?.reportUserGestureEnd ?? vi.fn();
-  const requestNavigationSpy = params?.transitionOverrides?.requestNavigation ?? vi.fn();
+  const requestNavigationSpy =
+    params?.transitionOverrides?.requestNavigation ??
+    vi.fn((): NavigationRequestResult => ({ status: 'queued', reason: 'motion-plan' }));
   const reportUserGestureMove = (viewport: { x: number; y: number; zoom: number }) => {
     (
       reportUserGestureMoveSpy as unknown as (viewport: {
@@ -200,13 +203,10 @@ async function renderController(params?: {
       }) => void
     )(viewport);
   };
-  const requestNavigation = (intent: import('../diagram/motion-types').NavigationIntent) => {
-    (
-      requestNavigationSpy as unknown as (
-        intent: import('../diagram/motion-types').NavigationIntent,
-      ) => void
-    )(intent);
-  };
+  const requestNavigation = (intent: NavigationIntent) =>
+    (requestNavigationSpy as unknown as (intent: NavigationIntent) => NavigationRequestResult)(
+      intent,
+    );
   let captured: ReturnType<
     typeof import('./useCanvasSurfaceController')['useCanvasSurfaceController']
   > | null = null;
@@ -226,7 +226,8 @@ async function renderController(params?: {
         screenToWorldPosition: vi.fn((point: { x: number; y: number }) => point),
         readOnly: params?.readOnly ?? false,
         showDebug: false,
-        canvasSize: params?.canvasSize ?? null,
+        getCurrentCanvasSize: vi.fn(() => null),
+        canvasLayoutVersion: params?.canvasLayoutVersion ?? 0,
         minZoom: 0.05,
         maxZoom: 2,
         nodeVisualMode: 'default',
@@ -431,94 +432,63 @@ describe('useCanvasSurfaceController', () => {
     ).toEqual([]);
   });
 
-  it('keys selection auto-reveal by selected node, viewport geometry, and occlusion', () => {
+  it('keys selection auto-reveal by selected node, canvas layout version, and occlusion', () => {
     const baseKey = buildAutoVisibleSelectionKey({
       selectedEntityId: 'node-1',
-      canvasSize: { width: 1200, height: 800 },
-      rect: { x: 400, y: 120, width: 260, height: 180 },
+      canvasLayoutVersion: 1,
       leftOcclusion: 0,
     });
-    const resizedKey = buildAutoVisibleSelectionKey({
+    const resizedCanvasKey = buildAutoVisibleSelectionKey({
       selectedEntityId: 'node-1',
-      canvasSize: { width: 880, height: 800 },
-      rect: { x: 400, y: 120, width: 260, height: 180 },
+      canvasLayoutVersion: 2,
       leftOcclusion: 0,
     });
     const occludedKey = buildAutoVisibleSelectionKey({
       selectedEntityId: 'node-1',
-      canvasSize: { width: 1200, height: 800 },
-      rect: { x: 400, y: 120, width: 260, height: 180 },
+      canvasLayoutVersion: 1,
       leftOcclusion: 320,
     });
     const movedNodeKey = buildAutoVisibleSelectionKey({
       selectedEntityId: 'node-1',
-      canvasSize: { width: 1200, height: 800 },
-      rect: { x: 640, y: 320, width: 260, height: 180 },
+      canvasLayoutVersion: 1,
       leftOcclusion: 0,
     });
 
     expect(baseKey).not.toBeNull();
-    expect(resizedKey).not.toBeNull();
+    expect(resizedCanvasKey).not.toBeNull();
     expect(occludedKey).not.toBeNull();
     expect(movedNodeKey).not.toBeNull();
-    expect(resizedKey).not.toBe(baseKey);
+    expect(resizedCanvasKey).not.toBe(baseKey);
     expect(occludedKey).not.toBe(baseKey);
     expect(movedNodeKey).toBe(baseKey);
   });
 
-  it('does not build a selection auto-reveal key without a selected node or canvas size', () => {
+  it('does not build a selection auto-reveal key without a selected node', () => {
     expect(
       buildAutoVisibleSelectionKey({
         selectedEntityId: 'node-1',
-        canvasSize: { width: 1200, height: 800 },
+        canvasLayoutVersion: 1,
       }),
     ).not.toBeNull();
     expect(
       buildAutoVisibleSelectionKey({
-        canvasSize: { width: 1200, height: 800 },
-      }),
-    ).toBeNull();
-    expect(
-      buildAutoVisibleSelectionKey({
-        selectedEntityId: 'node-1',
-        canvasSize: null,
+        canvasLayoutVersion: 1,
       }),
     ).toBeNull();
   });
 
-  it('waits for the inspector-open canvas shrink before auto-revealing selection', () => {
+  it('commits selection auto-reveal keys only for accepted navigation results', () => {
+    expect(shouldCommitAutoVisibleSelectionKey({ status: 'queued', reason: 'motion-plan' })).toBe(
+      true,
+    );
+    expect(shouldCommitAutoVisibleSelectionKey({ status: 'applied', reason: 'synchronous' })).toBe(
+      true,
+    );
+    expect(shouldCommitAutoVisibleSelectionKey({ status: 'noop', reason: 'no-target' })).toBe(
+      false,
+    );
     expect(
-      shouldWaitForSelectionRevealCanvasResize({
-        waitForInspectorResize: true,
-        previousCanvasWidth: 1200,
-        currentCanvasWidth: 1200,
-        waitFrames: 0,
-      }),
-    ).toBe(true);
-    expect(
-      shouldWaitForSelectionRevealCanvasResize({
-        waitForInspectorResize: true,
-        previousCanvasWidth: 1200,
-        currentCanvasWidth: 880,
-        waitFrames: 1,
-      }),
-    ).toBe(true);
-    expect(
-      shouldWaitForSelectionRevealCanvasResize({
-        waitForInspectorResize: true,
-        previousCanvasWidth: 1200,
-        currentCanvasWidth: 880,
-        waitFrames: 1,
-        resizeSettleFrames: 1,
-      }),
-    ).toBe(false);
-    expect(
-      shouldWaitForSelectionRevealCanvasResize({
-        waitForInspectorResize: false,
-        previousCanvasWidth: 1200,
-        currentCanvasWidth: 1200,
-        waitFrames: 0,
-      }),
+      shouldCommitAutoVisibleSelectionKey({ status: 'unavailable', reason: 'missing-canvas' }),
     ).toBe(false);
   });
 

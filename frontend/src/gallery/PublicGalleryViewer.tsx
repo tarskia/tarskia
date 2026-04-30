@@ -212,7 +212,7 @@ export default function PublicGalleryViewer() {
   } = diagramEngine;
   const defaultViewport = diagramEngine.initialViewport;
   const hasSceneContent = doc.entities.length > 0 || doc.relations.length > 0;
-  const shouldDelayCanvasMount = hasSceneContent && !defaultViewport;
+  const shouldDelayCanvasMount = hasSceneContent && !defaultViewport && !isLiveCanvasVisible;
 
   const {
     centerScene,
@@ -337,7 +337,6 @@ export default function PublicGalleryViewer() {
     addEntity: () => '',
     commitDoc,
     deleteEntities: () => {},
-    showInspector,
     showDebug: false,
     nodeVisualMode: 'outline',
     triggerEntityZoom,
@@ -370,7 +369,8 @@ export default function PublicGalleryViewer() {
   const { clearFocus, focusViewOnEntity } = useFocusViewController({
     sceneTree: compiled.scene.tree,
     expanded,
-    canvasSize: diagramEngine.canvasSize,
+    getCurrentCanvasSize: diagramEngine.getCurrentCanvasSize,
+    canvasLayoutVersion: diagramEngine.canvasLayoutVersion,
     showInspector,
     commitDoc,
     flushUserGesture: diagramEngine.flushUserGesture,
@@ -482,10 +482,10 @@ export default function PublicGalleryViewer() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col">
-      <div className="flex h-full flex-1 min-h-0">
-        <div className="relative flex h-full flex-1 min-h-0">
-          <div className="h-full flex-1 min-h-0">
+    <div className="flex h-full min-w-0 min-h-0 flex-1 flex-col">
+      <div className="flex h-full flex-1 min-w-0 min-h-0">
+        <div className="relative flex h-full flex-1 min-w-0 min-h-0">
+          <div className="h-full flex-1 min-w-0 min-h-0">
             {shouldDelayCanvasMount ? (
               <div
                 ref={diagramEngine.onCanvasElementChange}
@@ -525,7 +525,7 @@ export default function PublicGalleryViewer() {
           />
         </div>
         {showInspector ? (
-          <aside className="w-[420px] shrink-0 overflow-hidden">
+          <aside className="w-[420px] shrink-0 border-l border-border overflow-hidden flex flex-col">
             <GalleryInspector viewModel={inspectorViewModel} />
           </aside>
         ) : null}

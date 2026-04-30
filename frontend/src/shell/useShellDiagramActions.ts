@@ -1,7 +1,11 @@
 import { useCallback } from 'react';
 
 import type { CanonicalDiagramStructureQueries } from '../canvas/structure/queries';
-import type { NavigationIntent, StructuralTransitionIntent } from '../diagram/motion-types';
+import type {
+  NavigationIntent,
+  NavigationRequestResult,
+  StructuralTransitionIntent,
+} from '../diagram/motion-types';
 import {
   addEntityToDocument,
   buildEntityIndex,
@@ -68,7 +72,7 @@ interface UseShellDiagramActionsArgs {
     ensureDiagramView: EnsureDiagramView;
   };
   transition: {
-    requestNavigation: (intent: NavigationIntent) => void;
+    requestNavigation: (intent: NavigationIntent) => NavigationRequestResult;
     cancelTransitions: () => void;
     setPendingStructuralTransitionIntent: (intent: StructuralTransitionIntent | null) => void;
     flushUserGesture: () => boolean;

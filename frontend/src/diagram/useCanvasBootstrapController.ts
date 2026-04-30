@@ -2,11 +2,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AnimationSettings } from '../canvas/rendering/transition/animation-constants';
 import type { ViewportState } from '../model/types';
 import { resolveNavigationPolicy, resolveNavigationViewport } from './camera-navigation';
-import type { DiagramCameraPolicy, DiagramCameraRect, NavigationIntent } from './motion-types';
+import type { CanvasSize, GetCurrentCanvasSize } from './canvas-size';
+import type {
+  DiagramCameraPolicy,
+  DiagramCameraRect,
+  NavigationIntent,
+  NavigationRequestResult,
+} from './motion-types';
 
 const MIN_BOOTSTRAP_CANVAS_LENGTH = 32;
 
-export const isBootstrapCanvasSizeUsable = (canvasSize: { width: number; height: number } | null) =>
+export const isBootstrapCanvasSizeUsable = (canvasSize: CanvasSize | null) =>
   Boolean(
     canvasSize &&
       canvasSize.width >= MIN_BOOTSTRAP_CANVAS_LENGTH &&
@@ -16,7 +22,8 @@ export const isBootstrapCanvasSizeUsable = (canvasSize: { width: number; height:
 interface UseCanvasBootstrapControllerArgs {
   initialViewportKey?: string;
   savedViewport?: ViewportState;
-  canvasSize: { width: number; height: number } | null;
+  getCurrentCanvasSize: GetCurrentCanvasSize;
+  canvasLayoutVersion: number;
   sceneBounds: DiagramCameraRect | null;
   minZoom: number;
   maxZoom: number;
@@ -24,7 +31,7 @@ interface UseCanvasBootstrapControllerArgs {
   cameraPolicy?: DiagramCameraPolicy;
   getLeftOcclusion: () => number;
   canvasReady: boolean;
-  requestNavigation: (intent: NavigationIntent) => void;
+  requestNavigation: (intent: NavigationIntent) => NavigationRequestResult;
 }
 
 export interface CanvasBootstrapControllerResult {
@@ -35,7 +42,8 @@ export interface CanvasBootstrapControllerResult {
 export function useCanvasBootstrapController({
   initialViewportKey,
   savedViewport,
-  canvasSize,
+  getCurrentCanvasSize,
+  canvasLayoutVersion,
   sceneBounds,
   minZoom,
   maxZoom,
@@ -59,6 +67,9 @@ export function useCanvasBootstrapController({
     [animationSettings, cameraPolicy, initializeIntent],
   );
   const defaultViewport = useMemo(() => {
+    // ResizeObserver only signals that layout changed; the getter reads the actual size here.
+    void canvasLayoutVersion;
+    const canvasSize = getCurrentCanvasSize();
     const usableCanvasSize = isBootstrapCanvasSizeUsable(canvasSize) ? canvasSize : null;
     const leftOcclusion = getLeftOcclusion();
     return (
@@ -79,7 +90,8 @@ export function useCanvasBootstrapController({
       }) ?? undefined
     );
   }, [
-    canvasSize,
+    canvasLayoutVersion,
+    getCurrentCanvasSize,
     getLeftOcclusion,
     initializeIntent,
     initializePolicy,
@@ -100,10 +112,12 @@ export function useCanvasBootstrapController({
   }, [initialViewportKey]);
 
   useEffect(() => {
+    // Re-run pending bootstrap when the canvas reports a new layout version.
+    void canvasLayoutVersion;
     if (!initialViewportKey || pendingKey !== initialViewportKey) {
       return;
     }
-    if (!isBootstrapCanvasSizeUsable(canvasSize)) {
+    if (!isBootstrapCanvasSizeUsable(getCurrentCanvasSize())) {
       return;
     }
     if (!defaultViewport) {
@@ -119,8 +133,9 @@ export function useCanvasBootstrapController({
     setPendingKey((current) => (current === initialViewportKey ? undefined : current));
   }, [
     canvasReady,
-    canvasSize,
+    canvasLayoutVersion,
     defaultViewport,
+    getCurrentCanvasSize,
     initialViewportKey,
     initializeIntent,
     pendingKey,

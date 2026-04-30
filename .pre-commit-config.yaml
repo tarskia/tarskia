@@ -1,0 +1,35 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-yaml
+
+  - repo: https://github.com/biomejs/pre-commit
+    rev: "v2.4.13"
+    hooks:
+      - id: biome-check
+        args: ["--diagnostic-level=error"]
+        files: '(^|/).+\.(ts|tsx|js|jsx|json|css|md|yaml|yml)$'
+        exclude: '^(frontend/dist/|frontend/src/api/generated/|packages/diagram-semantics/dist/)'
+
+  - repo: local
+    hooks:
+      - id: frontend-validate-schemas
+        name: frontend schema module validation
+        entry: npm
+        language: system
+        args: ["run", "validate:schemas"]
+        pass_filenames: false
+        files: '^(frontend/src/(semantic/|model/validation/|shell/schema-cookbook(\.test)?\.ts)|packages/diagram-semantics/|scripts/build-semantics\.mjs$|package\.json$|package-lock\.json$|\.node-version$)'
+
+      - id: frontend-tests
+        name: frontend tests
+        entry: npm
+        language: system
+        args: ["run", "test", "-w", "@tarskia/frontend"]
+        pass_filenames: false
+        files: '^(frontend/|packages/diagram-semantics/|scripts/build-semantics\.mjs$|package\.json$|package-lock\.json$|\.node-version$)'

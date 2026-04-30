@@ -7,6 +7,7 @@ import { useCanvasTransitionController } from '../canvas/useCanvasTransitionCont
 import { useCanvasViewportAdapter } from '../canvas/useCanvasViewportAdapter';
 import { useDiagramRenderingController } from '../canvas/useDiagramRenderingController';
 import type { SchemaModule, SemanticDocument } from '../semantic';
+import { measureCanvasElement } from './canvas-size';
 import type {
   DiagramCameraPolicy,
   DiagramCameraRect,
@@ -51,7 +52,7 @@ export function useDiagramEngine({
   const viewportAdapter = useCanvasViewportAdapter();
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const [canvasElement, setCanvasElement] = useState<HTMLDivElement | null>(null);
-  const [canvasSize, setCanvasSize] = useState<{ width: number; height: number } | null>(null);
+  const [canvasLayoutVersion, setCanvasLayoutVersion] = useState(0);
   const sceneBoundsRef = useRef<DiagramCameraRect | null>(null);
   const nodeRectsByIdRef = useRef<Map<string, DiagramCameraRect>>(new Map());
   const pendingStructuralTransitionIntentRef = useRef<StructuralTransitionIntent | null>(null);
@@ -67,18 +68,21 @@ export function useDiagramEngine({
     setCanvasElement(element);
   }, []);
 
+  const getCurrentCanvasSize = useCallback(() => measureCanvasElement(canvasRef.current), []);
+
   useEffect(() => {
     if (!canvasElement) {
-      setCanvasSize(null);
       return;
     }
     const element = canvasElement;
-    const updateSize = () => {
-      const rect = element.getBoundingClientRect();
-      setCanvasSize({ width: rect.width, height: rect.height });
+    const notifyLayoutChanged = () => {
+      setCanvasLayoutVersion((current) => current + 1);
     };
-    updateSize();
-    const observer = new ResizeObserver(() => updateSize());
+    notifyLayoutChanged();
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    const observer = new ResizeObserver(() => notifyLayoutChanged());
     observer.observe(element);
     return () => observer.disconnect();
   }, [canvasElement]);
@@ -86,7 +90,6 @@ export function useDiagramEngine({
   const rendering = useDiagramRenderingController({
     doc,
     schema,
-    canvasSize,
   });
 
   const stableSnapshot = useMemo(
@@ -109,7 +112,7 @@ export function useDiagramEngine({
     animationSettings,
     savedViewport,
     cameraPolicy,
-    canvasSize,
+    getCurrentCanvasSize,
     minZoom,
     maxZoom,
     persistViewport,
@@ -178,7 +181,8 @@ export function useDiagramEngine({
   const bootstrap = useCanvasBootstrapController({
     initialViewportKey,
     savedViewport,
-    canvasSize,
+    getCurrentCanvasSize,
+    canvasLayoutVersion,
     sceneBounds: sceneBoundsRef.current,
     minZoom,
     maxZoom,
@@ -192,7 +196,8 @@ export function useDiagramEngine({
   return {
     canvasRef,
     onCanvasElementChange,
-    canvasSize,
+    getCurrentCanvasSize,
+    canvasLayoutVersion,
     onCanvasInit: motion.onCanvasInit,
     onCanvasUnmount: motion.onCanvasUnmount,
     setLeftOcclusion: viewportAdapter.setLeftOcclusion,

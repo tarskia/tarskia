@@ -42,11 +42,9 @@ const viewportHelpers = {
 export function useDiagramRenderingController({
   doc,
   schema,
-  canvasSize,
 }: {
   doc: SemanticDocument;
   schema: SchemaModule;
-  canvasSize?: { width: number; height: number } | null;
 }) {
   const semanticState = useMemo(() => selectDiagramSemanticState(doc), [doc]);
   const declarativeViewState = useMemo(() => selectDeclarativeDiagramViewState(doc), [doc]);
@@ -75,9 +73,8 @@ export function useDiagramRenderingController({
       buildLayoutResult({
         graph,
         viewState,
-        canvasSize,
       }),
-    [canvasSize, graph, viewState],
+    [graph, viewState],
   );
 
   const buildTransitionAdvisory = useCallback(
