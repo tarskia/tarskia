@@ -218,9 +218,9 @@ types:
     containment:
       allowedChildTypes:
         - api
-        - module
         - scheduler
         - scheduled-job
+        - module
         - group
       allowedChildTraits:
         - core/software.traits.api-like

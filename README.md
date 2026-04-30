@@ -7,6 +7,13 @@ This repository contains the open-source frontend, diagram renderer, curated
 gallery source, and shared semantic model. The generation worker and production
 backend are private while the worker pipeline is still experimental.
 
+## To come
+
+- Worker to let you build your own diagrams - on a bring-your-own-key basis
+- Diagram diffs: confirm that the AI only broke the thing you asked it to change
+- GitHub integration to keep your diagrams fresh
+- Studio for diagram editing, management, and cloud saves and sharing
+
 ## What You Can Run Locally
 
 The public gallery and renderer run from this repository without the private

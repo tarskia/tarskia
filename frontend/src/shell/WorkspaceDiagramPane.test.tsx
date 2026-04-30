@@ -243,6 +243,7 @@ describe('shouldDelayWorkspaceCanvasMount', () => {
 
     expect(args.triggerEntityZoom).toHaveBeenCalledTimes(1);
     const zoomOptions = vi.mocked(args.triggerEntityZoom).mock.calls[0]?.[2];
+    expect(zoomOptions?.expandSingleChildChain).toBe(true);
     expect(zoomOptions?.onComplete).toEqual(expect.any(Function));
     expect(args.commitDoc).not.toHaveBeenCalled();
 

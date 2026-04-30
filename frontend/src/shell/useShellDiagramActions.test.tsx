@@ -464,6 +464,121 @@ describe('useShellDiagramActions', () => {
     ).toBe(true);
   });
 
+  it('expands through a single-child chain when requested by focus zoom', () => {
+    const commitDoc = vi.fn();
+    const setPendingStructuralTransitionIntent = vi.fn();
+    let captured: ReturnType<typeof useShellDiagramActions> | null = null;
+    const childrenByParent = new Map<string, Array<{ id: string }>>([
+      ['service-a', [{ id: 'wrapper-a' }]],
+      ['wrapper-a', [{ id: 'group-a' }]],
+      ['group-a', [{ id: 'endpoint-a' }, { id: 'endpoint-b' }]],
+    ]);
+
+    function Harness() {
+      captured = useShellDiagramActions({
+        state: {
+          doc: {
+            version: '1',
+            schemaRefs: [],
+            entities: [
+              {
+                id: 'service-a',
+                type: 'service',
+                children: [
+                  {
+                    id: 'wrapper-a',
+                    type: 'group',
+                    children: [
+                      {
+                        id: 'group-a',
+                        type: 'group',
+                        children: [
+                          { id: 'endpoint-a', type: 'endpoint' },
+                          { id: 'endpoint-b', type: 'endpoint' },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+            relations: [],
+            view: {
+              kind: 'semantic-diagram-view',
+              version: 2,
+            },
+          },
+          expanded: {},
+          entityIndex: {
+            entries: [],
+            byId: new Map(),
+            parentById: new Map(),
+            childrenByParent: new Map(),
+          },
+        },
+        document: {
+          commitDoc,
+          ensureDiagramView: (view) =>
+            view ?? {
+              kind: 'semantic-diagram-view',
+              version: 2,
+            },
+        },
+        transition: {
+          requestNavigation: vi.fn(),
+          cancelTransitions: vi.fn(),
+          setPendingStructuralTransitionIntent,
+          flushUserGesture: vi.fn(() => false),
+        },
+        selection: {
+          setSelectedEntity: vi.fn(),
+          setSelectedEdge: vi.fn(),
+        },
+        rules: {
+          canContainEntity: () => true,
+          resolveDefaultEntityName: () => undefined,
+        },
+        sceneQueries: {
+          structure: {
+            getChildren: (id) => childrenByParent.get(id) ?? [],
+            getDescendantParentIds: () => [],
+          },
+        },
+      });
+      return null;
+    }
+
+    renderToStaticMarkup(<Harness />);
+    if (!captured) {
+      throw new Error('Expected shell actions to render');
+    }
+
+    expect(captured.triggerEntityZoom('service-a', 'in', { expandSingleChildChain: true })).toBe(
+      true,
+    );
+
+    expect(setPendingStructuralTransitionIntent).toHaveBeenCalledWith({
+      direction: 'in',
+      focus: { kind: 'single', rootId: 'service-a' },
+    });
+    const updater = commitDoc.mock.calls[0]?.[0];
+    expect(typeof updater).toBe('function');
+    const updated = (updater as Parameters<typeof commitDoc>[0])({
+      version: '1',
+      schemaRefs: [],
+      entities: [],
+      relations: [],
+      view: {
+        kind: 'semantic-diagram-view',
+        version: 2,
+      },
+    });
+    expect(updated.view?.nodesById?.['service-a']?.expanded).toBe(true);
+    expect(updated.view?.nodesById?.['wrapper-a']?.expanded).toBe(true);
+    expect(updated.view?.nodesById?.['group-a']?.expanded).toBe(true);
+    expect(updated.view?.nodesById?.['endpoint-a']?.expanded).toBeUndefined();
+  });
+
   it('carries completion callbacks through single-node zoom transitions', () => {
     const setPendingStructuralTransitionIntent = vi.fn();
     const onComplete = vi.fn();

@@ -1,3 +1,4 @@
+import { load } from 'js-yaml';
 import type { DtoGalleryDiagramSummaryResponse } from '../api/generated/model';
 
 type GallerySourceRepository = DtoGalleryDiagramSummaryResponse['sourceRepository'];
@@ -73,5 +74,39 @@ export function describePublicGalleryRepository(params: {
     href,
     label,
     searchText,
+  };
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value && typeof value === 'object' && !Array.isArray(value));
+
+const readString = (value: unknown) =>
+  typeof value === 'string' && value.trim() ? value : undefined;
+
+export function readPublicGallerySourceRepositoryFromRaw(
+  raw: string | undefined,
+): GallerySourceRepository | undefined {
+  if (!raw) {
+    return undefined;
+  }
+  let parsed: { metadata?: unknown } | undefined;
+  try {
+    parsed = load(raw) as { metadata?: unknown } | undefined;
+  } catch {
+    return undefined;
+  }
+  if (!isRecord(parsed?.metadata)) {
+    return undefined;
+  }
+  const sourceRepository = parsed.metadata.sourceRepository;
+  if (!isRecord(sourceRepository)) {
+    return undefined;
+  }
+  return {
+    repo: readString(sourceRepository.repo),
+    url: readString(sourceRepository.url),
+    ref: readString(sourceRepository.ref),
+    commit: readString(sourceRepository.commit),
+    committedAt: readString(sourceRepository.committedAt),
   };
 }
