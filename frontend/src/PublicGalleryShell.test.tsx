@@ -113,4 +113,33 @@ describe('PublicGalleryShell', () => {
     expect(html).toContain('h-screen');
     expect(html).toContain('overflow-hidden');
   });
+
+  it('uses raw detail repository metadata while repository summary metadata is unavailable', () => {
+    mockedUseGetGalleryDiagram.mockReturnValue({
+      data: {
+        status: 200,
+        data: {
+          namespace: 'tarskia',
+          slug: 'outline',
+          title: 'Outline',
+          raw:
+            'metadata:\n' +
+            '  name: Outline\n' +
+            '  sourceRepository:\n' +
+            '    url: https://github.com/outline/outline\n',
+        },
+      },
+    } as never);
+    mockedUseListGalleryDiagrams.mockReturnValue({
+      data: {
+        status: 200,
+        data: [],
+      },
+    } as never);
+
+    const html = renderAt('/gallery/tarskia/outline');
+
+    expect(html).toContain('outline/outline');
+    expect(html).not.toContain('>Outline<');
+  });
 });

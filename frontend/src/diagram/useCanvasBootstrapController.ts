@@ -39,6 +39,25 @@ export interface CanvasBootstrapControllerResult {
   initialViewportPending: boolean;
 }
 
+export type PendingBootstrapAction = 'idle' | 'wait' | 'request-navigation';
+
+export const resolvePendingBootstrapAction = (params: {
+  initialViewportKey?: string;
+  pendingKey?: string;
+  hasUsableCanvas: boolean;
+  defaultViewport?: ViewportState;
+  canvasReady: boolean;
+}): PendingBootstrapAction => {
+  const { initialViewportKey, pendingKey, hasUsableCanvas, defaultViewport, canvasReady } = params;
+  if (!initialViewportKey || pendingKey !== initialViewportKey) {
+    return 'idle';
+  }
+  if (!hasUsableCanvas || !defaultViewport || !canvasReady) {
+    return 'wait';
+  }
+  return 'request-navigation';
+};
+
 export function useCanvasBootstrapController({
   initialViewportKey,
   savedViewport,
@@ -114,19 +133,14 @@ export function useCanvasBootstrapController({
   useEffect(() => {
     // Re-run pending bootstrap when the canvas reports a new layout version.
     void canvasLayoutVersion;
-    if (!initialViewportKey || pendingKey !== initialViewportKey) {
-      return;
-    }
-    if (!isBootstrapCanvasSizeUsable(getCurrentCanvasSize())) {
-      return;
-    }
-    if (!defaultViewport) {
-      if (!savedViewport && !sceneBounds) {
-        setPendingKey((current) => (current === initialViewportKey ? undefined : current));
-      }
-      return;
-    }
-    if (!canvasReady) {
+    const action = resolvePendingBootstrapAction({
+      initialViewportKey,
+      pendingKey,
+      hasUsableCanvas: isBootstrapCanvasSizeUsable(getCurrentCanvasSize()),
+      defaultViewport,
+      canvasReady,
+    });
+    if (action !== 'request-navigation') {
       return;
     }
     requestNavigation(initializeIntent);
@@ -140,8 +154,6 @@ export function useCanvasBootstrapController({
     initializeIntent,
     pendingKey,
     requestNavigation,
-    savedViewport,
-    sceneBounds,
   ]);
 
   return {
