@@ -28,7 +28,7 @@ export function LoadingState({
     >
       <div
         className={cn(
-          'flex min-w-[220px] items-center gap-3 rounded-md border border-border bg-surface px-4 py-3 shadow-[var(--shadow-panel)]',
+          'flex min-w-[220px] items-center gap-3 rounded-md border border-border bg-surface px-4 py-3',
           panelClassName,
         )}
       >

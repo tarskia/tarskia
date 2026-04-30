@@ -8,9 +8,30 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <script>
+      // Apply the persisted theme class before first paint to avoid flashes.
+      // Mirrors applyStoredThemeOnLoad / resolveTheme in src/ui/useTheme.ts.
+      (function () {
+        var stored, pref, resolved;
+        try {
+          stored = window.localStorage.getItem('tarskia.theme');
+          pref = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+          resolved = pref;
+          if (pref === 'system') {
+            resolved =
+              window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+                ? 'light'
+                : 'dark';
+          }
+          document.documentElement.classList.add(resolved);
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
