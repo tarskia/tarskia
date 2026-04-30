@@ -1,6 +1,7 @@
 import { Redo2, RotateCcw, Search, Undo2, X } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { ThemeToggle } from './ThemeToggle';
 
 interface AppHeaderProps {
   diagramName?: string;
@@ -63,7 +64,7 @@ export function AppHeader({
   return (
     <header
       className={`flex items-center gap-4 px-4 h-16 bg-background z-50 shrink-0 ${
-        showBottomBorder ? 'border-b border-border shadow-[var(--shadow-subtle)]' : ''
+        showBottomBorder ? 'border-b border-border' : ''
       }`}
     >
       {/* Brand */}
@@ -198,6 +199,9 @@ export function AppHeader({
           </div>
         </div>
       )}
+
+      {/* Theme */}
+      <ThemeToggle />
 
       {/* Account */}
       <div className="flex items-center gap-2">
