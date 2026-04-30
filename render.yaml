@@ -14,18 +14,6 @@ projects:
             staticPublishPath: ./frontend/dist
             routes:
               - type: rewrite
-                source: /gallery
-                destination: /index.html
-              - type: rewrite
-                source: /gallery/*
-                destination: /index.html
-              - type: rewrite
-                source: /studio
-                destination: /index.html
-              - type: rewrite
-                source: /studio/*
-                destination: /index.html
-              - type: rewrite
                 source: /*
                 destination: /index.html
             envVars:
@@ -57,18 +45,6 @@ projects:
             buildCommand: npm ci --include=optional && npm run build -w @tarskia/frontend
             staticPublishPath: ./frontend/dist
             routes:
-              - type: rewrite
-                source: /gallery
-                destination: /index.html
-              - type: rewrite
-                source: /gallery/*
-                destination: /index.html
-              - type: rewrite
-                source: /studio
-                destination: /index.html
-              - type: rewrite
-                source: /studio/*
-                destination: /index.html
               - type: rewrite
                 source: /*
                 destination: /index.html
