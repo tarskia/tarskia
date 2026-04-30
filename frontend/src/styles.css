@@ -1,34 +1,78 @@
 :root {
   font-family: var(--font-sans);
+  /* Inter character variant 11 = single-storey 'a'. Slightly cleaner
+   * at small UI sizes; harmless when Inter isn't loaded (other faces
+   * just ignore the unknown feature tag). */
+  font-feature-settings: "cv11";
+  /* Light strokes bloom (halation) on dark backgrounds, which makes
+   * tracking read tighter than it really is. A small positive nudge
+   * compensates – see Apple HIG / Inter's own dark-mode guidance.
+   * Light mode resets this back to 0 (see `:root.light`). */
+  letter-spacing: 0.01em;
+  /* Tells the UA to render native scrollbars, form controls, and
+   * focus rings in the matching scheme. `:root.light` overrides. */
+  color-scheme: dark;
+  /* Greyscale AA reads cleaner than subpixel AA for light text on
+   * dark backgrounds (subpixel can look slightly heavy/fuzzy on
+   * macOS). Inherited everywhere via `:root`. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   color: var(--color-foreground);
   background: var(--color-background);
   --canvas-bg: rgba(12, 14, 20, 0.85);
+  /* Node fill = canvas-bg + a near-transparent white wash. The wash
+   * brightens uniformly without introducing any new hue, avoiding the
+   * "second blue-grey next to canvas blue-grey" / turned-off-TV feel.
+   * Layered as two backgrounds so the canvas-bg remains the true
+   * surface colour and the lift is purely a lightness shift. Light
+   * mode overrides this to plain `--canvas-bg` (no lift needed). */
+  --node-fill: linear-gradient(rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.025)), var(--canvas-bg);
+  /* Diagram-node elevation. Hybrid: a top-edge highlight (lit from
+   * above) + soft ambient drop. The uniform inset ring was dropped
+   * along with the shift to a 1px coloured border – two perimeter
+   * strokes were doing redundant work. Owned here (not via the
+   * `--shadow-*` chrome tokens) because nodes are Tarskia-rendered. */
+  --node-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.24),
+    0 12px 28px rgba(0, 0, 0, 0.28);
   --panel-bg: var(--color-surface);
   --panel-border: var(--color-border);
   --text-muted: var(--color-muted-foreground);
   --accent: var(--color-accent);
-  --node-text: hsla(0, 0%, 98%, 0.95);
+  /* Off-white instead of near-pure white. Pure white on near-black
+   * causes the most halation/eye-strain; 92% L with a whisper of
+   * cool chroma reads as more "designed" without losing legibility. */
+  --node-text: hsl(220, 12%, 92%);
   --node-bg-s: 38%;
   --node-bg-l: 16%;
   --node-bg-l-group: 18%;
   --node-border-s: 40%;
   --node-border-l: 55%;
-  --node-border-a: 0.55;
+  /* Softened from 0.55 so the surface (fill + shadow) carries the
+   * card feel and the coloured border reads as a tint rather than a
+   * hard outline. Light mode keeps a stronger value (see override). */
+  --node-border-a: 0.4;
   --tag-pill-s: 88%;
   --tag-pill-l: 80%;
-  --text-primary: rgba(255, 255, 255, 0.9);
-  --text-secondary: rgba(255, 255, 255, 0.75);
-  --text-tertiary: rgba(255, 255, 255, 0.62);
-  --text-faint: rgba(255, 255, 255, 0.5);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-default: rgba(255, 255, 255, 0.14);
-  --border-strong: rgba(255, 255, 255, 0.22);
-  --fill-subtle: rgba(255, 255, 255, 0.04);
-  --fill-muted: rgba(255, 255, 255, 0.06);
-  --fill-hover: rgba(255, 255, 255, 0.08);
-  --stroke-primary: rgba(255, 255, 255, 1);
-  --stroke-default: rgba(255, 255, 255, 0.55);
-  --stroke-muted: rgba(255, 255, 255, 0.16);
+  /* Whisper of cool chroma instead of pure white. Same alpha values,
+   * but the underlying colour is hsl(220 14% 97%) ≈ #F4F6FA – a
+   * barely-perceptible blue cast that ties text/borders/fills to the
+   * cool-blue canvas palette and reads as more "designed" than pure
+   * neutral. Light mode keeps its own slate-on-white tokens. */
+  --text-primary: hsla(220, 14%, 97%, 0.9);
+  --text-secondary: hsla(220, 14%, 97%, 0.75);
+  --text-tertiary: hsla(220, 14%, 97%, 0.62);
+  --text-faint: hsla(220, 14%, 97%, 0.5);
+  --border-subtle: hsla(220, 14%, 97%, 0.08);
+  --border-default: hsla(220, 14%, 97%, 0.14);
+  --border-strong: hsla(220, 14%, 97%, 0.22);
+  --fill-subtle: hsla(220, 14%, 97%, 0.04);
+  --fill-muted: hsla(220, 14%, 97%, 0.06);
+  --fill-hover: hsla(220, 14%, 97%, 0.08);
+  --stroke-primary: hsla(220, 14%, 97%, 1);
+  --stroke-default: hsla(220, 14%, 97%, 0.55);
+  --stroke-muted: hsla(220, 14%, 97%, 0.16);
   --surface-overlay: rgba(10, 16, 22, 0.84);
   --surface-elevated: rgba(10, 16, 22, 0.45);
 }
@@ -40,8 +84,12 @@
 body {
   margin: 0;
   min-height: 100vh;
+  /* Two-layer depth: a soft top-centre "glow" (lit-from-above feel a
+   * la Linear) over a diagonal base. Centre slightly cooler/brighter
+   * than the surrounding canvas so the whole window reads as gently
+   * lit rather than flat. */
   background:
-    radial-gradient(circle at top, rgba(33, 42, 60, 0.9), transparent 55%),
+    radial-gradient(circle at top, rgba(46, 64, 96, 0.85), transparent 58%),
     linear-gradient(160deg, #0a0c12 0%, #0d1119 40%, #0a0e16 100%);
   overflow: hidden;
 }
@@ -719,7 +767,14 @@ body {
   position: fixed;
   transform: translate(-10px, -10px);
   width: 280px;
-  background: var(--color-surface);
+  /* `--surface-overlay` is the semi-transparent floating-surface token
+   * (vs the more opaque `--color-surface` used for anchored panels).
+   * Combined with `backdrop-filter` it gives the modern frosted-glass
+   * read – the canvas behind shows through as a blurred, saturated
+   * tint rather than being hidden behind a flat panel. */
+  background: var(--surface-overlay);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 12px;
@@ -986,15 +1041,21 @@ body {
 /* ----------------------------------------------------------------
  * Outline mode – transparent node interiors on the regular canvas.
  * Restores the pre-blueprint "outline only" treatment.
+ *
+ * NOTE: The `box-shadow` values below are hardcoded and do NOT pick up
+ * the `--shadow-*` chrome tokens defined in `index.css`. Those tokens
+ * apply to app chrome (panels, toolbars, popovers); diagram nodes are
+ * rendered by Tarskia's canvas (React Flow only handles interaction)
+ * and so their elevation is owned by these rules. Both the live-node
+ * block (`.canvas-visual-outline .react-flow__node`) and the
+ * transition-overlay block below must be kept in sync.
  * ---------------------------------------------------------------- */
 
 .transition-overlay-visual-outline .transition-overlay-node-shell {
-  background: var(--canvas-bg);
-  border-width: 2px;
+  background: var(--node-fill);
+  border-width: 1px;
   border-style: solid;
-  box-shadow:
-    0 0 0 1px rgba(150, 212, 255, 0.25) inset,
-    0 8px 20px rgba(2, 8, 16, 0.28);
+  box-shadow: var(--node-shadow);
 }
 
 .transition-overlay-visual-outline .transition-overlay-node-shell .node {
@@ -1034,12 +1095,10 @@ body {
 }
 
 .canvas-visual-outline .react-flow__node {
-  background: var(--canvas-bg);
-  border-width: 2px;
+  background: var(--node-fill);
+  border-width: 1px;
   border-style: solid;
-  box-shadow:
-    0 0 0 1px rgba(150, 212, 255, 0.25) inset,
-    0 8px 20px rgba(2, 8, 16, 0.28);
+  box-shadow: var(--node-shadow);
 }
 
 .canvas-visual-outline .react-flow__node .node {
@@ -1386,166 +1445,201 @@ body {
   box-shadow: 0 0 0 1.5px hsla(205, 85%, 70%, 0.85);
 }
 
-@media (prefers-color-scheme: light) {
-  .transition-overlay-visual-outline .transition-overlay-node-shell .node-subtitle,
-  .transition-overlay-visual-outline .transition-overlay-node-shell .node-title-placeholder,
-  .canvas-visual-outline .react-flow__node .node-subtitle,
-  .canvas-visual-outline .react-flow__node .node-title-placeholder {
-    color: rgba(28, 57, 84, 0.74);
-  }
-
-  .transition-overlay-visual-outline .transition-overlay-edge-path {
-    stroke: rgba(31, 63, 93, 0.22);
-  }
-
-  .transition-overlay-visual-outline .edge-overlay-path,
-  .canvas-visual-outline .edge-overlay-path {
-    stroke: rgba(31, 63, 93, 0.095);
-  }
-
-  .transition-overlay-visual-outline .edge-overlay-path-branch,
-  .canvas-visual-outline .edge-overlay-path-branch {
-    stroke: rgba(31, 63, 93, 0.24);
-  }
-
-  :root {
-    --canvas-bg: rgba(245, 247, 250, 0.9);
-    --node-text: hsla(220, 20%, 15%, 0.95);
-    --node-bg-s: 50%;
-    --node-bg-l: 93%;
-    --node-bg-l-group: 95%;
-    --node-border-s: 30%;
-    --node-border-l: 78%;
-    --node-border-a: 0.5;
-    --tag-pill-s: 72%;
-    --tag-pill-l: 38%;
-    --text-primary: rgba(15, 23, 42, 0.9);
-    --text-secondary: rgba(15, 23, 42, 0.72);
-    --text-tertiary: rgba(15, 23, 42, 0.55);
-    --text-faint: rgba(15, 23, 42, 0.4);
-    --border-subtle: rgba(0, 0, 0, 0.07);
-    --border-default: rgba(0, 0, 0, 0.1);
-    --border-strong: rgba(0, 0, 0, 0.18);
-    --fill-subtle: rgba(0, 0, 0, 0.03);
-    --fill-muted: rgba(0, 0, 0, 0.04);
-    --fill-hover: rgba(0, 0, 0, 0.06);
-    --stroke-primary: rgba(0, 0, 0, 1);
-    --stroke-default: rgba(0, 0, 0, 0.3);
-    --stroke-muted: rgba(0, 0, 0, 0.1);
-    --surface-overlay: rgba(255, 255, 255, 0.92);
-    --surface-elevated: rgba(255, 255, 255, 0.7);
-  }
-
-  body {
-    background: linear-gradient(160deg, #f5f7fa 0%, #eef1f5 40%, #f0f3f7 100%);
-  }
-
-  /* Focus shell */
-  .canvas-focus-shell::after {
-    border-color: hsla(var(--focus-shell-hue, 210), 65%, 50%, 0.3);
-    box-shadow:
-      inset 0 0 0 1px hsla(var(--focus-shell-hue, 210), 65%, 50%, 0.06),
-      0 0 0 1px hsla(var(--focus-shell-hue, 210), 65%, 50%, 0.04);
-  }
-
-  .canvas-focus-shell--root::after {
-    border-color: hsla(var(--focus-shell-hue, 210), 70%, 45%, 0.42);
-    box-shadow:
-      inset 0 0 0 1px hsla(var(--focus-shell-hue, 210), 70%, 45%, 0.08),
-      0 0 0 1px hsla(var(--focus-shell-hue, 210), 70%, 45%, 0.05);
-  }
-
-  .canvas-focus-shell-boundary-label,
-  .canvas-focus-shell-boundary-note {
-    border-color: hsla(var(--focus-shell-hue, 210), 55%, 50%, 0.2);
-    box-shadow:
-      inset 0 0 0 1px hsla(var(--focus-shell-hue, 210), 55%, 50%, 0.05),
-      0 1px 3px rgba(0, 0, 0, 0.06);
-  }
-
-  .canvas-focus-shell-boundary-label {
-    color: var(--text-primary);
-  }
-
-  .canvas-focus-shell-boundary--root .canvas-focus-shell-boundary-label {
-    border-color: hsla(var(--focus-shell-hue, 210), 60%, 45%, 0.28);
-    color: hsla(var(--focus-shell-hue, 210), 75%, 32%, 0.95);
-  }
-
-  .canvas-focus-shell-boundary-note {
-    color: hsla(var(--focus-shell-hue, 210), 55%, 35%, 0.8);
-  }
-
-  /* Node text (element-specific) */
-  .node-rich-markdown {
-    color: var(--text-primary);
-  }
-
-  /* Node backgrounds (element-specific) */
-  .node-rich-code {
-    background: rgba(0, 0, 0, 0.05);
-  }
-
-  .node-rich-image-frame {
-    background:
-      linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.01)), rgba(245, 247, 250, 0.5);
-  }
-
-  /* List item accent highlights */
-  .react-flow__node.selected .list-item .node-body {
-    background: rgba(37, 99, 235, 0.08);
-  }
-
-  .list-item.matched .node-body {
-    background: rgba(14, 165, 233, 0.1);
-    border-top-color: rgba(14, 165, 233, 0.22);
-  }
-
-  /* Selection rings */
-  .react-flow__node.selected .node {
-    box-shadow: 0 0 0 2px var(--node-selection-ring, rgba(37, 99, 235, 0.7));
-  }
-
-  .node.matched {
-    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.65);
-  }
-
-  .react-flow__node.selected .node.matched {
-    box-shadow:
-      0 0 0 2px var(--node-selection-ring, rgba(37, 99, 235, 0.7)),
-      0 0 0 4px rgba(14, 165, 233, 0.4);
-  }
-
-  /* Accent hover states */
-  .zoom-buttons button:hover {
-    background: rgba(37, 99, 235, 0.1);
-  }
-
-  .bulk-zoom-button:hover:not(:disabled) {
-    background: rgba(37, 99, 235, 0.1);
-  }
-
-  .group-edge.matched .group-edge-path {
-    stroke: rgba(14, 165, 233, 0.8);
-  }
-
-  .group-edge.matched .group-edge-label {
-    fill: rgba(14, 165, 233, 0.95);
-  }
-
-  .edge-label-matched {
-    color: rgba(14, 165, 233, 0.9);
-    background: rgba(14, 165, 233, 0.08);
-  }
-
-  /* Errors */
-  .errors {
-    border-color: rgba(220, 38, 38, 0.28);
-    background: rgba(254, 226, 226, 0.65);
-  }
-
-  /* Blueprint mode is always dark – no light-mode overrides needed */
+/*
+ * Light-theme overrides. Triggered by the `.light` class on `<html>`, which the
+ * theme bootstrap (index.html + src/ui/useTheme.ts) maintains based on the
+ * user's preference (system / light / dark, with `system` resolved eagerly).
+ */
+:root.light .transition-overlay-visual-outline .transition-overlay-node-shell .node-subtitle,
+:root.light
+  .transition-overlay-visual-outline
+  .transition-overlay-node-shell
+  .node-title-placeholder,
+:root.light .canvas-visual-outline .react-flow__node .node-subtitle,
+:root.light .canvas-visual-outline .react-flow__node .node-title-placeholder {
+  color: rgba(28, 57, 84, 0.74);
 }
+
+:root.light .transition-overlay-visual-outline .transition-overlay-edge-path {
+  stroke: rgba(31, 63, 93, 0.22);
+}
+
+/* Underlay = the main edge line. The outline-mode base rules use a
+ * cyan-tinted stroke calibrated for dark canvases; on light we need a
+ * slate ink so it actually reads. */
+:root.light .transition-overlay-visual-outline .transition-overlay-edge-path,
+:root.light .canvas-visual-outline .edge-underlay-path {
+  stroke: rgba(31, 63, 93, 0.42);
+}
+
+/* Overlay = the decorative dashed accent painted over the underlay.
+ * Base `opacity: 0.58` multiplies stroke alpha, so the raw value needs
+ * to be roughly 2x what you actually want to see. */
+:root.light .transition-overlay-visual-outline .edge-overlay-path,
+:root.light .canvas-visual-outline .edge-overlay-path {
+  stroke: rgba(31, 63, 93, 0.34);
+}
+
+:root.light .transition-overlay-visual-outline .edge-overlay-path-branch,
+:root.light .canvas-visual-outline .edge-overlay-path-branch {
+  stroke: rgba(31, 63, 93, 0.36);
+}
+
+:root.light {
+  /* Reset the dark-mode halation-tracking nudge – not needed when text
+   * is dark on light. */
+  letter-spacing: 0;
+  /* Match UA scheme so native scrollbars/controls render light. */
+  color-scheme: light;
+  --canvas-bg: rgba(245, 247, 250, 0.9);
+  /* In light mode the canvas itself is the card surface – no lift
+   * needed. The coloured border + soft ambient shadow do the work. */
+  --node-fill: var(--canvas-bg);
+  /* Pared-back hybrid for light surfaces: near-invisible inset hairline
+   * (so the 2px coloured node border owns definition) + a soft, low-
+   * opacity ambient lift. Anything heavier reads skeuomorphic on white. */
+  --node-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.04) inset,
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 6px 18px rgba(15, 23, 42, 0.06);
+  --node-text: hsla(220, 20%, 15%, 0.95);
+  --node-bg-s: 50%;
+  --node-bg-l: 93%;
+  --node-bg-l-group: 95%;
+  --node-border-s: 30%;
+  --node-border-l: 78%;
+  /* Stronger than dark's 0.4 – in light mode the coloured tint owns
+   * definition (no surface lift to lean on), so the border carries
+   * more of the load. */
+  --node-border-a: 0.5;
+  --tag-pill-s: 72%;
+  --tag-pill-l: 38%;
+  --text-primary: rgba(15, 23, 42, 0.9);
+  --text-secondary: rgba(15, 23, 42, 0.72);
+  --text-tertiary: rgba(15, 23, 42, 0.55);
+  --text-faint: rgba(15, 23, 42, 0.4);
+  --border-subtle: rgba(0, 0, 0, 0.07);
+  --border-default: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.18);
+  --fill-subtle: rgba(0, 0, 0, 0.03);
+  --fill-muted: rgba(0, 0, 0, 0.04);
+  --fill-hover: rgba(0, 0, 0, 0.06);
+  --stroke-primary: rgba(0, 0, 0, 1);
+  --stroke-default: rgba(0, 0, 0, 0.3);
+  --stroke-muted: rgba(0, 0, 0, 0.1);
+  --surface-overlay: rgba(255, 255, 255, 0.92);
+  --surface-elevated: rgba(255, 255, 255, 0.7);
+}
+
+:root.light body {
+  background: linear-gradient(160deg, #f5f7fa 0%, #eef1f5 40%, #f0f3f7 100%);
+}
+
+/* Focus shell */
+:root.light .canvas-focus-shell::after {
+  border-color: hsla(var(--focus-shell-hue, 210), 65%, 50%, 0.3);
+  box-shadow:
+    inset 0 0 0 1px hsla(var(--focus-shell-hue, 210), 65%, 50%, 0.06),
+    0 0 0 1px hsla(var(--focus-shell-hue, 210), 65%, 50%, 0.04);
+}
+
+:root.light .canvas-focus-shell--root::after {
+  border-color: hsla(var(--focus-shell-hue, 210), 70%, 45%, 0.42);
+  box-shadow:
+    inset 0 0 0 1px hsla(var(--focus-shell-hue, 210), 70%, 45%, 0.08),
+    0 0 0 1px hsla(var(--focus-shell-hue, 210), 70%, 45%, 0.05);
+}
+
+:root.light .canvas-focus-shell-boundary-label,
+:root.light .canvas-focus-shell-boundary-note {
+  border-color: hsla(var(--focus-shell-hue, 210), 55%, 50%, 0.2);
+  box-shadow:
+    inset 0 0 0 1px hsla(var(--focus-shell-hue, 210), 55%, 50%, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+:root.light .canvas-focus-shell-boundary-label {
+  color: var(--text-primary);
+}
+
+:root.light .canvas-focus-shell-boundary--root .canvas-focus-shell-boundary-label {
+  border-color: hsla(var(--focus-shell-hue, 210), 60%, 45%, 0.28);
+  color: hsla(var(--focus-shell-hue, 210), 75%, 32%, 0.95);
+}
+
+:root.light .canvas-focus-shell-boundary-note {
+  color: hsla(var(--focus-shell-hue, 210), 55%, 35%, 0.8);
+}
+
+/* Node text (element-specific) */
+:root.light .node-rich-markdown {
+  color: var(--text-primary);
+}
+
+/* Node backgrounds (element-specific) */
+:root.light .node-rich-code {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+:root.light .node-rich-image-frame {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.01)), rgba(245, 247, 250, 0.5);
+}
+
+/* List item accent highlights */
+:root.light .react-flow__node.selected .list-item .node-body {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+:root.light .list-item.matched .node-body {
+  background: rgba(14, 165, 233, 0.1);
+  border-top-color: rgba(14, 165, 233, 0.22);
+}
+
+/* Selection rings */
+:root.light .react-flow__node.selected .node {
+  box-shadow: 0 0 0 2px var(--node-selection-ring, rgba(37, 99, 235, 0.7));
+}
+
+:root.light .node.matched {
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.65);
+}
+
+:root.light .react-flow__node.selected .node.matched {
+  box-shadow:
+    0 0 0 2px var(--node-selection-ring, rgba(37, 99, 235, 0.7)),
+    0 0 0 4px rgba(14, 165, 233, 0.4);
+}
+
+/* Accent hover states */
+:root.light .zoom-buttons button:hover {
+  background: rgba(37, 99, 235, 0.1);
+}
+
+:root.light .bulk-zoom-button:hover:not(:disabled) {
+  background: rgba(37, 99, 235, 0.1);
+}
+
+:root.light .group-edge.matched .group-edge-path {
+  stroke: rgba(14, 165, 233, 0.8);
+}
+
+:root.light .group-edge.matched .group-edge-label {
+  fill: rgba(14, 165, 233, 0.95);
+}
+
+:root.light .edge-label-matched {
+  color: rgba(14, 165, 233, 0.9);
+  background: rgba(14, 165, 233, 0.08);
+}
+
+/* Errors */
+:root.light .errors {
+  border-color: rgba(220, 38, 38, 0.28);
+  background: rgba(254, 226, 226, 0.65);
+}
+
+/* Blueprint mode is always dark – no light-mode overrides needed */
 
 .edge-search-list {
   display: flex;
@@ -1577,7 +1671,11 @@ body {
   position: fixed;
   transform: translate(-10px, -10px);
   width: 240px;
-  background: var(--color-surface);
+  /* See `.edge-search` for rationale on the floating-surface +
+   * backdrop-filter combo. */
+  background: var(--surface-overlay);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 12px;

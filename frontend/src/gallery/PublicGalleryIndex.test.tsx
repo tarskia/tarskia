@@ -70,14 +70,10 @@ describe('PublicGalleryIndex', () => {
     expect(html).toContain('Search gallery');
     expect(html).toContain('AI-generated, schema-validated architecture diagrams');
     expect(html).toContain('may miss or misclassify implementation details');
-    expect(html).toContain('Report diagram issue');
-    expect(html).toContain(
-      'href="https://github.com/tarskia/tarskia/issues/new?template=diagram_issue.yml"',
-    );
-    expect(html).toContain('Request a repo');
-    expect(html).toContain(
-      'href="https://github.com/tarskia/tarskia/issues/new?template=repo_request.yml"',
-    );
+    // Report diagram / Request a repo now live behind the gallery feedback menu
+    // in the shell header (see PublicGalleryShell.test.tsx) rather than inline.
+    expect(html).not.toContain('Report diagram issue');
+    expect(html).not.toContain('Request a repo');
     expect(html).not.toContain('Diagram Gallery');
     expect(html).toContain('Repository');
     expect(html).toContain('Nodes');

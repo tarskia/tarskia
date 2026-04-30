@@ -22,6 +22,8 @@ import {
   formatPublicGalleryCommit,
 } from './gallery/public-gallery-repository';
 import { formatCompactNumber } from './gallery/worker-build-summary';
+import { GalleryFeedbackMenu } from './ui/GalleryFeedbackMenu';
+import { ThemeToggle } from './ui/ThemeToggle';
 
 const buildViewerTitle = (params: { title?: string; slug?: string }) =>
   params.title?.trim() || params.slug?.trim() || 'Gallery diagram';
@@ -219,7 +221,7 @@ export default function PublicGalleryShell() {
             <div className="flex-1" />
           )}
           {inViewer ? (
-            <div className="ml-auto flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               {searchSummary ? (
                 <span className="truncate whitespace-nowrap text-[11px] text-muted-foreground">
                   {searchSummary}
@@ -279,6 +281,10 @@ export default function PublicGalleryShell() {
               </div>
             </div>
           ) : null}
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <GalleryFeedbackMenu />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">

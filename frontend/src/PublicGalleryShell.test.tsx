@@ -84,6 +84,8 @@ describe('PublicGalleryShell', () => {
     expect(html).toContain('21M tokens');
     expect(html).toContain('gpt-5.4-mini');
     expect(html).toContain('href="https://github.com/outline/outline"');
+    expect(html).toContain('aria-label="Open gallery feedback menu"');
+    expect(html).toContain('aria-label="Toggle theme"');
   });
 
   it('keeps the viewer mounted inside a fixed-height shell when the gallery list is not an array', () => {

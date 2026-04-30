@@ -15,9 +15,6 @@ import { describePublicGalleryRepository } from './public-gallery-repository';
 import { formatCompactNumber } from './worker-build-summary';
 
 const MISSING_VALUE = '\u2013';
-const GITHUB_REPO_URL = 'https://github.com/tarskia/tarskia';
-const DIAGRAM_ISSUE_URL = `${GITHUB_REPO_URL}/issues/new?template=diagram_issue.yml`;
-const REPO_REQUEST_URL = `${GITHUB_REPO_URL}/issues/new?template=repo_request.yml`;
 
 type GalleryRow = DtoGalleryDiagramSummaryResponse & { namespace: string; slug: string };
 const EMPTY_ROWS: GalleryRow[] = [];
@@ -184,33 +181,11 @@ export default function PublicGalleryIndex() {
   return (
     <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col px-5 py-6">
       <div className="flex flex-col gap-5 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-            AI-generated, schema-validated architecture diagrams for open-source repositories. Each
-            diagram is built from public source at a captured commit and may miss or misclassify
-            implementation details.
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-            <a
-              href={DIAGRAM_ISSUE_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <span>Report diagram issue</span>
-              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-            </a>
-            <a
-              href={REPO_REQUEST_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <span>Request a repo</span>
-              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-            </a>
-          </div>
-        </div>
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+          AI-generated, schema-validated architecture diagrams for open-source repositories. Each
+          diagram is built from public source at a captured commit and may miss or misclassify
+          implementation details.
+        </p>
 
         <div className="w-full max-w-sm md:w-[320px]">
           <div className="relative">
