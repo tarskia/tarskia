@@ -35,13 +35,9 @@ export function applySceneLayout(params: {
   edges: CompiledDiagramEdge[];
   tree: SceneTree;
   nodeVisuals: Map<string, ResolvedNodeVisual>;
-  canvasSize?: { width: number; height: number } | null;
 }): SceneTree {
-  const { schema, edges, tree, nodeVisuals, canvasSize } = params;
-  const focusShellAspect =
-    canvasSize && canvasSize.width > 0 && canvasSize.height > 0
-      ? canvasSize.width / canvasSize.height
-      : FOCUS_SHELL_FALLBACK_ASPECT;
+  const { schema, edges, tree, nodeVisuals } = params;
+  const focusShellAspect = FOCUS_SHELL_FALLBACK_ASPECT;
 
   const baseSizes = new Map<string, { width: number; height: number }>();
   for (const [id, _node] of tree.byId.entries()) {

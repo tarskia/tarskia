@@ -124,10 +124,13 @@ const buildEmptyPlanningAdvisory = (direction: 'in' | 'out') => ({
   },
 });
 
-function renderManager() {
+function renderManager(params?: {
+  getCurrentCanvasSize?: () => { width: number; height: number } | null;
+  initialViewport?: { x: number; y: number; zoom: number };
+}) {
   const rawOnCanvasInit = vi.fn();
   const rawOnCanvasUnmount = vi.fn();
-  let currentViewport = { x: 0, y: 0, zoom: 1 };
+  let currentViewport = params?.initialViewport ?? { x: 0, y: 0, zoom: 1 };
   const getCurrentViewport = vi.fn(() => currentViewport);
   const getLeftOcclusion = vi.fn(() => 0);
   const getSceneBounds = vi.fn(() => ({ x: 0, y: 0, width: 480, height: 320 }));
@@ -143,7 +146,7 @@ function renderManager() {
       stableSnapshot: buildSnapshot(),
       animationSettings: DEFAULT_ANIMATION_SETTINGS,
       savedViewport: undefined,
-      canvasSize: { width: 960, height: 640 },
+      getCurrentCanvasSize: params?.getCurrentCanvasSize ?? (() => ({ width: 960, height: 640 })),
       minZoom: 0.5,
       maxZoom: 2,
       persistViewport,
@@ -533,7 +536,7 @@ describe('useDiagramMotionManager', () => {
 
     manager.onCanvasInit({} as never);
 
-    manager.requestNavigation({
+    const result = manager.requestNavigation({
       kind: 'fit-scene',
       duration: 0,
       persist: false,
@@ -541,6 +544,7 @@ describe('useDiagramMotionManager', () => {
       deferUntilNextFrame: true,
     });
 
+    expect(result).toEqual({ status: 'queued', reason: 'deferred-frame' });
     expect(setViewport).not.toHaveBeenCalled();
 
     currentBounds = { x: 120, y: 80, width: 360, height: 240 };
@@ -592,6 +596,87 @@ describe('useDiagramMotionManager', () => {
         leftOcclusion: 0,
       }),
     );
+  });
+
+  it('measures the current canvas size when resolving selection navigation', () => {
+    let currentCanvasSize = { width: 960, height: 640 };
+    const { manager, setViewport } = renderManager({
+      getCurrentCanvasSize: () => currentCanvasSize,
+    });
+    const rect = { x: 920, y: 120, width: 180, height: 100 };
+
+    manager.onCanvasInit({} as never);
+    currentCanvasSize = { width: 640, height: 640 };
+    const result = manager.requestNavigation({
+      kind: 'ensure-visible',
+      preset: 'selection',
+      rect,
+      duration: 0,
+    });
+
+    expect(result).toEqual({ status: 'queued', reason: 'motion-plan' });
+    expect(setViewport).toHaveBeenCalledWith(
+      computeViewportToKeepRectVisible({
+        viewport: { x: 0, y: 0, zoom: 1 },
+        canvas: { width: 640, height: 640 },
+        rect,
+        padding: 40,
+        leftOcclusion: 0,
+      }),
+    );
+  });
+
+  it('reports selection navigation as unavailable when no usable canvas is mounted', () => {
+    const { manager, setViewport } = renderManager({
+      getCurrentCanvasSize: () => null,
+    });
+
+    manager.onCanvasInit({} as never);
+    const result = manager.requestNavigation({
+      kind: 'ensure-visible',
+      preset: 'selection',
+      rect: { x: 920, y: 120, width: 180, height: 100 },
+      duration: 0,
+    });
+
+    expect(result).toEqual({ status: 'unavailable', reason: 'missing-canvas' });
+    expect(setViewport).not.toHaveBeenCalled();
+  });
+
+  it('reports selection navigation as a noop when the selected rect is already visible', () => {
+    const { manager, setViewport } = renderManager();
+
+    manager.onCanvasInit({} as never);
+    const result = manager.requestNavigation({
+      kind: 'ensure-visible',
+      preset: 'selection',
+      rect: { x: 120, y: 120, width: 180, height: 100 },
+      duration: 0,
+    });
+
+    expect(result).toEqual({ status: 'noop', reason: 'no-target' });
+    expect(setViewport).not.toHaveBeenCalled();
+  });
+
+  it('reports navigation as a noop when the resolved target matches the current viewport', () => {
+    const currentViewport = computeViewportForBoundsInVisibleCanvas({
+      bounds: { x: 0, y: 0, width: 480, height: 320 },
+      canvas: { width: 960, height: 640 },
+      minZoom: 0.5,
+      maxZoom: 2,
+      padding: DEFAULT_VIEWPORT_FIT_PADDING,
+      leftOcclusion: 0,
+    });
+    const { manager, setViewport } = renderManager({ initialViewport: currentViewport });
+
+    manager.onCanvasInit({} as never);
+    const result = manager.requestNavigation({
+      kind: 'fit-scene',
+      duration: 0,
+    });
+
+    expect(result).toEqual({ status: 'noop', reason: 'same-viewport' });
+    expect(setViewport).not.toHaveBeenCalled();
   });
 
   it('interrupts managed motion for user gestures and persists only on gesture end', () => {

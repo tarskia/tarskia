@@ -15,7 +15,12 @@ import {
   useNodesState,
 } from 'reactflow';
 
-import type { MotionPhase, NavigationIntent } from '../diagram/motion-types';
+import type { GetCurrentCanvasSize } from '../diagram/canvas-size';
+import type {
+  MotionPhase,
+  NavigationIntent,
+  NavigationRequestResult,
+} from '../diagram/motion-types';
 import type { NodeVisualMode } from '../node-visual-mode';
 import type { Entity, SchemaModule, SemanticDocument } from '../semantic';
 import type { CanvasSemanticBindings } from '../shell/view-models';
@@ -50,10 +55,10 @@ export interface UseCanvasSurfaceControllerArgs {
     onCanvasUnmount: () => void;
     onLeftOcclusionChange: (leftOcclusion: number) => void;
     screenToWorldPosition: (point: { x: number; y: number }) => { x: number; y: number };
-    inspectorVisible?: boolean;
     readOnly?: boolean;
     showDebug: boolean;
-    canvasSize: { width: number; height: number } | null;
+    getCurrentCanvasSize: GetCurrentCanvasSize;
+    canvasLayoutVersion: number;
     minZoom: number;
     maxZoom: number;
     nodeVisualMode: NodeVisualMode;
@@ -102,7 +107,7 @@ export interface UseCanvasSurfaceControllerArgs {
   };
   transition: {
     getCurrentViewport: () => { x: number; y: number; zoom: number };
-    requestNavigation: (intent: NavigationIntent) => void;
+    requestNavigation: (intent: NavigationIntent) => NavigationRequestResult;
     reportUserGestureStart: () => void;
     reportUserGestureMove: (viewport: { x: number; y: number; zoom: number }) => void;
     reportUserGestureEnd: (viewport: { x: number; y: number; zoom: number }) => void;
@@ -128,20 +133,8 @@ const FOCUS_SHELL_OUTER_INSET_X = 18;
 const FOCUS_SHELL_OUTER_INSET_Y = 18;
 const FOCUS_SHELL_STEP_X = 16;
 const FOCUS_SHELL_STEP_Y = 32;
-const SELECTION_REVEAL_CANVAS_RESIZE_EPSILON = 0.5;
-const SELECTION_REVEAL_RESIZE_FALLBACK_FRAMES = 30;
-const SELECTION_REVEAL_RESIZE_SETTLE_FRAMES = 1;
 const toSingleSelectionSet = (id?: string) => (id ? new Set([id]) : new Set<string>());
 const hostRenderStateSignatureCache = new WeakMap<ReactFlowHostRenderState, string>();
-
-interface PendingSelectionRevealResize {
-  selectedEntityId: string;
-  previousCanvasWidth: number | null;
-  waitFrames: number;
-  waitForInspectorResize: boolean;
-  resizeObserved: boolean;
-  resizeSettleFrames: number;
-}
 
 const isEditableTarget = (target: EventTarget | null): boolean => {
   if (!(target instanceof HTMLElement)) return false;
@@ -178,45 +171,24 @@ export const getHostRenderStateSignature = (state: ReactFlowHostRenderState) => 
 
 export const buildAutoVisibleSelectionKey = (params: {
   selectedEntityId?: string;
-  canvasSize: { width: number; height: number } | null;
-  rect?: { x: number; y: number; width: number; height: number };
+  canvasLayoutVersion?: number;
   leftOcclusion?: number;
 }) => {
-  const { selectedEntityId, canvasSize, leftOcclusion } = params;
-  if (!selectedEntityId || !canvasSize) {
+  const { selectedEntityId, canvasLayoutVersion = 0, leftOcclusion } = params;
+  if (!selectedEntityId) {
     return null;
   }
   // Keep selection auto-reveal tied to user selection and viewport geometry,
   // not layout-driven node movement during unrelated expand/collapse transitions.
   return [
     selectedEntityId,
-    `${Math.round(canvasSize.width)}x${Math.round(canvasSize.height)}`,
+    `layout:${canvasLayoutVersion}`,
     `${Math.round(Math.max(0, leftOcclusion ?? 0))}`,
   ].join(':');
 };
 
-export const shouldWaitForSelectionRevealCanvasResize = (params: {
-  waitForInspectorResize: boolean;
-  previousCanvasWidth: number | null;
-  currentCanvasWidth: number | null;
-  waitFrames: number;
-  resizeSettleFrames?: number;
-}) => {
-  const {
-    waitForInspectorResize,
-    previousCanvasWidth,
-    currentCanvasWidth,
-    waitFrames,
-    resizeSettleFrames = 0,
-  } = params;
-  if (!waitForInspectorResize || previousCanvasWidth === null || currentCanvasWidth === null) {
-    return false;
-  }
-  if (currentCanvasWidth < previousCanvasWidth - SELECTION_REVEAL_CANVAS_RESIZE_EPSILON) {
-    return resizeSettleFrames < SELECTION_REVEAL_RESIZE_SETTLE_FRAMES;
-  }
-  return waitFrames < SELECTION_REVEAL_RESIZE_FALLBACK_FRAMES;
-};
+export const shouldCommitAutoVisibleSelectionKey = (result: NavigationRequestResult) =>
+  result.status === 'queued' || result.status === 'applied';
 
 export const shouldAcknowledgeDisplayGenerationImmediately = (params: {
   hostRenderChanged: boolean;
@@ -331,10 +303,10 @@ export function useCanvasSurfaceController({
     onCanvasUnmount,
     onLeftOcclusionChange,
     screenToWorldPosition,
-    inspectorVisible = false,
     readOnly = false,
     showDebug,
-    canvasSize,
+    getCurrentCanvasSize,
+    canvasLayoutVersion,
     minZoom,
     maxZoom,
     nodeVisualMode,
@@ -391,10 +363,6 @@ export function useCanvasSurfaceController({
   const edgeSearchInputRef = useRef<HTMLInputElement | null>(null);
   const edgeMenuInputRef = useRef<HTMLInputElement | null>(null);
   const autoVisibleSelectionKeyRef = useRef<string | null>(null);
-  const pendingSelectionRevealResizeRef = useRef<PendingSelectionRevealResize | null>(null);
-  const pendingSelectionRevealResizeFrameRef = useRef<number | null>(null);
-  const previousInspectorVisibleRef = useRef(inspectorVisible);
-  const previousCanvasWidthRef = useRef<number | null>(canvasSize?.width ?? null);
   const viewportGestureActiveRef = useRef(false);
   const pendingDisplayGenerationRef = useRef<number | null>(null);
   const notifiedDisplayGenerationRef = useRef<number | null>(null);
@@ -403,30 +371,6 @@ export function useCanvasSurfaceController({
   const [edgeMenu, setEdgeMenu] = useState<EdgeMenuState | null>(null);
   const [draftConnection, setDraftConnection] =
     useState<DiagramCanvasProps['draftConnection']>(null);
-  const [selectionRevealResizeWaitTick, setSelectionRevealResizeWaitTick] = useState(0);
-  const cancelPendingSelectionRevealResizeFrame = useCallback(() => {
-    if (pendingSelectionRevealResizeFrameRef.current === null) {
-      return;
-    }
-    cancelAnimationFrame(pendingSelectionRevealResizeFrameRef.current);
-    pendingSelectionRevealResizeFrameRef.current = null;
-  }, []);
-  const requestPendingSelectionRevealResizeRecheck = useCallback(() => {
-    cancelPendingSelectionRevealResizeFrame();
-    pendingSelectionRevealResizeFrameRef.current = requestAnimationFrame(() => {
-      pendingSelectionRevealResizeFrameRef.current = null;
-      const pendingReveal = pendingSelectionRevealResizeRef.current;
-      if (!pendingReveal) {
-        return;
-      }
-      if (pendingReveal.resizeObserved) {
-        pendingReveal.resizeSettleFrames += 1;
-      } else {
-        pendingReveal.waitFrames += 1;
-      }
-      setSelectionRevealResizeWaitTick((current) => current + 1);
-    });
-  }, [cancelPendingSelectionRevealResizeFrame]);
   const suppressPaneClickOnce = useCallback(() => {
     // Ignore the immediate pane click after node/edge/popup interactions.
     suppressPaneClickRef.current = true;
@@ -440,9 +384,8 @@ export function useCanvasSurfaceController({
       if (zoomDebounceRef.current) {
         globalThis.clearTimeout(zoomDebounceRef.current);
       }
-      cancelPendingSelectionRevealResizeFrame();
     };
-  }, [cancelPendingSelectionRevealResizeFrame]);
+  }, []);
 
   useEffect(() => {
     if (edgeSearch) {
@@ -521,7 +464,7 @@ export function useCanvasSurfaceController({
     );
   }, [entityIndex.byId, focusRootId, focusShellViews, semantic]);
   const focusShellFrames = useMemo(() => {
-    if (!canvasSize || !focusRootId) {
+    if (!focusRootId) {
       return [];
     }
     const focusRootEntity = entityIndex.byId.get(focusRootId);
@@ -551,11 +494,11 @@ export function useCanvasSurfaceController({
       frame: {
         left: FOCUS_SHELL_OUTER_INSET_X + index * FOCUS_SHELL_STEP_X,
         top: FOCUS_SHELL_OUTER_INSET_Y + index * FOCUS_SHELL_STEP_Y,
-        right: canvasSize.width - (FOCUS_SHELL_OUTER_INSET_X + index * FOCUS_SHELL_STEP_X),
-        bottom: canvasSize.height - (FOCUS_SHELL_OUTER_INSET_Y + index * FOCUS_SHELL_STEP_Y),
+        right: FOCUS_SHELL_OUTER_INSET_X + index * FOCUS_SHELL_STEP_X,
+        bottom: FOCUS_SHELL_OUTER_INSET_Y + index * FOCUS_SHELL_STEP_Y,
       },
     }));
-  }, [canvasSize, entityIndex.byId, focusRootId, focusShellHue, focusShellViews, semantic]);
+  }, [entityIndex.byId, focusRootId, focusShellHue, focusShellViews, semantic]);
   const handleEdgeSelect = useCallback(
     (edgeId: string) => {
       traceSelection('onEdgeClick', { edgeId, relationId: edgeId });
@@ -958,18 +901,14 @@ export function useCanvasSurfaceController({
     [onLeftOcclusionChange],
   );
 
-  useEffect(() => {
-    void selectionRevealResizeWaitTick;
+  useLayoutEffect(() => {
     if (!selectedEntityId) {
       autoVisibleSelectionKeyRef.current = null;
-      pendingSelectionRevealResizeRef.current = null;
-      cancelPendingSelectionRevealResizeFrame();
       return;
     }
     const nextAutoVisibleSelectionKey = buildAutoVisibleSelectionKey({
       selectedEntityId,
-      canvasSize,
-      rect: selectedNodeView?.rect,
+      canvasLayoutVersion,
       leftOcclusion,
     });
     if (!nextAutoVisibleSelectionKey) {
@@ -978,83 +917,29 @@ export function useCanvasSurfaceController({
     if (autoVisibleSelectionKeyRef.current === nextAutoVisibleSelectionKey) {
       return;
     }
-    const pendingSelectionReveal =
-      pendingSelectionRevealResizeRef.current?.selectedEntityId === selectedEntityId
-        ? pendingSelectionRevealResizeRef.current
-        : {
-            selectedEntityId,
-            previousCanvasWidth: previousCanvasWidthRef.current,
-            waitFrames: 0,
-            waitForInspectorResize: inspectorVisible && !previousInspectorVisibleRef.current,
-            resizeObserved: false,
-            resizeSettleFrames: 0,
-          };
-    pendingSelectionRevealResizeRef.current = pendingSelectionReveal;
-    const inspectorResizeObserved =
-      pendingSelectionReveal.waitForInspectorResize &&
-      pendingSelectionReveal.previousCanvasWidth !== null &&
-      canvasSize?.width !== undefined &&
-      canvasSize.width <
-        pendingSelectionReveal.previousCanvasWidth - SELECTION_REVEAL_CANVAS_RESIZE_EPSILON;
-    if (inspectorResizeObserved) {
-      pendingSelectionReveal.resizeObserved = true;
-    }
     if (!selectedNodeView?.rect) {
-      if (
-        shouldWaitForSelectionRevealCanvasResize({
-          waitForInspectorResize: pendingSelectionReveal.waitForInspectorResize,
-          previousCanvasWidth: pendingSelectionReveal.previousCanvasWidth,
-          currentCanvasWidth: canvasSize?.width ?? null,
-          waitFrames: pendingSelectionReveal.waitFrames,
-          resizeSettleFrames: pendingSelectionReveal.resizeSettleFrames,
-        })
-      ) {
-        requestPendingSelectionRevealResizeRecheck();
-      }
       return;
     }
     if (motionPhase !== 'idle' || isTransitionQueued) {
       return;
     }
-    if (
-      shouldWaitForSelectionRevealCanvasResize({
-        waitForInspectorResize: pendingSelectionReveal.waitForInspectorResize,
-        previousCanvasWidth: pendingSelectionReveal.previousCanvasWidth,
-        currentCanvasWidth: canvasSize?.width ?? null,
-        waitFrames: pendingSelectionReveal.waitFrames,
-        resizeSettleFrames: pendingSelectionReveal.resizeSettleFrames,
-      })
-    ) {
-      requestPendingSelectionRevealResizeRecheck();
-      return;
-    }
-    pendingSelectionRevealResizeRef.current = null;
-    cancelPendingSelectionRevealResizeFrame();
-    autoVisibleSelectionKeyRef.current = nextAutoVisibleSelectionKey;
-    requestNavigation({
+    const result = requestNavigation({
       kind: 'ensure-visible',
       preset: 'selection',
       rect: selectedNodeView.rect,
-      deferUntilNextFrame: pendingSelectionReveal.waitForInspectorResize,
     });
+    if (shouldCommitAutoVisibleSelectionKey(result)) {
+      autoVisibleSelectionKeyRef.current = nextAutoVisibleSelectionKey;
+    }
   }, [
-    canvasSize,
-    cancelPendingSelectionRevealResizeFrame,
-    inspectorVisible,
+    canvasLayoutVersion,
     isTransitionQueued,
     leftOcclusion,
     motionPhase,
-    requestPendingSelectionRevealResizeRecheck,
     requestNavigation,
     selectedEntityId,
     selectedNodeView,
-    selectionRevealResizeWaitTick,
   ]);
-
-  useEffect(() => {
-    previousInspectorVisibleRef.current = inspectorVisible;
-    previousCanvasWidthRef.current = canvasSize?.width ?? null;
-  });
 
   useEffect(() => {
     void nodes;
@@ -1101,6 +986,8 @@ export function useCanvasSurfaceController({
   }, [hostRenderState, selectedEdgeId, showDebug]);
 
   const debugSummary = useMemo(() => {
+    // Keep debug geometry current without storing canvas dimensions in React state.
+    void canvasLayoutVersion;
     if (!showDebug) return null;
     const allIds = graph.entities.map((entity) => entity.id);
     const layoutIds = compiled.scene.visibleIds;
@@ -1141,6 +1028,7 @@ export function useCanvasSurfaceController({
 
     const viewRect = (() => {
       const viewport = getCurrentViewport();
+      const canvasSize = getCurrentCanvasSize();
       if (!canvasSize || !viewport) return null;
       const minX = -viewport.x / viewport.zoom;
       const minY = -viewport.y / viewport.zoom;
@@ -1254,8 +1142,9 @@ export function useCanvasSurfaceController({
     hostRenderState.nodes,
     decoratedPresentation.nodes,
     decoratedPresentation.overlayEdges.length,
-    canvasSize,
+    canvasLayoutVersion,
     frameDurations,
+    getCurrentCanvasSize,
     isTransitionQueued,
     isTransitionRunning,
     nodes,

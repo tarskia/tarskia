@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type {
   NavigationIntent,
+  NavigationRequestResult,
   StructuralChoreographyRequest,
   StructuralTransitionFocus,
   StructuralTransitionIntent,
@@ -61,7 +62,7 @@ export interface UseCanvasTransitionControllerArgs {
   getCurrentViewport: () => ViewportState;
   getCurrentDisplaySnapshot: () => CanvasRenderSnapshot;
   isMotionActive: boolean;
-  requestNavigation: (intent: NavigationIntent) => void;
+  requestNavigation: (intent: NavigationIntent) => NavigationRequestResult;
   startChoreography: (
     request: StructuralChoreographyRequest,
     options?: { onComplete?: () => void },

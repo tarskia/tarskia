@@ -1,13 +1,7 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.10/schema.json",
   "files": {
-    "includes": [
-      "**",
-      "!**/dist",
-      "!**/test-results",
-      "!frontend/src/api/generated",
-      "!.cache"
-    ]
+    "includes": ["**", "!**/dist", "!**/test-results", "!frontend/src/api/generated", "!.cache"]
   },
   "formatter": {
     "enabled": true,

@@ -1,5 +1,9 @@
 import type { AnimationSettings } from '../diagram/animation-settings';
-import type { NavigationIntent, StructuralTransitionIntent } from '../diagram/motion-types';
+import type {
+  NavigationIntent,
+  NavigationRequestResult,
+  StructuralTransitionIntent,
+} from '../diagram/motion-types';
 import type { NodeVisualMode } from '../node-visual-mode';
 import type {
   Entity,
@@ -46,7 +50,7 @@ export interface WorkspaceDiagramModel {
 }
 
 export interface WorkspaceDiagramRuntimeHandle {
-  requestNavigation: (intent: NavigationIntent) => void;
+  requestNavigation: (intent: NavigationIntent) => NavigationRequestResult;
   flushUserGesture: () => boolean;
   setPendingStructuralTransitionIntent: (intent: StructuralTransitionIntent | null) => void;
   cancelTransitions: () => void;
