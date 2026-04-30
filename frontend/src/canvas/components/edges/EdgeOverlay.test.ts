@@ -543,6 +543,8 @@ describe('EdgeOverlayView', () => {
     expect(markup).toContain('<clipPath');
     expect(markup).toContain('edge-underlay-path edge-underlay-path-selected');
     expect(markup).toContain('edge-overlay-path edge-overlay-path-selected');
+    expect(markup).toContain('class="edge-underlay-path edge-underlay-path-selected"');
+    expect(markup).toContain('fill="none"');
     expect(markup).toContain('M 18,20 V 38 H 78 V 20 Z');
     expect(markup).not.toContain('edge-overlay-path-branch edge-overlay-path-branch-selected');
   });
