@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node ../scripts/build-semantics.mjs && vite",
-    "build": "node ../scripts/build-semantics.mjs && tsc -b && vite build",
+    "build": "node ../scripts/build-semantics.mjs && tsc -b tsconfig.app.json && vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "generate:api": "orval --config orval.config.ts",

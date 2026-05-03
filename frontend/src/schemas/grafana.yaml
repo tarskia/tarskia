@@ -1,0 +1,158 @@
+owner: gallery
+name: grafana
+version: "0.1"
+description: >-
+  Grafana-shaped architectural wrappers for the browser portal, Go control plane, shared package
+  surfaces, and repository-specific support code.
+use:
+  - schema: core/base@0.1
+    alias: base
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/frontend@0.3
+    alias: fe
+  - schema: core/web-app@0.3
+    alias: web
+  - schema: core/code@0.1
+    alias: code
+traits:
+  - id: grafana-runtime-like
+    label: Grafana Runtime
+    description: >-
+      Top-level Grafana application boundary spanning the browser portal, control plane, shared
+      packages, and repository-specific support code.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+  - id: browser-client-like
+    label: Browser Client
+    description: Browser-facing Grafana UI boundary that originates user-driven flow into the backend.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: source
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+  - id: server-control-plane-like
+    label: Control Plane
+    description: >-
+      Main Go backend runtime that serves Grafana HTTP and API surface and continues flow into
+      plugin, provisioning, auth, and data-access paths.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+        - reads
+        - writes
+        - read-writes
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+      - relation: core/software.relations.calls
+        endpoint: to
+      - relation: core/software.relations.reads
+        endpoint: from
+      - relation: core/software.relations.writes
+        endpoint: from
+      - relation: core/software.relations.read-writes
+        endpoint: from
+types:
+  - id: grafana
+    label: Grafana
+    description: >-
+      Top-level Grafana application boundary spanning the browser portal, Go control plane, shared
+      package surfaces, and repository-specific support code.
+    extends: core/web-app.types.application
+    traits:
+      - gallery/grafana.traits.grafana-runtime-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - portal-app
+        - control-plane
+        - group
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 320
+        height: 168
+      style:
+        hue: 209
+      count:
+        childTypes:
+          - portal-app
+          - control-plane
+          - group
+        label: components
+  - id: portal-app
+    label: Portal App
+    description: Browser-facing React surface for Grafana main dashboard UI and client-side packages.
+    extends: core/frontend.types.frontend
+    traits:
+      - gallery/grafana.traits.browser-client-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/code.traits.code-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 220
+        height: 96
+      style:
+        hue: 188
+      count:
+        childTypes:
+          - module
+          - group
+        label: components
+  - id: control-plane
+    label: Control Plane
+    description: >-
+      Main Go backend runtime that serves Grafana HTTP and API surface and continues flow into
+      plugin, provisioning, auth, and data-access paths.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/grafana.traits.server-control-plane-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - api
+        - module
+        - group
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/code.traits.code-like
+        - core/software.traits.api-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 240
+        height: 120
+      style:
+        hue: 214
+      count:
+        childTypes:
+          - api
+          - module
+          - group
+        label: components
+relations: []

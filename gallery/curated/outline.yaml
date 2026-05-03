@@ -1541,4 +1541,5 @@ metadata:
     url: https://github.com/outline/outline
     commit: af77bd6474abf4d1f731af281c2d3b34e88b2773
     committedAt: "2026-04-27T22:55:16-04:00"
+  description: Team knowledge base with collaborative docs and realtime editing
   name: Outline

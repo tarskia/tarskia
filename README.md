@@ -43,9 +43,9 @@ Open the Vite URL and go to `/gallery`.
 ## Backend Configuration
 
 Set `VITE_API_BASE_URL` to point the frontend at a backend API. If it is not set,
-the Vite dev server proxies API paths to `http://localhost:8082`. The public
-gallery falls back to the checked-in YAML files during local dev when that API is
-not available.
+the Vite dev server proxies API paths to `http://localhost:8082`, but the public
+gallery uses the checked-in YAML files during local dev by default. Set
+`VITE_GALLERY_SOURCE=api` when you want the gallery to use the backend API.
 
 ## Gallery
 
@@ -53,7 +53,7 @@ Curated gallery source files live in `gallery/curated`. The private backend keep
 a copied snapshot for deployment and embeds that snapshot into its Render-built
 Docker image.
 
-Force local gallery data without trying the API:
+Force local gallery data explicitly:
 
 ```sh
 VITE_GALLERY_SOURCE=local npm run dev -w @tarskia/frontend

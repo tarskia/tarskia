@@ -1,0 +1,172 @@
+owner: gallery
+name: tarskia
+version: "0.1"
+description: >-
+  Tarskia-shaped architectural wrappers for the browser gallery/studio app, the shared semantic
+  package, and the checked-in gallery assets, aligned to the repository runtime and authoring
+  surfaces.
+use:
+  - schema: core/base@0.1
+    alias: base
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/frontend@0.3
+    alias: fe
+  - schema: core/code@0.1
+    alias: code
+  - schema: core/web-app@0.3
+    alias: web
+traits:
+  - id: tarskia-runtime-like
+    label: Tarskia Runtime
+    description: >-
+      Top-level Tarskia application boundary spanning the browser app, shared semantic package, and
+      gallery asset corpus.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+  - id: browser-surface-like
+    label: Browser Surface
+    description: >-
+      Browser-facing application boundary that originates user-driven flow into repo-owned code and
+      services.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: source
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+types:
+  - id: tarskia
+    label: Tarskia
+    description: >-
+      Top-level Tarskia application boundary spanning the browser app, shared semantic package, and
+      gallery asset corpus.
+    extends: core/web-app.types.application
+    traits:
+      - gallery/tarskia.traits.tarskia-runtime-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - portal-app
+        - diagram-semantics
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 300
+        height: 168
+      style:
+        hue: 210
+      count:
+        childTypes:
+          - portal-app
+          - diagram-semantics
+        label: components
+  - id: portal-app
+    label: Portal App
+    description: Browser-facing React app that serves the public gallery and schema editor surfaces.
+    extends: core/frontend.types.frontend
+    traits:
+      - gallery/tarskia.traits.browser-surface-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 220
+        height: 104
+      style:
+        hue: 188
+      count:
+        childTypes:
+          - module
+          - group
+        label: components
+    properties:
+      - id: runtime
+        type: enum
+        description: >-
+          Primary execution environment for this node or subtree. Populate it when one runtime is
+          uniformly true for the boundary. If major children would have different runtimes, prefer
+          separate boundaries instead of mixing them under one node.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true. Prefer it on the highest boundary where it stays accurate instead of repeating it
+          across every descendant.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
+  - id: diagram-semantics
+    label: Diagram Semantics
+    description: >-
+      Shared diagram-semantics package that provides the semantic kernel, validation, serialization,
+      and flow-analysis logic used by the frontend and build scripts.
+    extends: core/code.types.module
+    analysis:
+      topLevelBias: avoid
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 230
+        height: 104
+      style:
+        hue: 316
+      count:
+        childTypes:
+          - module
+          - group
+        label: modules
+    properties:
+      - id: language
+        type: enum
+        description: Primary implementation language for this module or subtree when known.
+        values:
+          - typescript
+          - javascript
+          - python
+          - go
+          - rust
+          - java
+          - csharp
+        allowOther: true
+relations: []

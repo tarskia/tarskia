@@ -2772,4 +2772,5 @@ metadata:
     url: https://github.com/chatwoot/chatwoot
     commit: 7c7d67fd066e49b61abb9156e76c91aee3ce164c
     committedAt: "2026-04-29T14:15:37+05:30"
+  description: Customer support platform for live chat, inboxes, and automation
   name: Chatwoot

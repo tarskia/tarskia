@@ -4512,4 +4512,5 @@ metadata:
     url: https://github.com/n8n-io/n8n
     commit: 6175fd6f7b56ead0176938657085b763c1204681
     committedAt: "2026-04-30T08:29:11Z"
+  description: Workflow automation platform for integrations and internal tools
   name: N8n

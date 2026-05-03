@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 
 const DEV_WORKER_DIAGRAM_ENDPOINT = '/__dev/worker-diagram';
+const FRONTEND_ROOT = import.meta.dirname;
+const WORKSPACE_ROOT = path.resolve(FRONTEND_ROOT, '..');
+const IGNORED_LOCAL_WORKSPACE_GLOBS = ['**/.claude/**', '**/.tmp/**', '**/.playwright-mcp/**'];
 
 function workerDiagramDevPlugin(workerDiagramPath: string): Plugin {
   return {
@@ -86,7 +89,7 @@ const API_PROXY_PREFIXES = [
 ] as const;
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
+  const env = loadEnv(mode, WORKSPACE_ROOT, '');
   const workerDiagramPath = env.DEV_WORKER_DIAGRAM_PATH?.trim();
   const apiOrigin =
     env.VITE_API_BASE_URL?.trim() ||
@@ -94,13 +97,18 @@ export default defineConfig(({ mode }) => {
     `http://localhost:${env.PORT?.trim() || '8082'}`;
 
   return {
+    root: FRONTEND_ROOT,
+    envDir: WORKSPACE_ROOT,
     plugins: [
       react(),
       ...(workerDiagramPath ? [workerDiagramDevPlugin(path.resolve(workerDiagramPath))] : []),
     ],
     server: {
       fs: {
-        allow: [path.resolve(__dirname, '..')],
+        allow: [WORKSPACE_ROOT],
+      },
+      watch: {
+        ignored: IGNORED_LOCAL_WORKSPACE_GLOBS,
       },
       proxy: Object.fromEntries(
         API_PROXY_PREFIXES.map((prefix) => [

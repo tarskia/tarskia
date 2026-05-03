@@ -1,0 +1,592 @@
+version: 0.1.0
+schemaRefs:
+  - schema: gallery/airflow@0.1
+    layer: 0
+  - schema: core/web-app@0.3
+    layer: 1
+  - schema: core/frontend@0.3
+    layer: 1
+  - schema: core/kubernetes@0.3
+    layer: 1
+  - schema: core/code@0.1
+    layer: 2
+  - schema: core/web-app@0.3
+    layer: 0
+  - schema: core/frontend@0.3
+    layer: 0
+  - schema: core/kubernetes@0.3
+    layer: 0
+  - schema: core/code@0.1
+    layer: 1
+  - schema: core/software@0.1
+    layer: 1
+entities:
+  - id: airflow-cli-suite
+    type: gallery/airflow.types.cli-suite
+    name: Airflow CLI suite
+    description: CLI entrypoints and process launchers.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/__main__.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/cli_parser.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/api_server_command.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/scheduler_command.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/triggerer_command.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/dag_processor_command.py
+    children:
+      - id: airflow-cli-suite/dispatcher
+        type: core/web-app.types.scheduler
+        name: CLI dispatcher
+        description: CLI entrypoint and command dispatch tree.
+        provenance:
+          locations:
+            - input: primary
+              path: airflow-core/src/airflow/__main__.py
+            - input: primary
+              path: airflow-core/src/airflow/cli/cli_parser.py
+            - input: primary
+              path: airflow-core/src/airflow/cli/commands/api_server_command.py
+            - input: primary
+              path: airflow-core/src/airflow/cli/commands/scheduler_command.py
+            - input: primary
+              path: airflow-core/src/airflow/cli/commands/triggerer_command.py
+            - input: primary
+              path: airflow-core/src/airflow/cli/commands/dag_processor_command.py
+        children:
+          - id: airflow-cli-suite/dispatcher/main
+            type: core/code.types.module
+            name: CLI main
+            description: CLI entrypoint dispatch logic.
+            provenance:
+              locations:
+                - input: primary
+                  path: airflow-core/src/airflow/__main__.py
+            children:
+              - id: airflow-cli-suite/dispatcher/main/dispatcher-core
+                type: core/code.types.module
+                name: CLI dispatch core
+                description: CLI dispatch logic inside the main entrypoint.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: airflow-core/src/airflow/__main__.py
+          - id: airflow-cli-suite/dispatcher/parser
+            type: core/code.types.module
+            name: CLI parser
+            description: Command-tree parser.
+            provenance:
+              locations:
+                - input: primary
+                  path: airflow-core/src/airflow/cli/cli_parser.py
+          - id: airflow-cli-suite/dispatcher/api-server-command
+            type: core/code.types.module
+            name: API server command
+            description: Launcher for the API server process.
+            provenance:
+              locations:
+                - input: primary
+                  path: airflow-core/src/airflow/cli/commands/api_server_command.py
+          - id: airflow-cli-suite/dispatcher/scheduler-command
+            type: core/code.types.module
+            name: Scheduler command
+            description: Launcher for the scheduler process.
+            provenance:
+              locations:
+                - input: primary
+                  path: airflow-core/src/airflow/cli/commands/scheduler_command.py
+          - id: airflow-cli-suite/dispatcher/triggerer-command
+            type: core/code.types.module
+            name: Triggerer command
+            description: Launcher for the triggerer process.
+            provenance:
+              locations:
+                - input: primary
+                  path: airflow-core/src/airflow/cli/commands/triggerer_command.py
+          - id: airflow-cli-suite/dispatcher/dag-processor-command
+            type: core/code.types.module
+            name: DAG processor command
+            description: Launcher for the DAG processor process.
+            provenance:
+              locations:
+                - input: primary
+                  path: airflow-core/src/airflow/cli/commands/dag_processor_command.py
+  - id: airflow-control-plane
+    type: gallery/airflow.types.control-plane
+    name: Airflow control plane
+    description: API service and scheduler runtime inside the Airflow control plane.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/api_fastapi/main.py
+        - input: primary
+          path: airflow-core/src/airflow/api_fastapi/core_api/app.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/api_server_command.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/scheduler_command.py
+        - input: primary
+          path: airflow-core/src/airflow/api_fastapi/core_api/routes/public/dag_run.py
+    children:
+      - id: airflow-control-plane/api-server
+        type: core/web-app.types.service
+        name: API server
+        description: FastAPI API server runtime and public route surface.
+        props:
+          framework: fastapi
+          runtime: server
+          deployability: deployable
+        provenance:
+          locations:
+            - input: primary
+              path: airflow-core/src/airflow/api_fastapi/main.py
+            - input: primary
+              path: airflow-core/src/airflow/api_fastapi/core_api/app.py
+            - input: primary
+              path: airflow-core/src/airflow/api_fastapi/core_api/routes/public/dag_run.py
+            - input: primary
+              path: airflow-core/src/airflow/cli/commands/api_server_command.py
+            - input: primary
+              path: chart/templates/api-server/api-server-deployment.yaml
+        children:
+          - id: airflow-control-plane/api-server/entrypoint
+            type: core/code.types.module
+            name: API server entrypoint
+            description: FastAPI bootstrap module for the API server.
+            provenance:
+              locations:
+                - input: primary
+                  path: airflow-core/src/airflow/api_fastapi/main.py
+                - input: primary
+                  path: airflow-core/src/airflow/cli/commands/api_server_command.py
+          - id: airflow-control-plane/api-server/public-api
+            type: core/web-app.types.api
+            name: Public API
+            description: FastAPI application and public route surface.
+            provenance:
+              locations:
+                - input: primary
+                  path: airflow-core/src/airflow/api_fastapi/core_api/app.py
+                - input: primary
+                  path: airflow-core/src/airflow/api_fastapi/core_api/routes/public/dag_run.py
+      - id: airflow-control-plane/scheduler-runtime
+        type: core/web-app.types.service
+        name: Scheduler runtime
+        description: Scheduler process launcher and job runner inside the Airflow control plane.
+        props:
+          runtime: worker
+          deployability: deployable
+        provenance:
+          locations:
+            - input: primary
+              path: airflow-core/src/airflow/cli/commands/scheduler_command.py
+            - input: primary
+              path: airflow-core/src/airflow/jobs/JOB_LIFECYCLE.md
+            - input: primary
+              path: airflow-core/src/airflow/jobs/scheduler_job_runner.py
+            - input: primary
+              path: chart/templates/scheduler/scheduler-deployment.yaml
+        children:
+          - id: airflow-control-plane/scheduler-runtime/entrypoint
+            type: core/code.types.module
+            name: Scheduler entrypoint
+            description: Process launcher for the scheduler service.
+            provenance:
+              locations:
+                - input: primary
+                  path: airflow-core/src/airflow/cli/commands/scheduler_command.py
+                - input: primary
+                  path: chart/templates/scheduler/scheduler-deployment.yaml
+          - id: airflow-control-plane/scheduler-runtime/job-runner
+            type: core/code.types.module
+            name: Scheduler job runner
+            description: Runtime coordination loop.
+            provenance:
+              locations:
+                - input: primary
+                  path: airflow-core/src/airflow/jobs/JOB_LIFECYCLE.md
+                - input: primary
+                  path: airflow-core/src/airflow/jobs/scheduler_job_runner.py
+  - id: airflow-task-runtime
+    type: gallery/airflow.types.task-runtime
+    name: Airflow task runtime
+    description: Worker execution plane for scheduler, triggerer, and DAG processor processes.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/jobs/JOB_LIFECYCLE.md
+        - input: primary
+          path: airflow-core/src/airflow/jobs/job.py
+        - input: primary
+          path: airflow-core/src/airflow/jobs/scheduler_job_runner.py
+        - input: primary
+          path: airflow-core/src/airflow/jobs/triggerer_job_runner.py
+        - input: primary
+          path: airflow-core/src/airflow/jobs/dag_processor_job_runner.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/triggerer_command.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/dag_processor_command.py
+    children:
+      - id: airflow-task-runtime/scheduler-job-runner
+        type: core/code.types.module
+        name: Scheduler job runner
+        description: Scheduler job runner and shared job abstraction.
+        props:
+          language: python
+          runtime: worker
+        provenance:
+          locations:
+            - input: primary
+              path: airflow-core/src/airflow/jobs/job.py
+            - input: primary
+              path: airflow-core/src/airflow/jobs/JOB_LIFECYCLE.md
+            - input: primary
+              path: airflow-core/src/airflow/jobs/scheduler_job_runner.py
+        children:
+          - id: airflow-task-runtime/scheduler-job-runner/job
+            type: core/code.types.module
+            name: Job abstraction
+            description: Shared job lifecycle base.
+            provenance:
+              locations:
+                - input: primary
+                  path: airflow-core/src/airflow/jobs/job.py
+                - input: primary
+                  path: airflow-core/src/airflow/jobs/JOB_LIFECYCLE.md
+          - id: airflow-task-runtime/scheduler-job-runner/runner
+            type: core/code.types.module
+            name: Scheduler runner implementation
+            description: Scheduler job runner logic.
+            provenance:
+              locations:
+                - input: primary
+                  path: airflow-core/src/airflow/jobs/scheduler_job_runner.py
+                - input: primary
+                  path: airflow-core/src/airflow/jobs/JOB_LIFECYCLE.md
+      - id: airflow-task-runtime/triggerer-runtime
+        type: core/web-app.types.service
+        name: Triggerer runtime
+        description: Triggerer worker process.
+        props:
+          deployability: deployable
+          runtime: worker
+        provenance:
+          locations:
+            - input: primary
+              path: airflow-core/src/airflow/jobs/triggerer_job_runner.py
+            - input: primary
+              path: airflow-core/src/airflow/cli/commands/triggerer_command.py
+            - input: primary
+              path: chart/templates/triggerer/triggerer-deployment.yaml
+      - id: airflow-task-runtime/dag-processor-runtime
+        type: core/web-app.types.service
+        name: DAG processor runtime
+        description: DAG parsing worker process.
+        props:
+          deployability: deployable
+          runtime: worker
+        provenance:
+          locations:
+            - input: primary
+              path: airflow-core/src/airflow/jobs/dag_processor_job_runner.py
+            - input: primary
+              path: airflow-core/src/airflow/cli/commands/dag_processor_command.py
+            - input: primary
+              path: chart/templates/dag-processor/dag-processor-deployment.yaml
+  - id: airflow-metadata-store
+    type: core/web-app.types.relational-db
+    name: Airflow metadata store
+    description: Metadata database migration and access surface.
+    props:
+      implementation: postgres
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/migrations/env.py
+        - input: primary
+          path: airflow-core/src/airflow/api_fastapi/common/db/dag_runs.py
+        - input: primary
+          path: airflow-core/src/airflow/api_fastapi/common/db/task_instances.py
+        - input: primary
+          path: airflow-core/src/airflow/jobs/JOB_LIFECYCLE.md
+        - input: primary
+          path: chart/templates/secrets/metadata-connection-secret.yaml
+  - id: airflow-kubernetes-deployment-plane
+    type: core/kubernetes.types.microservice-orchestrator
+    name: Airflow Kubernetes deployment plane
+    description: Kubernetes namespace hosting the Airflow release.
+    props:
+      platform: kubernetes
+    provenance:
+      locations:
+        - input: primary
+          path: chart/README.md
+        - input: primary
+          path: chart/templates/api-server/api-server-deployment.yaml
+        - input: primary
+          path: chart/templates/scheduler/scheduler-deployment.yaml
+        - input: primary
+          path: chart/templates/workers/worker-deployment.yaml
+        - input: primary
+          path: chart/templates/triggerer/triggerer-deployment.yaml
+        - input: primary
+          path: chart/templates/dag-processor/dag-processor-deployment.yaml
+        - input: primary
+          path: chart/templates/jobs/migrate-database-job.yaml
+    children:
+      - id: airflow-kubernetes-deployment-plane/airflow-namespace
+        type: core/kubernetes.types.k8s-namespace
+        name: Airflow namespace
+        description: Kubernetes namespace for the Airflow release.
+        provenance:
+          locations:
+            - input: primary
+              path: chart/README.md
+            - input: primary
+              path: chart/templates/api-server/api-server-deployment.yaml
+            - input: primary
+              path: chart/templates/scheduler/scheduler-deployment.yaml
+            - input: primary
+              path: chart/templates/workers/worker-deployment.yaml
+            - input: primary
+              path: chart/templates/triggerer/triggerer-deployment.yaml
+            - input: primary
+              path: chart/templates/dag-processor/dag-processor-deployment.yaml
+            - input: primary
+              path: chart/templates/jobs/migrate-database-job.yaml
+relations:
+  - id: >-
+      cli-suite-calls-control-plane--core--software-relations-calls--airflow-cli-suite--dispatcher--to--airflow-control-plane--api-server
+    from: airflow-cli-suite/dispatcher/api-server-command
+    to: airflow-control-plane/api-server/entrypoint
+    type: core/software.relations.calls
+    description: CLI commands invoke orchestration entrypoints.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/__main__.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/api_server_command.py
+  - id: >-
+      cli-suite-calls-control-plane--core--software-relations-calls--airflow-cli-suite--dispatcher--to--airflow-control-plane--scheduler-runtime
+    from: airflow-cli-suite/dispatcher/scheduler-command
+    to: airflow-control-plane/scheduler-runtime/entrypoint
+    type: core/software.relations.calls
+    description: CLI commands invoke orchestration entrypoints.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/__main__.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/api_server_command.py
+  - id: >-
+      cli-suite-calls-task-runtime--core--software-relations-calls--airflow-cli-suite--dispatcher--to--airflow-task-runtime--triggerer-runtime
+    from: airflow-cli-suite/dispatcher/triggerer-command
+    to: airflow-task-runtime/triggerer-runtime
+    type: core/software.relations.calls
+    description: CLI commands launch task-facing runtime processes.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/triggerer_command.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/dag_processor_command.py
+  - id: >-
+      cli-suite-calls-task-runtime--core--software-relations-calls--airflow-cli-suite--dispatcher--to--airflow-task-runtime--dag-processor-runtime
+    from: airflow-cli-suite/dispatcher/dag-processor-command
+    to: airflow-task-runtime/dag-processor-runtime
+    type: core/software.relations.calls
+    description: CLI commands launch task-facing runtime processes.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/triggerer_command.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/dag_processor_command.py
+  - id: control-plane-calls-task-runtime
+    from: airflow-control-plane/scheduler-runtime/job-runner
+    to: airflow-task-runtime/scheduler-job-runner/runner
+    type: core/software.relations.calls
+    description: Scheduler coordination reaches the task execution plane.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/scheduler_command.py
+        - input: primary
+          path: airflow-core/src/airflow/jobs/JOB_LIFECYCLE.md
+  - id: control-plane-reads-writes-metadata-store
+    from: airflow-control-plane
+    to: airflow-metadata-store
+    type: core/software.relations.read-writes
+    description: Control plane persists orchestration state.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/api_fastapi/common/db/dag_runs.py
+        - input: primary
+          path: airflow-core/src/airflow/api_fastapi/common/db/task_instances.py
+        - input: primary
+          path: airflow-core/src/airflow/migrations/env.py
+  - id: task-runtime-reads-writes-metadata-store
+    from: airflow-task-runtime
+    to: airflow-metadata-store
+    type: core/software.relations.read-writes
+    description: Task runtime reads and updates workflow state.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/jobs/JOB_LIFECYCLE.md
+        - input: primary
+          path: airflow-core/src/airflow/jobs/job.py
+        - input: primary
+          path: airflow-core/src/airflow/jobs/triggerer_job_runner.py
+        - input: primary
+          path: airflow-core/src/airflow/jobs/dag_processor_job_runner.py
+  - id: deployment-plane-calls-control-plane
+    from: airflow-kubernetes-deployment-plane
+    to: airflow-control-plane
+    type: core/software.relations.calls
+    description: Helm operations drive control-plane process startup.
+    provenance:
+      locations:
+        - input: primary
+          path: chart/templates/api-server/api-server-deployment.yaml
+        - input: primary
+          path: chart/templates/scheduler/scheduler-deployment.yaml
+  - id: deployment-plane-calls-task-runtime
+    from: airflow-kubernetes-deployment-plane
+    to: airflow-task-runtime
+    type: core/software.relations.calls
+    description: Helm operations drive task runtime process startup.
+    provenance:
+      locations:
+        - input: primary
+          path: chart/templates/workers/worker-deployment.yaml
+        - input: primary
+          path: chart/templates/triggerer/triggerer-deployment.yaml
+        - input: primary
+          path: chart/templates/dag-processor/dag-processor-deployment.yaml
+  - id: airflow-cli-suite--dispatcher--parser-calls-main
+    from: airflow-cli-suite/dispatcher/parser
+    to: airflow-cli-suite/dispatcher/main/dispatcher-core
+    type: core/software.relations.calls
+    description: Parser wires the main dispatch module.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/__main__.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/cli_parser.py
+  - id: airflow-cli-suite--dispatcher--main-calls-api-server-command
+    from: airflow-cli-suite/dispatcher/main/dispatcher-core
+    to: airflow-cli-suite/dispatcher/api-server-command
+    type: core/software.relations.calls
+    description: Main dispatches the API server launcher.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/__main__.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/api_server_command.py
+  - id: airflow-cli-suite--dispatcher--main-calls-scheduler-command
+    from: airflow-cli-suite/dispatcher/main/dispatcher-core
+    to: airflow-cli-suite/dispatcher/scheduler-command
+    type: core/software.relations.calls
+    description: Main dispatches the scheduler launcher.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/__main__.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/scheduler_command.py
+  - id: airflow-cli-suite--dispatcher--main-calls-triggerer-command
+    from: airflow-cli-suite/dispatcher/main/dispatcher-core
+    to: airflow-cli-suite/dispatcher/triggerer-command
+    type: core/software.relations.calls
+    description: Main dispatches the triggerer launcher.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/__main__.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/triggerer_command.py
+  - id: airflow-cli-suite--dispatcher--main-calls-dag-processor-command
+    from: airflow-cli-suite/dispatcher/main/dispatcher-core
+    to: airflow-cli-suite/dispatcher/dag-processor-command
+    type: core/software.relations.calls
+    description: Main dispatches the DAG processor launcher.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/__main__.py
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/dag_processor_command.py
+  - id: airflow-control-plane--api-server--entrypoint-calls-public-api
+    from: airflow-control-plane/api-server/entrypoint
+    to: airflow-control-plane/api-server/public-api
+    type: core/software.relations.calls
+    description: Entrypoint composes the public API application.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/api_fastapi/main.py
+        - input: primary
+          path: airflow-core/src/airflow/api_fastapi/core_api/app.py
+        - input: primary
+          path: airflow-core/src/airflow/api_fastapi/core_api/routes/public/dag_run.py
+  - id: airflow-control-plane--scheduler-runtime--entrypoint-calls-job-runner
+    from: airflow-control-plane/scheduler-runtime/entrypoint
+    to: airflow-control-plane/scheduler-runtime/job-runner
+    type: core/software.relations.calls
+    description: Entrypoint launches the scheduler runner.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/cli/commands/scheduler_command.py
+        - input: primary
+          path: airflow-core/src/airflow/jobs/scheduler_job_runner.py
+  - id: airflow-task-runtime--scheduler-job-runner--runner-calls-job
+    from: airflow-task-runtime/scheduler-job-runner/runner
+    to: airflow-task-runtime/scheduler-job-runner/job
+    type: core/software.relations.calls
+    description: Runner uses the shared job abstraction.
+    provenance:
+      locations:
+        - input: primary
+          path: airflow-core/src/airflow/jobs/scheduler_job_runner.py
+        - input: primary
+          path: airflow-core/src/airflow/jobs/job.py
+        - input: primary
+          path: airflow-core/src/airflow/jobs/JOB_LIFECYCLE.md
+inputs:
+  - id: primary
+    kind: git
+    repo: https://github.com/apache/airflow
+    revision: 900d832d4a79691b4b7c05ba2adb748ccdc3206f
+    role: primary
+metadata:
+  workerBuild:
+    inputTokens: 9678336
+    cachedInputTokens: 8670720
+    outputTokens: 284051
+    approxTotalTokens: 18633107
+    mode: advanced
+    model: gpt-5.4-mini
+    builtAt: "2026-05-01T14:54:29.862Z"
+    durationMs: 2300895
+    turns: 24
+    nodes: 25
+    edges: 17
+  sourceRepository:
+    repo: https://github.com/apache/airflow
+    url: https://github.com/apache/airflow
+    commit: 900d832d4a79691b4b7c05ba2adb748ccdc3206f
+    committedAt: "2026-05-01T13:36:50+02:00"
+  description: Workflow orchestration platform for scheduled data pipelines
+  name: Airflow
