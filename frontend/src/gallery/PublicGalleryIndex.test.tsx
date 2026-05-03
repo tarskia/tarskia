@@ -22,6 +22,7 @@ const buildRows = () => [
     namespace: 'tarskia',
     slug: 'outline',
     title: 'Outline',
+    description: 'Outline is a collaborative knowledge base for teams.',
     sourceRepository: {
       url: 'https://github.com/outline/outline',
       repo: 'git@github.com:outline/outline.git',
@@ -78,8 +79,11 @@ describe('PublicGalleryIndex', () => {
     expect(html).toContain('Repository');
     expect(html).toContain('Nodes');
     expect(html).toContain('Tokens');
-    expect(html).toContain('3 diagrams');
+    expect(html).not.toContain('3 diagrams');
     expect(html).toContain('outline/outline');
+    expect(html).not.toContain('>Description<');
+    expect(html).not.toContain('>Source<');
+    expect(html).toContain('Outline is a collaborative knowledge base for teams.');
     expect(html).toContain('>GitHub<');
     expect(html).toContain('href="https://github.com/outline/outline"');
     expect(html).not.toContain('<div class="text-sm text-muted-foreground">tarskia</div>');
@@ -88,12 +92,19 @@ describe('PublicGalleryIndex', () => {
     expect(html).toContain('tarskia/harbor');
     expect(html).toContain('aria-sort="ascending"');
     expect(html).toContain('aria-sort="none"');
+    expect(html.indexOf('outline/outline')).toBeLessThan(
+      html.indexOf('Outline is a collaborative knowledge base for teams.'),
+    );
+    expect(html.indexOf('Outline is a collaborative knowledge base for teams.')).toBeLessThan(
+      html.indexOf('>GitHub<'),
+    );
   });
 
   it('filters by repository label, title, slug, and fallback path', () => {
     const rows = buildRows();
 
     expect(filterPublicGalleryRows(rows, 'outline')).toHaveLength(1);
+    expect(filterPublicGalleryRows(rows, 'knowledge base')).toHaveLength(1);
     expect(filterPublicGalleryRows(rows, 'coolify')).toHaveLength(1);
     expect(filterPublicGalleryRows(rows, 'harbor')).toHaveLength(1);
     expect(filterPublicGalleryRows(rows, 'tarskia/harbor')).toHaveLength(1);

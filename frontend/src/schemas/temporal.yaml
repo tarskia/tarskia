@@ -1,0 +1,91 @@
+owner: gallery
+name: temporal
+version: "0.1"
+description: >-
+  Temporal-shaped architectural wrappers for the server runtime and repo-owned runtime boundaries,
+  aligned to the durable-execution control plane.
+use:
+  - schema: core/base@0.1
+    alias: base
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/code@0.1
+    alias: code
+  - schema: core/web-app@0.3
+    alias: web
+traits:
+  - id: temporal-runtime-like
+    label: Temporal Runtime
+    description: >-
+      Durable execution boundary that keeps flow moving through gRPC entrypoints, internal services,
+      persistence, and task dispatch.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+types:
+  - id: temporal
+    label: Temporal
+    description: >-
+      Top-level Temporal application boundary spanning the server runtime and repo-owned runtime
+      code.
+    extends: core/web-app.types.application
+    traits:
+      - gallery/temporal.traits.temporal-runtime-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - server-runtime
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 300
+        height: 168
+      style:
+        hue: 210
+      count:
+        childTypes:
+          - server-runtime
+        label: components
+  - id: server-runtime
+    label: Server Runtime
+    description: >-
+      Go server boundary that serves gRPC APIs and coordinates workflow execution, persistence,
+      matching, and internal worker flows.
+    extends: core/software.types.system
+    traits:
+      - gallery/temporal.traits.temporal-runtime-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/code.traits.code-like
+        - core/software.traits.api-like
+        - core/software.traits.service-like
+        - core/software.traits.storage-boundary
+        - core/software.traits.storage
+        - core/software.traits.queueing
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 240
+        height: 112
+      style:
+        hue: 205
+      count:
+        childTypes:
+          - module
+          - group
+          - service
+        label: components
+relations: []

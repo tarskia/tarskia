@@ -1,0 +1,869 @@
+version: 0.1.0
+schemaRefs:
+  - schema: gallery/grafana@0.1
+    layer: 0
+  - schema: core/base@0.1
+    layer: 1
+  - schema: core/code@0.1
+    layer: 1
+  - schema: core/frontend@0.3
+    layer: 1
+  - schema: core/software@0.1
+    layer: 1
+  - schema: core/web-app@0.3
+    layer: 1
+  - schema: core/base@0.1
+    layer: 0
+  - schema: core/frontend@0.3
+    layer: 0
+  - schema: core/software@0.1
+    layer: 0
+  - schema: core/web-app@0.3
+    layer: 0
+entities:
+  - id: browser-shell-and-dashboard-ui
+    type: gallery/grafana.types.portal-app
+    name: Browser Shell and Dashboard UI
+    description: Immediate browser-shell implementation focused on the runtime chrome path.
+    props:
+      framework: react
+      runtime: browser
+    provenance:
+      locations:
+        - input: primary
+          path: public/app/index.ts
+        - input: primary
+          path: public/app/core/components/AppChrome/AppChrome.tsx
+        - input: primary
+          path: public/views/index.html
+    children:
+      - id: browser-shell-and-dashboard-ui/browser-shell-runtime
+        type: core/code.types.module
+        name: Browser Shell Runtime
+        description: Browser shell runtime that boots the app and composes the global chrome.
+        props:
+          framework: react
+          language: typescript
+          runtime: browser
+        provenance:
+          locations:
+            - input: primary
+              path: public/app/index.ts
+            - input: primary
+              path: public/app/core/components/AppChrome/AppChrome.tsx
+            - input: primary
+              path: public/views/index.html
+        children:
+          - id: browser-shell-and-dashboard-ui/browser-shell-runtime/bootstrap
+            type: core/code.types.module
+            name: Shell Bootstrap
+            description: Browser shell bootstrap entrypoint for the UI runtime.
+            props:
+              language: typescript
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: public/app/index.ts
+                - input: primary
+                  path: public/views/index.html
+            children:
+              - id: browser-shell-and-dashboard-ui/browser-shell-runtime/bootstrap/bootstrap-entry
+                type: core/code.types.module
+                name: Shell Entrypoint
+                description: Browser bootstrap and initial shell import surface.
+                props:
+                  language: typescript
+                  runtime: browser
+                provenance:
+                  locations:
+                    - input: primary
+                      path: public/app/index.ts
+                    - input: primary
+                      path: public/views/index.html
+          - id: browser-shell-and-dashboard-ui/browser-shell-runtime/app-chrome
+            type: core/code.types.module
+            name: App Chrome
+            description: Browser shell chrome composition for navigation and routed content.
+            props:
+              framework: react
+              language: typescript
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: public/app/core/components/AppChrome/AppChrome.tsx
+            children:
+              - id: browser-shell-and-dashboard-ui/browser-shell-runtime/app-chrome/chrome-composition
+                type: core/code.types.module
+                name: Chrome Composition
+                description: Global shell chrome and routed content composition.
+                props:
+                  language: typescript
+                  runtime: browser
+                provenance:
+                  locations:
+                    - input: primary
+                      path: public/app/core/components/AppChrome/AppChrome.tsx
+          - id: browser-shell-and-dashboard-ui/browser-shell-runtime/main-page-container
+            type: core/code.types.module
+            name: Main Page Container
+            description: Mount point for routed page content.
+            props:
+              framework: react
+              language: typescript
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: public/app/core/components/AppChrome/AppChrome.tsx
+  - id: shared-browser-runtime-kernel
+    type: core/code.types.module
+    name: Shared Browser Runtime Kernel
+    description: Shared browser runtime services and browser-side transport layer used by the Grafana UI.
+    props:
+      framework: react
+      language: typescript
+      runtime: browser
+    provenance:
+      locations:
+        - input: primary
+          path: packages/grafana-runtime/src/index.ts
+        - input: primary
+          path: packages/grafana-runtime/src/services/backendSrv.ts
+        - input: primary
+          path: packages/grafana-runtime/src/components/PanelRenderer.tsx
+        - input: primary
+          path: packages/grafana-ui/src/index.ts
+        - input: primary
+          path: packages/grafana-sql/src/index.ts
+        - input: primary
+          path: packages/grafana-o11y-ds-frontend/src/index.ts
+    children:
+      - id: shared-browser-runtime-kernel/runtime-entry
+        type: core/code.types.module
+        name: Browser Runtime Entry
+        description: >-
+          Browser runtime package root exporting the shared facade consumed by the shell and backend
+          bridge.
+        props:
+          framework: react
+          language: typescript
+          runtime: browser
+        provenance:
+          locations:
+            - input: primary
+              path: packages/grafana-runtime/src/index.ts
+        children:
+          - id: shared-browser-runtime-kernel/runtime-entry/package-exports
+            type: core/code.types.module
+            name: Package Exports
+            description: Shared runtime facade exported from the package root.
+            props:
+              language: typescript
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: packages/grafana-runtime/src/index.ts
+      - id: shared-browser-runtime-kernel/backend-srv
+        type: core/code.types.module
+        name: Backend Service Bridge
+        description: Browser-side HTTP and fetch abstraction.
+        props:
+          framework: react
+          language: typescript
+          runtime: browser
+        provenance:
+          locations:
+            - input: primary
+              path: packages/grafana-runtime/src/services/backendSrv.ts
+  - id: go-control-plane-and-http-services
+    type: gallery/grafana.types.control-plane
+    name: Go Control Plane and HTTP Services
+    description: >-
+      Go server-side HTTP contract, route handlers, storage boundary, and update checks for the
+      Grafana control plane.
+    props:
+      deployability: deployable
+      framework: go
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: pkg/services/correlations/api.go
+        - input: primary
+          path: pkg/services/serviceaccounts/api/api.go
+        - input: primary
+          path: pkg/services/store/http.go
+        - input: primary
+          path: packages/grafana-openapi/src/apis/dashboard.grafana.app-v2.json
+        - input: primary
+          path: packages/grafana-api-clients/src/clients/rtkq/dashboard/v2/index.ts
+        - input: primary
+          path: public/app/api/clients/provisioning/v0alpha1/index.ts
+    children:
+      - id: go-control-plane-and-http-services/service-routes
+        type: core/code.types.module
+        name: Service Route Handlers
+        description: Service route handlers centered on the correlations HTTP surface.
+        props:
+          language: go
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: pkg/services/correlations/api.go
+            - input: primary
+              path: pkg/services/serviceaccounts/api/api.go
+            - input: primary
+              path: public/app/api/clients/provisioning/v0alpha1/index.ts
+        children:
+          - id: go-control-plane-and-http-services/service-routes/correlations-api
+            type: core/code.types.module
+            name: Correlations API
+            description: Correlation route handlers with provisioning-only write behavior.
+            props:
+              language: go
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: pkg/services/correlations/api.go
+      - id: go-control-plane-and-http-services/store-http
+        type: core/code.types.module
+        name: Store HTTP Boundary
+        description: HTTP layer for storage error translation.
+        props:
+          language: go
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: pkg/services/store/http.go
+      - id: go-control-plane-and-http-services/update-manager
+        type: core/code.types.module
+        name: Update Manager
+        description: Outbound Grafana.com update checks.
+        props:
+          language: go
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: pkg/services/updatemanager/grafana.go
+            - input: primary
+              path: pkg/services/updatemanager/plugins.go
+  - id: app-platform-modular-services
+    type: core/web-app.types.service
+    name: App Platform Modular Services
+    description: >-
+      Embedded backend app surface for plugin metadata and storage adaptation within the app
+      platform layer.
+    props:
+      deployability: embedded
+      framework: go
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: apps/plugins/pkg/app/app.go
+        - input: primary
+          path: apps/plugins/pkg/app/meta/manager.go
+        - input: primary
+          path: apps/plugins/pkg/app/meta/core.go
+        - input: primary
+          path: apps/plugins/pkg/app/storage_wrapper.go
+        - input: primary
+          path: apps/shorturl/pkg/app/app.go
+    children:
+      - id: app-platform-modular-services/plugin-metadata-app
+        type: core/web-app.types.service
+        name: Plugin Metadata App
+        description: >-
+          Plugin metadata app lifecycle, provider chain, core metadata loader, asset provider, and
+          API storage wrapper.
+        props:
+          deployability: embedded
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: apps/plugins/pkg/app/app.go
+            - input: primary
+              path: apps/plugins/pkg/app/meta/core.go
+            - input: primary
+              path: apps/plugins/pkg/app/meta/manager.go
+            - input: primary
+              path: apps/plugins/pkg/app/storage_wrapper.go
+        children:
+          - id: app-platform-modular-services/plugin-metadata-app/app-runtime
+            type: core/code.types.module
+            name: Plugin App Runtime
+            description: Plugin app startup wiring for metadata and storage dependencies.
+            props:
+              language: go
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: apps/plugins/pkg/app/app.go
+            children:
+              - id: app-platform-modular-services/plugin-metadata-app/app-runtime/app-bootstrap
+                type: core/code.types.module
+                name: App Bootstrap
+                description: Plugin app wiring and startup surface.
+                props:
+                  language: go
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: apps/plugins/pkg/app/app.go
+          - id: app-platform-modular-services/plugin-metadata-app/metadata-manager
+            type: core/code.types.module
+            name: Plugin Metadata Manager
+            description: Plugin metadata provider manager with caching and cleanup.
+            props:
+              language: go
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: apps/plugins/pkg/app/meta/manager.go
+            children:
+              - id: >-
+                  app-platform-modular-services/plugin-metadata-app/metadata-manager/metadata-manager-core
+                type: core/code.types.module
+                name: Metadata Manager Core
+                description: Provider selection and cache orchestration.
+                props:
+                  language: go
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: apps/plugins/pkg/app/meta/manager.go
+          - id: app-platform-modular-services/plugin-metadata-app/core-provider
+            type: core/code.types.module
+            name: Core Metadata Provider
+            description: Core plugin metadata loading and pipeline delegation.
+            props:
+              language: go
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: apps/plugins/pkg/app/meta/core.go
+            children:
+              - id: app-platform-modular-services/plugin-metadata-app/core-provider/core-loader
+                type: core/code.types.module
+                name: Core Loader
+                description: Trusted-core metadata loading surface.
+                props:
+                  language: go
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: apps/plugins/pkg/app/meta/core.go
+          - id: app-platform-modular-services/plugin-metadata-app/storage-wrapper
+            type: core/code.types.module
+            name: Storage API Wrapper
+            description: Custom API server wrapper that swaps plugin storage handlers.
+            props:
+              language: go
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: apps/plugins/pkg/app/storage_wrapper.go
+          - id: app-platform-modular-services/plugin-metadata-app/loader-pipeline
+            type: core/code.types.module
+            name: Plugin Loader Pipeline
+            description: Plugin metadata loader and asset-path resolution core.
+            props:
+              language: go
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: apps/plugins/pkg/app/meta/core.go
+            children:
+              - id: app-platform-modular-services/plugin-metadata-app/loader-pipeline/loader-service
+                type: core/code.types.module
+                name: Loader Service
+                description: Static metadata loading and path resolution surface.
+                props:
+                  language: go
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: apps/plugins/pkg/app/meta/core.go
+          - id: app-platform-modular-services/plugin-metadata-app/asset-provider
+            type: core/code.types.module
+            name: Asset Provider
+            description: Resolves plugin asset paths from the static runtime tree.
+            props:
+              language: go
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: apps/plugins/pkg/app/meta/core.go
+  - id: provisioning-repository-sync-plane
+    type: core/web-app.types.service
+    name: Provisioning Repository Sync Plane
+    description: Worker-side provisioning repository reconciliation service for the Grafana app platform.
+    props:
+      deployability: embedded
+      framework: go
+      runtime: worker
+    provenance:
+      locations:
+        - input: primary
+          path: apps/provisioning/pkg/repository/github/repository.go
+        - input: primary
+          path: apps/provisioning/pkg/repository/local/local.go
+        - input: primary
+          path: apps/provisioning/pkg/jobs/validator.go
+        - input: primary
+          path: apps/provisioning/pkg/controller/job.go
+    children:
+      - id: provisioning-repository-sync-plane/repository-sync-service
+        type: core/web-app.types.service
+        name: Repository Sync Service
+        description: Provisioning sync controller and repository adapters for GitHub and local filesystems.
+        props:
+          deployability: embedded
+          framework: go
+          runtime: worker
+        provenance:
+          locations:
+            - input: primary
+              path: apps/provisioning/pkg/controller/job.go
+            - input: primary
+              path: apps/provisioning/pkg/jobs/validator.go
+            - input: primary
+              path: apps/provisioning/pkg/repository/github/repository.go
+            - input: primary
+              path: apps/provisioning/pkg/repository/local/local.go
+        children:
+          - id: provisioning-repository-sync-plane/repository-sync-service/job-controller
+            type: core/code.types.module
+            name: Job Controller
+            description: Provisioning job controller reconciliation loop.
+            props:
+              language: go
+              runtime: worker
+            provenance:
+              locations:
+                - input: primary
+                  path: apps/provisioning/pkg/controller/job.go
+            children:
+              - id: >-
+                  provisioning-repository-sync-plane/repository-sync-service/job-controller/reconciliation-loop
+                type: core/code.types.module
+                name: Reconciliation Loop
+                description: Informer-driven provisioning sync loop.
+                props:
+                  language: go
+                  runtime: worker
+                provenance:
+                  locations:
+                    - input: primary
+                      path: apps/provisioning/pkg/controller/job.go
+          - id: provisioning-repository-sync-plane/repository-sync-service/github-repository
+            type: core/code.types.module
+            name: GitHub Repository Adapter
+            description: GitHub-backed repository implementation.
+            props:
+              language: go
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: apps/provisioning/pkg/repository/github/repository.go
+          - id: provisioning-repository-sync-plane/repository-sync-service/local-repository
+            type: core/code.types.module
+            name: Local Repository Adapter
+            description: Filesystem-backed repository implementation.
+            props:
+              language: go
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: apps/provisioning/pkg/repository/local/local.go
+  - id: storage-root-service
+    type: core/web-app.types.datastore
+    name: Storage Root Service
+    description: Root storage runtime with SQL and disk-backed write paths.
+    provenance:
+      locations:
+        - input: primary
+          path: pkg/services/store/service.go
+        - input: primary
+          path: pkg/services/store/storage_sql.go
+        - input: primary
+          path: pkg/services/store/storage_disk.go
+    children:
+      - id: storage-root-service/storage-runtime
+        type: core/code.types.module
+        name: Root Storage Runtime
+        description: Root storage runtime dispatching to SQL and disk backends.
+        props:
+          language: go
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: pkg/services/store/service.go
+        children:
+          - id: storage-root-service/storage-runtime/storage-runtime-core
+            type: core/code.types.module
+            name: Storage Runtime Core
+            description: Service-level storage dispatcher.
+            props:
+              language: go
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: pkg/services/store/service.go
+      - id: storage-root-service/sql-storage
+        type: core/web-app.types.relational-db
+        name: SQL Storage Backend
+        description: SQL-backed root storage writes.
+        provenance:
+          locations:
+            - input: primary
+              path: pkg/services/store/storage_sql.go
+      - id: storage-root-service/disk-storage
+        type: core/web-app.types.object-store
+        name: Disk Storage Backend
+        description: Disk-backed root storage and bucket initialization.
+        provenance:
+          locations:
+            - input: primary
+              path: pkg/services/store/storage_disk.go
+  - id: grafana-com-update-integration
+    type: core/web-app.types.external-api
+    name: Grafana.com Update Integration
+    description: Grafana.com update check integration for version and plugin metadata.
+    props:
+      category: external-service
+      direction: outbound
+      protocol: http
+      provider: grafana.com
+      specificity: named-provider
+    provenance:
+      locations:
+        - input: primary
+          path: pkg/services/updatemanager/grafana.go
+        - input: primary
+          path: pkg/services/updatemanager/plugins.go
+relations:
+  - id: rel-browser-shell-calls-runtime-kernel
+    from: browser-shell-and-dashboard-ui/browser-shell-runtime/bootstrap/bootstrap-entry
+    to: shared-browser-runtime-kernel/runtime-entry/package-exports
+    type: core/software.relations.calls
+    description: Browser shell bootstraps through the shared runtime kernel.
+    provenance:
+      locations:
+        - input: primary
+          path: public/app/index.ts
+        - input: primary
+          path: packages/grafana-runtime/src/index.ts
+  - id: rel-runtime-kernel-calls-control-plane
+    from: shared-browser-runtime-kernel/backend-srv
+    to: go-control-plane-and-http-services/service-routes/correlations-api
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: packages/grafana-runtime/src/services/backendSrv.ts
+        - input: primary
+          path: packages/grafana-api-clients/src/clients/rtkq/dashboard/v2/index.ts
+        - input: primary
+          path: packages/grafana-openapi/src/apis/dashboard.grafana.app-v2.json
+        - input: primary
+          path: public/app/api/clients/provisioning/v0alpha1/index.ts
+        - input: primary
+          path: pkg/services/correlations/api.go
+  - id: rel-control-plane-calls-app-platform
+    from: go-control-plane-and-http-services/service-routes/correlations-api
+    to: app-platform-modular-services/plugin-metadata-app/app-runtime/app-bootstrap
+    type: core/software.relations.calls
+    description: The control plane delegates into modular backend app surfaces.
+    provenance:
+      locations:
+        - input: primary
+          path: pkg/services/correlations/api.go
+        - input: primary
+          path: apps/plugins/pkg/app/app.go
+        - input: primary
+          path: apps/shorturl/pkg/app/app.go
+  - id: rel-control-plane-calls-provisioning
+    from: go-control-plane-and-http-services/service-routes/correlations-api
+    to: provisioning-repository-sync-plane/repository-sync-service/job-controller/reconciliation-loop
+    type: core/software.relations.calls
+    description: The control plane triggers provisioning reconciliation work.
+    provenance:
+      locations:
+        - input: primary
+          path: pkg/services/correlations/api.go
+        - input: primary
+          path: apps/provisioning/pkg/controller/job.go
+        - input: primary
+          path: apps/provisioning/pkg/jobs/validator.go
+  - id: rel-control-plane-read-writes-storage
+    from: go-control-plane-and-http-services/store-http
+    to: storage-root-service
+    type: core/software.relations.read-writes
+    description: The control plane reads and writes root storage through the store service.
+    provenance:
+      locations:
+        - input: primary
+          path: pkg/services/store/service.go
+        - input: primary
+          path: pkg/services/store/http.go
+  - id: rel-app-platform-read-writes-storage
+    from: app-platform-modular-services/plugin-metadata-app/storage-wrapper
+    to: storage-root-service
+    type: core/software.relations.read-writes
+    description: Modular app-platform services persist and load state from the root storage boundary.
+    provenance:
+      locations:
+        - input: primary
+          path: apps/plugins/pkg/app/storage_wrapper.go
+        - input: primary
+          path: apps/plugins/pkg/app/meta/manager.go
+        - input: primary
+          path: pkg/services/store/service.go
+  - id: >-
+      rel-provisioning-read-writes-storage--core--software-relations-read-writes--provisioning-repository-sync-plane--repository-sync-service--github-repository--to--storage-root-service
+    from: provisioning-repository-sync-plane/repository-sync-service/github-repository
+    to: storage-root-service
+    type: core/software.relations.read-writes
+    description: Provisioning sync reads and writes repository-backed state through root storage.
+    provenance:
+      locations:
+        - input: primary
+          path: apps/provisioning/pkg/repository/github/repository.go
+        - input: primary
+          path: apps/provisioning/pkg/repository/local/local.go
+        - input: primary
+          path: pkg/services/store/service.go
+  - id: >-
+      rel-provisioning-read-writes-storage--core--software-relations-read-writes--provisioning-repository-sync-plane--repository-sync-service--local-repository--to--storage-root-service
+    from: provisioning-repository-sync-plane/repository-sync-service/local-repository
+    to: storage-root-service
+    type: core/software.relations.read-writes
+    description: Provisioning sync reads and writes repository-backed state through root storage.
+    provenance:
+      locations:
+        - input: primary
+          path: apps/provisioning/pkg/repository/github/repository.go
+        - input: primary
+          path: apps/provisioning/pkg/repository/local/local.go
+        - input: primary
+          path: pkg/services/store/service.go
+  - id: rel-control-plane-calls-grafana-com
+    from: go-control-plane-and-http-services/update-manager
+    to: grafana-com-update-integration
+    type: core/software.relations.calls
+    description: The backend checks grafana.com for Grafana and plugin update information.
+    provenance:
+      locations:
+        - input: primary
+          path: pkg/services/updatemanager/grafana.go
+        - input: primary
+          path: pkg/services/updatemanager/plugins.go
+  - id: shared-browser-runtime-kernel--runtime-entry-calls-backend-srv
+    from: shared-browser-runtime-kernel/runtime-entry/package-exports
+    to: shared-browser-runtime-kernel/backend-srv
+    type: core/software.relations.calls
+    description: Runtime entry routes backend access through the transport helper.
+    provenance:
+      locations:
+        - input: primary
+          path: packages/grafana-runtime/src/index.ts
+        - input: primary
+          path: packages/grafana-runtime/src/services/backendSrv.ts
+  - id: go-control-plane-and-http-services--service-routes-calls-store-http
+    from: go-control-plane-and-http-services/service-routes
+    to: go-control-plane-and-http-services/store-http
+    type: core/software.relations.calls
+    description: Route handlers delegate storage error translation to the store boundary.
+    provenance:
+      locations:
+        - input: primary
+          path: pkg/services/correlations/api.go
+        - input: primary
+          path: pkg/services/store/http.go
+  - id: go-control-plane-and-http-services--service-routes-calls-update-manager
+    from: go-control-plane-and-http-services/service-routes
+    to: go-control-plane-and-http-services/update-manager
+    type: core/software.relations.calls
+    description: Service routes trigger update manager checks.
+    provenance:
+      locations:
+        - input: primary
+          path: pkg/services/updatemanager/grafana.go
+        - input: primary
+          path: pkg/services/updatemanager/plugins.go
+  - id: storage-root-service--storage-runtime-calls-sql-storage
+    from: storage-root-service/storage-runtime/storage-runtime-core
+    to: storage-root-service/sql-storage
+    type: core/software.relations.read-writes
+    description: Root storage runtime writes into the SQL backend.
+    provenance:
+      locations:
+        - input: primary
+          path: pkg/services/store/service.go
+        - input: primary
+          path: pkg/services/store/storage_sql.go
+  - id: storage-root-service--storage-runtime-calls-disk-storage
+    from: storage-root-service/storage-runtime/storage-runtime-core
+    to: storage-root-service/disk-storage
+    type: core/software.relations.read-writes
+    description: Root storage runtime writes into the disk backend.
+    provenance:
+      locations:
+        - input: primary
+          path: pkg/services/store/service.go
+        - input: primary
+          path: pkg/services/store/storage_disk.go
+  - id: browser-shell-and-dashboard-ui--browser-shell-runtime-calls
+    from: browser-shell-and-dashboard-ui
+    to: browser-shell-and-dashboard-ui/browser-shell-runtime/bootstrap/bootstrap-entry
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: public/app/index.ts
+        - input: primary
+          path: public/app/core/components/AppChrome/AppChrome.tsx
+        - input: primary
+          path: public/views/index.html
+  - id: browser-shell-and-dashboard-ui--browser-shell-runtime--bootstrap-calls-app-chrome
+    from: browser-shell-and-dashboard-ui/browser-shell-runtime/bootstrap/bootstrap-entry
+    to: browser-shell-and-dashboard-ui/browser-shell-runtime/app-chrome/chrome-composition
+    type: core/software.relations.calls
+    description: Bootstrap hands off to the chrome composition.
+    provenance:
+      locations:
+        - input: primary
+          path: public/app/index.ts
+        - input: primary
+          path: public/app/core/components/AppChrome/AppChrome.tsx
+  - id: browser-shell-and-dashboard-ui--browser-shell-runtime--app-chrome-calls-main-page-container
+    from: browser-shell-and-dashboard-ui/browser-shell-runtime/app-chrome/chrome-composition
+    to: browser-shell-and-dashboard-ui/browser-shell-runtime/main-page-container
+    type: core/software.relations.calls
+    description: Chrome composition mounts the routed page container.
+    provenance:
+      locations:
+        - input: primary
+          path: public/app/core/components/AppChrome/AppChrome.tsx
+  - id: app-platform-modular-services--plugin-metadata-app--app-runtime-calls-metadata-manager
+    from: app-platform-modular-services/plugin-metadata-app/app-runtime/app-bootstrap
+    to: app-platform-modular-services/plugin-metadata-app/metadata-manager/metadata-manager-core
+    type: core/software.relations.calls
+    description: App runtime wires the metadata manager into the app lifecycle.
+    provenance:
+      locations:
+        - input: primary
+          path: apps/plugins/pkg/app/app.go
+  - id: app-platform-modular-services--plugin-metadata-app--app-runtime-calls-storage-wrapper
+    from: app-platform-modular-services/plugin-metadata-app/app-runtime/app-bootstrap
+    to: app-platform-modular-services/plugin-metadata-app/storage-wrapper
+    type: core/software.relations.calls
+    description: App runtime installs the custom storage wrapper around the API server.
+    provenance:
+      locations:
+        - input: primary
+          path: apps/plugins/pkg/app/app.go
+        - input: primary
+          path: apps/plugins/pkg/app/storage_wrapper.go
+  - id: app-platform-modular-services--plugin-metadata-app--metadata-manager-calls-core-provider
+    from: app-platform-modular-services/plugin-metadata-app/metadata-manager/metadata-manager-core
+    to: app-platform-modular-services/plugin-metadata-app/core-provider/core-loader
+    type: core/software.relations.calls
+    description: Metadata manager queries the core metadata provider first in the chain.
+    provenance:
+      locations:
+        - input: primary
+          path: apps/plugins/pkg/app/meta/manager.go
+        - input: primary
+          path: apps/plugins/pkg/app/meta/core.go
+  - id: app-platform-modular-services--plugin-metadata-app--core-provider-calls-loader-pipeline
+    from: app-platform-modular-services/plugin-metadata-app/core-provider/core-loader
+    to: app-platform-modular-services/plugin-metadata-app/loader-pipeline/loader-service
+    type: core/software.relations.calls
+    description: Core provider delegates static plugin discovery and loading to the pipeline.
+    provenance:
+      locations:
+        - input: primary
+          path: apps/plugins/pkg/app/meta/core.go
+  - id: app-platform-modular-services--plugin-metadata-app--loader-pipeline-calls-asset-provider
+    from: app-platform-modular-services/plugin-metadata-app/loader-pipeline/loader-service
+    to: app-platform-modular-services/plugin-metadata-app/asset-provider
+    type: core/software.relations.calls
+    description: Loader pipeline resolves asset locations through the asset provider.
+    provenance:
+      locations:
+        - input: primary
+          path: apps/plugins/pkg/app/meta/core.go
+  - id: >-
+      provisioning-repository-sync-plane--repository-sync-service--job-controller-calls-github-repository
+    from: provisioning-repository-sync-plane/repository-sync-service/job-controller/reconciliation-loop
+    to: provisioning-repository-sync-plane/repository-sync-service/github-repository
+    type: core/software.relations.calls
+    description: Controller drives GitHub-backed repository sync work.
+    provenance:
+      locations:
+        - input: primary
+          path: apps/provisioning/pkg/controller/job.go
+        - input: primary
+          path: apps/provisioning/pkg/repository/github/repository.go
+  - id: >-
+      provisioning-repository-sync-plane--repository-sync-service--job-controller-calls-local-repository
+    from: provisioning-repository-sync-plane/repository-sync-service/job-controller/reconciliation-loop
+    to: provisioning-repository-sync-plane/repository-sync-service/local-repository
+    type: core/software.relations.calls
+    description: Controller drives local-filesystem repository sync work.
+    provenance:
+      locations:
+        - input: primary
+          path: apps/provisioning/pkg/controller/job.go
+        - input: primary
+          path: apps/provisioning/pkg/repository/local/local.go
+inputs:
+  - id: primary
+    kind: git
+    repo: https://github.com/grafana/grafana
+    revision: 2a9d7c18219e9421c3c9a44cb40df19657ba5dbb
+    role: primary
+metadata:
+  workerBuild:
+    inputTokens: 12811290
+    cachedInputTokens: 11444224
+    outputTokens: 243737
+    approxTotalTokens: 24499251
+    mode: advanced
+    model: gpt-5.4-mini
+    builtAt: "2026-05-02T14:20:27.932Z"
+    durationMs: 2927245
+    turns: 39
+    nodes: 40
+    edges: 24
+  sourceRepository:
+    repo: https://github.com/grafana/grafana
+    url: https://github.com/grafana/grafana
+    commit: 2a9d7c18219e9421c3c9a44cb40df19657ba5dbb
+    committedAt: "2026-05-02T00:52:59Z"
+  description: The open-source platform for monitoring and observability
+  name: Grafana

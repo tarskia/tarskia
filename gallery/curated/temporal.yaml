@@ -1,0 +1,532 @@
+version: 0.1.0
+schemaRefs:
+  - schema: gallery/temporal@0.1
+    layer: 0
+  - schema: core/web-app@0.3
+    layer: 1
+entities:
+  - id: sdk-clients-and-workers
+    type: core/web-app.types.external-api
+    name: Temporal SDK Clients and Workers
+    props:
+      category: external-service
+      direction: bidirectional
+      protocol: sdk
+      specificity: unknown
+    provenance:
+      locations:
+        - input: primary
+          path: docs/architecture/README.md
+        - input: primary
+          path: docs/architecture/matching-service.md
+  - id: frontend-service-api-gateway
+    type: core/web-app.types.service
+    name: Frontend Service API Gateway
+    description: Frontend gateway for RPC ingress, HTTP transport, and workflow-forwarding control traffic.
+    props:
+      deployability: deployable
+      framework: go
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: service/frontend/service.go
+        - input: primary
+          path: service/frontend/http_api_server.go
+        - input: primary
+          path: api/workflowservice/v1
+        - input: primary
+          path: api/adminservice/v1
+    children:
+      - id: frontend-service-api-gateway/public-rpc-surface
+        type: core/web-app.types.api
+        name: Public RPC Surface
+        description: Frontend-exposed RPC endpoints for workflow, admin, and operator operations.
+        props:
+          framework: go
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: service/frontend/service.go
+            - input: primary
+              path: service/frontend/http_api_server.go
+            - input: primary
+              path: api/workflowservice/v1
+            - input: primary
+              path: api/historyservice/v1
+            - input: primary
+              path: api/matchingservice/v1
+            - input: primary
+              path: api/visibilityservice/v1
+            - input: primary
+              path: api/adminservice/v1
+        children:
+          - id: frontend-service-api-gateway/public-rpc-surface/workflow-service-rpc
+            type: core/web-app.types.api-endpoint
+            name: Workflow Service RPC
+            description: User-facing workflow RPC surface.
+            provenance:
+              locations:
+                - input: primary
+                  path: service/frontend/service.go
+                - input: primary
+                  path: service/frontend/http_api_server.go
+                - input: primary
+                  path: api/workflowservice/v1
+          - id: frontend-service-api-gateway/public-rpc-surface/admin-service-rpc
+            type: core/web-app.types.api-endpoint
+            name: Admin Service RPC
+            description: Operator/admin RPC surface.
+            provenance:
+              locations:
+                - input: primary
+                  path: service/frontend/service.go
+                - input: primary
+                  path: api/adminservice/v1
+          - id: frontend-service-api-gateway/public-rpc-surface/operator-service-rpc
+            type: core/web-app.types.api-endpoint
+            name: Operator Service RPC
+            description: HTTP-exposed operator RPC surface.
+            provenance:
+              locations:
+                - input: primary
+                  path: service/frontend/http_api_server.go
+                - input: primary
+                  path: service/frontend/service.go
+      - id: frontend-service-api-gateway/http-api-server
+        type: core/web-app.types.service
+        name: HTTP API Server
+        description: HTTP listener and gateway proxy for frontend requests.
+        props:
+          deployability: embedded
+          framework: go
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: service/frontend/http_api_server.go
+            - input: primary
+              path: service/frontend/service.go
+        children:
+          - id: frontend-service-api-gateway/http-api-server/http-gateway-runtime
+            type: core/web-app.types.service
+            name: HTTP Gateway Runtime
+            description: Listener and gateway proxy runtime.
+            props:
+              deployability: embedded
+              framework: go
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: service/frontend/http_api_server.go
+                - input: primary
+                  path: service/frontend/service.go
+  - id: history-workflow-state-plane
+    type: core/web-app.types.service
+    name: History Workflow State Plane
+    description: Durable workflow-state engine with queue-driven progression and persistence coordination.
+    props:
+      deployability: deployable
+      framework: go
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: service/history/README.md
+        - input: primary
+          path: docs/architecture/history-service.md
+        - input: primary
+          path: service/history/queues/action.go
+        - input: primary
+          path: service/history/api/update_workflow_util.go
+    children:
+      - id: history-workflow-state-plane/workflow-state-engine
+        type: core/software.types.system
+        name: Workflow State Engine
+        description: Mutable workflow state and persistence coordination.
+        props:
+          framework: go
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: service/history/history_engine.go
+            - input: primary
+              path: service/history/api/update_workflow_util.go
+            - input: primary
+              path: docs/architecture/history-service.md
+            - input: primary
+              path: service/history/README.md
+      - id: history-workflow-state-plane/queue-processing
+        type: core/software.types.system
+        name: Queue Processing
+        description: Queue execution runtime for reader groups, active/standby dispatch, and failure handling.
+        props:
+          framework: go
+          runtime: worker
+        provenance:
+          locations:
+            - input: primary
+              path: service/history/queues/action.go
+            - input: primary
+              path: service/history/queues/active_standby_executor.go
+            - input: primary
+              path: service/history/queues/dlq_writer.go
+        children:
+          - id: history-workflow-state-plane/queue-processing/queue-execution-runtime
+            type: core/software.types.system
+            name: Queue Execution Runtime
+            description: Reader-group execution and active/standby dispatch.
+            props:
+              framework: go
+              runtime: worker
+            provenance:
+              locations:
+                - input: primary
+                  path: service/history/queues/action.go
+                - input: primary
+                  path: service/history/queues/active_standby_executor.go
+                - input: primary
+                  path: service/history/queues/queue_base.go
+                - input: primary
+                  path: service/history/queues/executable.go
+                - input: primary
+                  path: service/history/queues/dlq_writer.go
+  - id: matching-task-queue-plane
+    type: core/web-app.types.service
+    name: Matching Task Queue Plane
+    description: Task-queue matching runtime for worker polling, partition routing, and ownership dispatch.
+    props:
+      deployability: deployable
+      framework: go
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: service/matching/service.go
+        - input: primary
+          path: client/matching/README.md
+        - input: primary
+          path: docs/architecture/matching-service.md
+    children:
+      - id: matching-task-queue-plane/matching-service-runtime
+        type: core/web-app.types.service
+        name: Matching Service Runtime
+        description: Matching runtime split into the serving entrypoint and the partition-routing engine.
+        props:
+          deployability: embedded
+          framework: go
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: service/matching/service.go
+            - input: primary
+              path: docs/architecture/matching-service.md
+            - input: primary
+              path: client/matching/README.md
+        children:
+          - id: matching-task-queue-plane/matching-service-runtime/matching-server
+            type: core/web-app.types.service
+            name: Matching Server
+            description: gRPC serving entrypoint and membership loop.
+            props:
+              deployability: embedded
+              framework: go
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: service/matching/service.go
+                - input: primary
+                  path: docs/architecture/matching-service.md
+          - id: matching-task-queue-plane/matching-service-runtime/matching-engine
+            type: core/software.types.system
+            name: Matching Engine
+            description: Partition ownership and task routing core.
+            props:
+              framework: go
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: service/matching/matching_engine.go
+                - input: primary
+                  path: client/matching/README.md
+      - id: matching-task-queue-plane/task-queue-partition-manager
+        type: core/software.types.system
+        name: Task Queue Partition Manager
+        description: Partition ownership and backlog management.
+        props:
+          framework: go
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: service/matching/task_queue_partition_manager.go
+            - input: primary
+              path: service/matching/physical_task_queue_manager.go
+            - input: primary
+              path: service/matching/db.go
+      - id: matching-task-queue-plane/task-queue-poll-api
+        type: core/web-app.types.service
+        name: Task Queue Poll Service
+        description: Worker-facing gRPC service for task queue traffic.
+        props:
+          deployability: embedded
+          framework: go
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: service/matching/service.go
+            - input: primary
+              path: docs/architecture/matching-service.md
+  - id: durable-persistence-schema-plane
+    type: core/web-app.types.datastore
+    name: Durable Persistence Schema Plane
+    description: Multi-backend durable persistence schemas for Temporal state and related storage variants.
+    provenance:
+      locations:
+        - input: primary
+          path: schema/cassandra/temporal/schema.cql
+        - input: primary
+          path: schema/mysql/v8
+        - input: primary
+          path: schema/postgresql/v12
+        - input: primary
+          path: schema/sqlite/v3
+    children:
+      - id: durable-persistence-schema-plane/cassandra-temporal-schema
+        type: core/web-app.types.datastore
+        name: Cassandra Temporal Schema
+        description: Primary durable execution schema.
+        provenance:
+          locations:
+            - input: primary
+              path: schema/cassandra/temporal/schema.cql
+            - input: primary
+              path: docs/architecture/history-service.md
+relations:
+  - id: sdk-clients-calls-frontend
+    from: sdk-clients-and-workers
+    to: frontend-service-api-gateway/http-api-server/http-gateway-runtime
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: docs/architecture/README.md
+        - input: primary
+          path: service/frontend/service.go
+  - id: frontend-calls-history
+    from: frontend-service-api-gateway/http-api-server/http-gateway-runtime
+    to: history-workflow-state-plane/queue-processing/queue-execution-runtime
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: service/frontend/service.go
+        - input: primary
+          path: docs/architecture/history-service.md
+  - id: history-calls-matching
+    from: history-workflow-state-plane/workflow-state-engine
+    to: matching-task-queue-plane/matching-service-runtime/matching-server
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: docs/architecture/history-service.md
+        - input: primary
+          path: docs/architecture/matching-service.md
+        - input: primary
+          path: service/history/queues/transfer_queue_active_task_executor.go
+  - id: matching-calls-sdk-clients
+    from: matching-task-queue-plane/task-queue-poll-api
+    to: sdk-clients-and-workers
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: docs/architecture/matching-service.md
+        - input: primary
+          path: docs/architecture/README.md
+        - input: primary
+          path: client/matching/README.md
+  - id: history-writes-datastore
+    from: history-workflow-state-plane/workflow-state-engine
+    to: durable-persistence-schema-plane/cassandra-temporal-schema
+    type: core/software.relations.read-writes
+    provenance:
+      locations:
+        - input: primary
+          path: docs/architecture/history-service.md
+        - input: primary
+          path: schema/cassandra/temporal/schema.cql
+  - id: history-reads-cassandra-schema
+    from: history-workflow-state-plane/workflow-state-engine
+    to: durable-persistence-schema-plane/cassandra-temporal-schema
+    type: core/software.relations.reads
+    provenance:
+      locations:
+        - input: primary
+          path: docs/architecture/history-service.md
+        - input: primary
+          path: schema/cassandra/temporal/schema.cql
+  - id: history-writes-cassandra-schema
+    from: history-workflow-state-plane/workflow-state-engine
+    to: durable-persistence-schema-plane/cassandra-temporal-schema
+    type: core/software.relations.writes
+    provenance:
+      locations:
+        - input: primary
+          path: docs/architecture/history-service.md
+        - input: primary
+          path: schema/cassandra/temporal/schema.cql
+  - id: frontend-service-api-gateway--http-api-server-calls-public-rpc-surface
+    from: frontend-service-api-gateway/http-api-server/http-gateway-runtime
+    to: frontend-service-api-gateway/public-rpc-surface/workflow-service-rpc
+    type: core/software.relations.calls
+    description: HTTP transport forwards to the RPC surface.
+    provenance:
+      locations:
+        - input: primary
+          path: service/frontend/http_api_server.go
+        - input: primary
+          path: service/frontend/service.go
+        - input: primary
+          path: api/workflowservice/v1
+  - id: frontend-service-api-gateway--http-api-server-calls-admin-service-rpc
+    from: frontend-service-api-gateway/http-api-server/http-gateway-runtime
+    to: frontend-service-api-gateway/public-rpc-surface/admin-service-rpc
+    type: core/software.relations.calls
+    description: HTTP transport routes admin RPC traffic to the admin surface.
+    provenance:
+      locations:
+        - input: primary
+          path: service/frontend/http_api_server.go
+        - input: primary
+          path: service/frontend/service.go
+        - input: primary
+          path: api/adminservice/v1
+  - id: frontend-service-api-gateway--http-api-server-calls-operator-service-rpc
+    from: frontend-service-api-gateway/http-api-server/http-gateway-runtime
+    to: frontend-service-api-gateway/public-rpc-surface/operator-service-rpc
+    type: core/software.relations.calls
+    description: HTTP transport routes operator RPC traffic to the operator surface.
+    provenance:
+      locations:
+        - input: primary
+          path: service/frontend/http_api_server.go
+        - input: primary
+          path: service/frontend/service.go
+  - id: frontend-service-api-gateway/public-rpc-surface/workflow-service-rpc-calls-history
+    from: frontend-service-api-gateway/public-rpc-surface/workflow-service-rpc
+    to: history-workflow-state-plane
+    type: core/software.relations.calls
+    description: Workflow RPCs continue into the history service.
+    provenance:
+      locations:
+        - input: primary
+          path: api/workflowservice/v1
+        - input: primary
+          path: service/frontend/service.go
+        - input: primary
+          path: docs/architecture/history-service.md
+  - id: frontend-service-api-gateway/public-rpc-surface/admin-service-rpc-calls-history
+    from: frontend-service-api-gateway/public-rpc-surface/admin-service-rpc
+    to: history-workflow-state-plane
+    type: core/software.relations.calls
+    description: Admin RPCs continue into the history service.
+    provenance:
+      locations:
+        - input: primary
+          path: api/adminservice/v1
+        - input: primary
+          path: service/frontend/service.go
+        - input: primary
+          path: docs/architecture/history-service.md
+  - id: frontend-service-api-gateway/public-rpc-surface/operator-service-rpc-calls-history
+    from: frontend-service-api-gateway/public-rpc-surface/operator-service-rpc
+    to: history-workflow-state-plane
+    type: core/software.relations.calls
+    description: Operator RPCs continue into the history service.
+    provenance:
+      locations:
+        - input: primary
+          path: service/frontend/http_api_server.go
+        - input: primary
+          path: service/frontend/service.go
+        - input: primary
+          path: docs/architecture/history-service.md
+  - id: history-workflow-state-plane--queue-processing-calls-workflow-state-engine
+    from: history-workflow-state-plane/queue-processing/queue-execution-runtime
+    to: history-workflow-state-plane/workflow-state-engine
+    type: core/software.relations.calls
+    description: Queue machinery drives the workflow state engine.
+    provenance:
+      locations:
+        - input: primary
+          path: service/history/history_engine.go
+        - input: primary
+          path: service/history/queues/action.go
+  - id: matching-task-queue-plane--matching-service-runtime-calls-partition-manager
+    from: matching-task-queue-plane/matching-service-runtime/matching-engine
+    to: matching-task-queue-plane/task-queue-partition-manager
+    type: core/software.relations.calls
+    description: Serving runtime delegates partition ownership work.
+    provenance:
+      locations:
+        - input: primary
+          path: service/matching/matching_engine.go
+        - input: primary
+          path: service/matching/task_queue_partition_manager.go
+  - id: matching-task-queue-plane--task-queue-partition-manager-calls-task-queue-poll-api
+    from: matching-task-queue-plane/task-queue-partition-manager
+    to: matching-task-queue-plane/task-queue-poll-api
+    type: core/software.relations.calls
+    description: Partition manager forwards work to the poll API.
+    provenance:
+      locations:
+        - input: primary
+          path: docs/architecture/matching-service.md
+        - input: primary
+          path: client/matching/README.md
+  - id: matching-task-queue-plane--matching-service-runtime--matching-server-calls-matching-engine
+    from: matching-task-queue-plane/matching-service-runtime/matching-server
+    to: matching-task-queue-plane/matching-service-runtime/matching-engine
+    type: core/software.relations.calls
+    description: Serving entrypoint delegates to the engine.
+    provenance:
+      locations:
+        - input: primary
+          path: service/matching/service.go
+        - input: primary
+          path: service/matching/matching_engine.go
+inputs:
+  - id: primary
+    kind: git
+    repo: https://github.com/temporalio/temporal
+    revision: d277ac1779ba65a1b74db2827ae0ce40ed9070fe
+    role: primary
+metadata:
+  workerBuild:
+    inputTokens: 8999877
+    cachedInputTokens: 8299520
+    outputTokens: 117973
+    approxTotalTokens: 17417370
+    mode: advanced
+    model: gpt-5.4-mini
+    builtAt: "2026-05-03T08:28:59.430Z"
+    durationMs: 6280
+    turns: 15
+    nodes: 20
+    edges: 17
+  sourceRepository:
+    repo: https://github.com/temporalio/temporal
+    url: https://github.com/temporalio/temporal
+    commit: d277ac1779ba65a1b74db2827ae0ce40ed9070fe
+    committedAt: "2026-05-01T17:56:10-07:00"
+  description: Durable execution platform for resilient workflow orchestration
+  name: Temporal

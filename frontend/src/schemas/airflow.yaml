@@ -1,0 +1,165 @@
+owner: gallery
+name: airflow
+version: "0.1"
+description: >-
+  Airflow-shaped architectural wrappers for the browser/operator application boundary, the
+  scheduler/control-plane runtime, task-execution worker runtime, and supporting CLI surface,
+  aligned to the repository-wide deployable surfaces rather than internal code packages.
+use:
+  - schema: core/base@0.1
+    alias: base
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/web-app@0.3
+    alias: web
+traits:
+  - id: platform-like
+    label: Platform
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+      - relation: core/software.relations.calls
+        endpoint: to
+  - id: control-plane-like
+    label: Control Plane
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+      - relation: core/software.relations.calls
+        endpoint: to
+  - id: task-runtime-like
+    label: Task Runtime
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+      - relation: core/software.relations.calls
+        endpoint: to
+  - id: cli-suite-like
+    label: CLI Suite
+    extends: core/base.traits.containable
+    analysis:
+      flowType: source
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+types:
+  - id: airflow
+    label: Airflow
+    description: >-
+      Top-level Airflow application boundary spanning the operator UI, orchestration services, task
+      execution runtime, and supporting CLI tools.
+    extends: core/web-app.types.application
+    traits:
+      - gallery/airflow.traits.platform-like
+    analysis:
+      topLevelBias: prefer
+    containment:
+      allowedChildTypes:
+        - control-plane
+        - task-runtime
+        - cli-suite
+      allowedChildTraits:
+        - gallery/airflow.traits.control-plane-like
+        - gallery/airflow.traits.task-runtime-like
+        - gallery/airflow.traits.cli-suite-like
+        - core/software.traits.storage-boundary
+        - core/software.traits.storage
+        - core/software.traits.queueing
+        - core/base.traits.group-like
+    defaultTags:
+      - core/software.tags.service
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 220
+        height: 110
+      style:
+        hue: 210
+  - id: control-plane
+    label: Control Plane
+    description: >-
+      Scheduler and web/API orchestration runtime that serves the operator-facing Airflow surfaces
+      and coordinates metadata-driven work.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/airflow.traits.control-plane-like
+    analysis:
+      topLevelBias: prefer
+    containment:
+      allowedChildTraits:
+        - core/software.traits.api-like
+        - core/software.traits.service-like
+        - core/software.traits.storage-boundary
+        - core/software.traits.storage
+        - core/base.traits.group-like
+    defaultTags:
+      - core/software.tags.service
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 210
+        height: 100
+      style:
+        hue: 200
+  - id: task-runtime
+    label: Task Runtime
+    description: Task execution runtime for workers, trigger handling, and task-level execution paths.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/airflow.traits.task-runtime-like
+    analysis:
+      topLevelBias: prefer
+    containment:
+      allowedChildTraits:
+        - core/software.traits.service-like
+        - core/base.traits.group-like
+    defaultTags:
+      - core/software.tags.service
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 210
+        height: 100
+      style:
+        hue: 168
+  - id: cli-suite
+    label: CLI Suite
+    description: >-
+      Operator and developer command-line surface, including the main Airflow CLI, the Airflow
+      control client, and supporting tooling.
+    traits:
+      - gallery/airflow.traits.cli-suite-like
+      - core/base.traits.container
+    analysis:
+      topLevelBias: neutral
+    containment:
+      allowedChildTraits:
+        - core/software.traits.compute
+        - core/base.traits.group-like
+    defaultTags:
+      - core/software.tags.integration
+    display:
+      primaryTag: core/software.tags.integration
+      defaultSize:
+        width: 180
+        height: 84
+      style:
+        hue: 42
+relations: []
