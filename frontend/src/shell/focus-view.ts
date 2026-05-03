@@ -8,7 +8,7 @@ import type { CommitDoc } from './types';
 type FocusTransitionTrigger = (
   entityId: string,
   direction: 'in' | 'out',
-  options?: { onComplete?: () => void },
+  options?: { onComplete?: () => void; expandSingleChildChain?: boolean },
 ) => boolean;
 
 const scheduleFocusFrame = (callback: FrameRequestCallback) => {
@@ -101,7 +101,6 @@ export const canFocusSceneNode = (params: { sceneTree: SceneTree; entityId: stri
 
 export function useFocusViewController({
   sceneTree,
-  expanded,
   getCurrentCanvasSize,
   canvasLayoutVersion = 0,
   skipTransitions = false,
@@ -168,13 +167,11 @@ export function useFocusViewController({
         enterFocusScope(entityId, true);
         return;
       }
-      if (!expanded[entityId]) {
-        const queued = triggerEntityZoom(entityId, 'in', {
-          onComplete: () => enterFocusScope(entityId),
-        });
-        if (!queued) {
-          enterFocusScope(entityId);
-        }
+      const queued = triggerEntityZoom(entityId, 'in', {
+        expandSingleChildChain: true,
+        onComplete: () => enterFocusScope(entityId),
+      });
+      if (queued) {
         onClearTransientFocusChrome?.();
         return;
       }
@@ -182,7 +179,6 @@ export function useFocusViewController({
     },
     [
       enterFocusScope,
-      expanded,
       flushUserGesture,
       onClearTransientFocusChrome,
       skipTransitions,

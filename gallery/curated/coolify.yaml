@@ -758,4 +758,5 @@ metadata:
     url: https://github.com/coollabsio/coolify
     commit: 96bfc14543c893f0b0156b12c40250d3f8cc96a2
     committedAt: "2026-04-27T10:51:15+02:00"
+  description: Self-hosted deployment platform for apps, databases, and services
   name: Coolify

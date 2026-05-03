@@ -10,9 +10,21 @@ projects:
             runtime: static
             repo: https://github.com/tarskia/tarskia
             branch: main
-            buildCommand: npm install && npm install --no-save @tailwindcss/oxide-linux-x64-gnu@4.2.2 && npm run build -w @tarskia/frontend
+            buildCommand: npm ci --include=optional && npm run build -w @tarskia/frontend
             staticPublishPath: ./frontend/dist
             routes:
+              - type: rewrite
+                source: /gallery
+                destination: /index.html
+              - type: rewrite
+                source: /gallery/*
+                destination: /index.html
+              - type: rewrite
+                source: /studio
+                destination: /index.html
+              - type: rewrite
+                source: /studio/*
+                destination: /index.html
               - type: rewrite
                 source: /*
                 destination: /index.html
@@ -31,6 +43,7 @@ projects:
                 - scripts/build-semantics.mjs
                 - openapi/**
                 - .node-version
+                - render.yaml
                 - package.json
                 - package-lock.json
 
@@ -41,9 +54,21 @@ projects:
             runtime: static
             repo: https://github.com/tarskia/tarskia
             branch: main
-            buildCommand: npm install && npm install --no-save @tailwindcss/oxide-linux-x64-gnu@4.2.2 && npm run build -w @tarskia/frontend
+            buildCommand: npm ci --include=optional && npm run build -w @tarskia/frontend
             staticPublishPath: ./frontend/dist
             routes:
+              - type: rewrite
+                source: /gallery
+                destination: /index.html
+              - type: rewrite
+                source: /gallery/*
+                destination: /index.html
+              - type: rewrite
+                source: /studio
+                destination: /index.html
+              - type: rewrite
+                source: /studio/*
+                destination: /index.html
               - type: rewrite
                 source: /*
                 destination: /index.html
@@ -64,5 +89,6 @@ projects:
                 - scripts/build-semantics.mjs
                 - openapi/**
                 - .node-version
+                - render.yaml
                 - package.json
                 - package-lock.json

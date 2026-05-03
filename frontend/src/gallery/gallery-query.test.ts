@@ -62,9 +62,13 @@ describe('gallery query helpers', () => {
     });
   });
 
-  it('falls back to checked-in gallery data in local dev when the API is unavailable', async () => {
+  it('uses checked-in gallery data first in local dev when no API is configured', async () => {
     vi.stubEnv('VITE_API_BASE_URL', '');
-    mockedListGalleryDiagrams.mockRejectedValue(new TypeError('Failed to fetch'));
+    mockedListGalleryDiagrams.mockResolvedValue({
+      status: 200,
+      data: [],
+      headers: new Headers(),
+    } as never);
 
     await expect(listGalleryDiagramsWithLocalFallback()).resolves.toMatchObject({
       status: 200,
@@ -76,9 +80,10 @@ describe('gallery query helpers', () => {
         }),
       ]),
     });
+    expect(mockedListGalleryDiagrams).not.toHaveBeenCalled();
   });
 
-  it('can read checked-in gallery detail data after an API miss in local dev', async () => {
+  it('can read checked-in gallery detail data directly in local dev', async () => {
     vi.stubEnv('VITE_API_BASE_URL', '');
     mockedGetGalleryDiagram.mockResolvedValue({
       status: 404,
@@ -95,5 +100,22 @@ describe('gallery query helpers', () => {
         raw: expect.stringContaining('name: Outline'),
       },
     });
+    expect(mockedGetGalleryDiagram).not.toHaveBeenCalled();
+  });
+
+  it('uses API gallery data when explicitly requested', async () => {
+    vi.stubEnv('VITE_GALLERY_SOURCE', 'api');
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    mockedListGalleryDiagrams.mockResolvedValue({
+      status: 200,
+      data: [{ namespace: 'remote', slug: 'api', title: 'API' }],
+      headers: new Headers(),
+    } as never);
+
+    await expect(listGalleryDiagramsWithLocalFallback()).resolves.toMatchObject({
+      status: 200,
+      data: [{ namespace: 'remote', slug: 'api', title: 'API' }],
+    });
+    expect(mockedListGalleryDiagrams).toHaveBeenCalledTimes(1);
   });
 });

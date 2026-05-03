@@ -177,7 +177,7 @@ export function TransitionOverlay({
                     opacity: edge.opacity,
                   }}
                 >
-                  <path className="group-edge-path" d={edge.geometry.path} />
+                  <path className="group-edge-path" d={edge.geometry.path} fill="none" />
                   {edgeTrack.labelTrack?.label && labelOpacity > VISIBILITY_EPSILON ? (
                     <text
                       className="group-edge-label"
@@ -196,6 +196,7 @@ export function TransitionOverlay({
                 key={edgeTrack.id}
                 className="transition-overlay-edge-path"
                 d={edge.geometry.path}
+                fill="none"
                 style={{
                   opacity: edge.opacity,
                 }}

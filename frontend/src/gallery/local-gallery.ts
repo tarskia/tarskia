@@ -22,6 +22,7 @@ type LocalGalleryManifestEntry = {
 
 type LocalDiagramMetadata = {
   name?: unknown;
+  description?: unknown;
   workerBuild?: Record<string, unknown>;
   sourceRepository?: Record<string, unknown>;
 };
@@ -102,6 +103,13 @@ const readUpdatedAt = (metadata: LocalDiagramMetadata) => {
   return undefined;
 };
 
+const readTextMetadata = (metadata: LocalDiagramMetadata) => {
+  const description = readString(metadata.description);
+  return {
+    ...(description ? { description } : {}),
+  };
+};
+
 const toSummary = (
   entry: LocalGalleryManifestEntry,
   raw: string,
@@ -114,20 +122,25 @@ const toSummary = (
     updatedAt: readUpdatedAt(metadata),
     workerBuild: readWorkerBuild(metadata),
     sourceRepository: readSourceRepository(metadata),
+    ...readTextMetadata(metadata),
   };
 };
 
 const toDetail = (
   entry: LocalGalleryManifestEntry,
   raw: string,
-): DtoGalleryDiagramDetailResponse => ({
-  namespace: entry.namespace,
-  slug: entry.slug,
-  title: entry.title,
-  raw,
-  visibility: entry.visibility,
-  checkpointedAt: readUpdatedAt(parseLocalDiagramMetadata(raw)),
-});
+): DtoGalleryDiagramDetailResponse => {
+  const metadata = parseLocalDiagramMetadata(raw);
+  return {
+    namespace: entry.namespace,
+    slug: entry.slug,
+    title: readString(metadata.name) ?? entry.title,
+    raw,
+    visibility: entry.visibility,
+    checkpointedAt: readUpdatedAt(metadata),
+    ...readTextMetadata(metadata),
+  };
+};
 
 const localManifest = manifest as LocalGalleryManifestEntry[];
 
@@ -168,9 +181,15 @@ export const getLocalGalleryDiagram = async (
   };
 };
 
-export const shouldUseLocalGallerySource = () => import.meta.env.VITE_GALLERY_SOURCE === 'local';
+const hasConfiguredGalleryApi = () => Boolean(import.meta.env.VITE_API_BASE_URL?.trim());
+
+export const shouldUseLocalGallerySource = () =>
+  import.meta.env.VITE_GALLERY_SOURCE === 'local' ||
+  (import.meta.env.VITE_GALLERY_SOURCE !== 'api' &&
+    !hasConfiguredGalleryApi() &&
+    import.meta.env.DEV);
 
 export const shouldUseLocalGalleryFallback = () =>
   import.meta.env.VITE_GALLERY_SOURCE !== 'api' &&
-  !import.meta.env.VITE_API_BASE_URL?.trim() &&
+  !hasConfiguredGalleryApi() &&
   import.meta.env.DEV;

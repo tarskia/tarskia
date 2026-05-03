@@ -6,9 +6,56 @@ import {
   DEFAULT_VIEWPORT_FIT_PADDING,
 } from '../canvas/rendering/transition/animation-constants';
 import { computeViewportForBoundsInVisibleCanvas } from '../canvas/viewport-visibility';
-import { useCanvasBootstrapController } from './useCanvasBootstrapController';
+import {
+  resolvePendingBootstrapAction,
+  useCanvasBootstrapController,
+} from './useCanvasBootstrapController';
 
 describe('useCanvasBootstrapController', () => {
+  it('keeps initial viewport bootstrap pending while async document content has no scene bounds yet', () => {
+    expect(
+      resolvePendingBootstrapAction({
+        initialViewportKey: 'diagram-1',
+        pendingKey: 'diagram-1',
+        hasUsableCanvas: true,
+        defaultViewport: undefined,
+        canvasReady: true,
+      }),
+    ).toBe('wait');
+  });
+
+  it('requests initial navigation only after a usable viewport target and live canvas are available', () => {
+    const defaultViewport = { x: 120, y: 80, zoom: 0.9 };
+
+    expect(
+      resolvePendingBootstrapAction({
+        initialViewportKey: 'diagram-1',
+        pendingKey: 'diagram-1',
+        hasUsableCanvas: true,
+        defaultViewport,
+        canvasReady: false,
+      }),
+    ).toBe('wait');
+    expect(
+      resolvePendingBootstrapAction({
+        initialViewportKey: 'diagram-1',
+        pendingKey: 'diagram-1',
+        hasUsableCanvas: true,
+        defaultViewport,
+        canvasReady: true,
+      }),
+    ).toBe('request-navigation');
+    expect(
+      resolvePendingBootstrapAction({
+        initialViewportKey: 'diagram-1',
+        pendingKey: undefined,
+        hasUsableCanvas: true,
+        defaultViewport,
+        canvasReady: true,
+      }),
+    ).toBe('idle');
+  });
+
   it('resolves the opening viewport from the latest usable canvas measurement', () => {
     let currentCanvasSize: { width: number; height: number } | null = null;
     let captured: ReturnType<typeof useCanvasBootstrapController> | null = null;
