@@ -55,6 +55,9 @@
   --node-border-a: 0.4;
   --tag-pill-s: 88%;
   --tag-pill-l: 80%;
+  --type-label-s: 55%;
+  --type-label-l: 72%;
+  --type-label-a: 0.9;
   /* Whisper of cool chroma instead of pure white. Same alpha values,
    * but the underlying colour is hsl(220 14% 97%) ≈ #F4F6FA – a
    * barely-perceptible blue cast that ties text/borders/fills to the
@@ -606,95 +609,105 @@ body {
   z-index: 2;
 }
 
-.count-zoom {
+.node-meta-bar {
   display: inline-flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 6px;
-  padding: 2px 8px;
-  border-radius: 999px;
+  align-items: stretch;
+  height: 22px;
+  border-radius: 6px;
   background: var(--fill-hover);
   border: 1px solid var(--border-default);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--text-secondary);
   width: fit-content;
   max-width: 100%;
-}
-
-.count-text {
-  letter-spacing: 0.02em;
-  white-space: nowrap;
+  overflow: hidden;
   line-height: 1;
 }
 
-.zoom-buttons {
-  display: inline-flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.zoom-buttons button {
-  width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-elevated);
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  line-height: 1;
+.node-meta-cell {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-}
-
-.zoom-buttons .zoom-all {
-  width: 26px;
-  font-size: 0.7rem;
-  letter-spacing: -0.02em;
-}
-
-.bulk-zoom-buttons {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: var(--fill-muted);
-  border: 1px solid var(--border-default);
-}
-
-.bulk-zoom-button {
-  padding: 3px 9px;
-  min-height: 20px;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-elevated);
-  color: var(--text-primary);
-  font-size: 0.66rem;
-  line-height: 1;
-  letter-spacing: 0.02em;
-  cursor: pointer;
+  padding: 0 8px;
+  min-width: 22px;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
   white-space: nowrap;
 }
 
-.bulk-zoom-button:hover:not(:disabled) {
-  background: rgba(255, 200, 120, 0.2);
+button.node-meta-cell {
+  cursor: pointer;
 }
 
-.bulk-zoom-button:disabled {
+button.node-meta-cell:hover:not(:disabled) {
+  background: rgba(255, 200, 120, 0.2);
+  color: var(--text-primary);
+}
+
+button.node-meta-cell:disabled {
   opacity: 0.45;
   cursor: default;
 }
 
-.zoom-buttons button:hover {
-  background: rgba(255, 200, 120, 0.2);
+.node-meta-cell + .node-meta-cell {
+  border-left: 1px solid var(--border-default);
 }
 
-.zoom-buttons .zoom-hidden {
+.node-meta-cell.node-meta-step {
+  padding: 0 6px;
+  font-size: 0.85rem;
+}
+
+.node-meta-cell.node-meta-text {
+  letter-spacing: 0.02em;
+}
+
+.node-meta-cell.node-meta-menu {
+  padding: 0 6px;
+  font-size: 0.7rem;
+}
+
+.node-meta-cell-hidden {
   display: none;
+}
+
+.node-meta-menu-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+}
+
+.node-meta-menu-section + .node-meta-menu-section {
+  border-top: 1px solid var(--border-default);
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.node-meta-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.node-meta-menu-item:hover:not(:disabled) {
+  background: var(--fill-hover);
+}
+
+.node-meta-menu-item:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .edge-underlay-path-selected {
@@ -1064,7 +1077,7 @@ body {
 
 .transition-overlay-visual-outline .transition-overlay-node-shell .node-subtitle,
 .transition-overlay-visual-outline .transition-overlay-node-shell .node-title-placeholder {
-  color: rgba(218, 237, 250, 0.78);
+  color: rgba(218, 237, 250, 0.78) !important;
 }
 
 .transition-overlay-visual-outline .transition-overlay-edge-path,
@@ -1106,7 +1119,7 @@ body {
 }
 
 .canvas-visual-outline .react-flow__node .node-subtitle {
-  color: rgba(218, 237, 250, 0.78);
+  color: rgba(218, 237, 250, 0.78) !important;
 }
 
 .canvas-visual-outline .react-flow__node .node-title-placeholder {
@@ -1206,7 +1219,7 @@ body {
 
 .transition-overlay-visual-transparent .transition-overlay-node-shell .node-subtitle,
 .transition-overlay-visual-transparent .transition-overlay-node-shell .node-title-placeholder {
-  color: var(--bp-text-faint);
+  color: var(--bp-text-faint) !important;
   letter-spacing: 0.06em;
 }
 
@@ -1255,7 +1268,7 @@ body {
 
 .canvas-visual-transparent .react-flow__node .node-subtitle,
 .canvas-visual-transparent .react-flow__node .node-title-placeholder {
-  color: var(--bp-text-faint);
+  color: var(--bp-text-faint) !important;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-size: 0.7em;
@@ -1269,7 +1282,7 @@ body {
 
 .canvas-visual-transparent .react-flow__node .list-type,
 .canvas-visual-transparent .react-flow__node .group-type {
-  color: var(--bp-text-faint);
+  color: var(--bp-text-faint) !important;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 0.65em;
@@ -1324,28 +1337,19 @@ body {
 }
 
 /* Buttons inside nodes */
-.canvas-visual-transparent .zoom-buttons button,
-.canvas-visual-transparent .bulk-zoom-button {
-  border-color: var(--bp-line-faint);
+.canvas-visual-transparent .node-meta-bar {
   background: transparent;
+  border-color: var(--bp-line-faint);
   color: var(--bp-text-faint);
 }
 
-.canvas-visual-transparent .zoom-buttons button:hover,
-.canvas-visual-transparent .bulk-zoom-button:hover:not(:disabled) {
-  border-color: var(--bp-line);
+.canvas-visual-transparent .node-meta-cell + .node-meta-cell {
+  border-left-color: var(--bp-line-faint);
+}
+
+.canvas-visual-transparent button.node-meta-cell:hover:not(:disabled) {
+  background: rgba(255, 200, 120, 0.12);
   color: var(--bp-text);
-}
-
-.canvas-visual-transparent .count-zoom {
-  background: transparent;
-  border-color: var(--bp-line-faint);
-  color: var(--bp-text-faint);
-}
-
-.canvas-visual-transparent .bulk-zoom-buttons {
-  background: transparent;
-  border-color: var(--bp-line-faint);
 }
 
 .canvas-visual-transparent .edge-underlay-path-selected {
@@ -1457,7 +1461,7 @@ body {
   .node-title-placeholder,
 :root.light .canvas-visual-outline .react-flow__node .node-subtitle,
 :root.light .canvas-visual-outline .react-flow__node .node-title-placeholder {
-  color: rgba(28, 57, 84, 0.74);
+  color: rgba(28, 57, 84, 0.74) !important;
 }
 
 :root.light .transition-overlay-visual-outline .transition-overlay-edge-path {

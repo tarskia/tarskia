@@ -75,9 +75,8 @@ export function applySceneLayout(params: {
 
     const hasDetailsControls = node.controls?.showDetailControls ?? Boolean(node.hasChildren);
     const hasChildGroupControls = node.controls?.showChildGroupControls ?? false;
-    const controlRowCount = (hasDetailsControls ? 1 : 0) + (hasChildGroupControls ? 1 : 0);
 
-    const headerHeight = isGroup ? getGroupHeaderHeight(0, controlRowCount) : 0;
+    const headerHeight = isGroup ? getGroupHeaderHeight(0) : 0;
     const childGap = isGroup && children.length > 0 ? 10 : 0;
     const layoutHeaderHeight = headerHeight + childGap;
     const minWidth = isGroup
