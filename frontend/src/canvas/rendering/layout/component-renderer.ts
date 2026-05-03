@@ -6,28 +6,19 @@ const GROUP_HEADER_BASE = 52;
 const GROUP_PROP_LINE = 15;
 const GROUP_PROP_GAP = 2;
 const GROUP_META_GAP = 6;
-// These values must track the real CSS control heights in `styles.css`:
-// - `.count-zoom` row (pill border + vertical padding + zoom buttons)
-// - `.bulk-zoom-buttons` row (pill border + vertical padding + button height)
-// Under-estimating them causes bottom clipping when nodes are collapsed.
-const GROUP_COUNT_HEIGHT = 28;
-const GROUP_BULK_CONTROLS_HEIGHT = 34;
-// Reserve breathing room below pills/control rows so child cards do not sit flush
+// These values must track the real CSS dimensions in `styles.css`:
+// - `.node-meta-bar` (height = 22px content + 2px border)
+// Under-estimating causes bottom clipping when nodes are collapsed.
+const GROUP_META_BAR_HEIGHT = 24;
+// Reserve breathing room below the meta bar so child cards do not sit flush
 // against the controls after expansion.
-const GROUP_COUNT_BOTTOM_GAP = 14;
-const GROUP_COUNT_TEXT_CHAR = 7;
-const GROUP_COUNT_MIN_TEXT = 48;
-const GROUP_COUNT_PADDING_X = 16;
-const GROUP_COUNT_GAP = 6;
-const GROUP_BUTTON_GAP = 4;
-const GROUP_BUTTON_SIZE = 20;
-const GROUP_BUTTON_WIDE = 26;
-const GROUP_BUTTON_COUNT = 4;
-const GROUP_BULK_ROW_GAP = 6;
-const GROUP_BULK_ROW_PADDING_X = 12;
-const GROUP_BULK_BUTTON_PAD_X = 18;
-const GROUP_BULK_BUTTON_MIN = 54;
-const GROUP_BULK_TEXT_CHAR = 6.4;
+const GROUP_META_BOTTOM_GAP = 14;
+const GROUP_META_TEXT_CHAR = 7;
+const GROUP_META_MIN_TEXT = 48;
+const GROUP_META_TEXT_PAD_X = 16; // text cell horizontal padding
+const GROUP_META_STEP_WIDTH = 22; // step (+/-) cell width
+const GROUP_META_MENU_WIDTH = 22; // menu trigger cell width
+const GROUP_META_BORDER = 2;
 const LIST_PADDING = 6;
 const LIST_TYPE_LINE = 10;
 const LIST_NAME_LINE = 14;
@@ -232,31 +223,16 @@ const resolveGroupContentOccluders = (params: {
     cursorY += propsHeight;
   }
 
-  if (params.hasSummary || params.showZoomControls) {
+  if (
+    params.hasSummary ||
+    params.showZoomControls ||
+    params.showDetailControls ||
+    params.showChildGroupControls
+  ) {
     cursorY += GROUP_META_GAP;
     pushOccluder(
       occluders,
-      { x: params.padding, y: cursorY, width, height: GROUP_COUNT_HEIGHT },
-      params.size,
-    );
-    cursorY += GROUP_COUNT_HEIGHT;
-  }
-
-  if (params.showDetailControls) {
-    cursorY += GROUP_META_GAP;
-    pushOccluder(
-      occluders,
-      { x: params.padding, y: cursorY, width, height: GROUP_BULK_CONTROLS_HEIGHT },
-      params.size,
-    );
-    cursorY += GROUP_BULK_CONTROLS_HEIGHT;
-  }
-
-  if (params.showChildGroupControls) {
-    cursorY += GROUP_META_GAP;
-    pushOccluder(
-      occluders,
-      { x: params.padding, y: cursorY, width, height: GROUP_BULK_CONTROLS_HEIGHT },
+      { x: params.padding, y: cursorY, width, height: GROUP_META_BAR_HEIGHT },
       params.size,
     );
   }
@@ -311,38 +287,25 @@ export function resolveNodeContentOccluders(params: {
   });
 }
 
-const estimateCountRowWidth = (summaryLabel: string | undefined) => {
+const estimateMetaBarWidth = (
+  summaryLabel: string | undefined,
+  hasSteps: boolean,
+  hasMenu: boolean,
+) => {
   const label = summaryLabel ?? 'Details';
-  const textWidth = Math.max(GROUP_COUNT_MIN_TEXT, label.length * GROUP_COUNT_TEXT_CHAR);
-  const buttonsWidth =
-    GROUP_BUTTON_WIDE * 2 + GROUP_BUTTON_SIZE * 2 + (GROUP_BUTTON_COUNT - 1) * GROUP_BUTTON_GAP;
-  return textWidth + GROUP_COUNT_GAP + buttonsWidth + GROUP_COUNT_PADDING_X;
+  const textCellWidth =
+    Math.max(GROUP_META_MIN_TEXT, label.length * GROUP_META_TEXT_CHAR) + GROUP_META_TEXT_PAD_X;
+  const stepsWidth = hasSteps ? GROUP_META_STEP_WIDTH * 2 : 0;
+  const menuWidth = hasMenu ? GROUP_META_MENU_WIDTH : 0;
+  return textCellWidth + stepsWidth + menuWidth + GROUP_META_BORDER;
 };
 
-const estimateBulkRowWidth = (leftLabel: string, rightLabel: string) => {
-  const leftWidth = Math.max(GROUP_BULK_BUTTON_MIN, leftLabel.length * GROUP_BULK_TEXT_CHAR);
-  const rightWidth = Math.max(GROUP_BULK_BUTTON_MIN, rightLabel.length * GROUP_BULK_TEXT_CHAR);
-  return (
-    GROUP_BULK_ROW_PADDING_X +
-    leftWidth +
-    GROUP_BULK_BUTTON_PAD_X +
-    GROUP_BULK_ROW_GAP +
-    rightWidth +
-    GROUP_BULK_BUTTON_PAD_X
-  );
-};
-
-const groupHeaderHeight = (badgeCount: number, controlRows: number) => {
+const groupHeaderHeight = (badgeCount: number) => {
   const count = Math.min(5, badgeCount);
   const propsHeight =
     count > 0 ? count * GROUP_PROP_LINE + (count - 1) * GROUP_PROP_GAP + GROUP_META_GAP : 0;
-  const rowCount = Math.max(0, controlRows);
-  const controlsHeight =
-    GROUP_COUNT_HEIGHT +
-    (rowCount > 0
-      ? GROUP_META_GAP + rowCount * GROUP_BULK_CONTROLS_HEIGHT + (rowCount - 1) * GROUP_META_GAP
-      : 0);
-  return GROUP_HEADER_BASE + controlsHeight + propsHeight + GROUP_COUNT_BOTTOM_GAP;
+  const controlsHeight = GROUP_META_GAP + GROUP_META_BAR_HEIGHT;
+  return GROUP_HEADER_BASE + controlsHeight + propsHeight + GROUP_META_BOTTOM_GAP;
 };
 
 export type LayoutSpec = {
@@ -357,14 +320,14 @@ export type LayoutSpec = {
 
 export function getGroupHeaderHeight(
   badgeCount: number,
-  controlRows: number | boolean = false,
+  // Retained for call-site compat; the merged meta bar is one row regardless.
+  _controlRows: number | boolean = false,
 ): number {
-  const rows = typeof controlRows === 'number' ? Math.max(0, controlRows) : controlRows ? 1 : 0;
-  return groupHeaderHeight(badgeCount, rows);
+  return groupHeaderHeight(badgeCount);
 }
 
 export function getGroupMinWidth(summaryLabel: string | undefined, padding: number): number {
-  return estimateCountRowWidth(summaryLabel) + padding * 2;
+  return estimateMetaBarWidth(summaryLabel, true, false) + padding * 2;
 }
 
 export function getGroupMinWidthWithControls(
@@ -372,14 +335,8 @@ export function getGroupMinWidthWithControls(
   padding: number,
   controls: { detailControls: boolean; childGroupControls: boolean },
 ): number {
-  let contentWidth = estimateCountRowWidth(summaryLabel);
-  if (controls.detailControls) {
-    contentWidth = Math.max(contentWidth, estimateBulkRowWidth('Expand all', 'Collapse all'));
-  }
-  if (controls.childGroupControls) {
-    contentWidth = Math.max(contentWidth, estimateBulkRowWidth('Expand once', 'Collapse once'));
-  }
-  return contentWidth + padding * 2;
+  const hasMenu = controls.detailControls || controls.childGroupControls;
+  return estimateMetaBarWidth(summaryLabel, true, hasMenu) + padding * 2;
 }
 
 export function getLeafMinHeight(params: {
