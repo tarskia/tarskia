@@ -1,11 +1,13 @@
 # Tarskia
 
-Tarskia is a semantic architecture diagram system for inspecting software
-repositories as structured, schema-validated diagrams.
+Tarskia is an open-source toolkit for generating and maintaining architecture
+diagrams of software repositories. Diagrams are code: every entity has a type,
+types come from versioned schemas, and the result is plain YAML that fits into
+normal source control.
 
-This repository contains the open-source frontend, diagram renderer, curated
-gallery source, and shared semantic model. The generation worker and production
-backend are private while the worker pipeline is still experimental.
+This repository contains the frontend, diagram renderer, curated gallery
+source, and shared diagram model. The generation worker and hosted backend are
+private.
 
 ## To come
 
@@ -27,7 +29,7 @@ depend on the private backend.
 
 - `frontend/`: Vite + React + TypeScript app.
 - `gallery/curated/`: source-of-truth curated gallery diagrams.
-- `packages/diagram-semantics/`: semantic diagram model, parser, validator, and view helpers.
+- `packages/diagram-semantics/`: shared diagram model — parser, validator, and view helpers.
 - `openapi/`: public API contract snapshot for the hosted backend.
 - `scripts/`: shared build scripts.
 

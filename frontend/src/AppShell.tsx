@@ -1,5 +1,6 @@
 import { Navigate, type RouteObject, useRoutes } from 'react-router-dom';
 
+import AboutPage from './AboutPage';
 import EditorShell from './EditorShell';
 import PublicGalleryIndex from './gallery/PublicGalleryIndex';
 import PublicGalleryViewer from './gallery/PublicGalleryViewer';
@@ -9,6 +10,10 @@ export const appRoutes: RouteObject[] = [
   {
     path: '/',
     element: <Navigate to="/gallery" replace />,
+  },
+  {
+    path: '/about',
+    element: <AboutPage />,
   },
   {
     path: '/gallery',
