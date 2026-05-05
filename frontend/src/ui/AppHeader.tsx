@@ -1,6 +1,8 @@
 import { Redo2, RotateCcw, Search, Undo2, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { GitHubLink } from './GitHubLink';
 import { ThemeToggle } from './ThemeToggle';
 
 interface AppHeaderProps {
@@ -68,10 +70,19 @@ export function AppHeader({
       }`}
     >
       {/* Brand */}
-      <div className="inline-flex items-center gap-2.5 font-semibold text-lg tracking-wide text-accent shrink-0">
+      <Link
+        to="/gallery"
+        className="inline-flex items-center gap-2.5 font-semibold text-lg tracking-wide text-accent shrink-0 transition-colors hover:text-accent/80"
+      >
         <img src="/tarskia-icon.svg" alt="" aria-hidden="true" className="h-7 w-7" />
         <span className="text-accent">tarskia</span>
-      </div>
+      </Link>
+      <Link
+        to="/about"
+        className="hidden shrink-0 rounded-md px-2.5 py-1 text-sm text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground sm:inline-flex"
+      >
+        About
+      </Link>
       <div className="w-px h-6 bg-border" />
 
       {/* Document context: name + undo/redo + status */}
@@ -200,7 +211,8 @@ export function AppHeader({
         </div>
       )}
 
-      {/* Theme */}
+      {/* GitHub + Theme */}
+      <GitHubLink />
       <ThemeToggle />
 
       {/* Account */}
