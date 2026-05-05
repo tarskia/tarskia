@@ -2172,21 +2172,20 @@ inputs:
     role: primary
 metadata:
   workerBuild:
-    inputTokens: 23612690
-    cachedInputTokens: 21510144
-    outputTokens: 430376
-    approxTotalTokens: 45553210
+    inputTokens: 18274901
+    cachedInputTokens: 16699904
+    outputTokens: 305578
+    approxTotalTokens: 35280383
     mode: advanced
     model: gpt-5.4-mini
-    builtAt: "2026-05-01T11:36:37.146Z"
-    durationMs: 4245706
-    turns: 70
+    builtAt: "2026-05-04T11:30:14.547Z"
+    durationMs: 12387446
+    turns: 64
     nodes: 103
     edges: 69
   sourceRepository:
     repo: https://github.com/tarskia/tarskia
     url: https://github.com/tarskia/tarskia
     commit: 552bffae4e104fba3b3fdad4b6ce44bd98e4e90e
-    committedAt: "2026-04-30T14:55:30+01:00"
-  description: Semantic architecture diagrams for exploring software repositories
+  description: TypeScript monorepo with a Vite/React browser app, a shared diagram-semantics...
   name: Tarskia

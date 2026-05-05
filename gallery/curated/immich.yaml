@@ -1,0 +1,1059 @@
+version: 0.1.0
+schemaRefs:
+  - schema: gallery/immich@0.1
+    layer: 0
+  - schema: core/frontend@0.3
+    layer: 0
+  - schema: core/code@0.1
+    layer: 0
+  - schema: core/software@0.1
+    layer: 0
+  - schema: core/web-app@0.3
+    layer: 0
+  - schema: core/code@0.1
+    layer: 1
+entities:
+  - id: web-gallery-app
+    type: gallery/immich.types.portal-app
+    name: Web gallery and admin UI
+    description: Browser gallery shell plus generated API client.
+    props:
+      framework: sveltekit
+      runtime: browser
+    provenance:
+      locations:
+        - input: primary
+          path: web/src/routes/+layout.svelte
+        - input: primary
+          path: web/package.json
+        - input: primary
+          path: open-api/typescript-sdk/src/index.ts
+    children:
+      - id: web-gallery-app/browser-shell
+        type: core/web-app.types.group
+        name: Browser shell and routes
+        description: Browser shell and login route.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: web/src/routes/+layout.svelte
+            - input: primary
+              path: web/src/routes/auth/login/+page.svelte
+            - input: primary
+              path: web/package.json
+        children:
+          - id: web-gallery-app/browser-shell/shell-runtime
+            type: core/frontend.types.frontend
+            name: Browser runtime
+            description: SvelteKit shell and authenticated client flow.
+            props:
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: web/src/routes/+layout.svelte
+                - input: primary
+                  path: web/package.json
+          - id: web-gallery-app/browser-shell/login-route
+            type: core/web-app.types.application
+            name: Login route
+            description: Browser login page surface.
+            provenance:
+              locations:
+                - input: primary
+                  path: web/src/routes/auth/login/+page.svelte
+      - id: web-gallery-app/api-client
+        type: core/code.types.module
+        name: Generated API client
+        description: Typed helpers for the canonical server contract.
+        provenance:
+          locations:
+            - input: primary
+              path: open-api/immich-openapi-specs.json
+            - input: primary
+              path: open-api/typescript-sdk/src/index.ts
+            - input: primary
+              path: web/src/routes/+layout.svelte
+  - id: mobile-client-runtime
+    type: core/frontend.types.frontend
+    name: Mobile client runtime
+    description: Flutter app shell plus background upload and API client layers.
+    props:
+      framework: flutter
+    provenance:
+      locations:
+        - input: primary
+          path: mobile/pubspec.yaml
+        - input: primary
+          path: mobile/lib/main.dart
+        - input: primary
+          path: mobile/lib/services/background_upload.service.dart
+        - input: primary
+          path: open-api/immich-openapi-specs.json
+    children:
+      - id: mobile-client-runtime/mobile-shell
+        type: core/web-app.types.group
+        name: Mobile app shell
+        description: Mobile shell and route entry.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: mobile/lib/main.dart
+            - input: primary
+              path: mobile/pubspec.yaml
+        children:
+          - id: mobile-client-runtime/mobile-shell/shell-runtime
+            type: core/frontend.types.frontend
+            name: Mobile runtime
+            description: Flutter app bootstrap and shell.
+            provenance:
+              locations:
+                - input: primary
+                  path: mobile/lib/main.dart
+                - input: primary
+                  path: mobile/pubspec.yaml
+          - id: mobile-client-runtime/mobile-shell/route-entry
+            type: core/web-app.types.application
+            name: Route entry
+            description: Deep-link and route surface.
+            provenance:
+              locations:
+                - input: primary
+                  path: mobile/lib/main.dart
+      - id: mobile-client-runtime/background-upload-service
+        type: core/code.types.module
+        name: Background upload service
+        description: Background upload orchestration and local runtime state.
+        provenance:
+          locations:
+            - input: primary
+              path: mobile/lib/services/background_upload.service.dart
+            - input: primary
+              path: mobile/lib/infrastructure/entities/store.entity.dart
+            - input: primary
+              path: mobile/lib/main.dart
+        children:
+          - id: mobile-client-runtime/background-upload-service/background-coordinator
+            type: core/code.types.module
+            name: Background coordinator
+            description: Upload orchestration and task state handling.
+            provenance:
+              locations:
+                - input: primary
+                  path: mobile/lib/services/background_upload.service.dart
+          - id: mobile-client-runtime/background-upload-service/local-persistence
+            type: core/web-app.types.group
+            name: Local persistence
+            description: Local on-device persistence boundary.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: mobile/lib/infrastructure/entities/store.entity.dart
+            children:
+              - id: mobile-client-runtime/background-upload-service/local-persistence/store-entity
+                type: core/code.types.module
+                name: Store entity
+                description: On-device persistence model.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: mobile/lib/infrastructure/entities/store.entity.dart
+              - id: mobile-client-runtime/background-upload-service/local-persistence/local-store
+                type: core/web-app.types.cache
+                name: Local store
+                description: Device-backed runtime cache.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: mobile/lib/infrastructure/entities/store.entity.dart
+      - id: mobile-client-runtime/api-client
+        type: core/code.types.module
+        name: Generated API client
+        description: Typed helpers for the canonical server contract.
+        provenance:
+          locations:
+            - input: primary
+              path: open-api/immich-openapi-specs.json
+            - input: primary
+              path: open-api/typescript-sdk/src/index.ts
+            - input: primary
+              path: mobile/lib/services/background_upload.service.dart
+  - id: cli-runtime
+    type: core/web-app.types.application
+    name: CLI upload and admin tooling
+    description: CLI command surface, runtime, upload pipeline, and generated API client layers.
+    props:
+      framework: node
+      runtime: cli
+    provenance:
+      locations:
+        - input: primary
+          path: cli/src/index.ts
+        - input: primary
+          path: cli/src/commands/asset.ts
+        - input: primary
+          path: open-api/typescript-sdk/src/index.ts
+    children:
+      - id: cli-runtime/command-surface
+        type: core/web-app.types.group
+        name: Command surface
+        description: Command routing and runtime queue.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: cli/src/index.ts
+            - input: primary
+              path: cli/src/queue.ts
+        children:
+          - id: cli-runtime/command-surface/cli-bootstrap
+            type: core/web-app.types.group
+            name: CLI bootstrap
+            description: CLI bootstrap boundary.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: cli/src/index.ts
+            children:
+              - id: cli-runtime/command-surface/cli-bootstrap/bootstrap-runtime
+                type: core/web-app.types.application
+                name: Bootstrap runtime
+                description: CLI startup boundary.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: cli/src/index.ts
+          - id: cli-runtime/command-surface/cli-dispatch
+            type: core/code.types.module
+            name: CLI dispatch
+            description: Entry point for command routing.
+            provenance:
+              locations:
+                - input: primary
+                  path: cli/src/index.ts
+          - id: cli-runtime/command-surface/command-router
+            type: core/code.types.module
+            name: Command router
+            description: Resolves commands into runtime actions.
+            provenance:
+              locations:
+                - input: primary
+                  path: cli/src/index.ts
+          - id: cli-runtime/command-surface/task-queue
+            type: core/code.types.module
+            name: Task queue
+            description: Bounded runtime queue.
+            provenance:
+              locations:
+                - input: primary
+                  path: cli/src/queue.ts
+      - id: cli-runtime/cli-suite
+        type: gallery/immich.types.cli-suite
+        name: CLI runtime
+        description: CLI runtime and upload handling.
+        props:
+          framework: node
+          runtime: cli
+        provenance:
+          locations:
+            - input: primary
+              path: cli/src/index.ts
+            - input: primary
+              path: cli/src/queue.ts
+            - input: primary
+              path: cli/package.json
+        children:
+          - id: cli-runtime/cli-suite/runtime-core
+            type: core/code.types.module
+            name: Runtime core
+            description: Command dispatch and queue orchestration.
+            provenance:
+              locations:
+                - input: primary
+                  path: cli/src/index.ts
+                - input: primary
+                  path: cli/src/queue.ts
+          - id: cli-runtime/cli-suite/asset-commands
+            type: core/code.types.module
+            name: Asset commands
+            description: Upload command handling.
+            provenance:
+              locations:
+                - input: primary
+                  path: cli/src/commands/asset.ts
+      - id: cli-runtime/asset-upload
+        type: core/code.types.module
+        name: Asset upload pipeline
+        description: Upload pipeline and queue handling.
+        provenance:
+          locations:
+            - input: primary
+              path: cli/src/commands/asset.ts
+            - input: primary
+              path: cli/src/queue.ts
+            - input: primary
+              path: cli/src/index.ts
+        children:
+          - id: cli-runtime/asset-upload/upload-orchestrator
+            type: core/code.types.module
+            name: Upload orchestrator
+            description: Batch upload control flow and queue handling.
+            provenance:
+              locations:
+                - input: primary
+                  path: cli/src/commands/asset.ts
+                - input: primary
+                  path: cli/src/queue.ts
+                - input: primary
+                  path: cli/src/index.ts
+      - id: cli-runtime/api-client
+        type: core/code.types.module
+        name: Generated API client
+        description: Typed helpers for the canonical server contract.
+        provenance:
+          locations:
+            - input: primary
+              path: open-api/immich-openapi-specs.json
+            - input: primary
+              path: open-api/typescript-sdk/src/index.ts
+            - input: primary
+              path: cli/src/commands/asset.ts
+  - id: server-control-plane
+    type: gallery/immich.types.control-plane
+    name: NestJS server control plane
+    description: Nest controller surface plus application runtime service.
+    props:
+      deployability: deployable
+      framework: nestjs
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/app.module.ts
+        - input: primary
+          path: server/src/controllers/app.controller.ts
+        - input: primary
+          path: server/src/controllers/oauth.controller.ts
+        - input: primary
+          path: server/src/controllers/queue.controller.ts
+    children:
+      - id: server-control-plane/admin-api
+        type: core/web-app.types.group
+        name: HTTP controller surface
+        description: HTTP controller surface for the main app and mobile sync paths.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: server/src/controllers/app.controller.ts
+            - input: primary
+              path: server/src/controllers/oauth.controller.ts
+            - input: primary
+              path: server/src/controllers/queue.controller.ts
+            - input: primary
+              path: server/src/controllers/sync.controller.ts
+            - input: primary
+              path: open-api/immich-openapi-specs.json
+            - input: primary
+              path: open-api/typescript-sdk/src/index.ts
+        children:
+          - id: server-control-plane/admin-api/app-controller
+            type: core/code.types.module
+            name: App controller
+            description: Primary HTTP surface for the control plane.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/src/controllers/app.controller.ts
+          - id: server-control-plane/admin-api/sync-controller
+            type: core/code.types.module
+            name: Sync controller
+            description: Mobile sync HTTP surface.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/src/controllers/sync.controller.ts
+      - id: server-control-plane/control-service
+        type: core/web-app.types.service
+        name: Nest runtime service
+        description: Nest runtime service composition.
+        props:
+          framework: nestjs
+          runtime: server
+          deployability: deployable
+        provenance:
+          locations:
+            - input: primary
+              path: server/src/app.module.ts
+        children:
+          - id: server-control-plane/control-service/app-module
+            type: core/code.types.module
+            name: App module
+            description: Nest application composition module.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/src/app.module.ts
+  - id: background-worker-plane
+    type: core/web-app.types.service
+    name: Background worker and maintenance plane
+    description: Worker runtimes plus shared queue and persistence support.
+    props:
+      deployability: deployable
+      framework: nestjs
+      runtime: worker
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/workers/microservices.ts
+        - input: primary
+          path: server/src/workers/maintenance.ts
+        - input: primary
+          path: server/src/services/queue.service.ts
+    children:
+      - id: background-worker-plane/worker-suite
+        type: core/web-app.types.group
+        name: Worker suite
+        description: Worker runtimes for microservices and maintenance.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: server/src/workers/microservices.ts
+            - input: primary
+              path: server/src/workers/maintenance.ts
+        children:
+          - id: background-worker-plane/worker-suite/microservices-runtime
+            type: core/software.types.system
+            name: Microservices runtime
+            description: Separate worker runtime for microservices.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/src/workers/microservices.ts
+          - id: background-worker-plane/worker-suite/maintenance-runtime
+            type: core/software.types.system
+            name: Maintenance runtime
+            description: Dedicated maintenance worker runtime.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/src/workers/maintenance.ts
+      - id: background-worker-plane/queue-service
+        type: core/code.types.module
+        name: Queue orchestration service
+        description: Queue orchestration service.
+        provenance:
+          locations:
+            - input: primary
+              path: server/src/services/queue.service.ts
+            - input: primary
+              path: server/src/workers/microservices.ts
+        children:
+          - id: background-worker-plane/queue-service/queue-orchestrator
+            type: core/code.types.module
+            name: Queue orchestrator
+            description: Queue state, concurrency, and scheduling coordination.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/src/services/queue.service.ts
+                - input: primary
+                  path: server/src/workers/microservices.ts
+      - id: background-worker-plane/persistence-adapters
+        type: core/web-app.types.group
+        name: Persistence adapters
+        description: Database and storage adapters.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: server/src/services/database.service.ts
+            - input: primary
+              path: server/src/services/storage.service.ts
+            - input: primary
+              path: docker/docker-compose.yml
+        children:
+          - id: background-worker-plane/persistence-adapters/database-service
+            type: core/code.types.module
+            name: Database service
+            description: Relational state access adapter.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/src/services/database.service.ts
+                - input: primary
+                  path: docker/docker-compose.yml
+          - id: background-worker-plane/persistence-adapters/storage-service
+            type: core/code.types.module
+            name: Storage service
+            description: Media and filesystem storage adapter.
+            provenance:
+              locations:
+                - input: primary
+                  path: server/src/services/storage.service.ts
+                - input: primary
+                  path: docker/docker-compose.yml
+  - id: machine-learning-service
+    type: gallery/immich.types.machine-learning-service
+    name: Machine learning inference service
+    description: FastAPI inference runtime.
+    props:
+      deployability: deployable
+      framework: fastapi
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: machine-learning/immich_ml/__main__.py
+        - input: primary
+          path: machine-learning/pyproject.toml
+        - input: primary
+          path: server/src/services/ocr.service.ts
+        - input: primary
+          path: server/src/repositories/machine-learning.repository.ts
+    children:
+      - id: machine-learning-service/inference-runtime
+        type: core/web-app.types.service
+        name: Inference runtime
+        description: FastAPI app bootstrapped by Gunicorn.
+        props:
+          framework: fastapi
+          runtime: server
+          deployability: deployable
+        provenance:
+          locations:
+            - input: primary
+              path: machine-learning/immich_ml/__main__.py
+            - input: primary
+              path: machine-learning/pyproject.toml
+  - id: job-queue
+    type: core/web-app.types.queue
+    name: Background job queue
+    description: Background job queue with shared scheduling service and job topic.
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/services/queue.service.ts
+        - input: primary
+          path: server/package.json
+        - input: primary
+          path: docker/docker-compose.yml
+    children:
+      - id: job-queue/queue-service
+        type: core/code.types.module
+        name: Queue service
+        description: Queue state, concurrency, and nightly scheduling.
+        props:
+          language: typescript
+        provenance:
+          locations:
+            - input: primary
+              path: server/src/services/queue.service.ts
+            - input: primary
+              path: server/package.json
+      - id: job-queue/job-topic
+        type: core/web-app.types.topic
+        name: Job topic
+        description: Queue payloads flowing between producer and workers.
+        provenance:
+          locations:
+            - input: primary
+              path: server/src/services/queue.service.ts
+            - input: primary
+              path: server/src/workers/microservices.ts
+            - input: primary
+              path: server/src/workers/maintenance.ts
+            - input: primary
+              path: docker/docker-compose.yml
+  - id: persistence-queue-substrate
+    type: core/web-app.types.datastore
+    name: Persistence substrate
+    description: Relational database and media object store behind the shared substrate.
+    provenance:
+      locations:
+        - input: primary
+          path: docker/docker-compose.yml
+        - input: primary
+          path: server/src/services/database.service.ts
+        - input: primary
+          path: server/src/services/storage.service.ts
+    children:
+      - id: persistence-queue-substrate/relational-db
+        type: core/web-app.types.relational-db
+        name: Relational database
+        description: Primary Postgres-backed store.
+        provenance:
+          locations:
+            - input: primary
+              path: docker/docker-compose.yml
+            - input: primary
+              path: server/src/services/database.service.ts
+      - id: persistence-queue-substrate/object-store
+        type: core/web-app.types.object-store
+        name: Object store
+        description: Persistent media volume.
+        provenance:
+          locations:
+            - input: primary
+              path: docker/docker-compose.yml
+            - input: primary
+              path: server/src/services/storage.service.ts
+relations:
+  - id: web-gallery-app-calls-server-control-plane
+    from: web-gallery-app/api-client
+    to: server-control-plane/admin-api/app-controller
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: web/src/routes/+layout.svelte
+        - input: primary
+          path: web/package.json
+        - input: primary
+          path: open-api/typescript-sdk/src/index.ts
+  - id: mobile-client-runtime-calls-server-control-plane
+    from: mobile-client-runtime/api-client
+    to: server-control-plane/admin-api/sync-controller
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: mobile/lib/main.dart
+        - input: primary
+          path: mobile/lib/services/background_upload.service.dart
+        - input: primary
+          path: open-api/immich-openapi-specs.json
+  - id: cli-runtime-calls-server-control-plane
+    from: cli-runtime/api-client
+    to: server-control-plane/admin-api/app-controller
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: cli/src/index.ts
+        - input: primary
+          path: cli/src/commands/asset.ts
+        - input: primary
+          path: open-api/typescript-sdk/src/index.ts
+  - id: >-
+      server-control-plane-calls-background-worker-plane--core--software-relations-calls--server-control-plane--control-service--app-module--to--background-worker-plane--worker-suite--microservices-runtime
+    from: server-control-plane/control-service/app-module
+    to: background-worker-plane/worker-suite/microservices-runtime
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/app.module.ts
+        - input: primary
+          path: server/src/workers/microservices.ts
+        - input: primary
+          path: server/src/workers/maintenance.ts
+  - id: >-
+      server-control-plane-calls-background-worker-plane--core--software-relations-calls--server-control-plane--control-service--app-module--to--background-worker-plane--worker-suite--maintenance-runtime
+    from: server-control-plane/control-service/app-module
+    to: background-worker-plane/worker-suite/maintenance-runtime
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/app.module.ts
+        - input: primary
+          path: server/src/workers/microservices.ts
+        - input: primary
+          path: server/src/workers/maintenance.ts
+  - id: server-control-plane-publishes-to-job-queue
+    from: server-control-plane/control-service/app-module
+    to: job-queue/job-topic
+    type: core/software.relations.publishes-to
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/services/queue.service.ts
+        - input: primary
+          path: server/src/controllers/queue.controller.ts
+        - input: primary
+          path: docker/docker-compose.yml
+  - id: background-worker-plane-consumes-from-job-queue
+    from: background-worker-plane/queue-service/queue-orchestrator
+    to: job-queue/job-topic
+    type: core/software.relations.consumes-from
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/services/queue.service.ts
+        - input: primary
+          path: server/src/workers/microservices.ts
+        - input: primary
+          path: server/src/workers/maintenance.ts
+  - id: server-control-plane-calls-machine-learning-service
+    from: server-control-plane/control-service/app-module
+    to: machine-learning-service/inference-runtime
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/services/ocr.service.ts
+        - input: primary
+          path: server/src/services/person.service.ts
+        - input: primary
+          path: server/src/repositories/machine-learning.repository.ts
+  - id: >-
+      server-control-plane-read-writes-persistence-queue-substrate--core--software-relations-reads--server-control-plane--control-service--to--persistence-queue-substrate--relational-db
+    from: server-control-plane/control-service/app-module
+    to: persistence-queue-substrate/relational-db
+    type: core/software.relations.reads
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/services/database.service.ts
+        - input: primary
+          path: server/src/services/storage.service.ts
+        - input: primary
+          path: docker/docker-compose.yml
+  - id: >-
+      server-control-plane-read-writes-persistence-queue-substrate--core--software-relations-writes--server-control-plane--control-service--to--persistence-queue-substrate--relational-db
+    from: server-control-plane/control-service/app-module
+    to: persistence-queue-substrate/relational-db
+    type: core/software.relations.writes
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/services/database.service.ts
+        - input: primary
+          path: server/src/services/storage.service.ts
+        - input: primary
+          path: docker/docker-compose.yml
+  - id: >-
+      background-worker-plane-read-writes-persistence-queue-substrate--core--software-relations-reads--background-worker-plane--persistence-adapters--to--persistence-queue-substrate--object-store
+    from: background-worker-plane/persistence-adapters/storage-service
+    to: persistence-queue-substrate/object-store
+    type: core/software.relations.reads
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/workers/maintenance.ts
+        - input: primary
+          path: server/src/services/storage.service.ts
+        - input: primary
+          path: docker/docker-compose.yml
+  - id: >-
+      background-worker-plane-read-writes-persistence-queue-substrate--core--software-relations-writes--background-worker-plane--persistence-adapters--to--persistence-queue-substrate--object-store
+    from: background-worker-plane/persistence-adapters/storage-service
+    to: persistence-queue-substrate/object-store
+    type: core/software.relations.writes
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/workers/maintenance.ts
+        - input: primary
+          path: server/src/services/storage.service.ts
+        - input: primary
+          path: docker/docker-compose.yml
+  - id: >-
+      machine-learning-service-read-writes-persistence-queue-substrate--core--software-relations-reads--machine-learning-service--inference-runtime--to--persistence-queue-substrate--relational-db
+    from: machine-learning-service/inference-runtime
+    to: persistence-queue-substrate/relational-db
+    type: core/software.relations.reads
+    provenance:
+      locations:
+        - input: primary
+          path: machine-learning/immich_ml/__main__.py
+        - input: primary
+          path: machine-learning/pyproject.toml
+        - input: primary
+          path: server/src/services/ocr.service.ts
+        - input: primary
+          path: server/src/repositories/machine-learning.repository.ts
+        - input: primary
+          path: docker/docker-compose.yml
+  - id: >-
+      machine-learning-service-read-writes-persistence-queue-substrate--core--software-relations-writes--machine-learning-service--inference-runtime--to--persistence-queue-substrate--relational-db
+    from: machine-learning-service/inference-runtime
+    to: persistence-queue-substrate/relational-db
+    type: core/software.relations.writes
+    provenance:
+      locations:
+        - input: primary
+          path: machine-learning/immich_ml/__main__.py
+        - input: primary
+          path: machine-learning/pyproject.toml
+        - input: primary
+          path: server/src/services/ocr.service.ts
+        - input: primary
+          path: server/src/repositories/machine-learning.repository.ts
+        - input: primary
+          path: docker/docker-compose.yml
+  - id: web-gallery-app--browser-shell-calls-api-client
+    from: web-gallery-app/browser-shell/shell-runtime
+    to: web-gallery-app/api-client
+    type: core/software.relations.calls
+    description: Shell uses the generated client helpers.
+    provenance:
+      locations:
+        - input: primary
+          path: web/src/routes/+layout.svelte
+        - input: primary
+          path: open-api/typescript-sdk/src/index.ts
+  - id: mobile-client-runtime--mobile-shell-calls-background-upload-service
+    from: mobile-client-runtime/mobile-shell/shell-runtime
+    to: mobile-client-runtime/background-upload-service/background-coordinator
+    type: core/software.relations.calls
+    description: Shell delegates uploads to the background service.
+    provenance:
+      locations:
+        - input: primary
+          path: mobile/lib/main.dart
+        - input: primary
+          path: mobile/lib/services/background_upload.service.dart
+  - id: mobile-client-runtime--background-upload-service-calls-api-client
+    from: mobile-client-runtime/background-upload-service/background-coordinator
+    to: mobile-client-runtime/api-client
+    type: core/software.relations.calls
+    description: Uploader uses the generated API client.
+    provenance:
+      locations:
+        - input: primary
+          path: mobile/lib/services/background_upload.service.dart
+        - input: primary
+          path: open-api/typescript-sdk/src/index.ts
+  - id: cli-runtime--command-surface-calls-cli-suite
+    from: cli-runtime/command-surface/task-queue
+    to: cli-runtime/cli-suite/runtime-core
+    type: core/software.relations.calls
+    description: Command routing feeds the CLI runtime boundary.
+    provenance:
+      locations:
+        - input: primary
+          path: cli/src/index.ts
+        - input: primary
+          path: cli/src/queue.ts
+  - id: cli-runtime--cli-suite-calls-asset-upload
+    from: cli-runtime/cli-suite/asset-commands
+    to: cli-runtime/asset-upload/upload-orchestrator
+    type: core/software.relations.calls
+    description: CLI runtime delegates uploads to the pipeline.
+    provenance:
+      locations:
+        - input: primary
+          path: cli/src/index.ts
+        - input: primary
+          path: cli/src/commands/asset.ts
+  - id: cli-runtime--asset-upload-calls-api-client
+    from: cli-runtime/asset-upload/upload-orchestrator
+    to: cli-runtime/api-client
+    type: core/software.relations.calls
+    description: Upload pipeline uses the generated API client.
+    provenance:
+      locations:
+        - input: primary
+          path: cli/src/commands/asset.ts
+        - input: primary
+          path: open-api/typescript-sdk/src/index.ts
+  - id: >-
+      server-control-plane--admin-api-calls-control-service--core--software-relations-calls--server-control-plane--admin-api--app-controller--to--server-control-plane--control-service
+    from: server-control-plane/admin-api/app-controller
+    to: server-control-plane/control-service
+    type: core/software.relations.calls
+    description: HTTP surface delegates into the Nest runtime.
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/app.module.ts
+        - input: primary
+          path: server/src/controllers/app.controller.ts
+        - input: primary
+          path: server/src/controllers/oauth.controller.ts
+  - id: >-
+      server-control-plane--admin-api-calls-control-service--core--software-relations-calls--server-control-plane--admin-api--sync-controller--to--server-control-plane--control-service
+    from: server-control-plane/admin-api/sync-controller
+    to: server-control-plane/control-service
+    type: core/software.relations.calls
+    description: HTTP surface delegates into the Nest runtime.
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/app.module.ts
+        - input: primary
+          path: server/src/controllers/app.controller.ts
+        - input: primary
+          path: server/src/controllers/oauth.controller.ts
+  - id: >-
+      background-worker-plane--worker-suite-calls-queue-service--core--software-relations-calls--background-worker-plane--worker-suite--microservices-runtime--to--background-worker-plane--queue-service
+    from: background-worker-plane/worker-suite/microservices-runtime
+    to: background-worker-plane/queue-service
+    type: core/software.relations.calls
+    description: Worker runtimes delegate shared queue behavior.
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/workers/microservices.ts
+        - input: primary
+          path: server/src/workers/maintenance.ts
+  - id: >-
+      background-worker-plane--worker-suite-calls-queue-service--core--software-relations-calls--background-worker-plane--worker-suite--maintenance-runtime--to--background-worker-plane--queue-service
+    from: background-worker-plane/worker-suite/maintenance-runtime
+    to: background-worker-plane/queue-service
+    type: core/software.relations.calls
+    description: Worker runtimes delegate shared queue behavior.
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/workers/microservices.ts
+        - input: primary
+          path: server/src/workers/maintenance.ts
+  - id: background-worker-plane--queue-service-calls-persistence-adapters
+    from: background-worker-plane/queue-service/queue-orchestrator
+    to: background-worker-plane/persistence-adapters/database-service
+    type: core/software.relations.calls
+    description: Queue orchestration uses database and storage adapters.
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/services/queue.service.ts
+        - input: primary
+          path: server/src/services/database.service.ts
+        - input: primary
+          path: server/src/services/storage.service.ts
+  - id: job-queue--queue-service-consumes-from-job-topic
+    from: job-queue/queue-service
+    to: job-queue/job-topic
+    type: core/software.relations.consumes-from
+    description: Queue orchestration reads work payloads.
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/services/queue.service.ts
+        - input: primary
+          path: server/src/workers/maintenance.ts
+  - id: job-queue--queue-service-publishes-to-job-topic
+    from: job-queue/queue-service
+    to: job-queue/job-topic
+    type: core/software.relations.publishes-to
+    description: Queue orchestration enqueues work payloads.
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/services/queue.service.ts
+        - input: primary
+          path: server/src/workers/microservices.ts
+  - id: mobile-client-runtime--mobile-shell--shell-runtime-calls-route-entry
+    from: mobile-client-runtime/mobile-shell/shell-runtime
+    to: mobile-client-runtime/mobile-shell/route-entry
+    type: core/software.relations.calls
+    description: Bootstraps route handling.
+    provenance:
+      locations:
+        - input: primary
+          path: mobile/lib/main.dart
+  - id: >-
+      mobile-client-runtime--background-upload-service--background-coordinator-calls-local-persistence
+    from: mobile-client-runtime/background-upload-service/background-coordinator
+    to: mobile-client-runtime/background-upload-service/local-persistence/store-entity
+    type: core/software.relations.calls
+    description: Uses local runtime state.
+    provenance:
+      locations:
+        - input: primary
+          path: mobile/lib/services/background_upload.service.dart
+        - input: primary
+          path: mobile/lib/infrastructure/entities/store.entity.dart
+  - id: cli-runtime--command-surface--cli-bootstrap-calls-cli-dispatch
+    from: cli-runtime/command-surface/cli-bootstrap/bootstrap-runtime
+    to: cli-runtime/command-surface/cli-dispatch
+    type: core/software.relations.calls
+    description: Bootstraps command dispatch.
+    provenance:
+      locations:
+        - input: primary
+          path: cli/src/index.ts
+  - id: cli-runtime--command-surface--cli-dispatch-calls-command-router
+    from: cli-runtime/command-surface/cli-dispatch
+    to: cli-runtime/command-surface/command-router
+    type: core/software.relations.calls
+    description: Bootstraps command routing.
+    provenance:
+      locations:
+        - input: primary
+          path: cli/src/index.ts
+  - id: cli-runtime--command-surface--command-router-calls-task-queue
+    from: cli-runtime/command-surface/command-router
+    to: cli-runtime/command-surface/task-queue
+    type: core/software.relations.calls
+    description: Initializes the queue layer.
+    provenance:
+      locations:
+        - input: primary
+          path: cli/src/index.ts
+        - input: primary
+          path: cli/src/queue.ts
+  - id: cli-runtime--cli-suite--runtime-core-calls-asset-commands
+    from: cli-runtime/cli-suite/runtime-core
+    to: cli-runtime/cli-suite/asset-commands
+    type: core/software.relations.calls
+    description: Dispatches upload work.
+    provenance:
+      locations:
+        - input: primary
+          path: cli/src/index.ts
+        - input: primary
+          path: cli/src/commands/asset.ts
+  - id: background-worker-plane--persistence-adapters--database-service-calls-storage-service
+    from: background-worker-plane/persistence-adapters/database-service
+    to: background-worker-plane/persistence-adapters/storage-service
+    type: core/software.relations.calls
+    description: Routes persisted work into storage access.
+    provenance:
+      locations:
+        - input: primary
+          path: server/src/services/database.service.ts
+        - input: primary
+          path: server/src/services/storage.service.ts
+  - id: >-
+      mobile-client-runtime--background-upload-service--local-persistence--store-entity-read-writes-local-store
+    from: mobile-client-runtime/background-upload-service/local-persistence/store-entity
+    to: mobile-client-runtime/background-upload-service/local-persistence/local-store
+    type: core/software.relations.read-writes
+    description: Persists runtime state into device cache.
+    provenance:
+      locations:
+        - input: primary
+          path: mobile/lib/infrastructure/entities/store.entity.dart
+inputs:
+  - id: primary
+    kind: git
+    repo: https://github.com/immich-app/immich
+    revision: 3decc864b5a8dc80b64fdd3a6771ef6d7d43d293
+    role: primary
+metadata:
+  workerBuild:
+    inputTokens: 14140521
+    cachedInputTokens: 12131328
+    outputTokens: 347356
+    approxTotalTokens: 26619205
+    mode: advanced
+    model: gpt-5.4-mini
+    builtAt: "2026-05-04T12:29:34.445Z"
+    durationMs: 15947346
+    turns: 45
+    nodes: 51
+    edges: 35
+  sourceRepository:
+    repo: https://github.com/immich-app/immich
+    url: https://github.com/immich-app/immich
+    commit: 3decc864b5a8dc80b64fdd3a6771ef6d7d43d293
+    committedAt: "2026-05-04T00:00:03-04:00"
+  description: Self-hosted photo platform spanning web, mobile, server, and ML
+  name: Immich

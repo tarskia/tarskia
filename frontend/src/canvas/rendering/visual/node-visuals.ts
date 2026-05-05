@@ -85,6 +85,15 @@ const pluralize = (label: string, count: number) => {
   return `${base}s`;
 };
 
+const isGenericComponentCountLabel = (label: string, singularLabel?: string) => {
+  const normalizedLabel = label.trim().toLowerCase();
+  const normalizedSingularLabel = singularLabel?.trim().toLowerCase();
+  return (
+    (normalizedLabel === 'component' || normalizedLabel === 'components') &&
+    (!normalizedSingularLabel || normalizedSingularLabel === 'component')
+  );
+};
+
 const getStructuralChildCount = (node: SceneNode) => node.diagramChildCount ?? node.children.length;
 
 const getStructuralChildTypeCounts = (node: SceneNode) => {
@@ -255,7 +264,8 @@ export function buildNodeVisualMap(params: {
         const label =
           formatLabel(childType?.label ?? getSchemaObjectLocalId(groupType)) ??
           getSchemaObjectLocalId(groupType);
-        if (count > 0) {
+        const countCoversAllChildren = count === getStructuralChildCount(sceneNode);
+        if (count > 0 && (!isGenericComponentCountLabel(label) || countCoversAllChildren)) {
           summaryLabel = `${count} ${pluralize(label, count)}`;
         }
       } else {
@@ -266,7 +276,12 @@ export function buildNodeVisualMap(params: {
       for (const childType of typeProjection.summary.childTypes) {
         count += getStructuralChildTypeCount(sceneNode, childType);
       }
-      if (count > 0) {
+      const countCoversAllChildren = count === getStructuralChildCount(sceneNode);
+      const usesGenericComponentLabel = isGenericComponentCountLabel(
+        typeProjection.summary.label,
+        typeProjection.summary.singularLabel,
+      );
+      if (count > 0 && (!usesGenericComponentLabel || countCoversAllChildren)) {
         const label =
           count === 1
             ? (typeProjection.summary.singularLabel ??

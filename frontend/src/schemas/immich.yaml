@@ -1,0 +1,265 @@
+owner: gallery
+name: immich
+version: "0.1"
+description: >-
+  Immich-shaped architectural wrappers for the browser gallery, NestJS control plane,
+  machine-learning inference service, and shipped CLI surface, aligned to runtime boundaries rather
+  than internal code packages.
+use:
+  - schema: core/base@0.1
+    alias: base
+  - schema: core/frontend@0.3
+    alias: fe
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/web-app@0.3
+    alias: web
+traits:
+  - id: immich-runtime-like
+    label: Immich Runtime
+    description: >-
+      Top-level Immich application boundary spanning the browser app, control plane, machine-
+      learning service, and CLI surface.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+  - id: browser-client-like
+    label: Browser Client
+    description: Browser-facing Immich UI boundary that originates user-driven flow into repo-owned services.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: source
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+  - id: cli-client-like
+    label: CLI Client
+    description: >-
+      Command-line surface that originates upload, auth, and inspection flow into the repo-owned
+      server.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: source
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+types:
+  - id: immich
+    label: Immich
+    description: >-
+      Top-level Immich application boundary spanning the browser app, control plane, machine-
+      learning service, and CLI surface.
+    extends: core/web-app.types.application
+    traits:
+      - gallery/immich.traits.immich-runtime-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - portal-app
+        - control-plane
+        - machine-learning-service
+        - cli-suite
+      allowedChildTraits:
+        - core/frontend.traits.client-like
+        - core/software.traits.service-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      count:
+        childTypes:
+          - portal-app
+          - control-plane
+          - machine-learning-service
+          - cli-suite
+        label: components
+  - id: portal-app
+    label: Portal App
+    description: Browser-facing Immich UI surface for gallery, sharing, search, admin, and playback workflows.
+    extends: core/frontend.types.frontend
+    traits:
+      - gallery/immich.traits.browser-client-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    properties:
+      - id: runtime
+        type: enum
+        description: >-
+          Primary execution environment for this node or subtree. Populate it when one runtime is
+          uniformly true for the boundary. If major children would have different runtimes, prefer
+          separate boundaries instead of mixing them under one node.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true. Prefer it on the highest boundary where it stays accurate instead of repeating it
+          across every descendant.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
+  - id: control-plane
+    label: Control Plane
+    description: >-
+      NestJS runtime that serves the HTTP API, websocket channel, auth, queue orchestration, and
+      maintenance flows.
+    extends: core/web-app.types.service
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    properties:
+      - id: deployability
+        type: enum
+        description: Whether this service is independently deployable or embedded inside another runtime.
+        values:
+          - embedded
+          - deployable
+      - id: runtime
+        type: enum
+        description: >-
+          Primary execution environment for this node or subtree. Populate it when one runtime is
+          uniformly true for the boundary. If major children would have different runtimes, prefer
+          separate boundaries instead of mixing them under one node.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true. Prefer it on the highest boundary where it stays accurate instead of repeating it
+          across every descendant.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
+  - id: machine-learning-service
+    label: Machine Learning Service
+    description: FastAPI inference runtime for CLIP, facial recognition, OCR, and related model execution.
+    extends: core/web-app.types.service
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    properties:
+      - id: deployability
+        type: enum
+        description: Whether this service is independently deployable or embedded inside another runtime.
+        values:
+          - embedded
+          - deployable
+      - id: runtime
+        type: enum
+        description: >-
+          Primary execution environment for this node or subtree. Populate it when one runtime is
+          uniformly true for the boundary. If major children would have different runtimes, prefer
+          separate boundaries instead of mixing them under one node.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true. Prefer it on the highest boundary where it stays accurate instead of repeating it
+          across every descendant.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
+  - id: cli-suite
+    label: CLI Suite
+    description: Node.js command-line surface used for uploads, authentication, and server inspection.
+    extends: core/software.types.system
+    traits:
+      - gallery/immich.traits.cli-client-like
+    analysis:
+      topLevelBias: neutral
+    defaultTags:
+      - core/software.tags.service
+    properties:
+      - id: runtime
+        type: enum
+        description: >-
+          Primary execution environment for this node or subtree. Populate it when one runtime is
+          uniformly true for the boundary. If major children would have different runtimes, prefer
+          separate boundaries instead of mixing them under one node.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true. Prefer it on the highest boundary where it stays accurate instead of repeating it
+          across every descendant.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
+relations: []

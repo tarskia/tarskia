@@ -58,7 +58,7 @@
   {
     "namespace": "tarskia",
     "slug": "clickhouse",
-    "title": "ClickHouse",
+    "title": "Clickhouse",
     "file": "clickhouse.yaml",
     "visibility": "listed",
     "starter": false
@@ -84,6 +84,30 @@
     "slug": "supabase",
     "title": "Supabase",
     "file": "supabase.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "prometheus",
+    "title": "Prometheus",
+    "file": "prometheus.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "immich",
+    "title": "Immich",
+    "file": "immich.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "keycloak",
+    "title": "Keycloak",
+    "file": "keycloak.yaml",
     "visibility": "listed",
     "starter": false
   }
