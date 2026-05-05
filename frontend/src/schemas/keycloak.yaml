@@ -1,0 +1,250 @@
+owner: gallery
+name: keycloak
+version: "0.1"
+description: >-
+  Keycloak-shaped architectural wrappers for the Quarkus control plane, browser administration and
+  account surfaces, and Kubernetes operator runtime.
+use:
+  - schema: core/base@0.1
+    alias: base
+  - schema: core/code@0.1
+    alias: code
+  - schema: core/frontend@0.3
+    alias: fe
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/web-app@0.3
+    alias: web
+traits:
+  - id: runtime-boundary-like
+    label: Keycloak Runtime
+    description: >-
+      Top-level Keycloak boundary that spans the browser surfaces, Quarkus control plane, and
+      operator runtime.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+  - id: client-surface-like
+    label: Client Surface
+    description: >-
+      Browser or command-line entry surface that originates user-driven flow into repo-owned runtime
+      dependencies.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: source
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+types:
+  - id: keycloak
+    label: Keycloak
+    description: >-
+      Top-level Keycloak application boundary spanning the browser admin/account surfaces, the
+      Quarkus control plane, and the Kubernetes operator runtime.
+    extends: core/web-app.types.application
+    traits:
+      - gallery/keycloak.traits.runtime-boundary-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - control-plane
+        - portal-app
+        - operator-service
+      allowedChildTraits:
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 340
+        height: 190
+      style:
+        hue: 210
+      count:
+        childTypes:
+          - control-plane
+          - portal-app
+          - operator-service
+        label: components
+  - id: control-plane
+    label: Control Plane
+    description: >-
+      Main Quarkus runtime that serves the server APIs, admin flows, authentication, and build-time
+      augmented server behavior.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/keycloak.traits.runtime-boundary-like
+      - core/base.traits.container
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/code.traits.code-like
+        - core/software.traits.api-like
+        - core/software.traits.service-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 250
+        height: 120
+      style:
+        hue: 198
+      count:
+        childTypes:
+          - module
+          - group
+        label: modules
+    properties:
+      - id: runtime
+        type: enum
+        description: Primary execution environment for this node or subtree.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
+  - id: portal-app
+    label: Portal App
+    description: Browser-facing admin and account UI surface built from the js workspace and theme assets.
+    extends: core/frontend.types.frontend
+    traits:
+      - gallery/keycloak.traits.client-surface-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/code.traits.code-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 260
+        height: 120
+      style:
+        hue: 186
+      count:
+        childTypes:
+          - module
+          - group
+        label: modules
+    properties:
+      - id: runtime
+        type: enum
+        description: Primary execution environment for this node or subtree.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
+  - id: operator-service
+    label: Operator Service
+    description: >-
+      Kubernetes operator runtime that reconciles Keycloak deployments and cluster-side
+      configuration.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/keycloak.traits.runtime-boundary-like
+      - core/base.traits.container
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/code.traits.code-like
+        - core/software.traits.api-like
+        - core/software.traits.service-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 240
+        height: 112
+      style:
+        hue: 224
+      count:
+        childTypes:
+          - module
+          - group
+        label: modules
+    properties:
+      - id: runtime
+        type: enum
+        description: Primary execution environment for this node or subtree.
+        values:
+          - browser
+          - server
+          - worker
+          - edge
+          - cli
+          - external
+        allowOther: true
+      - id: framework
+        type: enum
+        description: >-
+          Dominant framework or runtime stack for this node or subtree when one choice is uniformly
+          true.
+        values:
+          - react
+          - nextjs
+          - vue
+          - svelte
+          - express
+          - fastify
+          - koa
+          - nestjs
+          - socketio
+        allowOther: true
+relations: []

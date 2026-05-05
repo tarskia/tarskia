@@ -1,0 +1,302 @@
+version: 0.1.0
+schemaRefs:
+  - schema: gallery/prometheus@0.1
+    layer: 0
+  - schema: core/base@0.1
+    layer: 1
+  - schema: core/software@0.1
+    layer: 1
+  - schema: core/web-app@0.3
+    layer: 1
+  - schema: core/frontend@0.3
+    layer: 1
+  - schema: core/code@0.1
+    layer: 1
+  - schema: core/base@0.1
+    layer: 0
+  - schema: core/software@0.1
+    layer: 0
+  - schema: core/web-app@0.3
+    layer: 0
+  - schema: core/frontend@0.3
+    layer: 0
+entities:
+  - id: browser-ui-surface
+    type: gallery/prometheus.types.portal-app
+    name: Browser UI surface
+    description: Browser UI surface for the hosted browser apps and UI shell
+    props:
+      runtime: browser
+    provenance:
+      locations:
+        - input: primary
+          path: web/web.go
+        - input: primary
+          path: web/ui/react-app/src/App.tsx
+        - input: primary
+          path: web/ui/mantine-ui/src/main.tsx
+        - input: primary
+          path: web/ui/ui.go
+  - id: prometheus-server-runtime
+    type: gallery/prometheus.types.server-runtime
+    name: Prometheus server runtime
+    description: Server runtime with a browser-facing HTTP control plane and local TSDB storage
+    props:
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: cmd/prometheus/main.go
+        - input: primary
+          path: web/web.go
+        - input: primary
+          path: web/api/v1/api.go
+    children:
+      - id: prometheus-server-runtime/http-control-plane
+        type: core/web-app.types.service
+        name: HTTP control plane
+        description: HTTP host that serves the browser UI and API surface inside the Prometheus control plane
+        props:
+          deployability: embedded
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: cmd/prometheus/main.go
+            - input: primary
+              path: web/web.go
+            - input: primary
+              path: web/api/v1/api.go
+            - input: primary
+              path: web/ui/ui.go
+        children:
+          - id: prometheus-server-runtime/http-control-plane/web-host
+            type: core/web-app.types.service
+            name: Web host
+            description: Server-side HTTP host for the UI and API.
+            props:
+              deployability: embedded
+              runtime: server
+              framework: go
+            provenance:
+              locations:
+                - input: primary
+                  path: cmd/prometheus/main.go
+                - input: primary
+                  path: web/web.go
+                - input: primary
+                  path: web/api/v1/api.go
+                - input: primary
+                  path: web/ui/ui.go
+      - id: prometheus-server-runtime/runtime-core
+        type: core/software.types.system
+        name: Runtime core
+        description: Runtime coordination layer that routes API work into storage access
+        props:
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: cmd/prometheus/main.go
+            - input: primary
+              path: web/api/v1/api.go
+        children:
+          - id: prometheus-server-runtime/runtime-core/runtime-service
+            type: core/web-app.types.service
+            name: Runtime service
+            description: Server-side coordination service for query and scrape work.
+            props:
+              deployability: embedded
+              runtime: server
+              framework: go
+            provenance:
+              locations:
+                - input: primary
+                  path: cmd/prometheus/main.go
+                - input: primary
+                  path: web/api/v1/api.go
+      - id: prometheus-server-runtime/local-tsdb
+        type: gallery/prometheus.types.storage-stack
+        name: Local TSDB
+        description: Server-owned TSDB storage boundary.
+        provenance:
+          locations:
+            - input: primary
+              path: tsdb/db.go
+            - input: primary
+              path: tsdb/agent/db.go
+            - input: primary
+              path: cmd/prometheus/main.go
+            - input: primary
+              path: web/api/v1/api.go
+  - id: tsdb-storage-plane
+    type: gallery/prometheus.types.storage-stack
+    name: TSDB storage plane
+    description: TSDB storage implementation spanning the block store and agent-mode WAL path
+    provenance:
+      locations:
+        - input: primary
+          path: tsdb/db.go
+        - input: primary
+          path: tsdb/agent/db.go
+    children:
+      - id: tsdb-storage-plane/db-core
+        type: gallery/prometheus.types.storage-stack
+        name: TSDB core
+        description: Primary block-store implementation.
+        provenance:
+          locations:
+            - input: primary
+              path: tsdb/db.go
+            - input: primary
+              path: tsdb/db.go
+      - id: tsdb-storage-plane/agent-db
+        type: gallery/prometheus.types.storage-stack
+        name: Agent TSDB
+        description: Agent-mode storage implementation.
+        provenance:
+          locations:
+            - input: primary
+              path: tsdb/agent/db.go
+            - input: primary
+              path: tsdb/agent/db.go
+relations:
+  - id: rel-browser-ui-calls-server-runtime
+    from: browser-ui-surface
+    to: prometheus-server-runtime/http-control-plane/web-host
+    type: core/software.relations.calls
+    description: Browser UI calls the server for queries, status, and operational actions.
+    provenance:
+      locations:
+        - input: primary
+          path: web/web.go
+        - input: primary
+          path: web/ui/react-app/src/App.tsx
+        - input: primary
+          path: web/ui/mantine-ui/src/pages/query/QueryPage.tsx
+  - id: >-
+      rel-server-runtime-reads-tsdb-storage-plane--core--software-relations-reads--prometheus-server-runtime--runtime-core--to--tsdb-storage-plane--db-core
+    from: prometheus-server-runtime/runtime-core/runtime-service
+    to: tsdb-storage-plane/db-core
+    type: core/software.relations.read-writes
+    description: Server runtime reads from the local TSDB.
+    provenance:
+      locations:
+        - input: primary
+          path: cmd/prometheus/main.go
+        - input: primary
+          path: tsdb/db.go
+        - input: primary
+          path: tsdb/agent/db.go
+  - id: >-
+      rel-server-runtime-reads-tsdb-storage-plane--core--software-relations-reads--prometheus-server-runtime--runtime-core--to--tsdb-storage-plane--agent-db
+    from: prometheus-server-runtime/runtime-core
+    to: tsdb-storage-plane/agent-db
+    type: core/software.relations.reads
+    description: Server runtime reads from the local TSDB.
+    provenance:
+      locations:
+        - input: primary
+          path: cmd/prometheus/main.go
+        - input: primary
+          path: tsdb/db.go
+        - input: primary
+          path: tsdb/agent/db.go
+  - id: >-
+      rel-server-runtime-writes-tsdb-storage-plane--core--software-relations-writes--prometheus-server-runtime--runtime-core--to--tsdb-storage-plane--db-core
+    from: prometheus-server-runtime/runtime-core
+    to: tsdb-storage-plane/db-core
+    type: core/software.relations.writes
+    description: Server runtime writes to the local TSDB.
+    provenance:
+      locations:
+        - input: primary
+          path: cmd/prometheus/main.go
+        - input: primary
+          path: tsdb/db.go
+        - input: primary
+          path: tsdb/agent/db.go
+  - id: >-
+      rel-server-runtime-writes-tsdb-storage-plane--core--software-relations-writes--prometheus-server-runtime--runtime-core--to--tsdb-storage-plane--agent-db
+    from: prometheus-server-runtime/runtime-core
+    to: tsdb-storage-plane/agent-db
+    type: core/software.relations.writes
+    description: Server runtime writes to the local TSDB.
+    provenance:
+      locations:
+        - input: primary
+          path: cmd/prometheus/main.go
+        - input: primary
+          path: tsdb/db.go
+        - input: primary
+          path: tsdb/agent/db.go
+  - id: prometheus-server-runtime--rel-http-control-plane-calls-runtime-core
+    from: prometheus-server-runtime/http-control-plane/web-host
+    to: prometheus-server-runtime/runtime-core/runtime-service
+    type: core/software.relations.calls
+    description: HTTP layer delegates runtime work to the coordination core.
+    provenance:
+      locations:
+        - input: primary
+          path: web/web.go
+        - input: primary
+          path: web/api/v1/api.go
+  - id: prometheus-server-runtime--rel-runtime-core-reads-local-tsdb
+    from: prometheus-server-runtime/runtime-core
+    to: prometheus-server-runtime/local-tsdb
+    type: core/software.relations.reads
+    description: Runtime core reads from local TSDB state.
+    provenance:
+      locations:
+        - input: primary
+          path: cmd/prometheus/main.go
+        - input: primary
+          path: web/api/v1/api.go
+  - id: prometheus-server-runtime--rel-runtime-core-writes-local-tsdb
+    from: prometheus-server-runtime/runtime-core
+    to: prometheus-server-runtime/local-tsdb
+    type: core/software.relations.writes
+    description: Runtime core writes to local TSDB state.
+    provenance:
+      locations:
+        - input: primary
+          path: cmd/prometheus/main.go
+        - input: primary
+          path: web/api/v1/api.go
+  - id: prometheus-server-runtime--rel-runtime-core-accesses-local-tsdb
+    from: prometheus-server-runtime/runtime-core
+    to: prometheus-server-runtime/local-tsdb
+    type: core/software.relations.read-writes
+    description: Runtime core reads and writes local TSDB state.
+    provenance:
+      locations:
+        - input: primary
+          path: cmd/prometheus/main.go
+        - input: primary
+          path: web/api/v1/api.go
+inputs:
+  - id: primary
+    kind: git
+    repo: https://github.com/prometheus/prometheus
+    revision: 16034ecf3b7cc5da96a1f0c324d0eed927267877
+    role: primary
+metadata:
+  workerBuild:
+    inputTokens: 9112726
+    cachedInputTokens: 7871488
+    outputTokens: 185971
+    approxTotalTokens: 17170185
+    mode: advanced
+    model: gpt-5.4-mini
+    builtAt: "2026-05-04T12:07:37.475Z"
+    durationMs: 14630378
+    turns: 17
+    nodes: 10
+    edges: 9
+  sourceRepository:
+    repo: https://github.com/prometheus/prometheus
+    url: https://github.com/prometheus/prometheus
+    commit: 16034ecf3b7cc5da96a1f0c324d0eed927267877
+    committedAt: "2026-04-27T15:45:24+02:00"
+  description: Prometheus server with bundled web UI and monitoring subsystems
+  name: Prometheus
