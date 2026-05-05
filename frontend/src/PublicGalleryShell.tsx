@@ -24,6 +24,7 @@ import {
 } from './gallery/public-gallery-repository';
 import { formatCompactNumber } from './gallery/worker-build-summary';
 import { GalleryFeedbackMenu } from './ui/GalleryFeedbackMenu';
+import { GitHubLink } from './ui/GitHubLink';
 import { ThemeToggle } from './ui/ThemeToggle';
 
 const buildViewerRouteLabel = (params: { namespace: string; slug: string }) =>
@@ -189,6 +190,12 @@ export default function PublicGalleryShell() {
             <img src="/tarskia-icon.svg" alt="" aria-hidden="true" className="h-7 w-7" />
             tarskia
           </Link>
+          <Link
+            to="/about"
+            className="hidden shrink-0 rounded-md px-2.5 py-1 text-sm text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground sm:inline-flex"
+          >
+            About
+          </Link>
           {viewerTitle ? (
             <>
               <div className="h-6 w-px bg-border" />
@@ -305,6 +312,7 @@ export default function PublicGalleryShell() {
           ) : null}
           <div className="ml-auto flex shrink-0 items-center gap-1">
             <GalleryFeedbackMenu />
+            <GitHubLink />
             <ThemeToggle />
           </div>
         </div>
