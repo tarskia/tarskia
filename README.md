@@ -1,6 +1,6 @@
 # Tarskia
 
-Tarskia is an open-source toolkit for generating and maintaining architecture
+[Tarskia](https://tarskia.io) is an open-source toolkit for generating and maintaining architecture
 diagrams of software repositories. Diagrams are code: every entity has a type,
 types come from versioned schemas, and the result is plain YAML that fits into
 normal source control.
