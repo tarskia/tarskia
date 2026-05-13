@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SceneTree } from '../canvas/rendering/tree/scene-tree';
+import type { GetCurrentCanvasSize } from '../diagram/canvas-size';
 import type { SemanticDocument } from '../semantic';
 import { ensureDiagramView } from './diagram-view';
 import type { CommitDoc } from './types';
@@ -7,7 +8,7 @@ import type { CommitDoc } from './types';
 type FocusTransitionTrigger = (
   entityId: string,
   direction: 'in' | 'out',
-  options?: { onComplete?: () => void },
+  options?: { onComplete?: () => void; expandSingleChildChain?: boolean },
 ) => boolean;
 
 const scheduleFocusFrame = (callback: FrameRequestCallback) => {
@@ -100,8 +101,8 @@ export const canFocusSceneNode = (params: { sceneTree: SceneTree; entityId: stri
 
 export function useFocusViewController({
   sceneTree,
-  expanded,
-  canvasSize,
+  getCurrentCanvasSize,
+  canvasLayoutVersion = 0,
   skipTransitions = false,
   showInspector,
   commitDoc,
@@ -113,7 +114,8 @@ export function useFocusViewController({
 }: {
   sceneTree: SceneTree;
   expanded: Record<string, boolean>;
-  canvasSize?: { width: number; height: number } | null;
+  getCurrentCanvasSize?: GetCurrentCanvasSize;
+  canvasLayoutVersion?: number;
   skipTransitions?: boolean;
   showInspector: boolean;
   commitDoc: CommitDoc;
@@ -165,13 +167,11 @@ export function useFocusViewController({
         enterFocusScope(entityId, true);
         return;
       }
-      if (!expanded[entityId]) {
-        const queued = triggerEntityZoom(entityId, 'in', {
-          onComplete: () => enterFocusScope(entityId),
-        });
-        if (!queued) {
-          enterFocusScope(entityId);
-        }
+      const queued = triggerEntityZoom(entityId, 'in', {
+        expandSingleChildChain: true,
+        onComplete: () => enterFocusScope(entityId),
+      });
+      if (queued) {
         onClearTransientFocusChrome?.();
         return;
       }
@@ -179,7 +179,6 @@ export function useFocusViewController({
     },
     [
       enterFocusScope,
-      expanded,
       flushUserGesture,
       onClearTransientFocusChrome,
       skipTransitions,
@@ -201,12 +200,14 @@ export function useFocusViewController({
   }, [cancelPendingFocusFrame]);
 
   useEffect(() => {
+    // The version is a resize signal; current dimensions are read from the getter below.
+    void canvasLayoutVersion;
     void pendingFocusWaitTick;
     const pendingFocusRequest = pendingFocusRequestRef.current;
     if (!pendingFocusRequest) {
       return;
     }
-    const currentCanvasWidth = canvasSize?.width ?? null;
+    const currentCanvasWidth = getCurrentCanvasSize?.()?.width ?? null;
     const readyToFocus = shouldRunPendingFocusAfterInspectorClose({
       showInspector,
       previousCanvasWidth: pendingFocusRequest.previousCanvasWidth,
@@ -224,8 +225,9 @@ export function useFocusViewController({
       runFocusViewOnEntity(pendingFocusRequest.entityId);
     });
   }, [
-    canvasSize?.width,
+    canvasLayoutVersion,
     cancelPendingFocusFrame,
+    getCurrentCanvasSize,
     pendingFocusWaitTick,
     requestPendingFocusRecheck,
     runFocusViewOnEntity,
@@ -247,15 +249,15 @@ export function useFocusViewController({
       }
       pendingFocusRequestRef.current = {
         entityId,
-        previousCanvasWidth: canvasSize?.width ?? null,
+        previousCanvasWidth: getCurrentCanvasSize?.()?.width ?? null,
         waitFrames: 0,
       };
       setPendingFocusWaitTick((current) => current + 1);
       return true;
     },
     [
-      canvasSize?.width,
       clearPendingFocusRequest,
+      getCurrentCanvasSize,
       onClearTransientFocusChrome,
       runFocusViewOnEntity,
       sceneTree,

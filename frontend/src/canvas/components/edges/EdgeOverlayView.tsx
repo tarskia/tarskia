@@ -96,12 +96,14 @@ export function EdgeOverlayView({
               <path
                 className={`edge-underlay-path${edge.selected ? ' edge-underlay-path-selected' : ''}${edge.matched ? ' edge-underlay-path-matched' : ''}`}
                 d={edge.path}
+                fill="none"
                 clipPath={`url(#${solidClipId})`}
               />
               {blockedClipId ? (
                 <path
                   className={`edge-overlay-path${edge.selected ? ' edge-overlay-path-selected' : ''}${edge.matched ? ' edge-overlay-path-matched' : ''}`}
                   d={edge.path}
+                  fill="none"
                   clipPath={`url(#${blockedClipId})`}
                 />
               ) : null}

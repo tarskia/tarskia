@@ -1,0 +1,683 @@
+version: 0.1.0
+schemaRefs:
+  - schema: gallery/keycloak@0.1
+    layer: 0
+  - schema: core/base@0.1
+    layer: 0
+  - schema: core/software@0.1
+    layer: 0
+  - schema: core/web-app@0.3
+    layer: 0
+  - schema: core/frontend@0.3
+    layer: 0
+  - schema: core/code@0.1
+    layer: 1
+  - schema: core/kubernetes@0.3
+    layer: 1
+entities:
+  - id: keycloak
+    type: gallery/keycloak.types.keycloak
+    name: Keycloak
+    description: Keycloak runtime centered on the Quarkus server plane.
+    provenance:
+      locations:
+        - input: primary
+          path: pom.xml
+        - input: primary
+          path: js/package.json
+        - input: primary
+          path: quarkus/pom.xml
+        - input: primary
+          path: operator/pom.xml
+    children:
+      - id: keycloak/server-runtime
+        type: core/code.types.module
+        name: Quarkus server runtime
+        description: Quarkus server runtime entrypoint.
+        props:
+          framework: quarkus
+          language: java
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/KeycloakMain.java
+            - input: primary
+              path: quarkus/server/src/main/resources/application.properties
+            - input: primary
+              path: >-
+                quarkus/deployment/src/main/java/org/keycloak/quarkus/deployment/KeycloakProcessor.java
+            - input: primary
+              path: model/jpa/pom.xml
+            - input: primary
+              path: model/storage/pom.xml
+            - input: primary
+              path: >-
+                quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/jpa/QuarkusJpaConnectionProviderFactory.java
+            - input: primary
+              path: >-
+                quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/liquibase/QuarkusJpaUpdaterProvider.java
+        children:
+          - id: keycloak/server-runtime/runtime-entrypoint
+            type: core/code.types.module
+            name: Server runtime entrypoint
+            description: Keycloak Quarkus bootstrap runtime.
+            props:
+              framework: quarkus
+              language: java
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/KeycloakMain.java
+                - input: primary
+                  path: quarkus/server/src/main/resources/application.properties
+                - input: primary
+                  path: >-
+                    quarkus/deployment/src/main/java/org/keycloak/quarkus/deployment/KeycloakProcessor.java
+            children:
+              - id: keycloak/server-runtime/runtime-entrypoint/server-configuration
+                type: core/code.types.module
+                name: Server configuration shell
+                description: Runtime image shaping and launch config.
+                props:
+                  framework: quarkus
+                  language: java
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: quarkus/server/src/main/resources/application.properties
+                    - input: primary
+                      path: >-
+                        quarkus/deployment/src/main/java/org/keycloak/quarkus/deployment/KeycloakProcessor.java
+              - id: keycloak/server-runtime/runtime-entrypoint/bootstrap-runtime
+                type: core/code.types.module
+                name: Bootstrap runtime process
+                description: Entry process for the server runtime.
+                props:
+                  framework: quarkus
+                  language: java
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/KeycloakMain.java
+                    - input: primary
+                      path: quarkus/server/src/main/resources/application.properties
+  - id: portal-app
+    type: gallery/keycloak.types.portal-app
+    name: Browser admin and account consoles
+    description: Keycloak browser admin and account consoles.
+    props:
+      framework: react
+      runtime: browser
+    provenance:
+      locations:
+        - input: primary
+          path: js/apps/admin-ui/src/main.tsx
+        - input: primary
+          path: js/apps/admin-ui/src/routes.tsx
+        - input: primary
+          path: js/apps/account-ui/src/main.tsx
+        - input: primary
+          path: js/apps/account-ui/src/routes.tsx
+    children:
+      - id: portal-app/console-suite
+        type: core/web-app.types.group
+        name: Browser console suite
+        description: Browser admin and account console suite.
+        props:
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: js/apps/account-ui/src/main.tsx
+            - input: primary
+              path: js/apps/account-ui/src/routes.tsx
+            - input: primary
+              path: js/apps/account-ui/maven-resources/theme/keycloak.v3/account/theme.properties
+            - input: primary
+              path: js/apps/admin-ui/src/main.tsx
+            - input: primary
+              path: js/apps/admin-ui/src/routes.tsx
+            - input: primary
+              path: js/apps/admin-ui/package.json
+        children:
+          - id: portal-app/console-suite/admin-ui
+            type: core/frontend.types.frontend
+            name: Admin console frontend
+            description: Administrative browser surface.
+            props:
+              framework: react
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: js/apps/admin-ui/src/main.tsx
+                - input: primary
+                  path: js/apps/admin-ui/src/routes.tsx
+                - input: primary
+                  path: js/apps/admin-ui/package.json
+          - id: portal-app/console-suite/account-ui
+            type: core/frontend.types.frontend
+            name: Account console frontend
+            description: Account management browser surface.
+            props:
+              framework: react
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: js/apps/account-ui/src/main.tsx
+                - input: primary
+                  path: js/apps/account-ui/src/routes.tsx
+                - input: primary
+                  path: js/apps/account-ui/maven-resources/theme/keycloak.v3/account/theme.properties
+  - id: control-plane
+    type: gallery/keycloak.types.control-plane
+    name: Quarkus control plane
+    description: Quarkus control plane split into server and persistence paths.
+    props:
+      framework: quarkus
+      runtime: server
+    provenance:
+      locations:
+        - input: primary
+          path: quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/KeycloakMain.java
+        - input: primary
+          path: quarkus/server/src/main/resources/application.properties
+        - input: primary
+          path: >-
+            quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/jpa/QuarkusJpaConnectionProviderFactory.java
+    children:
+      - id: control-plane/server-runtime
+        type: core/code.types.module
+        name: Quarkus server runtime
+        description: Quarkus server runtime entrypoint.
+        props:
+          framework: quarkus
+          language: java
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/KeycloakMain.java
+            - input: primary
+              path: quarkus/server/src/main/resources/application.properties
+            - input: primary
+              path: >-
+                quarkus/deployment/src/main/java/org/keycloak/quarkus/deployment/KeycloakProcessor.java
+        children:
+          - id: control-plane/server-runtime/runtime-entrypoint
+            type: core/code.types.module
+            name: Server runtime entrypoint
+            description: Keycloak Quarkus bootstrap runtime.
+            props:
+              framework: quarkus
+              language: java
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/KeycloakMain.java
+                - input: primary
+                  path: quarkus/server/src/main/resources/application.properties
+                - input: primary
+                  path: >-
+                    quarkus/deployment/src/main/java/org/keycloak/quarkus/deployment/KeycloakProcessor.java
+            children:
+              - id: control-plane/server-runtime/runtime-entrypoint/bootstrap-runtime
+                type: core/code.types.module
+                name: Bootstrap runtime process
+                description: Entry process for the server runtime.
+                props:
+                  framework: quarkus
+                  language: java
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/KeycloakMain.java
+                    - input: primary
+                      path: quarkus/server/src/main/resources/application.properties
+      - id: control-plane/persistence
+        type: core/code.types.module
+        name: Persistence module
+        description: Keycloak persistence module.
+        props:
+          framework: quarkus
+          language: java
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: model/jpa/pom.xml
+            - input: primary
+              path: model/storage/pom.xml
+            - input: primary
+              path: >-
+                quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/jpa/QuarkusJpaConnectionProviderFactory.java
+            - input: primary
+              path: >-
+                quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/liquibase/QuarkusJpaUpdaterProvider.java
+        children:
+          - id: control-plane/persistence/jpa-persistence-runtime
+            type: core/code.types.module
+            name: JPA persistence runtime
+            description: Keycloak JPA persistence runtime.
+            props:
+              framework: quarkus
+              language: java
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: model/jpa/pom.xml
+                - input: primary
+                  path: model/storage/pom.xml
+                - input: primary
+                  path: >-
+                    quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/jpa/QuarkusJpaConnectionProviderFactory.java
+                - input: primary
+                  path: >-
+                    quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/liquibase/QuarkusJpaUpdaterProvider.java
+            children:
+              - id: control-plane/persistence/jpa-persistence-runtime/database-runtime
+                type: core/code.types.module
+                name: Database persistence runtime
+                description: JPA-backed connection and migration layer.
+                props:
+                  framework: quarkus
+                  language: java
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: model/jpa/pom.xml
+                    - input: primary
+                      path: model/storage/pom.xml
+                    - input: primary
+                      path: >-
+                        quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/jpa/QuarkusJpaConnectionProviderFactory.java
+                    - input: primary
+                      path: >-
+                        quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/liquibase/QuarkusJpaUpdaterProvider.java
+  - id: operator-service
+    type: gallery/keycloak.types.operator-service
+    name: Kubernetes operator
+    description: Keycloak Kubernetes operator runtime.
+    props:
+      framework: quarkus
+      runtime: worker
+    provenance:
+      locations:
+        - input: primary
+          path: operator/src/main/java/org/keycloak/operator/controllers/KeycloakController.java
+        - input: primary
+          path: operator/src/main/resources/application.properties
+        - input: primary
+          path: operator/src/main/java/org/keycloak/operator/crds/v2beta1/deployment/Keycloak.java
+    children:
+      - id: operator-service/operator-runtime
+        type: core/code.types.module
+        name: Operator reconciler runtime
+        description: Keycloak operator controller core.
+        props:
+          framework: quarkus
+          language: java
+          runtime: worker
+        provenance:
+          locations:
+            - input: primary
+              path: operator/src/main/java/org/keycloak/operator/controllers/KeycloakController.java
+            - input: primary
+              path: operator/src/main/resources/application.properties
+            - input: primary
+              path: operator/src/main/java/org/keycloak/operator/crds/v2beta1/deployment/Keycloak.java
+        children:
+          - id: operator-service/operator-runtime/controller-runtime
+            type: core/code.types.module
+            name: Operator controller runtime
+            description: Operator controller runtime for the Keycloak reconciler.
+            props:
+              framework: quarkus
+              language: java
+              runtime: worker
+            provenance:
+              locations:
+                - input: primary
+                  path: operator/src/main/java/org/keycloak/operator/controllers/KeycloakController.java
+                - input: primary
+                  path: operator/src/main/resources/application.properties
+                - input: primary
+                  path: >-
+                    operator/src/main/java/org/keycloak/operator/crds/v2beta1/deployment/Keycloak.java
+            children:
+              - id: operator-service/operator-runtime/controller-runtime/keycloak-reconciler
+                type: core/code.types.module
+                name: Keycloak reconciler
+                description: Keycloak controller runtime orchestration core.
+                props:
+                  framework: quarkus
+                  language: java
+                  runtime: worker
+                provenance:
+                  locations:
+                    - input: primary
+                      path: >-
+                        operator/src/main/java/org/keycloak/operator/controllers/KeycloakController.java
+                    - input: primary
+                      path: operator/src/main/resources/application.properties
+                    - input: primary
+                      path: >-
+                        operator/src/main/java/org/keycloak/operator/crds/v2beta1/deployment/Keycloak.java
+                children:
+                  - id: >-
+                      operator-service/operator-runtime/controller-runtime/keycloak-reconciler/controller-core
+                    type: core/code.types.module
+                    name: Controller core
+                    description: Reconcile loop and orchestration entrypoint.
+                    props:
+                      framework: quarkus
+                      language: java
+                      runtime: worker
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: >-
+                            operator/src/main/java/org/keycloak/operator/controllers/KeycloakController.java
+                        - input: primary
+                          path: operator/src/main/resources/application.properties
+                        - input: primary
+                          path: >-
+                            operator/src/main/java/org/keycloak/operator/crds/v2beta1/deployment/Keycloak.java
+              - id: operator-service/operator-runtime/controller-runtime/dependent-resources
+                type: core/code.types.module
+                name: Dependent resource handlers
+                description: Dependent resource handlers for the operator controller runtime.
+                props:
+                  framework: quarkus
+                  language: java
+                  runtime: worker
+                provenance:
+                  locations:
+                    - input: primary
+                      path: >-
+                        operator/src/main/java/org/keycloak/operator/controllers/KeycloakDeploymentDependentResource.java
+                    - input: primary
+                      path: >-
+                        operator/src/main/java/org/keycloak/operator/controllers/KeycloakUpdateJobDependentResource.java
+                    - input: primary
+                      path: >-
+                        operator/src/main/java/org/keycloak/operator/controllers/KeycloakIngressDependentResource.java
+                    - input: primary
+                      path: >-
+                        operator/src/main/java/org/keycloak/operator/controllers/KeycloakNetworkPolicyDependentResource.java
+                    - input: primary
+                      path: >-
+                        operator/src/main/java/org/keycloak/operator/controllers/KeycloakServiceMonitorDependentResource.java
+                children:
+                  - id: >-
+                      operator-service/operator-runtime/controller-runtime/dependent-resources/deployment-resource-handlers
+                    type: core/code.types.module
+                    name: Deployment resource handlers
+                    description: Kubernetes resource and job adapters.
+                    props:
+                      framework: quarkus
+                      language: java
+                      runtime: worker
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: >-
+                            operator/src/main/java/org/keycloak/operator/controllers/KeycloakDeploymentDependentResource.java
+                        - input: primary
+                          path: >-
+                            operator/src/main/java/org/keycloak/operator/controllers/KeycloakUpdateJobDependentResource.java
+                        - input: primary
+                          path: >-
+                            operator/src/main/java/org/keycloak/operator/controllers/KeycloakIngressDependentResource.java
+                        - input: primary
+                          path: >-
+                            operator/src/main/java/org/keycloak/operator/controllers/KeycloakNetworkPolicyDependentResource.java
+                        - input: primary
+                          path: >-
+                            operator/src/main/java/org/keycloak/operator/controllers/KeycloakServiceMonitorDependentResource.java
+              - id: operator-service/operator-runtime/controller-runtime/deployment-crd-model
+                type: core/code.types.module
+                name: Deployment CRD model
+                description: Keycloak spec and status shape.
+                props:
+                  framework: quarkus
+                  language: java
+                  runtime: worker
+                provenance:
+                  locations:
+                    - input: primary
+                      path: >-
+                        operator/src/main/java/org/keycloak/operator/crds/v2beta1/deployment/Keycloak.java
+                    - input: primary
+                      path: >-
+                        operator/src/main/java/org/keycloak/operator/crds/v2beta1/deployment/KeycloakSpec.java
+                    - input: primary
+                      path: >-
+                        operator/src/main/java/org/keycloak/operator/crds/v2beta1/deployment/KeycloakStatusAggregator.java
+                    - input: primary
+                      path: >-
+                        operator/src/main/java/org/keycloak/operator/crds/v2beta1/StatusCondition.java
+                    - input: primary
+                      path: operator/src/main/java/org/keycloak/operator/crds/v2beta1/CRDUtils.java
+  - id: datastore
+    type: core/web-app.types.relational-db
+    name: Relational database
+    description: Keycloak persistence endpoint.
+    provenance:
+      locations:
+        - input: primary
+          path: model/jpa/pom.xml
+        - input: primary
+          path: model/storage/pom.xml
+        - input: primary
+          path: >-
+            quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/liquibase/QuarkusJpaUpdaterProvider.java
+  - id: external-integrations
+    type: core/web-app.types.external-api
+    name: External identity integrations
+    props:
+      category: identity
+      direction: bidirectional
+      protocol: http
+      specificity: provider-family
+    provenance:
+      locations:
+        - input: primary
+          path: federation/ldap/src/main/java/org/keycloak/storage/ldap/LDAPStorageProvider.java
+        - input: primary
+          path: adapters/saml/core-public/src/main/java/org/keycloak/adapters/saml/SamlPrincipal.java
+        - input: primary
+          path: scim/services/src/main/java/org/keycloak/scim/services/ScimRealmResource.java
+  - id: kubernetes-cluster
+    type: core/kubernetes.types.microservice-orchestrator
+    name: Kubernetes cluster
+    description: Operator cluster namespace.
+    props:
+      platform: kubernetes
+    provenance:
+      locations:
+        - input: primary
+          path: operator/src/main/kubernetes/kubernetes.yml
+        - input: primary
+          path: operator/src/main/kubernetes/kustomization.yml
+        - input: primary
+          path: operator/overlays/default-namespace/kustomization.yaml
+    children:
+      - id: kubernetes-cluster/operator-namespace
+        type: core/kubernetes.types.k8s-namespace
+        name: Operator namespace
+        description: Namespace used by the operator deployment.
+        provenance:
+          locations:
+            - input: primary
+              path: operator/src/main/kubernetes/kubernetes.yml
+            - input: primary
+              path: operator/src/main/kubernetes/kustomization.yml
+            - input: primary
+              path: operator/overlays/default-namespace/kustomization.yaml
+relations:
+  - id: >-
+      portal-app-calls-keycloak--core--software-relations-calls--portal-app--console-suite--admin-ui--to--keycloak--server-runtime--runtime-entrypoint
+    from: portal-app/console-suite/admin-ui
+    to: keycloak/server-runtime/runtime-entrypoint
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: js/apps/admin-ui/src/main.tsx
+        - input: primary
+          path: js/apps/account-ui/src/main.tsx
+  - id: >-
+      portal-app-calls-keycloak--core--software-relations-calls--portal-app--console-suite--account-ui--to--keycloak--server-runtime--runtime-entrypoint
+    from: portal-app/console-suite/account-ui
+    to: keycloak/server-runtime/runtime-entrypoint
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: js/apps/admin-ui/src/main.tsx
+        - input: primary
+          path: js/apps/account-ui/src/main.tsx
+  - id: keycloak-calls-control-plane
+    from: keycloak/server-runtime/runtime-entrypoint/bootstrap-runtime
+    to: control-plane/server-runtime/runtime-entrypoint/bootstrap-runtime
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/KeycloakMain.java
+        - input: primary
+          path: quarkus/server/src/main/resources/application.properties
+  - id: keycloak-calls-operator-service
+    from: keycloak
+    to: operator-service/operator-runtime/controller-runtime/keycloak-reconciler/controller-core
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: operator/src/main/java/org/keycloak/operator/controllers/KeycloakController.java
+        - input: primary
+          path: operator/src/main/resources/application.properties
+  - id: control-plane-calls-external-integrations
+    from: control-plane/server-runtime/runtime-entrypoint
+    to: external-integrations
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: federation/ldap/src/main/java/org/keycloak/storage/ldap/LDAPStorageProvider.java
+        - input: primary
+          path: adapters/saml/core-public/src/main/java/org/keycloak/adapters/saml/SamlPrincipal.java
+        - input: primary
+          path: scim/services/src/main/java/org/keycloak/scim/services/ScimRealmResource.java
+  - id: control-plane-read-writes-datastore
+    from: control-plane/persistence/jpa-persistence-runtime/database-runtime
+    to: datastore
+    type: core/software.relations.read-writes
+    provenance:
+      locations:
+        - input: primary
+          path: >-
+            quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/jpa/QuarkusJpaConnectionProviderFactory.java
+        - input: primary
+          path: >-
+            quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/liquibase/QuarkusJpaUpdaterProvider.java
+        - input: primary
+          path: model/jpa/pom.xml
+  - id: operator-service-runs-on-kubernetes-cluster
+    from: operator-service
+    to: kubernetes-cluster
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: operator/src/main/resources/application.properties
+        - input: primary
+          path: operator/src/main/kubernetes/kustomization.yml
+  - id: control-plane--server-runtime-calls-persistence
+    from: control-plane/server-runtime/runtime-entrypoint/bootstrap-runtime
+    to: control-plane/persistence/jpa-persistence-runtime/database-runtime
+    type: core/software.relations.calls
+    description: Server runtime delegates persistence work.
+    provenance:
+      locations:
+        - input: primary
+          path: >-
+            quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/jpa/QuarkusJpaConnectionProviderFactory.java
+        - input: primary
+          path: >-
+            quarkus/runtime/src/main/java/org/keycloak/quarkus/runtime/storage/database/liquibase/QuarkusJpaUpdaterProvider.java
+  - id: keycloak--server-runtime--runtime-entrypoint--server-configuration-calls-bootstrap-runtime
+    from: keycloak/server-runtime/runtime-entrypoint/server-configuration
+    to: keycloak/server-runtime/runtime-entrypoint/bootstrap-runtime
+    type: core/software.relations.calls
+    description: Configuration shell launches the runtime process.
+    provenance:
+      locations:
+        - input: primary
+          path: quarkus/server/src/main/resources/application.properties
+        - input: primary
+          path: quarkus/deployment/src/main/java/org/keycloak/quarkus/deployment/KeycloakProcessor.java
+  - id: >-
+      operator-service--operator-runtime--controller-runtime--keycloak-reconciler-calls-dependent-resources
+    from: operator-service/operator-runtime/controller-runtime/keycloak-reconciler/controller-core
+    to: >-
+      operator-service/operator-runtime/controller-runtime/dependent-resources/deployment-resource-handlers
+    type: core/software.relations.calls
+    description: Controller orchestration delegates to dependent resource handlers.
+    provenance:
+      locations:
+        - input: primary
+          path: operator/src/main/java/org/keycloak/operator/controllers/KeycloakController.java
+        - input: primary
+          path: >-
+            operator/src/main/java/org/keycloak/operator/controllers/KeycloakDeploymentDependentResource.java
+  - id: >-
+      operator-service--operator-runtime--controller-runtime--dependent-resources-calls-deployment-crd-model
+    from: >-
+      operator-service/operator-runtime/controller-runtime/dependent-resources/deployment-resource-handlers
+    to: operator-service/operator-runtime/controller-runtime/deployment-crd-model
+    type: core/software.relations.calls
+    description: Dependent resources consume the deployment schema and status model.
+    provenance:
+      locations:
+        - input: primary
+          path: >-
+            operator/src/main/java/org/keycloak/operator/controllers/KeycloakDeploymentDependentResource.java
+        - input: primary
+          path: operator/src/main/java/org/keycloak/operator/crds/v2beta1/deployment/Keycloak.java
+inputs:
+  - id: primary
+    kind: git
+    repo: https://github.com/keycloak/keycloak
+    revision: 263d44be88e9906f643ecf7ebc75563465a814cd
+    role: primary
+metadata:
+  workerBuild:
+    inputTokens: 15638916
+    cachedInputTokens: 14023680
+    outputTokens: 243031
+    approxTotalTokens: 29905627
+    mode: advanced
+    model: gpt-5.4-mini
+    builtAt: "2026-05-05T08:16:28.242Z"
+    durationMs: 2364660
+    turns: 35
+    nodes: 28
+    edges: 11
+  sourceRepository:
+    repo: https://github.com/keycloak/keycloak
+    url: https://github.com/keycloak/keycloak
+    commit: 263d44be88e9906f643ecf7ebc75563465a814cd
+    committedAt: "2026-05-05T08:53:15+02:00"
+  description: Keycloak identity server with browser UIs and operator
+  name: Keycloak

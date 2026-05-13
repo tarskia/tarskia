@@ -251,7 +251,7 @@ describe('buildStaticCanvasPresentation', () => {
 
     expect(groupNode?.contentOccluders?.length).toBeGreaterThan(0);
     expect(groupNode?.contentOccluders).toEqual(
-      expect.arrayContaining([expect.objectContaining({ height: 28 })]),
+      expect.arrayContaining([expect.objectContaining({ height: 24 })]),
     );
     expect(leftNode?.contentOccluders?.length).toBeGreaterThan(0);
     expect(leftNode?.contentOccluders).toEqual(

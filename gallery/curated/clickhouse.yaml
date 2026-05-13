@@ -1,0 +1,1565 @@
+version: 0.1.0
+schemaRefs:
+  - schema: gallery/clickhouse@0.1
+    layer: 0
+  - schema: core/code@0.1
+    layer: 1
+entities:
+  - id: clickhouse-server-runtime
+    type: gallery/clickhouse.types.engine
+    name: ClickHouse Server Runtime
+    description: Main ClickHouse server runtime that dispatches requests into execution.
+    provenance:
+      locations:
+        - input: primary
+          path: programs/server/clickhouse-server.cpp
+        - input: primary
+          path: programs/server/Server.cpp
+        - input: primary
+          path: programs/CMakeLists.cpp
+        - input: primary
+          path: src/Server/TCPServer.cpp
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+    children:
+      - id: clickhouse-server-runtime/server-protocol-surface
+        type: gallery/clickhouse.types.protocol-surface
+        name: Server Protocol Surface
+        description: Concrete server protocol handlers that bridge external traffic into query dispatch.
+        provenance:
+          locations:
+            - input: primary
+              path: src/Server/HTTPHandler.cpp
+            - input: primary
+              path: src/Server/TCPServer.cpp
+            - input: primary
+              path: src/Server/MySQLHandler.cpp
+            - input: primary
+              path: src/Server/PostgreSQLHandler.cpp
+            - input: primary
+              path: src/Server/GRPCServer.cpp
+            - input: primary
+              path: src/Server/PrometheusRequestHandler.cpp
+            - input: primary
+              path: src/Server/InterserverIOHTTPHandler.cpp
+        children:
+          - id: clickhouse-server-runtime/server-protocol-surface/server-handler-surface
+            type: gallery/clickhouse.types.protocol-surface
+            name: Server Handler Surface
+            description: HTTP, TCP, SQL, and gRPC handler boundaries.
+            provenance:
+              locations:
+                - input: primary
+                  path: src/Server/HTTPHandler.cpp
+                - input: primary
+                  path: src/Server/TCPServer.cpp
+                - input: primary
+                  path: src/Server/MySQLHandler.cpp
+                - input: primary
+                  path: src/Server/PostgreSQLHandler.cpp
+                - input: primary
+                  path: src/Server/GRPCServer.cpp
+                - input: primary
+                  path: src/Server/PrometheusRequestHandler.cpp
+                - input: primary
+                  path: src/Server/InterserverIOHTTPHandler.cpp
+            children:
+              - id: >-
+                  clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface
+                type: gallery/clickhouse.types.protocol-surface
+                name: HTTP Handler Surface
+                description: HTTP handler surface split into request, interserver, and metrics endpoints.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Server/HTTPHandler.cpp
+                    - input: primary
+                      path: src/Server/InterserverIOHTTPHandler.cpp
+                    - input: primary
+                      path: src/Server/PrometheusRequestHandler.cpp
+                children:
+                  - id: >-
+                      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/http-request-handler-surface
+                    type: gallery/clickhouse.types.protocol-surface
+                    name: HTTP Request Handler Surface
+                    description: Main query-facing HTTP handler.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Server/HTTPHandler.cpp
+                  - id: >-
+                      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/interserver-io-http-surface
+                    type: gallery/clickhouse.types.protocol-surface
+                    name: Interserver IO HTTP Surface
+                    description: Internal HTTP traffic channel.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Server/InterserverIOHTTPHandler.cpp
+                  - id: >-
+                      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/prometheus-metrics-http-surface
+                    type: gallery/clickhouse.types.protocol-surface
+                    name: Prometheus Metrics HTTP Surface
+                    description: Operational metrics endpoint.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Server/PrometheusRequestHandler.cpp
+              - id: >-
+                  clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface
+                type: gallery/clickhouse.types.protocol-surface
+                name: Native Handler Surface
+                description: Native handler surface split into TCP, MySQL, and PostgreSQL endpoints.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Server/TCPServer.cpp
+                    - input: primary
+                      path: src/Server/MySQLHandler.cpp
+                    - input: primary
+                      path: src/Server/PostgreSQLHandler.cpp
+                children:
+                  - id: >-
+                      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/tcp-handler-surface
+                    type: gallery/clickhouse.types.protocol-surface
+                    name: TCP Handler Surface
+                    description: Core native protocol ingress.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Server/TCPServer.cpp
+                  - id: >-
+                      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/mysql-handler-surface
+                    type: gallery/clickhouse.types.protocol-surface
+                    name: MySQL Handler Surface
+                    description: MySQL-compatible protocol surface.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Server/MySQLHandler.cpp
+                  - id: >-
+                      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/postgresql-handler-surface
+                    type: gallery/clickhouse.types.protocol-surface
+                    name: PostgreSQL Handler Surface
+                    description: PostgreSQL-compatible protocol surface.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Server/PostgreSQLHandler.cpp
+              - id: >-
+                  clickhouse-server-runtime/server-protocol-surface/server-handler-surface/grpc-handler-surface
+                type: gallery/clickhouse.types.protocol-surface
+                name: gRPC Handler Surface
+                description: gRPC handler surface split into ingress and runtime dispatch.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Server/GRPCServer.cpp
+                children:
+                  - id: >-
+                      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/grpc-handler-surface/grpc-ingress
+                    type: core/code.types.module
+                    name: gRPC Ingress
+                    description: gRPC request intake.
+                    props:
+                      language: cpp
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Server/GRPCServer.cpp
+                  - id: >-
+                      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/grpc-handler-surface/grpc-runtime-dispatch
+                    type: core/code.types.module
+                    name: gRPC Runtime Dispatch
+                    description: gRPC-to-runtime bridge.
+                    props:
+                      language: cpp
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Server/GRPCServer.cpp
+      - id: clickhouse-server-runtime/query-runtime-module
+        type: gallery/clickhouse.types.runtime-stack
+        name: Query Runtime Kernel
+        description: Query planning, execution, and server entrypoint kernel.
+        provenance:
+          locations:
+            - input: primary
+              path: programs/server/Server.cpp
+            - input: primary
+              path: programs/server/clickhouse-server.cpp
+            - input: primary
+              path: src/Analyzer/QueryTreeBuilder.cpp
+            - input: primary
+              path: src/Planner/Planner.cpp
+            - input: primary
+              path: src/QueryPipeline/QueryPipeline.cpp
+            - input: primary
+              path: src/Interpreters/Context.cpp
+            - input: primary
+              path: src/Functions/FunctionFactory.cpp
+            - input: primary
+              path: src/AggregateFunctions/AggregateFunctionFactory.cpp
+            - input: primary
+              path: src/Processors/IProcessor.cpp
+        children:
+          - id: clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints
+            type: core/code.types.module
+            name: Query Planning and Entrypoints
+            description: Server wiring and query planning support.
+            props:
+              language: cpp
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: programs/server/Server.cpp
+                - input: primary
+                  path: programs/server/clickhouse-server.cpp
+                - input: primary
+                  path: src/Analyzer/QueryTreeBuilder.cpp
+                - input: primary
+                  path: src/Planner/Planner.cpp
+                - input: primary
+                  path: src/Interpreters/Context.cpp
+                - input: primary
+                  path: src/Functions/FunctionFactory.cpp
+                - input: primary
+                  path: src/AggregateFunctions/AggregateFunctionFactory.cpp
+            children:
+              - id: >-
+                  clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/server-entrypoints
+                type: core/code.types.module
+                name: Server Entrypoints
+                description: Server bootstrap and runtime wiring.
+                props:
+                  language: cpp
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: programs/server/Server.cpp
+                    - input: primary
+                      path: programs/server/clickhouse-server.cpp
+              - id: >-
+                  clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/query-planning-core
+                type: core/code.types.module
+                name: Query Planning Core
+                description: Query analysis, planning, and runtime context setup.
+                props:
+                  language: cpp
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Analyzer/QueryTreeBuilder.cpp
+                    - input: primary
+                      path: src/Planner/Planner.cpp
+                    - input: primary
+                      path: src/Interpreters/Context.cpp
+                    - input: primary
+                      path: src/Functions/FunctionFactory.cpp
+                    - input: primary
+                      path: src/AggregateFunctions/AggregateFunctionFactory.cpp
+                children:
+                  - id: >-
+                      clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/query-planning-core/query-tree-builder
+                    type: core/code.types.module
+                    name: Query Tree Builder
+                    description: Query analysis and tree construction.
+                    props:
+                      language: cpp
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Analyzer/QueryTreeBuilder.cpp
+                  - id: >-
+                      clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/query-planning-core/query-planner
+                    type: core/code.types.module
+                    name: Query Planner
+                    description: Execution-shape planning.
+                    props:
+                      language: cpp
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Planner/Planner.cpp
+                  - id: >-
+                      clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/query-planning-core/query-runtime-context
+                    type: core/code.types.module
+                    name: Query Runtime Context
+                    description: Execution context and function registries.
+                    props:
+                      language: cpp
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Interpreters/Context.cpp
+                        - input: primary
+                          path: src/Functions/FunctionFactory.cpp
+                        - input: primary
+                          path: src/AggregateFunctions/AggregateFunctionFactory.cpp
+          - id: clickhouse-server-runtime/query-runtime-module/query-execution-pipeline
+            type: core/code.types.module
+            name: Query Execution Pipeline
+            description: Execution pipeline assembly and processor dispatch core.
+            props:
+              language: cpp
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: src/QueryPipeline/QueryPipeline.cpp
+                - input: primary
+                  path: src/Processors/IProcessor.cpp
+            children:
+              - id: >-
+                  clickhouse-server-runtime/query-runtime-module/query-execution-pipeline/pipeline-core
+                type: core/code.types.module
+                name: Pipeline Core
+                description: Pipeline assembly and processor layer.
+                props:
+                  language: cpp
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/QueryPipeline/QueryPipeline.cpp
+                    - input: primary
+                      path: src/Processors/IProcessor.cpp
+  - id: protocol-surface-multiplex
+    type: gallery/clickhouse.types.protocol-surface
+    name: Protocol and Admin Surfaces
+    description: Protocol ingress and server routing surface.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/TCPServer.cpp
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+        - input: primary
+          path: src/Server/MySQLHandler.cpp
+        - input: primary
+          path: src/Server/PostgreSQLHandler.cpp
+        - input: primary
+          path: src/Server/GRPCServer.cpp
+        - input: primary
+          path: src/Server/PrometheusRequestHandler.cpp
+        - input: primary
+          path: src/Server/InterserverIOHTTPHandler.cpp
+    children:
+      - id: protocol-surface-multiplex/server-protocol-surface
+        type: gallery/clickhouse.types.protocol-surface
+        name: Server Protocol Surface
+        description: Concrete server protocol handlers that bridge external traffic into the runtime stack.
+        provenance:
+          locations:
+            - input: primary
+              path: src/Server/HTTPHandler.cpp
+            - input: primary
+              path: src/Server/TCPServer.cpp
+            - input: primary
+              path: src/Server/MySQLHandler.cpp
+            - input: primary
+              path: src/Server/PostgreSQLHandler.cpp
+            - input: primary
+              path: src/Server/GRPCServer.cpp
+            - input: primary
+              path: src/Server/PrometheusRequestHandler.cpp
+            - input: primary
+              path: src/Server/InterserverIOHTTPHandler.cpp
+        children:
+          - id: protocol-surface-multiplex/server-protocol-surface/server-handler-surface
+            type: gallery/clickhouse.types.protocol-surface
+            name: Server Handler Surface
+            description: Public callers into the server handler runtime stack.
+            provenance:
+              locations:
+                - input: primary
+                  path: src/Server/HTTPHandler.cpp
+                - input: primary
+                  path: src/Server/TCPServer.cpp
+                - input: primary
+                  path: src/Server/MySQLHandler.cpp
+                - input: primary
+                  path: src/Server/PostgreSQLHandler.cpp
+                - input: primary
+                  path: src/Server/GRPCServer.cpp
+                - input: primary
+                  path: src/Server/PrometheusRequestHandler.cpp
+                - input: primary
+                  path: src/Server/InterserverIOHTTPHandler.cpp
+            children:
+              - id: >-
+                  protocol-surface-multiplex/server-protocol-surface/server-handler-surface/client-command-suite
+                type: gallery/clickhouse.types.tool-suite
+                name: Client Command Suite
+                description: CLI and local execution callers.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: programs/CMakeLists.cpp
+                    - input: primary
+                      path: programs/client/clickhouse-client.cpp
+                    - input: primary
+                      path: programs/local/clickhouse-local.cpp
+              - id: >-
+                  protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack
+                type: gallery/clickhouse.types.runtime-stack
+                name: Handler Runtime Stack
+                description: Protocol handling stack split into HTTP, native, and gRPC surfaces.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Server/HTTPHandler.cpp
+                    - input: primary
+                      path: src/Server/TCPServer.cpp
+                    - input: primary
+                      path: src/Server/MySQLHandler.cpp
+                    - input: primary
+                      path: src/Server/PostgreSQLHandler.cpp
+                    - input: primary
+                      path: src/Server/GRPCServer.cpp
+                    - input: primary
+                      path: src/Server/PrometheusRequestHandler.cpp
+                    - input: primary
+                      path: src/Server/InterserverIOHTTPHandler.cpp
+                children:
+                  - id: >-
+                      protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/http-handler-surface
+                    type: gallery/clickhouse.types.protocol-surface
+                    name: HTTP Handler Surface
+                    description: HTTP request handling surface.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Server/HTTPHandler.cpp
+                        - input: primary
+                          path: src/Server/InterserverIOHTTPHandler.cpp
+                        - input: primary
+                          path: src/Server/PrometheusRequestHandler.cpp
+                  - id: >-
+                      protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/native-handler-surface
+                    type: gallery/clickhouse.types.protocol-surface
+                    name: Native Handler Surface
+                    description: Native protocol handling surface.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Server/TCPServer.cpp
+                        - input: primary
+                          path: src/Server/MySQLHandler.cpp
+                        - input: primary
+                          path: src/Server/PostgreSQLHandler.cpp
+                  - id: >-
+                      protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/grpc-handler-surface
+                    type: gallery/clickhouse.types.protocol-surface
+                    name: gRPC Handler Surface
+                    description: gRPC ingress handling surface.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: src/Server/GRPCServer.cpp
+      - id: protocol-surface-multiplex/server-runtime-stack
+        type: gallery/clickhouse.types.runtime-stack
+        name: Server Runtime Stack
+        description: Bootstrap and routing glue for the server runtime stack.
+        provenance:
+          locations:
+            - input: primary
+              path: programs/server/Server.cpp
+            - input: primary
+              path: programs/server/clickhouse-server.cpp
+            - input: primary
+              path: src/Server/TCPServer.cpp
+            - input: primary
+              path: programs/CMakeLists.txt
+            - input: primary
+              path: src/Server/HTTPHandler.cpp
+        children:
+          - id: protocol-surface-multiplex/server-runtime-stack/server-routing-module
+            type: core/code.types.module
+            name: Server Routing Module
+            description: >-
+              Server routing path with bidirectional handoff between startup wiring and TCP
+              dispatch.
+            props:
+              language: cpp
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: programs/server/Server.cpp
+                - input: primary
+                  path: programs/server/clickhouse-server.cpp
+                - input: primary
+                  path: src/Server/TCPServer.cpp
+                - input: primary
+                  path: programs/CMakeLists.txt
+            children:
+              - id: >-
+                  protocol-surface-multiplex/server-runtime-stack/server-routing-module/server-entrypoints
+                type: core/code.types.module
+                name: Server Entrypoints
+                description: Server startup and process wiring.
+                props:
+                  language: cpp
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: programs/server/Server.cpp
+                    - input: primary
+                      path: programs/server/clickhouse-server.cpp
+                    - input: primary
+                      path: programs/CMakeLists.txt
+              - id: >-
+                  protocol-surface-multiplex/server-runtime-stack/server-routing-module/tcp-server-routing
+                type: core/code.types.module
+                name: TCP Server Routing
+                description: Core network server dispatch.
+                props:
+                  language: cpp
+                  runtime: server
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Server/TCPServer.cpp
+  - id: client-tool-suite
+    type: gallery/clickhouse.types.tool-suite
+    name: Client and Local Tool Suite
+    description: Shipped CLI commands and shared client connection logic.
+    provenance:
+      locations:
+        - input: primary
+          path: programs/client/clickhouse-client.cpp
+        - input: primary
+          path: programs/local/clickhouse-local.cpp
+        - input: primary
+          path: programs/benchmark/clickhouse-benchmark.cpp
+        - input: primary
+          path: programs/format/clickhouse-format.cpp
+        - input: primary
+          path: programs/compressor/clickhouse-compressor.cpp
+        - input: primary
+          path: programs/obfuscator/clickhouse-obfuscator.cpp
+        - input: primary
+          path: src/Client/ClientBase.cpp
+        - input: primary
+          path: src/Client/ConnectionPool.cpp
+    children:
+      - id: client-tool-suite/client-command-suite
+        type: core/software.types.system
+        name: Client Command Suite
+        description: CLI command entrypoints and tool dispatch for the client suite.
+        props:
+          runtime: cli
+        provenance:
+          locations:
+            - input: primary
+              path: programs/client/clickhouse-client.cpp
+            - input: primary
+              path: programs/local/clickhouse-local.cpp
+            - input: primary
+              path: programs/CMakeLists.txt
+            - input: primary
+              path: programs/benchmark/clickhouse-benchmark.cpp
+            - input: primary
+              path: programs/format/clickhouse-format.cpp
+            - input: primary
+              path: programs/compressor/clickhouse-compressor.cpp
+            - input: primary
+              path: programs/obfuscator/clickhouse-obfuscator.cpp
+        children:
+          - id: client-tool-suite/client-command-suite/client-command-entrypoints
+            type: core/code.types.module
+            name: Client Command Entrypoints
+            description: Client CLI entrypoints for shipped interactive and local commands.
+            props:
+              language: cpp
+              runtime: cli
+            provenance:
+              locations:
+                - input: primary
+                  path: programs/client/clickhouse-client.cpp
+                - input: primary
+                  path: programs/local/clickhouse-local.cpp
+                - input: primary
+                  path: programs/CMakeLists.txt
+                - input: primary
+                  path: programs/benchmark/clickhouse-benchmark.cpp
+                - input: primary
+                  path: programs/format/clickhouse-format.cpp
+                - input: primary
+                  path: programs/compressor/clickhouse-compressor.cpp
+                - input: primary
+                  path: programs/obfuscator/clickhouse-obfuscator.cpp
+            children:
+              - id: >-
+                  client-tool-suite/client-command-suite/client-command-entrypoints/clickhouse-client-entrypoint
+                type: core/code.types.module
+                name: ClickHouse Client Entrypoint
+                description: Main interactive client command.
+                props:
+                  language: cpp
+                provenance:
+                  locations:
+                    - input: primary
+                      path: programs/client/clickhouse-client.cpp
+              - id: >-
+                  client-tool-suite/client-command-suite/client-command-entrypoints/clickhouse-local-entrypoint
+                type: core/code.types.module
+                name: ClickHouse Local Entrypoint
+                description: Local execution command.
+                props:
+                  language: cpp
+                provenance:
+                  locations:
+                    - input: primary
+                      path: programs/local/clickhouse-local.cpp
+      - id: client-tool-suite/client-connection-core
+        type: core/code.types.module
+        name: Client Connection Core
+        description: Client request execution and connection pooling core for the CLI suite.
+        props:
+          language: cpp
+          runtime: cli
+        provenance:
+          locations:
+            - input: primary
+              path: src/Client/ClientBase.cpp
+            - input: primary
+              path: src/Client/ConnectionPool.cpp
+        children:
+          - id: client-tool-suite/client-connection-core/client-session-core
+            type: core/code.types.module
+            name: Client Session Core
+            description: Client session coordination and shared connection pooling.
+            props:
+              language: cpp
+              runtime: cli
+            provenance:
+              locations:
+                - input: primary
+                  path: src/Client/ClientBase.cpp
+                - input: primary
+                  path: src/Client/ConnectionPool.cpp
+            children:
+              - id: >-
+                  client-tool-suite/client-connection-core/client-session-core/client-session-control
+                type: core/code.types.module
+                name: Client Session Control
+                description: Shared client request and command flow.
+                props:
+                  language: cpp
+                  runtime: client
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Client/ClientBase.cpp
+              - id: >-
+                  client-tool-suite/client-connection-core/client-session-core/connection-pool-management
+                type: core/code.types.module
+                name: Connection Pool Management
+                description: Shared client connection handling.
+                props:
+                  language: cpp
+                  runtime: client
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Client/ConnectionPool.cpp
+  - id: keeper-coordination-runtime
+    type: gallery/clickhouse.types.coordination-service
+    name: ClickHouse Keeper Coordination
+    description: Keeper ingress surface, server runtime, and coordination state machine.
+    provenance:
+      locations:
+        - input: primary
+          path: programs/keeper/keeper_main.cpp
+        - input: primary
+          path: programs/keeper/Keeper.cpp
+        - input: primary
+          path: packages/clickhouse-keeper.yaml
+        - input: primary
+          path: src/Coordination/KeeperServer.cpp
+        - input: primary
+          path: src/Coordination/KeeperStateMachine.cpp
+        - input: primary
+          path: src/Server/KeeperTCPHandler.cpp
+    children:
+      - id: keeper-coordination-runtime/keeper-tcp-surface
+        type: gallery/clickhouse.types.protocol-surface
+        name: Keeper TCP Surface
+        description: TCP handler implementation that bridges into Keeper coordination.
+        provenance:
+          locations:
+            - input: primary
+              path: src/Server/KeeperTCPHandler.cpp
+        children:
+          - id: keeper-coordination-runtime/keeper-tcp-surface/keeper-tcp-handler-core
+            type: core/code.types.module
+            name: Keeper TCP Handler Core
+            description: Keeper TCP handling split into ingress and runtime dispatch.
+            props:
+              language: cpp
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: src/Server/KeeperTCPHandler.cpp
+            children:
+              - id: >-
+                  keeper-coordination-runtime/keeper-tcp-surface/keeper-tcp-handler-core/keeper-tcp-ingress
+                type: core/code.types.module
+                name: Keeper TCP Ingress
+                description: Direct TCP request intake.
+                props:
+                  language: cpp
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Server/KeeperTCPHandler.cpp
+              - id: >-
+                  keeper-coordination-runtime/keeper-tcp-surface/keeper-tcp-handler-core/keeper-runtime-dispatch
+                type: core/code.types.module
+                name: Keeper Runtime Dispatch
+                description: Routes requests into Keeper runtime execution.
+                props:
+                  language: cpp
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Server/KeeperTCPHandler.cpp
+      - id: keeper-coordination-runtime/keeper-runtime
+        type: core/software.types.system
+        name: Keeper Runtime
+        description: Keeper process wiring and coordination server core.
+        props:
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: programs/keeper/keeper_main.cpp
+            - input: primary
+              path: programs/keeper/Keeper.cpp
+            - input: primary
+              path: src/Coordination/KeeperServer.cpp
+            - input: primary
+              path: packages/clickhouse-keeper.yaml
+        children:
+          - id: keeper-coordination-runtime/keeper-runtime/keeper-server-core
+            type: core/code.types.module
+            name: Keeper Server Core
+            description: Keeper startup wiring and core coordination execution.
+            props:
+              language: cpp
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: programs/keeper/keeper_main.cpp
+                - input: primary
+                  path: programs/keeper/Keeper.cpp
+                - input: primary
+                  path: src/Coordination/KeeperServer.cpp
+                - input: primary
+                  path: packages/clickhouse-keeper.yaml
+            children:
+              - id: >-
+                  keeper-coordination-runtime/keeper-runtime/keeper-server-core/keeper-process-entrypoint
+                type: core/code.types.module
+                name: Keeper Process Entrypoint
+                description: Keeper process startup and wiring.
+                props:
+                  language: cpp
+                provenance:
+                  locations:
+                    - input: primary
+                      path: programs/keeper/keeper_main.cpp
+                    - input: primary
+                      path: programs/keeper/Keeper.cpp
+              - id: >-
+                  keeper-coordination-runtime/keeper-runtime/keeper-server-core/keeper-coordination-engine
+                type: core/code.types.module
+                name: Keeper Coordination Engine
+                description: Core coordination runtime implementation.
+                props:
+                  language: cpp
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Coordination/KeeperServer.cpp
+      - id: keeper-coordination-runtime/keeper-state-machine
+        type: core/code.types.module
+        name: Keeper State Machine
+        description: Keeper coordination state machine logic.
+        props:
+          language: cpp
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: src/Coordination/KeeperStateMachine.cpp
+  - id: storage-and-database-plane
+    type: gallery/clickhouse.types.storage-stack
+    name: Storage and Database Plane
+    description: Replicated database runtime and storage-plane orchestration.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Databases/DatabaseReplicated.cpp
+        - input: primary
+          path: src/Backups/BackupsWorker.cpp
+        - input: primary
+          path: src/Storages/ObjectStorage/StorageObjectStorage.cpp
+        - input: primary
+          path: src/Disks/DiskObjectStorage/DiskObjectStorage.cpp
+        - input: primary
+          path: src/Dictionaries/DictionarySource.cpp
+        - input: primary
+          path: src/Access/AccessControl.cpp
+    children:
+      - id: storage-and-database-plane/database-replicated-runtime
+        type: core/software.types.system
+        name: Replicated Database Runtime
+        description: >-
+          Replicated database control plane, object-storage backend, disk adapter, and terminal
+          storage boundary.
+        props:
+          runtime: server
+        provenance:
+          locations:
+            - input: primary
+              path: src/Databases/DatabaseReplicated.cpp
+            - input: primary
+              path: src/Backups/BackupsWorker.cpp
+            - input: primary
+              path: src/Storages/ObjectStorage/StorageObjectStorage.cpp
+            - input: primary
+              path: src/Disks/DiskObjectStorage/DiskObjectStorage.cpp
+            - input: primary
+              path: src/Dictionaries/DictionarySource.cpp
+            - input: primary
+              path: src/Access/AccessControl.cpp
+        children:
+          - id: >-
+              storage-and-database-plane/database-replicated-runtime/replicated-database-control-plane
+            type: core/software.types.system
+            name: Replicated Database Control Plane
+            description: Replicated database control flow and persistence maintenance.
+            props:
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: src/Databases/DatabaseReplicated.cpp
+                - input: primary
+                  path: src/Access/AccessControl.cpp
+                - input: primary
+                  path: src/Backups/BackupsWorker.cpp
+            children:
+              - id: >-
+                  storage-and-database-plane/database-replicated-runtime/replicated-database-control-plane/replicated-database-engine
+                type: core/code.types.module
+                name: Replicated Database Engine
+                description: Replication-aware database control flow.
+                props:
+                  language: cpp
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Databases/DatabaseReplicated.cpp
+                    - input: primary
+                      path: src/Access/AccessControl.cpp
+              - id: >-
+                  storage-and-database-plane/database-replicated-runtime/replicated-database-control-plane/backup-restore-worker
+                type: core/code.types.module
+                name: Backup Restore Worker
+                description: Persistence maintenance loop.
+                props:
+                  language: cpp
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Backups/BackupsWorker.cpp
+          - id: storage-and-database-plane/database-replicated-runtime/object-storage-backend
+            type: core/code.types.module
+            name: Object Storage Backend
+            description: Object storage request intake and disk delegation.
+            props:
+              language: cpp
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: src/Storages/ObjectStorage/StorageObjectStorage.cpp
+            children:
+              - id: >-
+                  storage-and-database-plane/database-replicated-runtime/object-storage-backend/object-storage-ingress
+                type: core/code.types.module
+                name: Object Storage Ingress
+                description: Replicated storage request intake.
+                props:
+                  language: cpp
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Storages/ObjectStorage/StorageObjectStorage.cpp
+              - id: >-
+                  storage-and-database-plane/database-replicated-runtime/object-storage-backend/disk-object-storage-adapter
+                type: core/code.types.module
+                name: Disk Object Storage Adapter
+                description: Delegates object storage to the disk layer.
+                props:
+                  language: cpp
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Storages/ObjectStorage/StorageObjectStorage.cpp
+          - id: storage-and-database-plane/database-replicated-runtime/disk-object-storage
+            type: core/code.types.module
+            name: Disk Object Storage
+            description: Disk object-storage delegation and persistence integration.
+            props:
+              language: cpp
+              runtime: server
+            provenance:
+              locations:
+                - input: primary
+                  path: src/Disks/DiskObjectStorage/DiskObjectStorage.cpp
+            children:
+              - id: >-
+                  storage-and-database-plane/database-replicated-runtime/disk-object-storage/disk-object-storage-ingress
+                type: core/code.types.module
+                name: Disk Object Storage Ingress
+                description: Object-storage delegation intake.
+                props:
+                  language: cpp
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Disks/DiskObjectStorage/DiskObjectStorage.cpp
+              - id: >-
+                  storage-and-database-plane/database-replicated-runtime/disk-object-storage/disk-object-storage-persistence
+                type: core/code.types.module
+                name: Disk Object Storage Persistence
+                description: Terminal persistence integration.
+                props:
+                  language: cpp
+                provenance:
+                  locations:
+                    - input: primary
+                      path: src/Disks/DiskObjectStorage/DiskObjectStorage.cpp
+          - id: storage-and-database-plane/database-replicated-runtime/persistent-storage-stack
+            type: gallery/clickhouse.types.storage-stack
+            name: Persistent Storage Stack
+            description: Terminal persistent storage boundary.
+            provenance:
+              locations:
+                - input: primary
+                  path: src/Storages/ObjectStorage/StorageObjectStorage.cpp
+                - input: primary
+                  path: src/Disks/DiskObjectStorage/DiskObjectStorage.cpp
+relations:
+  - id: >-
+      tool-suite-calls-protocol-surface--core--software-relations-calls--client-tool-suite--client-command-suite--client-command-entrypoints--clickhouse-client-entrypoint--to--protocol-surface-multiplex--server-protocol-surface--server-handler-surface
+    from: client-tool-suite/client-command-suite/client-command-entrypoints/clickhouse-client-entrypoint
+    to: protocol-surface-multiplex/server-protocol-surface/server-handler-surface
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: programs/CMakeLists.cpp
+        - input: primary
+          path: programs/client/clickhouse-client.cpp
+        - input: primary
+          path: programs/local/clickhouse-local.cpp
+  - id: >-
+      tool-suite-calls-protocol-surface--core--software-relations-calls--client-tool-suite--client-command-suite--client-command-entrypoints--clickhouse-local-entrypoint--to--protocol-surface-multiplex--server-protocol-surface--server-handler-surface
+    from: client-tool-suite/client-command-suite/client-command-entrypoints/clickhouse-local-entrypoint
+    to: protocol-surface-multiplex/server-protocol-surface/server-handler-surface
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: programs/CMakeLists.cpp
+        - input: primary
+          path: programs/client/clickhouse-client.cpp
+        - input: primary
+          path: programs/local/clickhouse-local.cpp
+  - id: >-
+      protocol-surface-calls-engine--core--software-relations-calls--protocol-surface-multiplex--server-runtime-stack--server-routing-module--to--clickhouse-server-runtime--server-protocol-surface--server-handler-surface--http-handler-surface
+    from: protocol-surface-multiplex/server-runtime-stack/server-routing-module
+    to: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/http-request-handler-surface
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+        - input: primary
+          path: src/Server/TCPServer.cpp
+        - input: primary
+          path: src/Server/MySQLHandler.cpp
+        - input: primary
+          path: src/Server/PostgreSQLHandler.cpp
+  - id: >-
+      protocol-surface-calls-engine--core--software-relations-calls--protocol-surface-multiplex--server-runtime-stack--server-routing-module--to--clickhouse-server-runtime--server-protocol-surface--server-handler-surface--native-handler-surface
+    from: protocol-surface-multiplex/server-runtime-stack/server-routing-module
+    to: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/tcp-handler-surface
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+        - input: primary
+          path: src/Server/TCPServer.cpp
+        - input: primary
+          path: src/Server/MySQLHandler.cpp
+        - input: primary
+          path: src/Server/PostgreSQLHandler.cpp
+  - id: >-
+      protocol-surface-calls-engine--core--software-relations-calls--protocol-surface-multiplex--server-runtime-stack--server-routing-module--to--clickhouse-server-runtime--server-protocol-surface--server-handler-surface--grpc-handler-surface
+    from: protocol-surface-multiplex/server-runtime-stack/server-routing-module
+    to: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/grpc-handler-surface/grpc-ingress
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+        - input: primary
+          path: src/Server/TCPServer.cpp
+        - input: primary
+          path: src/Server/MySQLHandler.cpp
+        - input: primary
+          path: src/Server/PostgreSQLHandler.cpp
+  - id: engine-read-writes-storage
+    from: clickhouse-server-runtime/query-runtime-module/query-execution-pipeline/pipeline-core
+    to: >-
+      storage-and-database-plane/database-replicated-runtime/replicated-database-control-plane/replicated-database-engine
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/QueryPipeline/QueryPipeline.cpp
+        - input: primary
+          path: src/Databases/DatabaseReplicated.cpp
+        - input: primary
+          path: src/Storages/ObjectStorage/StorageObjectStorage.cpp
+        - input: primary
+          path: src/Backups/BackupsWorker.cpp
+  - id: engine-calls-coordination
+    from: clickhouse-server-runtime/query-runtime-module/query-execution-pipeline/pipeline-core
+    to: keeper-coordination-runtime/keeper-tcp-surface/keeper-tcp-handler-core/keeper-tcp-ingress
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/Coordination/KeeperServer.cpp
+        - input: primary
+          path: src/Server/KeeperTCPHandler.cpp
+        - input: primary
+          path: packages/clickhouse-keeper.yaml
+  - id: >-
+      clickhouse-server-runtime--server-protocol-surface-calls-query-runtime--core--software-relations-calls--clickhouse-server-runtime--server-protocol-surface--server-handler-surface--http-handler-surface--to--clickhouse-server-runtime--query-runtime-module--query-planning-and-entrypoints
+    from: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/http-request-handler-surface
+    to: clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+        - input: primary
+          path: src/Server/TCPServer.cpp
+        - input: primary
+          path: src/Server/MySQLHandler.cpp
+        - input: primary
+          path: src/Server/PostgreSQLHandler.cpp
+  - id: >-
+      clickhouse-server-runtime--server-protocol-surface-calls-query-runtime--core--software-relations-calls--clickhouse-server-runtime--server-protocol-surface--server-handler-surface--native-handler-surface--to--clickhouse-server-runtime--query-runtime-module--query-planning-and-entrypoints
+    from: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/tcp-handler-surface
+    to: clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+        - input: primary
+          path: src/Server/TCPServer.cpp
+        - input: primary
+          path: src/Server/MySQLHandler.cpp
+        - input: primary
+          path: src/Server/PostgreSQLHandler.cpp
+  - id: >-
+      clickhouse-server-runtime--server-protocol-surface-calls-query-runtime--core--software-relations-calls--clickhouse-server-runtime--server-protocol-surface--server-handler-surface--grpc-handler-surface--to--clickhouse-server-runtime--query-runtime-module--query-planning-and-entrypoints
+    from: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/grpc-handler-surface/grpc-runtime-dispatch
+    to: clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+        - input: primary
+          path: src/Server/TCPServer.cpp
+        - input: primary
+          path: src/Server/MySQLHandler.cpp
+        - input: primary
+          path: src/Server/PostgreSQLHandler.cpp
+  - id: protocol-surface-multiplex--server-protocol-surface-calls-runtime-stack
+    from: >-
+      protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/native-handler-surface
+    to: protocol-surface-multiplex/server-runtime-stack/server-routing-module/server-entrypoints
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+        - input: primary
+          path: src/Server/TCPServer.cpp
+        - input: primary
+          path: src/Server/MySQLHandler.cpp
+        - input: primary
+          path: src/Server/PostgreSQLHandler.cpp
+  - id: >-
+      client-tool-suite--client-command-suite-calls-connection-core--core--software-relations-calls--client-tool-suite--client-command-suite--client-command-entrypoints--clickhouse-client-entrypoint--to--client-tool-suite--client-connection-core--client-session-core
+    from: client-tool-suite/client-command-suite/client-command-entrypoints/clickhouse-client-entrypoint
+    to: client-tool-suite/client-connection-core/client-session-core
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: programs/client/clickhouse-client.cpp
+        - input: primary
+          path: programs/local/clickhouse-local.cpp
+        - input: primary
+          path: src/Client/ClientBase.cpp
+        - input: primary
+          path: src/Client/ConnectionPool.cpp
+  - id: >-
+      client-tool-suite--client-command-suite-calls-connection-core--core--software-relations-calls--client-tool-suite--client-command-suite--client-command-entrypoints--clickhouse-local-entrypoint--to--client-tool-suite--client-connection-core--client-session-core
+    from: client-tool-suite/client-command-suite/client-command-entrypoints/clickhouse-local-entrypoint
+    to: client-tool-suite/client-connection-core/client-session-core
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: programs/client/clickhouse-client.cpp
+        - input: primary
+          path: programs/local/clickhouse-local.cpp
+        - input: primary
+          path: src/Client/ClientBase.cpp
+        - input: primary
+          path: src/Client/ConnectionPool.cpp
+  - id: keeper-coordination-runtime--keeper-tcp-surface-calls-keeper-runtime
+    from: keeper-coordination-runtime/keeper-tcp-surface/keeper-tcp-handler-core/keeper-runtime-dispatch
+    to: keeper-coordination-runtime/keeper-runtime/keeper-server-core/keeper-coordination-engine
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/KeeperTCPHandler.cpp
+        - input: primary
+          path: src/Coordination/KeeperServer.cpp
+  - id: keeper-coordination-runtime--keeper-runtime-calls-state-machine
+    from: keeper-coordination-runtime/keeper-runtime/keeper-server-core/keeper-coordination-engine
+    to: keeper-coordination-runtime/keeper-state-machine
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/Coordination/KeeperServer.cpp
+        - input: primary
+          path: src/Coordination/KeeperStateMachine.cpp
+  - id: storage-and-database-plane--database-replicated-runtime-calls-database-replicated-runtime
+    from: >-
+      storage-and-database-plane/database-replicated-runtime/replicated-database-control-plane/replicated-database-engine
+    to: >-
+      storage-and-database-plane/database-replicated-runtime/object-storage-backend/object-storage-ingress
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: src/Databases/DatabaseReplicated.cpp
+        - input: primary
+          path: src/Backups/BackupsWorker.cpp
+        - input: primary
+          path: src/Storages/ObjectStorage/StorageObjectStorage.cpp
+        - input: primary
+          path: src/Databases/DatabaseReplicated.cpp
+        - input: primary
+          path: src/Storages/ObjectStorage/StorageObjectStorage.cpp
+  - id: >-
+      clickhouse-server-runtime--query-runtime-module--query-planning-and-entrypoints-calls-query-execution-pipeline
+    from: >-
+      clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/query-planning-core/query-planner
+    to: clickhouse-server-runtime/query-runtime-module/query-execution-pipeline/pipeline-core
+    type: core/software.relations.calls
+    description: Planning and request setup feed the execution pipeline.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Analyzer/QueryTreeBuilder.cpp
+        - input: primary
+          path: src/Planner/Planner.cpp
+        - input: primary
+          path: src/QueryPipeline/QueryPipeline.cpp
+  - id: >-
+      storage-and-database-plane--database-replicated-runtime--object-storage-backend-calls-disk-object-storage
+    from: >-
+      storage-and-database-plane/database-replicated-runtime/object-storage-backend/disk-object-storage-adapter
+    to: >-
+      storage-and-database-plane/database-replicated-runtime/disk-object-storage/disk-object-storage-ingress
+    type: core/software.relations.calls
+    description: Backend delegates to the disk storage adapter.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Storages/ObjectStorage/StorageObjectStorage.cpp
+        - input: primary
+          path: src/Disks/DiskObjectStorage/DiskObjectStorage.cpp
+  - id: >-
+      storage-and-database-plane--database-replicated-runtime--disk-object-storage-writes-persistent-storage-stack
+    from: >-
+      storage-and-database-plane/database-replicated-runtime/disk-object-storage/disk-object-storage-persistence
+    to: storage-and-database-plane/database-replicated-runtime/persistent-storage-stack
+    type: core/software.relations.read-writes
+    description: Disk adapter reaches the terminal storage stack.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Disks/DiskObjectStorage/DiskObjectStorage.cpp
+        - input: primary
+          path: src/Storages/ObjectStorage/StorageObjectStorage.cpp
+  - id: >-
+      clickhouse-server-runtime--query-runtime-module--query-planning-and-entrypoints--server-entrypoints-calls-query-planning-core
+    from: >-
+      clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/server-entrypoints
+    to: >-
+      clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/query-planning-core/query-tree-builder
+    type: core/software.relations.calls
+    description: Entrypoints hand off into planning.
+    provenance:
+      locations:
+        - input: primary
+          path: programs/server/Server.cpp
+        - input: primary
+          path: src/Analyzer/QueryTreeBuilder.cpp
+  - id: >-
+      protocol-surface-multiplex--server-protocol-surface--server-handler-surface--client-command-suite-calls-handler-runtime-stack
+    from: protocol-surface-multiplex/server-protocol-surface/server-handler-surface/client-command-suite
+    to: >-
+      protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/native-handler-surface
+    type: core/software.relations.calls
+    description: Client calls land on the handler runtime stack.
+    provenance:
+      locations:
+        - input: primary
+          path: programs/CMakeLists.cpp
+        - input: primary
+          path: programs/client/clickhouse-client.cpp
+        - input: primary
+          path: programs/local/clickhouse-local.cpp
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+        - input: primary
+          path: src/Server/TCPServer.cpp
+  - id: >-
+      protocol-surface-multiplex--server-runtime-stack--server-routing-module--server-entrypoints-calls-tcp-server-routing
+    from: protocol-surface-multiplex/server-runtime-stack/server-routing-module/server-entrypoints
+    to: protocol-surface-multiplex/server-runtime-stack/server-routing-module/tcp-server-routing
+    type: core/software.relations.calls
+    description: Server startup hands off to TCP routing.
+    provenance:
+      locations:
+        - input: primary
+          path: programs/server/Server.cpp
+        - input: primary
+          path: src/Server/TCPServer.cpp
+  - id: >-
+      client-tool-suite--client-connection-core--client-session-core--client-session-control-calls-connection-pool-management
+    from: client-tool-suite/client-connection-core/client-session-core/client-session-control
+    to: client-tool-suite/client-connection-core/client-session-core/connection-pool-management
+    type: core/software.relations.calls
+    description: Session control uses the shared connection pool.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Client/ClientBase.cpp
+        - input: primary
+          path: src/Client/ConnectionPool.cpp
+  - id: >-
+      keeper-coordination-runtime--keeper-tcp-surface--keeper-tcp-handler-core--keeper-tcp-ingress-calls-keeper-runtime-dispatch
+    from: keeper-coordination-runtime/keeper-tcp-surface/keeper-tcp-handler-core/keeper-tcp-ingress
+    to: keeper-coordination-runtime/keeper-tcp-surface/keeper-tcp-handler-core/keeper-runtime-dispatch
+    type: core/software.relations.calls
+    description: Ingress hands off to Keeper runtime dispatch.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/KeeperTCPHandler.cpp
+        - input: primary
+          path: src/Coordination/KeeperServer.cpp
+  - id: >-
+      keeper-coordination-runtime--keeper-runtime--keeper-server-core--keeper-process-entrypoint-calls-keeper-coordination-engine
+    from: keeper-coordination-runtime/keeper-runtime/keeper-server-core/keeper-process-entrypoint
+    to: keeper-coordination-runtime/keeper-runtime/keeper-server-core/keeper-coordination-engine
+    type: core/software.relations.calls
+    description: Process startup wires into coordination execution.
+    provenance:
+      locations:
+        - input: primary
+          path: programs/keeper/Keeper.cpp
+        - input: primary
+          path: src/Coordination/KeeperServer.cpp
+  - id: >-
+      storage-and-database-plane--database-replicated-runtime--replicated-database-control-plane--replicated-database-engine-calls-backup-restore-worker
+    from: >-
+      storage-and-database-plane/database-replicated-runtime/replicated-database-control-plane/replicated-database-engine
+    to: >-
+      storage-and-database-plane/database-replicated-runtime/replicated-database-control-plane/backup-restore-worker
+    type: core/software.relations.calls
+    description: Engine coordinates backup and restore work.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Databases/DatabaseReplicated.cpp
+        - input: primary
+          path: src/Backups/BackupsWorker.cpp
+  - id: >-
+      storage-and-database-plane--database-replicated-runtime--object-storage-backend--object-storage-ingress-calls-disk-object-storage-adapter
+    from: >-
+      storage-and-database-plane/database-replicated-runtime/object-storage-backend/object-storage-ingress
+    to: >-
+      storage-and-database-plane/database-replicated-runtime/object-storage-backend/disk-object-storage-adapter
+    type: core/software.relations.calls
+    description: Ingress hands off to the disk adapter.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Storages/ObjectStorage/StorageObjectStorage.cpp
+        - input: primary
+          path: src/Disks/DiskObjectStorage/DiskObjectStorage.cpp
+  - id: >-
+      storage-and-database-plane--database-replicated-runtime--disk-object-storage--disk-object-storage-ingress-calls-disk-object-storage-persistence
+    from: >-
+      storage-and-database-plane/database-replicated-runtime/disk-object-storage/disk-object-storage-ingress
+    to: >-
+      storage-and-database-plane/database-replicated-runtime/disk-object-storage/disk-object-storage-persistence
+    type: core/software.relations.calls
+    description: Ingress hands control to persistence integration.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Disks/DiskObjectStorage/DiskObjectStorage.cpp
+  - id: >-
+      clickhouse-server-runtime--server-protocol-surface--server-handler-surface--http-handler-surface--http-request-handler-surface-calls-interserver-io-http-surface
+    from: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/http-request-handler-surface
+    to: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/interserver-io-http-surface
+    type: core/software.relations.calls
+    description: HTTP requests hand off to interserver traffic handling.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+        - input: primary
+          path: src/Server/InterserverIOHTTPHandler.cpp
+  - id: >-
+      clickhouse-server-runtime--server-protocol-surface--server-handler-surface--http-handler-surface--interserver-io-http-surface-calls-prometheus-metrics-http-surface
+    from: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/interserver-io-http-surface
+    to: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/prometheus-metrics-http-surface
+    type: core/software.relations.calls
+    description: Interserver handling flows into metrics exposure.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/InterserverIOHTTPHandler.cpp
+        - input: primary
+          path: src/Server/PrometheusRequestHandler.cpp
+  - id: >-
+      clickhouse-server-runtime--server-protocol-surface--server-handler-surface--http-handler-surface--prometheus-metrics-http-surface-calls-http-request-handler-surface
+    from: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/prometheus-metrics-http-surface
+    to: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/http-request-handler-surface
+    type: core/software.relations.calls
+    description: Metrics surface returns control to the main HTTP surface.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/PrometheusRequestHandler.cpp
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+  - id: >-
+      clickhouse-server-runtime--server-protocol-surface--server-handler-surface--native-handler-surface--tcp-handler-surface-calls-mysql-handler-surface
+    from: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/tcp-handler-surface
+    to: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/mysql-handler-surface
+    type: core/software.relations.calls
+    description: TCP ingress hands off to MySQL handling.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/TCPServer.cpp
+        - input: primary
+          path: src/Server/MySQLHandler.cpp
+  - id: >-
+      clickhouse-server-runtime--server-protocol-surface--server-handler-surface--native-handler-surface--mysql-handler-surface-calls-postgresql-handler-surface
+    from: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/mysql-handler-surface
+    to: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/postgresql-handler-surface
+    type: core/software.relations.calls
+    description: MySQL handling flows into PostgreSQL handling.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/MySQLHandler.cpp
+        - input: primary
+          path: src/Server/PostgreSQLHandler.cpp
+  - id: >-
+      clickhouse-server-runtime--server-protocol-surface--server-handler-surface--native-handler-surface--postgresql-handler-surface-calls-tcp-handler-surface
+    from: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/postgresql-handler-surface
+    to: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/tcp-handler-surface
+    type: core/software.relations.calls
+    description: PostgreSQL handling returns to TCP dispatch.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/PostgreSQLHandler.cpp
+        - input: primary
+          path: src/Server/TCPServer.cpp
+  - id: >-
+      clickhouse-server-runtime--server-protocol-surface--server-handler-surface--grpc-handler-surface--grpc-ingress-calls-grpc-runtime-dispatch
+    from: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/grpc-handler-surface/grpc-ingress
+    to: >-
+      clickhouse-server-runtime/server-protocol-surface/server-handler-surface/grpc-handler-surface/grpc-runtime-dispatch
+    type: core/software.relations.calls
+    description: Ingress hands off to runtime dispatch.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/GRPCServer.cpp
+  - id: >-
+      clickhouse-server-runtime--query-runtime-module--query-planning-and-entrypoints--query-planning-core--query-tree-builder-calls-query-planner
+    from: >-
+      clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/query-planning-core/query-tree-builder
+    to: >-
+      clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/query-planning-core/query-planner
+    type: core/software.relations.calls
+    description: Tree construction hands off to planning.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Analyzer/QueryTreeBuilder.cpp
+        - input: primary
+          path: src/Planner/Planner.cpp
+  - id: >-
+      clickhouse-server-runtime--query-runtime-module--query-planning-and-entrypoints--query-planning-core--query-planner-calls-query-runtime-context
+    from: >-
+      clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/query-planning-core/query-planner
+    to: >-
+      clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/query-planning-core/query-runtime-context
+    type: core/software.relations.calls
+    description: Planning feeds runtime context setup.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Planner/Planner.cpp
+        - input: primary
+          path: src/Interpreters/Context.cpp
+  - id: >-
+      clickhouse-server-runtime--query-runtime-module--query-planning-and-entrypoints--query-planning-core--query-runtime-context-calls-query-tree-builder
+    from: >-
+      clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/query-planning-core/query-runtime-context
+    to: >-
+      clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints/query-planning-core/query-tree-builder
+    type: core/software.relations.calls
+    description: Runtime context feeds back into analysis.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Interpreters/Context.cpp
+        - input: primary
+          path: src/Analyzer/QueryTreeBuilder.cpp
+  - id: >-
+      protocol-surface-multiplex--server-protocol-surface--server-handler-surface--handler-runtime-stack--native-handler-surface-calls-http-handler-surface
+    from: >-
+      protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/native-handler-surface
+    to: >-
+      protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/http-handler-surface
+    type: core/software.relations.calls
+    description: Native traffic hands off to HTTP handling.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/TCPServer.cpp
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+  - id: >-
+      protocol-surface-multiplex--server-protocol-surface--server-handler-surface--handler-runtime-stack--http-handler-surface-calls-grpc-handler-surface
+    from: >-
+      protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/http-handler-surface
+    to: >-
+      protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/grpc-handler-surface
+    type: core/software.relations.calls
+    description: HTTP handling flows into gRPC ingress.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/HTTPHandler.cpp
+        - input: primary
+          path: src/Server/GRPCServer.cpp
+  - id: >-
+      protocol-surface-multiplex--server-protocol-surface--server-handler-surface--handler-runtime-stack--grpc-handler-surface-calls-native-handler-surface
+    from: >-
+      protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/grpc-handler-surface
+    to: >-
+      protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/native-handler-surface
+    type: core/software.relations.calls
+    description: gRPC handling returns to native protocol dispatch.
+    provenance:
+      locations:
+        - input: primary
+          path: src/Server/GRPCServer.cpp
+        - input: primary
+          path: src/Server/MySQLHandler.cpp
+inputs:
+  - id: primary
+    kind: git
+    repo: https://github.com/clickhouse/clickhouse
+    revision: 3ca4289b08bf59ad5f60679ea8679b313352ed4c
+    role: primary
+metadata:
+  workerBuild:
+    inputTokens: 13798546
+    cachedInputTokens: 12461056
+    outputTokens: 351774
+    approxTotalTokens: 26611376
+    mode: advanced
+    model: gpt-5.4-mini
+    builtAt: "2026-05-05T09:56:52.226Z"
+    durationMs: 3289055
+    turns: 56
+    nodes: 66
+    edges: 41
+  sourceRepository:
+    repo: https://github.com/clickhouse/clickhouse
+    url: https://github.com/clickhouse/clickhouse
+    commit: 3ca4289b08bf59ad5f60679ea8679b313352ed4c
+    committedAt: "2026-05-05T08:58:37Z"
+  description: ClickHouse database engine and operational tools
+  name: Clickhouse

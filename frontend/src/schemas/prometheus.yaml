@@ -1,0 +1,252 @@
+owner: gallery
+name: prometheus
+version: "0.1"
+description: >-
+  Prometheus-shaped architectural wrappers for the browser UI, server runtime, storage stack, and
+  CLI tooling, aligned to the repository specific deployable and runtime surfaces.
+use:
+  - schema: core/base@0.1
+    alias: base
+  - schema: core/software@0.1
+    alias: sw
+  - schema: core/code@0.1
+    alias: code
+  - schema: core/frontend@0.3
+    alias: fe
+  - schema: core/web-app@0.3
+    alias: web
+traits:
+  - id: prometheus-app-like
+    label: Prometheus Application
+    description: >-
+      Top-level Prometheus boundary spanning the browser UI, main server runtime, storage stack, and
+      command-line tooling.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+  - id: server-runtime-like
+    label: Server Runtime
+    description: >-
+      Main Prometheus server boundary that serves the HTTP UI/API, coordinates scrape discovery,
+      scrape ingestion, rule evaluation, alerting, and reload paths, and continues into storage and
+      internal code.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+        - reads
+        - writes
+        - read-writes
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+      - relation: core/software.relations.reads
+        endpoint: from
+      - relation: core/software.relations.writes
+        endpoint: from
+      - relation: core/software.relations.read-writes
+        endpoint: from
+  - id: browser-surface-like
+    label: Browser Surface
+    description: >-
+      Browser-facing Prometheus UI surface that initiates operator-driven queries, inspection, and
+      configuration actions into the server runtime.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: source
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
+  - id: storage-stack-like
+    label: Storage Stack
+    description: >-
+      Persistence-facing boundary for the local TSDB, WAL/block storage, and remote read/write
+      plumbing.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: sink
+      mayTerminate: true
+      expectedRelationIds:
+        - reads
+        - writes
+        - read-writes
+    relationParticipation:
+      - relation: core/software.relations.reads
+        endpoint: to
+      - relation: core/software.relations.writes
+        endpoint: to
+      - relation: core/software.relations.read-writes
+        endpoint: to
+  - id: cli-surface-like
+    label: CLI Surface
+    description: Command-line tooling surface for promtool and related operator or developer commands.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: through
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+types:
+  - id: prometheus
+    label: Prometheus
+    description: >-
+      Top-level Prometheus application boundary spanning the browser UI, server runtime, storage
+      stack, and CLI tooling.
+    extends: core/web-app.types.application
+    traits:
+      - gallery/prometheus.traits.prometheus-app-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTypes:
+        - portal-app
+        - server-runtime
+        - storage-stack
+        - cli-suite
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 320
+        height: 180
+      style:
+        hue: 210
+      count:
+        childTypes:
+          - portal-app
+          - server-runtime
+          - storage-stack
+          - cli-suite
+        label: components
+  - id: portal-app
+    label: Portal App
+    description: Browser-facing React UI surface for querying, inspecting alerts, and operating the server.
+    extends: core/frontend.types.frontend
+    traits:
+      - gallery/prometheus.traits.browser-surface-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/code.traits.code-like
+        - core/base.traits.group-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 240
+        height: 112
+      style:
+        hue: 188
+      count:
+        childTypes:
+          - module
+          - group
+        label: components
+  - id: server-runtime
+    label: Server Runtime
+    description: >-
+      Deployable Go server boundary that serves the web UI and API, coordinates scrape discovery,
+      scrape ingestion, rule evaluation, alerting, and reload flow.
+    extends: core/web-app.types.service
+    traits:
+      - gallery/prometheus.traits.server-runtime-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.service
+    containment:
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/code.traits.code-like
+        - core/software.traits.api-like
+        - core/software.traits.endpoint-like
+        - core/software.traits.service-like
+        - core/software.traits.storage-boundary
+        - core/software.traits.storage
+        - core/software.traits.queueing
+        - core/software.traits.scheduler-like
+        - core/software.traits.job-like
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 250
+        height: 120
+      style:
+        hue: 204
+      count:
+        childTypes:
+          - module
+          - group
+          - service
+          - api
+        label: components
+  - id: storage-stack
+    label: Storage Stack
+    description: Persistence boundary for the local TSDB and the remote read/write plumbing that feeds it.
+    extends: core/web-app.types.datastore
+    traits:
+      - gallery/prometheus.traits.storage-stack-like
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.data
+    containment:
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/code.traits.code-like
+        - core/software.traits.storage-boundary
+        - core/software.traits.storage
+        - core/software.traits.queueing
+    display:
+      primaryTag: core/software.tags.data
+      defaultSize:
+        width: 240
+        height: 132
+      style:
+        hue: 165
+      count:
+        childTypes:
+          - datastore
+          - group
+          - module
+        label: components
+  - id: cli-suite
+    label: CLI Suite
+    description: Command-line tooling boundary for promtool and other shipped operator or developer utilities.
+    extends: core/software.types.system
+    traits:
+      - gallery/prometheus.traits.cli-surface-like
+    analysis:
+      topLevelBias: neutral
+    defaultTags:
+      - core/software.tags.integration
+    containment:
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/code.traits.code-like
+    display:
+      primaryTag: core/software.tags.integration
+      defaultSize:
+        width: 210
+        height: 92
+      style:
+        hue: 28
+      count:
+        childTypes:
+          - module
+          - group
+        label: commands
+relations: []

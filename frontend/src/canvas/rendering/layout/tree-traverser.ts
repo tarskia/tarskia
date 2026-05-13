@@ -35,13 +35,9 @@ export function applySceneLayout(params: {
   edges: CompiledDiagramEdge[];
   tree: SceneTree;
   nodeVisuals: Map<string, ResolvedNodeVisual>;
-  canvasSize?: { width: number; height: number } | null;
 }): SceneTree {
-  const { schema, edges, tree, nodeVisuals, canvasSize } = params;
-  const focusShellAspect =
-    canvasSize && canvasSize.width > 0 && canvasSize.height > 0
-      ? canvasSize.width / canvasSize.height
-      : FOCUS_SHELL_FALLBACK_ASPECT;
+  const { schema, edges, tree, nodeVisuals } = params;
+  const focusShellAspect = FOCUS_SHELL_FALLBACK_ASPECT;
 
   const baseSizes = new Map<string, { width: number; height: number }>();
   for (const [id, _node] of tree.byId.entries()) {
@@ -79,9 +75,8 @@ export function applySceneLayout(params: {
 
     const hasDetailsControls = node.controls?.showDetailControls ?? Boolean(node.hasChildren);
     const hasChildGroupControls = node.controls?.showChildGroupControls ?? false;
-    const controlRowCount = (hasDetailsControls ? 1 : 0) + (hasChildGroupControls ? 1 : 0);
 
-    const headerHeight = isGroup ? getGroupHeaderHeight(0, controlRowCount) : 0;
+    const headerHeight = isGroup ? getGroupHeaderHeight(0) : 0;
     const childGap = isGroup && children.length > 0 ? 10 : 0;
     const layoutHeaderHeight = headerHeight + childGap;
     const minWidth = isGroup

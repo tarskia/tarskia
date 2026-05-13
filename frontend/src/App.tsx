@@ -576,7 +576,7 @@ export default function App({ session, remoteWorkspace }: LoadedAppProps) {
                 }}
               >
                 <aside
-                  className="h-full border-r border-border bg-surface flex flex-col min-h-0 overflow-hidden shadow-[var(--shadow-panel)]"
+                  className="h-full border-r border-border bg-surface flex flex-col min-h-0 overflow-hidden"
                   style={{
                     width: resolvedSidebarWidth,
                     minWidth: sidebarBounds.min,

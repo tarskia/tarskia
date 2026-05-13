@@ -1,4 +1,10 @@
 import type { RefObject } from 'react';
+import {
+  Popover,
+  PopoverClose,
+  PopoverContent,
+  PopoverTrigger,
+} from '../../../components/ui/popover';
 import type { CanvasInteractionBindings, CanvasNodeHostControls } from '../../host/reactflow/types';
 import type { CanvasNodeView } from '../../rendering/presentation/presentation';
 
@@ -38,6 +44,12 @@ export function GroupNodeView({ id, view, bindings, controls, rootRef }: GroupNo
       : {
           color: `hsla(${primaryTagHue}, var(--tag-pill-s, 88%), var(--tag-pill-l, 80%), 0.95)`,
         };
+  const typeStyle =
+    primaryTagHue === undefined
+      ? undefined
+      : {
+          color: `hsla(${primaryTagHue}, var(--type-label-s, 55%), var(--type-label-l, 72%), var(--type-label-a, 0.9))`,
+        };
   const localOpacity =
     typeof view.content.childOpacity === 'number' ? view.content.childOpacity : 1;
   const showChildGroupControls = view.controls.showChildGroupControls && localOpacity >= 0.98;
@@ -54,7 +66,11 @@ export function GroupNodeView({ id, view, bindings, controls, rootRef }: GroupNo
       <div className="node-body">
         {listMode ? (
           <div className="list-content">
-            {showListType && <div className="list-type">{view.content.entityType}</div>}
+            {showListType && (
+              <div className="list-type" style={typeStyle}>
+                {view.content.entityType}
+              </div>
+            )}
             {hasLabel && (
               <div className="list-name" title={view.content.label}>
                 {view.content.label}
@@ -65,7 +81,9 @@ export function GroupNodeView({ id, view, bindings, controls, rootRef }: GroupNo
           <>
             <div className="group-header">
               <div className="group-header-top">
-                <span className="group-type">{view.content.entityType}</span>
+                <span className="group-type" style={typeStyle}>
+                  {view.content.entityType}
+                </span>
                 {primaryTagLabel ? (
                   <span className="node-tag-pill" style={primaryTagStyle} title={primaryTagLabel}>
                     {primaryTagLabel}
@@ -78,123 +96,165 @@ export function GroupNodeView({ id, view, bindings, controls, rootRef }: GroupNo
                 </span>
               ) : null}
             </div>
-            <div className="group-meta">
-              {(view.content.summaryLabel || view.controls.showZoomControls) && (
-                <div className="count-zoom nodrag nopan nowheel">
-                  <span className="count-text">{view.content.summaryLabel ?? 'Details'}</span>
+            {(view.content.summaryLabel ||
+              view.controls.showZoomControls ||
+              view.controls.showDetailControls ||
+              showChildGroupControls) && (
+              <div className="group-meta">
+                <div className="node-meta-bar nodrag nopan nowheel">
                   {view.controls.showZoomControls && (
-                    <div className="zoom-buttons nodrag nopan nowheel">
-                      <button
-                        type="button"
-                        className={joinClassNames(
-                          'nodrag',
-                          'nopan',
-                          'nowheel',
-                          !canZoomOut && 'zoom-hidden',
-                        )}
-                        disabled={zoomControlsDisabled}
+                    <button
+                      type="button"
+                      className={joinClassNames(
+                        'node-meta-cell',
+                        'node-meta-step',
+                        'nodrag',
+                        'nopan',
+                        'nowheel',
+                        !canZoomOut && 'node-meta-cell-hidden',
+                      )}
+                      disabled={zoomControlsDisabled}
+                      onPointerDown={stopCanvasGesture}
+                      onMouseDown={stopCanvasGesture}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        bindings.onZoomTrigger(controlsTargetId, 'out');
+                      }}
+                      aria-label="Zoom out details"
+                      aria-hidden={!canZoomOut}
+                    >
+                      –
+                    </button>
+                  )}
+                  <span className="node-meta-cell node-meta-text">
+                    {view.content.summaryLabel ?? 'Details'}
+                  </span>
+                  {view.controls.showZoomControls && (
+                    <button
+                      type="button"
+                      className={joinClassNames(
+                        'node-meta-cell',
+                        'node-meta-step',
+                        'nodrag',
+                        'nopan',
+                        'nowheel',
+                        !canZoomIn && 'node-meta-cell-hidden',
+                      )}
+                      disabled={zoomControlsDisabled}
+                      onPointerDown={stopCanvasGesture}
+                      onMouseDown={stopCanvasGesture}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        bindings.onZoomTrigger(controlsTargetId, 'in');
+                      }}
+                      aria-label="Zoom in details"
+                      aria-hidden={!canZoomIn}
+                    >
+                      +
+                    </button>
+                  )}
+                  {(view.controls.showDetailControls || showChildGroupControls) && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="node-meta-cell node-meta-menu nodrag nopan nowheel"
+                          disabled={controls.disableControlActions}
+                          onPointerDown={stopCanvasGesture}
+                          onMouseDown={stopCanvasGesture}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                          }}
+                          aria-label="More expand and collapse actions"
+                        >
+                          ▾
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="node-meta-menu-panel nodrag nopan nowheel"
+                        side="bottom"
+                        align="end"
+                        sideOffset={4}
                         onPointerDown={stopCanvasGesture}
                         onMouseDown={stopCanvasGesture}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          bindings.onZoomTrigger(controlsTargetId, 'out');
-                        }}
-                        aria-label="Zoom out details"
-                        aria-hidden={!canZoomOut}
                       >
-                        –
-                      </button>
-                      <button
-                        type="button"
-                        className={joinClassNames(
-                          'nodrag',
-                          'nopan',
-                          'nowheel',
-                          !canZoomIn && 'zoom-hidden',
+                        {view.controls.showDetailControls && (
+                          <div className="node-meta-menu-section">
+                            <PopoverClose asChild>
+                              <button
+                                type="button"
+                                className="node-meta-menu-item"
+                                disabled={
+                                  !view.controls.canExpandDetails || controls.disableControlActions
+                                }
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  bindings.onExpandDetails(controlsTargetId);
+                                }}
+                              >
+                                Expand all
+                              </button>
+                            </PopoverClose>
+                            <PopoverClose asChild>
+                              <button
+                                type="button"
+                                className="node-meta-menu-item"
+                                disabled={
+                                  !view.controls.canCollapseDetails ||
+                                  controls.disableControlActions
+                                }
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  bindings.onCollapseDetails(controlsTargetId);
+                                }}
+                              >
+                                Collapse all
+                              </button>
+                            </PopoverClose>
+                          </div>
                         )}
-                        disabled={zoomControlsDisabled}
-                        onPointerDown={stopCanvasGesture}
-                        onMouseDown={stopCanvasGesture}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          bindings.onZoomTrigger(controlsTargetId, 'in');
-                        }}
-                        aria-label="Zoom in details"
-                        aria-hidden={!canZoomIn}
-                      >
-                        +
-                      </button>
-                    </div>
+                        {showChildGroupControls && (
+                          <div className="node-meta-menu-section">
+                            <PopoverClose asChild>
+                              <button
+                                type="button"
+                                className="node-meta-menu-item"
+                                disabled={
+                                  !view.controls.canExpandChildGroups ||
+                                  controls.disableControlActions
+                                }
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  bindings.onExpandChildGroups(controlsTargetId);
+                                }}
+                              >
+                                Expand one level
+                              </button>
+                            </PopoverClose>
+                            <PopoverClose asChild>
+                              <button
+                                type="button"
+                                className="node-meta-menu-item"
+                                disabled={
+                                  !view.controls.canCollapseChildGroups ||
+                                  controls.disableControlActions
+                                }
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  bindings.onCollapseChildGroups(controlsTargetId);
+                                }}
+                              >
+                                Collapse one level
+                              </button>
+                            </PopoverClose>
+                          </div>
+                        )}
+                      </PopoverContent>
+                    </Popover>
                   )}
                 </div>
-              )}
-              {view.controls.showDetailControls && (
-                <div className="bulk-zoom-buttons nodrag nopan nowheel">
-                  <button
-                    type="button"
-                    className="bulk-zoom-button nodrag nopan nowheel"
-                    disabled={!view.controls.canExpandDetails || controls.disableControlActions}
-                    onPointerDown={stopCanvasGesture}
-                    onMouseDown={stopCanvasGesture}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      bindings.onExpandDetails(controlsTargetId);
-                    }}
-                    aria-label="Expand all details"
-                  >
-                    Expand all
-                  </button>
-                  <button
-                    type="button"
-                    className="bulk-zoom-button nodrag nopan nowheel"
-                    disabled={!view.controls.canCollapseDetails || controls.disableControlActions}
-                    onPointerDown={stopCanvasGesture}
-                    onMouseDown={stopCanvasGesture}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      bindings.onCollapseDetails(controlsTargetId);
-                    }}
-                    aria-label="Collapse all details"
-                  >
-                    Collapse all
-                  </button>
-                </div>
-              )}
-              {showChildGroupControls && (
-                <div className="bulk-zoom-buttons nodrag nopan nowheel">
-                  <button
-                    type="button"
-                    className="bulk-zoom-button nodrag nopan nowheel"
-                    disabled={!view.controls.canExpandChildGroups || controls.disableControlActions}
-                    onPointerDown={stopCanvasGesture}
-                    onMouseDown={stopCanvasGesture}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      bindings.onExpandChildGroups(controlsTargetId);
-                    }}
-                    aria-label="Expand child groups"
-                  >
-                    Expand once
-                  </button>
-                  <button
-                    type="button"
-                    className="bulk-zoom-button nodrag nopan nowheel"
-                    disabled={
-                      !view.controls.canCollapseChildGroups || controls.disableControlActions
-                    }
-                    onPointerDown={stopCanvasGesture}
-                    onMouseDown={stopCanvasGesture}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      bindings.onCollapseChildGroups(controlsTargetId);
-                    }}
-                    aria-label="Collapse child groups"
-                  >
-                    Collapse once
-                  </button>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </>
         )}
       </div>

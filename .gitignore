@@ -7,3 +7,4 @@ packages/diagram-semantics/dist/
 /.idea/
 /.claude/
 /.tmp/
+.playwright-mcp/

@@ -204,6 +204,64 @@ describe('buildNodeVisualMap', () => {
     );
   });
 
+  it('does not present a filtered authored count as a generic component total', () => {
+    const doc: SemanticDocument = {
+      version: '1',
+      schemaRefs: [],
+      entities: [
+        {
+          id: 'parent',
+          type: CONTAINER_TYPE_ID,
+          name: 'Parent Container',
+          children: [
+            { id: 'child-counted', type: COMPONENT_TYPE_ID, name: 'Counted' },
+            { id: 'child-other', type: NOTE_TYPE_ID, name: 'Other' },
+          ],
+        },
+      ],
+      relations: [],
+    };
+
+    expect(buildVisualMap(doc).get('parent')?.projection.summaryLabel).toBe('2 components');
+  });
+
+  it('keeps specific authored labels for intentionally filtered counts', () => {
+    const specificSchema: SchemaModule = {
+      ...schema,
+      types: schema.types.map((type) =>
+        type.id === CONTAINER_TYPE_ID
+          ? {
+              ...type,
+              display: {
+                ...type.display,
+                count: { childTypes: [NOTE_TYPE_ID], label: 'notes' },
+              },
+            }
+          : type,
+      ),
+    };
+    const doc: SemanticDocument = {
+      version: '1',
+      schemaRefs: [],
+      entities: [
+        {
+          id: 'parent',
+          type: CONTAINER_TYPE_ID,
+          name: 'Parent Container',
+          children: [
+            { id: 'child-note', type: NOTE_TYPE_ID, name: 'Note' },
+            { id: 'child-image', type: IMAGE_TYPE_ID, name: 'Image' },
+          ],
+        },
+      ],
+      relations: [],
+    };
+    const tree = buildSceneTree({ tree: buildEntityTree(doc) });
+    const visual = buildNodeVisualMap({ schema: specificSchema, tree }).get('parent');
+
+    expect(visual?.projection.summaryLabel).toBe('1 note');
+  });
+
   it('resolves markdown and image rich content from the display content config', () => {
     const doc: SemanticDocument = {
       version: '1',
@@ -263,6 +321,27 @@ describe('buildNodeVisualMap', () => {
     expect(visual?.identity.primaryTagId).toBe(DATA_TAG_ID);
     expect(visual?.projection.typeLabel).toBe('Component Group');
     expect(visual?.projection.summaryLabel).toBe('1 component');
+  });
+
+  it('does not present a filtered typed group count as a generic component total', () => {
+    const doc: SemanticDocument = {
+      version: '1',
+      schemaRefs: [],
+      entities: [
+        {
+          id: 'typed-group',
+          type: CORE_GROUP_TYPE_ID,
+          props: { mode: 'typed', groupType: COMPONENT_TYPE_ID },
+          children: [
+            { id: 'child-counted', type: COMPONENT_TYPE_ID, name: 'Counted' },
+            { id: 'child-other', type: NOTE_TYPE_ID, name: 'Other' },
+          ],
+        },
+      ],
+      relations: [],
+    };
+
+    expect(buildVisualMap(doc).get('typed-group')?.projection.summaryLabel).toBe('2 components');
   });
 
   it('uses the direct child type when an untyped expandable node is homogeneous', () => {

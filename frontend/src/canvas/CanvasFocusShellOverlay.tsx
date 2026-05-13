@@ -32,9 +32,7 @@ const resolveBoundaryLeftInset = (
   if (leftOcclusion <= shell.frame.left + defaultInset) {
     return defaultInset;
   }
-  const shellWidth = shell.frame.right - shell.frame.left;
-  const shiftedInset = leftOcclusion - shell.frame.left + defaultInset;
-  return Math.min(Math.max(defaultInset, shellWidth - 48), shiftedInset);
+  return leftOcclusion - shell.frame.left + defaultInset;
 };
 
 export function CanvasFocusShellOverlay({
@@ -57,8 +55,8 @@ export function CanvasFocusShellOverlay({
               ['--focus-shell-hue' as string]: String(shell.hue ?? 210),
               left: shell.frame.left,
               top: shell.frame.top,
-              width: shell.frame.right - shell.frame.left,
-              height: shell.frame.bottom - shell.frame.top,
+              right: shell.frame.right,
+              bottom: shell.frame.bottom,
             } as CSSProperties
           }
         >

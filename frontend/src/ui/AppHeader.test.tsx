@@ -1,11 +1,16 @@
+import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AppHeader } from './AppHeader';
 
+const renderHeader = (element: ReactElement) =>
+  renderToStaticMarkup(<MemoryRouter>{element}</MemoryRouter>);
+
 describe('AppHeader', () => {
   it('keeps diagram save actions out of the header', () => {
-    const html = renderToStaticMarkup(
+    const html = renderHeader(
       <AppHeader
         diagramName="Payments"
         onDiagramNameChange={vi.fn()}
@@ -30,7 +35,7 @@ describe('AppHeader', () => {
   });
 
   it('renders a profile image when available for the authenticated account', () => {
-    const html = renderToStaticMarkup(
+    const html = renderHeader(
       <AppHeader
         diagramName="Payments"
         onDiagramNameChange={vi.fn()}
@@ -46,7 +51,7 @@ describe('AppHeader', () => {
   });
 
   it('renders persistent guest auth actions when no account is signed in', () => {
-    const html = renderToStaticMarkup(
+    const html = renderHeader(
       <AppHeader
         diagramName="Payments"
         onDiagramNameChange={vi.fn()}
@@ -61,7 +66,7 @@ describe('AppHeader', () => {
   });
 
   it('keeps search status and reveal controls to the left of the search input', () => {
-    const html = renderToStaticMarkup(
+    const html = renderHeader(
       <AppHeader
         diagramName="Payments"
         onDiagramNameChange={vi.fn()}

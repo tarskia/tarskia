@@ -27,6 +27,12 @@ export function EntityNodeView({ id, view, rootRef, bodyRef }: EntityNodeViewPro
       : {
           color: `hsla(${primaryTagHue}, var(--tag-pill-s, 88%), var(--tag-pill-l, 80%), 0.95)`,
         };
+  const typeStyle =
+    primaryTagHue === undefined
+      ? undefined
+      : {
+          color: `hsla(${primaryTagHue}, var(--type-label-s, 55%), var(--type-label-l, 72%), var(--type-label-a, 0.9))`,
+        };
   const debug = view.content.debug;
 
   return (
@@ -45,7 +51,11 @@ export function EntityNodeView({ id, view, rootRef, bodyRef }: EntityNodeViewPro
       >
         {listMode ? (
           <div className="list-content">
-            {showListType && <div className="list-type">{view.content.entityType}</div>}
+            {showListType && (
+              <div className="list-type" style={typeStyle}>
+                {view.content.entityType}
+              </div>
+            )}
             {hasLabel && (
               <div className="list-name" title={view.content.label}>
                 {view.content.label}
@@ -56,7 +66,9 @@ export function EntityNodeView({ id, view, rootRef, bodyRef }: EntityNodeViewPro
           <>
             <div className="entity-header">
               <div className="node-header-top">
-                <span className="node-subtitle">{view.content.entityType}</span>
+                <span className="node-subtitle" style={typeStyle}>
+                  {view.content.entityType}
+                </span>
                 {primaryTagLabel ? (
                   <span className="node-tag-pill" style={primaryTagStyle} title={primaryTagLabel}>
                     {primaryTagLabel}

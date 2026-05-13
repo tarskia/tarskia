@@ -20,11 +20,15 @@ import {
 import {
   describePublicGalleryRepository,
   formatPublicGalleryCommit,
+  readPublicGallerySourceRepositoryFromRaw,
 } from './gallery/public-gallery-repository';
 import { formatCompactNumber } from './gallery/worker-build-summary';
+import { GalleryFeedbackMenu } from './ui/GalleryFeedbackMenu';
+import { GitHubLink } from './ui/GitHubLink';
+import { ThemeToggle } from './ui/ThemeToggle';
 
-const buildViewerTitle = (params: { title?: string; slug?: string }) =>
-  params.title?.trim() || params.slug?.trim() || 'Gallery diagram';
+const buildViewerRouteLabel = (params: { namespace: string; slug: string }) =>
+  [params.namespace, params.slug].filter((value) => value.trim()).join('/') || 'Gallery diagram';
 
 export interface PublicGalleryViewerSearchChrome {
   searchTotalMatches: number;
@@ -44,6 +48,10 @@ export default function PublicGalleryShell() {
     searchTotalMatches: 0,
     searchHiddenMatches: 0,
   });
+  const viewerRouteKey = `${namespace}/${slug}`;
+  const [stableViewerRepositoryLabel, setStableViewerRepositoryLabel] = useState<
+    { key: string; label: string } | undefined
+  >();
   const revealSearchResultsRef = useRef<(() => void) | undefined>(undefined);
   const detailQuery = useGetGalleryDiagram(namespace, slug, {
     query: {
@@ -64,6 +72,10 @@ export default function PublicGalleryShell() {
     },
   });
   const detail = coerceSuccessfulResponseBody<DtoGalleryDiagramDetailResponse>(detailQuery.data);
+  const detailSourceRepository = useMemo(
+    () => readPublicGallerySourceRepositoryFromRaw(detail?.raw),
+    [detail?.raw],
+  );
   const gallerySummaries = useMemo(
     () => coerceGallerySummaryArray(coerceSuccessfulResponseBody<unknown>(galleryQuery.data)),
     [galleryQuery.data],
@@ -73,17 +85,30 @@ export default function PublicGalleryShell() {
       gallerySummaries.find((diagram) => diagram.namespace === namespace && diagram.slug === slug),
     [gallerySummaries, namespace, slug],
   );
-  const viewerRepository = currentSummary
+  const viewerSourceRepository = currentSummary?.sourceRepository ?? detailSourceRepository;
+  const viewerRepository = viewerSourceRepository
     ? describePublicGalleryRepository({
-        sourceRepository: currentSummary.sourceRepository,
+        sourceRepository: viewerSourceRepository,
         namespace,
         slug,
       })
     : undefined;
-  const viewerTitle = inViewer
-    ? viewerRepository?.label || buildViewerTitle({ title: detail?.title, slug })
-    : undefined;
-  const viewerCommit = formatPublicGalleryCommit(currentSummary?.sourceRepository?.commit);
+  useEffect(() => {
+    if (!inViewer) {
+      setStableViewerRepositoryLabel(undefined);
+      return;
+    }
+    if (!viewerRepository?.label) {
+      return;
+    }
+    setStableViewerRepositoryLabel({ key: viewerRouteKey, label: viewerRepository.label });
+  }, [inViewer, viewerRepository?.label, viewerRouteKey]);
+  const fallbackViewerTitle =
+    stableViewerRepositoryLabel?.key === viewerRouteKey
+      ? stableViewerRepositoryLabel.label
+      : buildViewerRouteLabel({ namespace, slug });
+  const viewerTitle = inViewer ? viewerRepository?.label || fallbackViewerTitle : undefined;
+  const viewerCommit = formatPublicGalleryCommit(viewerSourceRepository?.commit);
   const viewerMeta = useMemo(() => {
     if (!currentSummary) {
       return undefined;
@@ -165,6 +190,12 @@ export default function PublicGalleryShell() {
             <img src="/tarskia-icon.svg" alt="" aria-hidden="true" className="h-7 w-7" />
             tarskia
           </Link>
+          <Link
+            to="/about"
+            className="hidden shrink-0 rounded-md px-2.5 py-1 text-sm text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground sm:inline-flex"
+          >
+            About
+          </Link>
           {viewerTitle ? (
             <>
               <div className="h-6 w-px bg-border" />
@@ -219,7 +250,7 @@ export default function PublicGalleryShell() {
             <div className="flex-1" />
           )}
           {inViewer ? (
-            <div className="ml-auto flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               {searchSummary ? (
                 <span className="truncate whitespace-nowrap text-[11px] text-muted-foreground">
                   {searchSummary}
@@ -279,6 +310,11 @@ export default function PublicGalleryShell() {
               </div>
             </div>
           ) : null}
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <GalleryFeedbackMenu />
+            <GitHubLink />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">

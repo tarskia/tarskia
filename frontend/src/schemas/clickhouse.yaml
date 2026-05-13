@@ -1,178 +1,246 @@
 owner: gallery
 name: clickhouse
 version: "0.1"
-description: ClickHouse-shaped architectural wrappers for modeling the database engine with native-looking runtime boundaries while staying on top of the shared core schemas.
+description: >-
+  ClickHouse-shaped architectural wrappers for the database engine, server runtime, coordination
+  layer, protocol surfaces, storage stack, and shipped operational tools.
 use:
+  - schema: core/base@0.1
+    alias: base
   - schema: core/software@0.1
     alias: sw
-  - schema: core/web-app@0.3
-    alias: web
-
 traits:
-  - id: protocol-surface-like
-    label: Protocol Surface
+  - id: engine-like
+    label: ClickHouse Engine
+    description: >-
+      Top-level ClickHouse boundary that spans the server, keeper, storage, protocol, and tooling
+      surfaces.
     extends: core/base.traits.containable
     analysis:
       flowType: through
+      expectedRelationIds:
+        - calls
     relationParticipation:
       - relation: core/software.relations.calls
-        endpoint: from
-      - relation: core/software.relations.calls
-        endpoint: to
-
+        endpoint: both
   - id: runtime-stack-like
     label: Runtime Stack
+    description: >-
+      Server/query runtime boundary that continues flow into storage, coordination, and protocol
+      surfaces.
     extends: core/base.traits.containable
     analysis:
       flowType: through
+      expectedRelationIds:
+        - calls
     relationParticipation:
       - relation: core/software.relations.calls
-        endpoint: from
-      - relation: core/software.relations.calls
-        endpoint: to
-
-  - id: tooling-like
-    label: Tooling
+        endpoint: both
+  - id: protocol-surface-like
+    label: Protocol Surface
+    description: External access boundary such as HTTP, native TCP, MySQL, PostgreSQL, or interserver traffic.
     extends: core/base.traits.containable
     analysis:
-      flowType: source
-      mayTerminate: true
+      flowType: through
+      expectedRelationIds:
+        - calls
     relationParticipation:
       - relation: core/software.relations.calls
-        endpoint: from
-
+        endpoint: both
   - id: coordination-like
-    label: Coordination
+    label: Coordination Service
+    description: Coordination boundary such as ClickHouse Keeper and keeper-adjacent utilities.
     extends: core/base.traits.containable
     analysis:
       flowType: sink
       mayTerminate: true
+      expectedRelationIds:
+        - calls
     relationParticipation:
       - relation: core/software.relations.calls
         endpoint: to
-
   - id: storage-stack-like
     label: Storage Stack
+    description: Persistence-facing boundary for storage engines, metadata, dictionaries, and disks.
     extends: core/base.traits.containable
     analysis:
       flowType: sink
       mayTerminate: true
+      expectedRelationIds:
+        - reads
+        - writes
+        - read-writes
     relationParticipation:
-      - relation: core/software.relations.calls
-        endpoint: to
       - relation: core/software.relations.reads
         endpoint: to
       - relation: core/software.relations.writes
         endpoint: to
       - relation: core/software.relations.read-writes
         endpoint: to
-
+  - id: tooling-like
+    label: Tooling
+    description: >-
+      Shipped clients and local operational tools such as clickhouse-client, local mode, benchmark,
+      compressor, and maintenance utilities.
+    extends: core/base.traits.containable
+    analysis:
+      flowType: source
+      mayTerminate: true
+      expectedRelationIds:
+        - calls
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: from
 types:
   - id: engine
     label: Engine
-    description: Top-level ClickHouse product/runtime boundary. Use this for the overall database engine when application or service is too narrow.
+    description: Top-level ClickHouse product/runtime boundary for the overall database system.
     extends: core/software.types.system
-    defaultTags: [core/software.tags.service]
-    display:
-      primaryTag: core/software.tags.service
-      style:
-        hue: 206
-
-  - id: runtime-stack
-    label: Runtime Stack
-    description: Named wrapper for a major active area such as server runtime, query runtime, or background maintenance.
-    traits: [gallery/clickhouse.traits.runtime-stack-like, core/base.traits.container]
+    traits:
+      - gallery/clickhouse.traits.engine-like
     analysis:
       topLevelBias: prefer
-    defaultTags: [core/software.tags.service]
+    defaultTags:
+      - core/software.tags.service
     containment:
+      allowedChildTypes:
+        - runtime-stack
+        - protocol-surface
+        - storage-stack
+        - coordination-service
+        - tool-suite
       allowedChildTraits:
-        [
-          core/base.traits.containable,
-          core/software.traits.compute,
-          core/software.traits.storage-boundary,
-          core/software.traits.storage,
-        ]
+        - core/base.traits.group-like
+        - core/software.traits.api-like
+        - core/software.traits.service-like
+        - core/software.traits.storage-boundary
+        - core/software.traits.storage
+        - core/software.traits.queueing
     display:
       primaryTag: core/software.tags.service
       defaultSize:
-        width: 200
-        height: 96
+        width: 320
+        height: 180
       style:
-        hue: 198
-
-  - id: protocol-surface
-    label: Protocol Surface
-    description: Externally meaningful access surface such as HTTP, native TCP, interserver, MySQL, PostgreSQL, or ArrowFlight.
-    extends: core/web-app.types.api
-    traits: [gallery/clickhouse.traits.protocol-surface-like]
-    analysis:
-      topLevelBias: neutral
-    display:
-      style:
-        hue: 218
-
-  - id: storage-stack
-    label: Storage Stack
-    description: Persistence-facing boundary for storage engines, disks, metadata catalog, dictionaries, and related subsystems.
-    traits: [gallery/clickhouse.traits.storage-stack-like, core/base.traits.container]
+        hue: 206
+      count:
+        childTypes:
+          - runtime-stack
+          - protocol-surface
+          - storage-stack
+          - coordination-service
+          - tool-suite
+        label: components
+  - id: runtime-stack
+    label: Runtime Stack
+    description: Named wrapper for server runtime, query runtime, or background maintenance areas.
+    traits:
+      - gallery/clickhouse.traits.runtime-stack-like
+      - core/base.traits.container
     analysis:
       topLevelBias: prefer
-    defaultTags: [core/software.tags.data]
+    defaultTags:
+      - core/software.tags.service
     containment:
       allowedChildTraits:
-        [
-          core/base.traits.containable,
-          core/software.traits.storage-boundary,
-          core/software.traits.storage,
-          core/software.traits.compute,
-        ]
+        - core/base.traits.group-like
+        - core/software.traits.api-like
+        - core/software.traits.service-like
+        - core/software.traits.queueing
+        - core/software.traits.storage-boundary
+        - core/software.traits.storage
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 220
+        height: 100
+      style:
+        hue: 198
+  - id: protocol-surface
+    label: Protocol Surface
+    description: >-
+      Externally meaningful access surface for native TCP, HTTP, interserver, MySQL, PostgreSQL, or
+      ArrowFlight traffic.
+    extends: core/software.types.system
+    traits:
+      - gallery/clickhouse.traits.protocol-surface-like
+    analysis:
+      topLevelBias: neutral
+    defaultTags:
+      - core/software.tags.integration
+    display:
+      primaryTag: core/software.tags.integration
+      style:
+        hue: 218
+  - id: storage-stack
+    label: Storage Stack
+    description: >-
+      Persistence-facing boundary for storage engines, disks, metadata catalog, dictionaries, and
+      related subsystems.
+    traits:
+      - gallery/clickhouse.traits.storage-stack-like
+      - core/base.traits.container
+    analysis:
+      topLevelBias: prefer
+    defaultTags:
+      - core/software.tags.data
+    containment:
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/software.traits.storage-boundary
+        - core/software.traits.storage
+        - core/software.traits.compute
     display:
       primaryTag: core/software.tags.data
       defaultSize:
-        width: 210
-        height: 110
+        width: 220
+        height: 120
       style:
         hue: 165
-
   - id: coordination-service
     label: Coordination Service
-    description: Coordination boundary such as ClickHouse Keeper and related coordination runtime.
-    traits: [gallery/clickhouse.traits.coordination-like, core/base.traits.container]
+    description: Coordination boundary for ClickHouse Keeper and related ZooKeeper-compatible utilities.
+    traits:
+      - gallery/clickhouse.traits.coordination-like
+      - core/base.traits.container
     analysis:
       topLevelBias: prefer
-    defaultTags: [core/software.tags.integration]
+    defaultTags:
+      - core/software.tags.integration
     containment:
       allowedChildTraits:
-        [
-          core/base.traits.containable,
-          core/software.traits.compute,
-          core/software.traits.storage-boundary,
-          core/software.traits.storage,
-        ]
+        - core/base.traits.group-like
+        - core/software.traits.compute
+        - core/software.traits.storage-boundary
+        - core/software.traits.storage
     display:
       primaryTag: core/software.tags.integration
       defaultSize:
-        width: 190
-        height: 84
+        width: 200
+        height: 92
       style:
         hue: 24
-
   - id: tool-suite
     label: Tool Suite
-    description: Wrapper for shipped clients and local operational tools such as clickhouse-client, local mode, benchmark, compressor, and disk utilities.
-    traits: [gallery/clickhouse.traits.tooling-like, core/base.traits.container]
+    description: >-
+      Wrapper for shipped clients and local operational tools such as clickhouse-client, local mode,
+      benchmark, compressor, and maintenance utilities.
+    traits:
+      - gallery/clickhouse.traits.tooling-like
+      - core/base.traits.container
     analysis:
       topLevelBias: neutral
-    defaultTags: [core/software.tags.integration]
+    defaultTags:
+      - core/software.tags.integration
     containment:
-      allowedChildTraits: [core/base.traits.containable, core/software.traits.compute]
+      allowedChildTraits:
+        - core/base.traits.group-like
+        - core/software.traits.compute
     display:
       primaryTag: core/software.tags.integration
       defaultSize:
-        width: 190
-        height: 84
+        width: 200
+        height: 92
       style:
         hue: 42
-
 relations: []

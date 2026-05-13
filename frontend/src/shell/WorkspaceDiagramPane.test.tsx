@@ -52,7 +52,8 @@ const renderFocusController = (
   const baseArgs: Parameters<typeof useFocusViewController>[0] = {
     sceneTree: buildFocusSceneTree(),
     expanded: { svc: true },
-    canvasSize: { width: 800, height: 600 },
+    getCurrentCanvasSize: () => ({ width: 800, height: 600 }),
+    canvasLayoutVersion: 0,
     showInspector: false,
     commitDoc: vi.fn(),
     flushUserGesture: vi.fn(() => false),
@@ -91,6 +92,15 @@ describe('shouldDelayWorkspaceCanvasMount', () => {
       shouldDelayWorkspaceCanvasMount({
         hasContent: true,
         defaultViewport: { x: 120, y: 80, zoom: 0.9 },
+      }),
+    ).toBe(false);
+  });
+
+  it('keeps an already visible canvas mounted while layout measurements settle', () => {
+    expect(
+      shouldDelayWorkspaceCanvasMount({
+        hasContent: true,
+        isLiveCanvasVisible: true,
       }),
     ).toBe(false);
   });
@@ -233,6 +243,7 @@ describe('shouldDelayWorkspaceCanvasMount', () => {
 
     expect(args.triggerEntityZoom).toHaveBeenCalledTimes(1);
     const zoomOptions = vi.mocked(args.triggerEntityZoom).mock.calls[0]?.[2];
+    expect(zoomOptions?.expandSingleChildChain).toBe(true);
     expect(zoomOptions?.onComplete).toEqual(expect.any(Function));
     expect(args.commitDoc).not.toHaveBeenCalled();
 

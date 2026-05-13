@@ -22,7 +22,7 @@ export function buildLayoutResult(params: {
   viewState: CompiledDiagramViewState;
   canvasSize?: { width: number; height: number } | null;
 }): LayoutResult {
-  const { graph, viewState, canvasSize } = params;
+  const { graph, viewState } = params;
   const tree = buildSceneTree({ tree: viewState.tree });
   const nodeVisuals = buildNodeVisualMap({ schema: graph.schema, tree });
   const edges = buildEdgeVisuals({
@@ -34,7 +34,6 @@ export function buildLayoutResult(params: {
     edges,
     tree,
     nodeVisuals,
-    canvasSize,
   });
   const visibleIds = (() => {
     return new Set([...tree.byId.keys()].filter((id) => id !== tree.rootId));

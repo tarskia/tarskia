@@ -38,5 +38,77 @@
     "file": "n8n.yaml",
     "visibility": "listed",
     "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "tarskia",
+    "title": "Tarskia",
+    "file": "tarskia.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "airflow",
+    "title": "Airflow",
+    "file": "airflow.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "clickhouse",
+    "title": "Clickhouse",
+    "file": "clickhouse.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "grafana",
+    "title": "Grafana",
+    "file": "grafana.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "temporal",
+    "title": "Temporal",
+    "file": "temporal.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "supabase",
+    "title": "Supabase",
+    "file": "supabase.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "prometheus",
+    "title": "Prometheus",
+    "file": "prometheus.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "immich",
+    "title": "Immich",
+    "file": "immich.yaml",
+    "visibility": "listed",
+    "starter": false
+  },
+  {
+    "namespace": "tarskia",
+    "slug": "keycloak",
+    "title": "Keycloak",
+    "file": "keycloak.yaml",
+    "visibility": "listed",
+    "starter": false
   }
 ]

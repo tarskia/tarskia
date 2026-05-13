@@ -1,7 +1,11 @@
 import { useCallback } from 'react';
 
 import type { CanonicalDiagramStructureQueries } from '../canvas/structure/queries';
-import type { NavigationIntent, StructuralTransitionIntent } from '../diagram/motion-types';
+import type {
+  NavigationIntent,
+  NavigationRequestResult,
+  StructuralTransitionIntent,
+} from '../diagram/motion-types';
 import {
   addEntityToDocument,
   buildEntityIndex,
@@ -57,6 +61,35 @@ const setExpandedState = (
   return normalizeNodesById(nextNodesById);
 };
 
+const collectSingleChildChainExpansionIds = (
+  rootId: string,
+  getChildren: (rootId: string) => Array<{ id: string }>,
+) => {
+  const expansionIds = [rootId];
+  let currentId = rootId;
+  while (true) {
+    const children = getChildren(currentId);
+    if (children.length !== 1) {
+      return expansionIds;
+    }
+    const childId = children[0]?.id;
+    if (!childId) {
+      return expansionIds;
+    }
+    const childChildren = getChildren(childId);
+    if (childChildren.length === 0) {
+      return expansionIds;
+    }
+    expansionIds.push(childId);
+    currentId = childId;
+  }
+};
+
+interface EntityZoomOptions {
+  onComplete?: () => void;
+  expandSingleChildChain?: boolean;
+}
+
 interface UseShellDiagramActionsArgs {
   state: {
     doc: SemanticDocument;
@@ -68,7 +101,7 @@ interface UseShellDiagramActionsArgs {
     ensureDiagramView: EnsureDiagramView;
   };
   transition: {
-    requestNavigation: (intent: NavigationIntent) => void;
+    requestNavigation: (intent: NavigationIntent) => NavigationRequestResult;
     cancelTransitions: () => void;
     setPendingStructuralTransitionIntent: (intent: StructuralTransitionIntent | null) => void;
     flushUserGesture: () => boolean;
@@ -207,10 +240,14 @@ export function useShellDiagramActions({
   ]);
 
   const triggerEntityZoom = useCallback(
-    (entityId: string, direction: 'in' | 'out', options?: { onComplete?: () => void }) => {
+    (entityId: string, direction: 'in' | 'out', options?: EntityZoomOptions) => {
       const nextExpanded = direction === 'in';
-      const currentExpanded = doc.view?.nodesById?.[entityId]?.expanded ?? false;
-      if (currentExpanded === nextExpanded) return false;
+      const targetIds =
+        nextExpanded && options?.expandSingleChildChain
+          ? collectSingleChildChainExpansionIds(entityId, structure.getChildren)
+          : [entityId];
+      const willChange = targetIds.some((id) => Boolean(expanded[id]) !== nextExpanded);
+      if (!willChange) return false;
       flushUserGesture();
       const intent: StructuralTransitionIntent = {
         direction,
@@ -223,11 +260,22 @@ export function useShellDiagramActions({
       commitDoc(
         (prev) => {
           const view = ensureDiagramView(prev.view);
+          let nextNodesById = view.nodesById;
+          let changed = false;
+          const currentExpanded = getDiagramViewExpandedMap(view);
+          for (const id of targetIds) {
+            if (Boolean(currentExpanded[id]) === nextExpanded) {
+              continue;
+            }
+            nextNodesById = setExpandedState(nextNodesById, id, nextExpanded);
+            changed = true;
+          }
+          if (!changed) return prev;
           return {
             ...prev,
             view: {
               ...view,
-              nodesById: setExpandedState(view.nodesById, entityId, nextExpanded),
+              nodesById: nextNodesById,
             },
           };
         },
@@ -237,10 +285,11 @@ export function useShellDiagramActions({
     },
     [
       commitDoc,
-      doc.view?.nodesById,
       ensureDiagramView,
+      expanded,
       flushUserGesture,
       setPendingStructuralTransitionIntent,
+      structure.getChildren,
     ],
   );
 

@@ -42,7 +42,6 @@ interface UseDiagramSurfaceArgs {
     options?: { undoable?: boolean },
   ) => void;
   deleteEntities: (ids: string[]) => void;
-  showInspector?: boolean;
   showDebug: boolean;
   nodeVisualMode: NodeVisualMode;
   triggerEntityZoom: (entityId: string, direction: 'in' | 'out') => boolean;
@@ -74,7 +73,6 @@ export function useDiagramSurface({
   addEntity,
   commitDoc,
   deleteEntities,
-  showInspector = false,
   showDebug,
   nodeVisualMode,
   triggerEntityZoom,
@@ -102,10 +100,10 @@ export function useDiagramSurface({
       onCanvasUnmount: diagramEngine.onCanvasUnmount,
       onLeftOcclusionChange: diagramEngine.setLeftOcclusion,
       screenToWorldPosition: diagramEngine.screenToWorldPosition,
-      inspectorVisible: showInspector,
       readOnly,
       showDebug,
-      canvasSize: diagramEngine.canvasSize,
+      getCurrentCanvasSize: diagramEngine.getCurrentCanvasSize,
+      canvasLayoutVersion: diagramEngine.canvasLayoutVersion,
       minZoom,
       maxZoom,
       nodeVisualMode,

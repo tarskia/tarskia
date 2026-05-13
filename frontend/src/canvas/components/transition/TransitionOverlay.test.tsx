@@ -92,8 +92,7 @@ describe('TransitionOverlay', () => {
       />,
     );
 
-    expect(markup).toContain('Expand all');
-    expect(markup).toContain('Collapse once');
+    expect(markup).toContain('More expand and collapse actions');
   });
 
   it('omits control rows that are absent from the sampled frame view', () => {
@@ -131,8 +130,7 @@ describe('TransitionOverlay', () => {
       />,
     );
 
-    expect(markup).not.toContain('Expand all');
-    expect(markup).not.toContain('Expand once');
+    expect(markup).not.toContain('More expand and collapse actions');
   });
 
   it('applies frame z-index to transition node shells', () => {
@@ -273,6 +271,7 @@ describe('TransitionOverlay', () => {
 
     expect(markup).toContain('<clipPath');
     expect(markup).toContain('edge-underlay-path');
+    expect(markup).toContain('fill="none"');
     expect(markup).not.toContain('edge-overlay-path-branch');
   });
 

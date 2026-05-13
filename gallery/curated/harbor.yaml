@@ -1415,4 +1415,5 @@ metadata:
     repo: https://github.com/goharbor/harbor
     url: https://github.com/goharbor/harbor
     commit: 88ab66244ef0d6c5fad21039084b017241896dc4
+  description: Container registry platform for images, artifacts, and security
   name: Harbor

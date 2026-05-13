@@ -73,6 +73,24 @@ export type NavigationIntent =
       kind: 'restore-saved';
     });
 
+export type NavigationRequestResult =
+  | {
+      status: 'queued';
+      reason: 'deferred-frame' | 'pending-motion' | 'motion-plan';
+    }
+  | {
+      status: 'applied';
+      reason: 'synchronous';
+    }
+  | {
+      status: 'noop';
+      reason: 'no-target' | 'same-viewport';
+    }
+  | {
+      status: 'unavailable';
+      reason: 'missing-canvas';
+    };
+
 export interface CameraTrack {
   from: ViewportState;
   to: ViewportState;

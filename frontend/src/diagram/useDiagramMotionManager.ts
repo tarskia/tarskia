@@ -35,6 +35,7 @@ import {
   resolveNavigationViewport,
   viewportStatesEqual,
 } from './camera-navigation';
+import type { CanvasSize, GetCurrentCanvasSize } from './canvas-size';
 import type {
   DiagramCameraPolicy,
   DiagramCameraRect,
@@ -42,6 +43,7 @@ import type {
   MotionPlan,
   MotionSegment,
   NavigationIntent,
+  NavigationRequestResult,
   StructuralChoreographyRequest,
 } from './motion-types';
 
@@ -81,7 +83,7 @@ interface UseDiagramMotionManagerArgs {
   animationSettings: AnimationSettings;
   savedViewport?: ViewportState;
   cameraPolicy?: DiagramCameraPolicy;
-  canvasSize: { width: number; height: number } | null;
+  getCurrentCanvasSize: GetCurrentCanvasSize;
   minZoom: number;
   maxZoom: number;
   persistViewport: (viewport: ViewportState) => void;
@@ -220,7 +222,7 @@ export const computePostOverlayBridgeViewport = (params: {
 
 const computeSnapshotSceneFitViewport = (params: {
   snapshot: CanvasRenderSnapshot;
-  canvasSize: { width: number; height: number } | null;
+  canvasSize: CanvasSize | null;
   leftOcclusion: number;
   minZoom: number;
   maxZoom: number;
@@ -451,7 +453,7 @@ export const computeStructuralCameraDurationMs = (params: {
   from: ViewportState;
   to: ViewportState;
   baseDurationMs: number;
-  canvasSize: { width: number; height: number } | null;
+  canvasSize: CanvasSize | null;
 }) => {
   const { from, to, baseDurationMs, canvasSize } = params;
   if (baseDurationMs <= 0 || !canvasSize) {
@@ -519,7 +521,7 @@ export const buildMotionPlanFromChoreographyRequest = (params: {
   request: StructuralChoreographyRequest;
   animationSettings: AnimationSettings;
   cameraPolicy?: DiagramCameraPolicy;
-  canvasSize: { width: number; height: number } | null;
+  canvasSize: CanvasSize | null;
   leftOcclusion: number;
   minZoom: number;
   maxZoom: number;
@@ -714,7 +716,7 @@ export function useDiagramMotionManager({
   animationSettings,
   savedViewport,
   cameraPolicy,
-  canvasSize,
+  getCurrentCanvasSize,
   minZoom,
   maxZoom,
   persistViewport,
@@ -1057,13 +1059,13 @@ export function useDiagramMotionManager({
   };
 
   const startPlan = useCallback(
-    (plan: MotionPlan, options?: { onComplete?: () => void }) => {
+    (plan: MotionPlan, options?: { onComplete?: () => void }): NavigationRequestResult => {
       if (userGestureActiveRef.current || !canvasReadyRef.current) {
         pendingManagedMotionRef.current = {
           plan,
           options,
         };
-        return;
+        return { status: 'queued', reason: 'pending-motion' };
       }
       pendingManagedMotionRef.current = null;
       cancelScheduledFrame();
@@ -1099,16 +1101,21 @@ export function useDiagramMotionManager({
 
       if (!firstSegment) {
         finishMotion(now);
-        return;
+        return { status: 'applied', reason: 'synchronous' };
       }
 
       enterSegmentRef.current(0, now);
+      return { status: 'queued', reason: 'motion-plan' };
     },
     [cancelScheduledFrame, finishMotion],
   );
 
   const computeNavigationViewport = useCallback(
-    (intent: NavigationIntent, policy: ResolvedNavigationPolicy): ViewportState | null => {
+    (
+      intent: NavigationIntent,
+      policy: ResolvedNavigationPolicy,
+      canvasSize: CanvasSize | null,
+    ): ViewportState | null => {
       return resolveNavigationViewport({
         intent,
         policy,
@@ -1123,7 +1130,6 @@ export function useDiagramMotionManager({
       });
     },
     [
-      canvasSize,
       getObservedViewport,
       getLeftOcclusion,
       getNodeSetBounds,
@@ -1135,7 +1141,7 @@ export function useDiagramMotionManager({
   );
 
   const navigate = useCallback(
-    (intent: NavigationIntent, options?: { onComplete?: () => void }) => {
+    (intent: NavigationIntent, options?: { onComplete?: () => void }): NavigationRequestResult => {
       if (intent.deferUntilNextFrame) {
         cancelDeferredNavigationFrame();
         deferredNavigationFrameRef.current = requestAnimationFrame(() => {
@@ -1148,12 +1154,15 @@ export function useDiagramMotionManager({
             options,
           );
         });
-        return;
+        return { status: 'queued', reason: 'deferred-frame' };
       }
       const policy = resolveNavigationPolicy(intent, animationSettings, cameraPolicy);
-      const targetViewport = computeNavigationViewport(intent, policy);
+      const canvasSize = getCurrentCanvasSize();
+      const targetViewport = computeNavigationViewport(intent, policy, canvasSize);
       if (!targetViewport) {
-        return;
+        return canvasSize
+          ? { status: 'noop', reason: 'no-target' }
+          : { status: 'unavailable', reason: 'missing-canvas' };
       }
       const currentViewport = getObservedViewport();
       if (viewportStatesEqual(currentViewport, targetViewport)) {
@@ -1161,9 +1170,9 @@ export function useDiagramMotionManager({
           persistNow(targetViewport);
         }
         options?.onComplete?.();
-        return;
+        return { status: 'noop', reason: 'same-viewport' };
       }
-      startPlan(
+      return startPlan(
         {
           segments: [
             {
@@ -1184,6 +1193,7 @@ export function useDiagramMotionManager({
       animationSettings,
       cancelDeferredNavigationFrame,
       computeNavigationViewport,
+      getCurrentCanvasSize,
       getObservedViewport,
       persistNow,
       startPlan,
@@ -1192,9 +1202,7 @@ export function useDiagramMotionManager({
   );
 
   const requestNavigation = useCallback(
-    (intent: NavigationIntent) => {
-      navigate(intent);
-    },
+    (intent: NavigationIntent): NavigationRequestResult => navigate(intent),
     [navigate],
   );
 
@@ -1205,7 +1213,7 @@ export function useDiagramMotionManager({
           request,
           animationSettings,
           cameraPolicy,
-          canvasSize,
+          canvasSize: getCurrentCanvasSize(),
           leftOcclusion: getLeftOcclusion(),
           minZoom,
           maxZoom,
@@ -1213,7 +1221,15 @@ export function useDiagramMotionManager({
         options,
       );
     },
-    [animationSettings, cameraPolicy, canvasSize, getLeftOcclusion, maxZoom, minZoom, startPlan],
+    [
+      animationSettings,
+      cameraPolicy,
+      getCurrentCanvasSize,
+      getLeftOcclusion,
+      maxZoom,
+      minZoom,
+      startPlan,
+    ],
   );
 
   const reportUserGestureStart = useCallback(() => {

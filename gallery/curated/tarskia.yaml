@@ -1,0 +1,2191 @@
+version: 0.1.0
+schemaRefs:
+  - schema: gallery/tarskia@0.1
+    layer: 0
+  - schema: core/frontend@0.3
+    layer: 1
+  - schema: core/code@0.1
+    layer: 1
+  - schema: core/web-app@0.3
+    layer: 1
+  - schema: core/frontend@0.3
+    layer: 0
+  - schema: core/web-app@0.3
+    layer: 0
+  - schema: core/base@0.1
+    layer: 0
+  - schema: core/software@0.1
+    layer: 1
+entities:
+  - id: browser-portal-app
+    type: gallery/tarskia.types.portal-app
+    name: Browser Portal App
+    description: Browser portal app split into a browser runtime system plus gallery and studio surfaces.
+    props:
+      framework: react
+      runtime: browser
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/AppShell.tsx
+        - input: primary
+          path: frontend/src/EditorShell.tsx
+        - input: primary
+          path: frontend/src/PublicGalleryShell.tsx
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+        - input: primary
+          path: frontend/src/semantic/bootstrap.ts
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+    children:
+      - id: browser-portal-app/browser-runtime
+        type: core/software.types.system
+        name: Browser Runtime
+        description: Browser runtime split between route dispatch and semantic bootstrap.
+        props:
+          framework: react
+          runtime: browser
+        provenance:
+          locations:
+            - input: primary
+              path: frontend/src/AppShell.tsx
+            - input: primary
+              path: frontend/src/EditorShell.tsx
+            - input: primary
+              path: frontend/src/App.tsx
+            - input: primary
+              path: frontend/src/PublicGalleryShell.tsx
+            - input: primary
+              path: frontend/src/gallery/gallery-query.ts
+            - input: primary
+              path: frontend/src/gallery/local-gallery.ts
+            - input: primary
+              path: frontend/src/shell/schema-authoring-support.ts
+            - input: primary
+              path: frontend/src/semantic/bootstrap.ts
+            - input: primary
+              path: frontend/src/semantic/bundled-diagrams.ts
+            - input: primary
+              path: frontend/src/semantic/trusted-bundled-assets.ts
+        children:
+          - id: browser-portal-app/browser-runtime/route-dispatch
+            type: core/software.types.system
+            name: Route Dispatch
+            description: Route dispatch split into gallery and studio shells plus query and authoring helpers.
+            props:
+              framework: react
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: frontend/src/AppShell.tsx
+                - input: primary
+                  path: frontend/src/EditorShell.tsx
+                - input: primary
+                  path: frontend/src/PublicGalleryShell.tsx
+                - input: primary
+                  path: frontend/src/App.tsx
+                - input: primary
+                  path: frontend/src/gallery/gallery-query.ts
+                - input: primary
+                  path: frontend/src/gallery/local-gallery.ts
+                - input: primary
+                  path: frontend/src/shell/schema-authoring-support.ts
+            children:
+              - id: browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell
+                type: core/web-app.types.group
+                name: Public Gallery Shell
+                description: Public gallery shell split into browsing and viewer route surfaces.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: frontend/src/AppShell.tsx
+                    - input: primary
+                      path: frontend/src/PublicGalleryShell.tsx
+                children:
+                  - id: >-
+                      browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-index
+                    type: core/frontend.types.frontend
+                    name: Public Gallery Index
+                    description: Listing surface for gallery browsing.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/AppShell.tsx
+                        - input: primary
+                          path: frontend/src/PublicGalleryShell.tsx
+                  - id: >-
+                      browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-viewer
+                    type: core/frontend.types.frontend
+                    name: Public Gallery Viewer
+                    description: Viewer outlet for an individual gallery diagram.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/AppShell.tsx
+                        - input: primary
+                          path: frontend/src/PublicGalleryShell.tsx
+              - id: browser-portal-app/browser-runtime/route-dispatch/gallery-query
+                type: core/code.types.module
+                name: Gallery Query
+                description: Gallery retrieval split into routing plus remote and local client paths.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: frontend/src/gallery/gallery-query.ts
+                    - input: primary
+                      path: README.md
+                children:
+                  - id: browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router
+                    type: core/code.types.module
+                    name: Query Router
+                    description: >-
+                      Gallery query router that applies retry policy, dispatches remote retrieval,
+                      and routes to local fallback.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/gallery/gallery-query.ts
+                        - input: primary
+                          path: README.md
+                    children:
+                      - id: >-
+                          browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router/gallery-query-policy
+                        type: core/code.types.module
+                        name: Gallery Query Policy
+                        description: Retry limits, error checks, and backoff.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: frontend/src/gallery/gallery-query.ts
+                            - input: primary
+                              path: README.md
+                      - id: >-
+                          browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router/remote-query-route
+                        type: core/code.types.module
+                        name: Remote Query Route
+                        description: Retryable API-backed gallery retrieval.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: frontend/src/gallery/gallery-query.ts
+                      - id: >-
+                          browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router/local-fallback-route
+                        type: core/code.types.module
+                        name: Local Fallback Route
+                        description: Gallery retrieval through the local corpus.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: frontend/src/gallery/gallery-query.ts
+                            - input: primary
+                              path: README.md
+                  - id: >-
+                      browser-portal-app/browser-runtime/route-dispatch/gallery-query/remote-gallery-client
+                    type: core/code.types.module
+                    name: Remote Gallery Client
+                    description: Calls the hosted backend API.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/gallery/gallery-query.ts
+                        - input: primary
+                          path: frontend/src/api/generated/gallery/gallery.ts
+                  - id: >-
+                      browser-portal-app/browser-runtime/route-dispatch/gallery-query/local-fallback-client
+                    type: core/code.types.module
+                    name: Local Fallback Client
+                    description: Calls the repository-backed local gallery.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/gallery/gallery-query.ts
+                        - input: primary
+                          path: README.md
+              - id: browser-portal-app/browser-runtime/route-dispatch/local-gallery
+                type: core/code.types.module
+                name: Local Gallery
+                description: Curated file loader.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: frontend/src/gallery/local-gallery.ts
+                    - input: primary
+                      path: frontend/src/gallery/gallery-query.ts
+              - id: browser-portal-app/browser-runtime/route-dispatch/studio-shell
+                type: core/web-app.types.group
+                name: Studio Shell
+                description: >-
+                  Studio shell split into the authenticated editor surface, schema authoring
+                  support, publish assessment, and manager panel.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: frontend/src/EditorShell.tsx
+                    - input: primary
+                      path: frontend/src/App.tsx
+                    - input: primary
+                      path: frontend/src/shell/schema-authoring-support.ts
+                children:
+                  - id: browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell
+                    type: core/frontend.types.frontend
+                    name: Editor Shell
+                    description: Authenticated editor shell boundary inside the browser runtime.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/EditorShell.tsx
+                        - input: primary
+                          path: frontend/src/App.tsx
+                    children:
+                      - id: >-
+                          browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary
+                        type: core/web-app.types.group
+                        name: Editor Shell Boundary
+                        description: >-
+                          Browser-runtime editor shell boundary with layout and schema authoring
+                          branches.
+                        props:
+                          mode: mixed
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: frontend/src/EditorShell.tsx
+                            - input: primary
+                              path: frontend/src/App.tsx
+                        children:
+                          - id: >-
+                              browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime
+                            type: core/frontend.types.frontend
+                            name: Editor Shell Runtime
+                            description: >-
+                              Editor shell runtime boundary and the main workspace and authoring
+                              branches.
+                            provenance:
+                              locations:
+                                - input: primary
+                                  path: frontend/src/EditorShell.tsx
+                                - input: primary
+                                  path: frontend/src/App.tsx
+                            children:
+                              - id: >-
+                                  browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime
+                                type: core/web-app.types.group
+                                name: Editor Shell Runtime
+                                description: >-
+                                  Runtime entrypoint plus workspace layout and schema authoring
+                                  modules.
+                                props:
+                                  mode: mixed
+                                provenance:
+                                  locations:
+                                    - input: primary
+                                      path: frontend/src/EditorShell.tsx
+                                    - input: primary
+                                      path: frontend/src/App.tsx
+                                children:
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/editor-shell-runtime
+                                    type: core/frontend.types.frontend
+                                    name: Editor Shell Runtime
+                                    description: Runtime entrypoint for the editor shell.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/EditorShell.tsx
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/workspace-layout-controller
+                                    type: core/code.types.module
+                                    name: Workspace Layout Controller
+                                    description: Workspace layout orchestration.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/EditorShell.tsx
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/schema-authoring-support
+                                    type: core/code.types.module
+                                    name: Schema Authoring Support
+                                    description: Schema authoring workflow support.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                                        - input: primary
+                                          path: frontend/src/shell/schema-authoring-support.ts
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/schema-editor-assessment
+                                    type: core/code.types.module
+                                    name: Schema Editor Assessment
+                                    description: Schema editor assessment stage.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                                        - input: primary
+                                          path: frontend/src/shell/schema-authoring-support.ts
+                              - id: >-
+                                  browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/workspace-layout-controller
+                                type: core/web-app.types.group
+                                name: Workspace Layout Controller
+                                description: >-
+                                  Workspace layout orchestration for schema closure and schema
+                                  manager presentation.
+                                props:
+                                  mode: mixed
+                                provenance:
+                                  locations:
+                                    - input: primary
+                                      path: frontend/src/EditorShell.tsx
+                                    - input: primary
+                                      path: frontend/src/App.tsx
+                                children:
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/workspace-layout-controller/schema-closure-builder
+                                    type: core/code.types.module
+                                    name: Schema Closure Builder
+                                    description: Builds the schema closure used by the workspace.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/model/validation/schema-closure.ts
+                                        - input: primary
+                                          path: frontend/src/shell/useAppShellController.tsx
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/workspace-layout-controller/schema-manager-bridge
+                                    type: core/web-app.types.application
+                                    name: Schema Manager Bridge
+                                    description: Schema manager presentation boundary.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/shell/useAppShellController.tsx
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                                        - input: primary
+                                          path: frontend/src/ui/editor/SchemaManagerPanel.tsx
+                              - id: >-
+                                  browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-authoring-support
+                                type: core/web-app.types.group
+                                name: Schema Authoring Support
+                                description: >-
+                                  Schema authoring orchestration and the assessment boundary it
+                                  feeds.
+                                props:
+                                  mode: mixed
+                                provenance:
+                                  locations:
+                                    - input: primary
+                                      path: frontend/src/App.tsx
+                                    - input: primary
+                                      path: frontend/src/shell/schema-authoring-support.ts
+                                children:
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-authoring-support/schema-authoring-core
+                                    type: core/code.types.module
+                                    name: Schema Authoring Core
+                                    description: Builds authoring state and drives the assessment handoff.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/shell/schema-authoring-support.ts
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-authoring-support/schema-assessment-engine
+                                    type: core/web-app.types.application
+                                    name: Schema Assessment Engine
+                                    description: Assessment boundary for editor and publish readiness.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: >-
+                                            frontend/src/model/validation/schema-editor-assessment.ts
+                                        - input: primary
+                                          path: frontend/src/model/validation/schema-publish.ts
+                                        - input: primary
+                                          path: frontend/src/model/validation/index.ts
+                              - id: >-
+                                  browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-editor-assessment
+                                type: core/web-app.types.group
+                                name: Schema Editor Assessment
+                                description: >-
+                                  Editor-side assessment pipeline for schema drafts and publish
+                                  readiness.
+                                props:
+                                  mode: mixed
+                                provenance:
+                                  locations:
+                                    - input: primary
+                                      path: frontend/src/App.tsx
+                                    - input: primary
+                                      path: frontend/src/shell/schema-authoring-support.ts
+                                children:
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-editor-assessment/schema-editor-assessment-core
+                                    type: core/code.types.module
+                                    name: Schema Editor Assessment Core
+                                    description: >-
+                                      Builds editor assessment state and triggers publish
+                                      assessment.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: >-
+                                            frontend/src/model/validation/schema-editor-assessment.ts
+                                        - input: primary
+                                          path: frontend/src/shell/schema-authoring-support.ts
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-editor-assessment/schema-publish-assessment
+                                    type: core/web-app.types.application
+                                    name: Schema Publish Assessment
+                                    description: Publish readiness boundary.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/model/validation/schema-publish.ts
+                                        - input: primary
+                                          path: >-
+                                            frontend/src/model/validation/schema-editor-assessment.ts
+                          - id: >-
+                              browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller
+                            type: core/web-app.types.group
+                            name: Workspace Layout Controller
+                            description: >-
+                              Workspace layout orchestration boundary between bridge and closure
+                              computation.
+                            props:
+                              mode: mixed
+                            provenance:
+                              locations:
+                                - input: primary
+                                  path: frontend/src/EditorShell.tsx
+                                - input: primary
+                                  path: frontend/src/App.tsx
+                            children:
+                              - id: >-
+                                  browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller/schema-manager-bridge
+                                type: core/web-app.types.group
+                                name: Schema Manager Bridge
+                                description: >-
+                                  Workspace state that bridges schema manager data into closure
+                                  computation.
+                                props:
+                                  mode: mixed
+                                provenance:
+                                  locations:
+                                    - input: primary
+                                      path: frontend/src/EditorShell.tsx
+                                    - input: primary
+                                      path: frontend/src/App.tsx
+                                children:
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller/schema-manager-bridge/schema-manager-state
+                                    type: core/code.types.module
+                                    name: Schema Manager State
+                                    description: >-
+                                      Derives schema dependencies, streams, and notices for the
+                                      workspace.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/shell/useAppShellController.tsx
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller/schema-manager-bridge/schema-manager-bridge-core
+                                    type: core/web-app.types.application
+                                    name: Schema Manager Bridge Core
+                                    description: >-
+                                      Boundary that hands workspace state toward closure
+                                      computation.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/EditorShell.tsx
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                                        - input: primary
+                                          path: frontend/src/model/validation/schema-closure.ts
+                              - id: >-
+                                  browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller/schema-closure-builder
+                                type: core/web-app.types.group
+                                name: Schema Closure Builder
+                                description: >-
+                                  Schema closure resolution and runtime materialization for
+                                  workspace layout.
+                                props:
+                                  mode: mixed
+                                provenance:
+                                  locations:
+                                    - input: primary
+                                      path: frontend/src/App.tsx
+                                    - input: primary
+                                      path: frontend/src/model/validation/schema-closure.ts
+                                children:
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller/schema-closure-builder/schema-closure-resolution
+                                    type: core/code.types.module
+                                    name: Schema Closure Resolution
+                                    description: Resolves the schema closure from the catalog and raw set.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/model/validation/schema-closure.ts
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller/schema-closure-builder/schema-closure-materialization
+                                    type: core/web-app.types.application
+                                    name: Schema Closure Materialization
+                                    description: Runtime materialization boundary.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/model/validation/schema-closure.ts
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                          - id: >-
+                              browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support
+                            type: core/web-app.types.group
+                            name: Schema Authoring Support
+                            description: >-
+                              Schema authoring support workflow boundary for assessment, impact, and
+                              publish readiness.
+                            props:
+                              mode: mixed
+                            provenance:
+                              locations:
+                                - input: primary
+                                  path: frontend/src/App.tsx
+                                - input: primary
+                                  path: frontend/src/shell/schema-authoring-support.ts
+                            children:
+                              - id: >-
+                                  browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/schema-editor-assessment
+                                type: core/web-app.types.group
+                                name: Schema Editor Assessment
+                                description: >-
+                                  Editor-side assessment boundary that computes draft results and
+                                  forwards impact handling.
+                                props:
+                                  mode: mixed
+                                provenance:
+                                  locations:
+                                    - input: primary
+                                      path: frontend/src/App.tsx
+                                    - input: primary
+                                      path: frontend/src/shell/schema-authoring-support.ts
+                                children:
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/schema-editor-assessment/schema-editor-assessment-core
+                                    type: core/code.types.module
+                                    name: Schema Editor Assessment Core
+                                    description: Computes editor assessment results from draft schema state.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: >-
+                                            frontend/src/model/validation/schema-editor-assessment.ts
+                                        - input: primary
+                                          path: frontend/src/shell/schema-authoring-support.ts
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/schema-editor-assessment/schema-assessment-impact-bridge
+                                    type: core/web-app.types.application
+                                    name: Schema Assessment Impact Bridge
+                                    description: Forwards assessment results into impact analysis.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/shell/schema-authoring-support.ts
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                              - id: >-
+                                  browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/diagram-impact-analysis
+                                type: core/web-app.types.group
+                                name: Diagram Impact Analysis
+                                description: >-
+                                  Editor-side impact computation that bridges assessment into
+                                  publish readiness.
+                                props:
+                                  mode: mixed
+                                provenance:
+                                  locations:
+                                    - input: primary
+                                      path: frontend/src/shell/schema-authoring-support.ts
+                                children:
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/diagram-impact-analysis/diagram-impact-core
+                                    type: core/code.types.module
+                                    name: Diagram Impact Core
+                                    description: Computes impact signals from the editor assessment.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/shell/schema-authoring-support.ts
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/diagram-impact-analysis/diagram-impact-publish-bridge
+                                    type: core/web-app.types.application
+                                    name: Diagram Impact Publish Bridge
+                                    description: Forwards impact results into publish readiness.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/shell/schema-authoring-support.ts
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                              - id: >-
+                                  browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/publish-assessment
+                                type: core/web-app.types.group
+                                name: Publish Assessment
+                                description: Publish readiness assessment boundary for schema authoring.
+                                props:
+                                  mode: mixed
+                                provenance:
+                                  locations:
+                                    - input: primary
+                                      path: frontend/src/App.tsx
+                                    - input: primary
+                                      path: frontend/src/shell/schema-authoring-support.ts
+                                children:
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/publish-assessment/schema-publish-assessment-core
+                                    type: core/code.types.module
+                                    name: Schema Publish Assessment Core
+                                    description: Computes publish readiness from impact results.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/model/validation/schema-publish.ts
+                                        - input: primary
+                                          path: frontend/src/shell/schema-authoring-support.ts
+                                  - id: >-
+                                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/publish-assessment/schema-publish-bridge
+                                    type: core/web-app.types.application
+                                    name: Schema Publish Bridge
+                                    description: Terminal boundary for publish readiness handoff.
+                                    provenance:
+                                      locations:
+                                        - input: primary
+                                          path: frontend/src/shell/schema-authoring-support.ts
+                                        - input: primary
+                                          path: frontend/src/App.tsx
+                  - id: >-
+                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/schema-authoring-support
+                    type: core/code.types.module
+                    name: Schema Authoring Support
+                    description: >-
+                      Schema authoring workflow for draft validation, diagram impact, and publish
+                      assessment.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/shell/schema-authoring-support.ts
+                        - input: primary
+                          path: frontend/src/App.tsx
+                    children:
+                      - id: >-
+                          browser-portal-app/browser-runtime/route-dispatch/studio-shell/schema-authoring-support/schema-editor-assessment
+                        type: core/code.types.module
+                        name: Schema Editor Assessment
+                        description: Validates draft input and publish readiness.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: frontend/src/shell/schema-authoring-support.ts
+                            - input: primary
+                              path: frontend/src/App.tsx
+                      - id: >-
+                          browser-portal-app/browser-runtime/route-dispatch/studio-shell/schema-authoring-support/diagram-impact-analysis
+                        type: core/code.types.module
+                        name: Diagram Impact Analysis
+                        description: Checks schema changes against the current diagram.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: frontend/src/shell/schema-authoring-support.ts
+                      - id: >-
+                          browser-portal-app/browser-runtime/route-dispatch/studio-shell/schema-authoring-support/publish-assessment-bridge
+                        type: core/code.types.module
+                        name: Publish Assessment Bridge
+                        description: Prepares dependencies and handoff to publish assessment.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: frontend/src/shell/schema-authoring-support.ts
+                  - id: >-
+                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/publish-assessment
+                    type: core/code.types.module
+                    name: Publish Assessment
+                    description: Publish assessment state for schema authoring and panel handoff.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/shell/schema-authoring-support.ts
+                        - input: primary
+                          path: frontend/src/App.tsx
+                    children:
+                      - id: >-
+                          browser-portal-app/browser-runtime/route-dispatch/studio-shell/publish-assessment/published-diagram-impact
+                        type: core/code.types.module
+                        name: Published Diagram Impact
+                        description: Evaluates the current diagram against a published schema candidate.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: frontend/src/shell/schema-authoring-support.ts
+                      - id: >-
+                          browser-portal-app/browser-runtime/route-dispatch/studio-shell/publish-assessment/schema-cookbook-availability
+                        type: core/code.types.module
+                        name: Schema Cookbook Availability
+                        description: Tracks cookbook insertion and dependency state for publishing.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: frontend/src/shell/schema-authoring-support.ts
+                      - id: >-
+                          browser-portal-app/browser-runtime/route-dispatch/studio-shell/publish-assessment/schema-manager-bridge
+                        type: core/code.types.module
+                        name: Schema Manager Bridge
+                        description: Packages publish assessment for the editor panel.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: frontend/src/shell/schema-authoring-support.ts
+                            - input: primary
+                              path: frontend/src/App.tsx
+                  - id: >-
+                      browser-portal-app/browser-runtime/route-dispatch/studio-shell/schema-manager-panel
+                    type: core/frontend.types.frontend
+                    name: Schema Manager Panel
+                    description: Panel for schema management and edits.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/ui/editor/SchemaManagerPanel.tsx
+                        - input: primary
+                          path: frontend/src/App.tsx
+              - id: browser-portal-app/browser-runtime/route-dispatch/schema-authoring-support
+                type: core/code.types.module
+                name: Schema Authoring Support
+                description: Schema validation and publish helper.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: frontend/src/shell/schema-authoring-support.ts
+                    - input: primary
+                      path: frontend/src/App.tsx
+          - id: browser-portal-app/browser-runtime/semantic-bootstrap
+            type: core/web-app.types.group
+            name: Semantic Bootstrap
+            description: Semantic bootstrap split into startup coordination and bundled asset boundaries.
+            props:
+              framework: react
+              runtime: browser
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: frontend/src/semantic/bootstrap.ts
+                - input: primary
+                  path: frontend/src/semantic/bundled-diagrams.ts
+                - input: primary
+                  path: frontend/src/semantic/trusted-bundled-assets.ts
+            children:
+              - id: browser-portal-app/browser-runtime/semantic-bootstrap/bootstrap
+                type: core/code.types.module
+                name: Bootstrap
+                description: >-
+                  Bootstrap runtime for loading trusted bundled semantic assets before the browser
+                  shells render.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: frontend/src/semantic/bootstrap.ts
+                    - input: primary
+                      path: frontend/src/AppShell.tsx
+                children:
+                  - id: >-
+                      browser-portal-app/browser-runtime/semantic-bootstrap/bootstrap/bootstrap-runtime
+                    type: core/code.types.module
+                    name: Bootstrap Runtime
+                    description: Startup loader for bundled semantic assets.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/semantic/bootstrap.ts
+                        - input: primary
+                          path: frontend/src/AppShell.tsx
+              - id: browser-portal-app/browser-runtime/semantic-bootstrap/bundled-diagrams
+                type: core/web-app.types.group
+                name: Bundled Diagrams
+                description: Bundled starter diagram exports consumed by the bootstrap path.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: frontend/src/semantic/bundled-diagrams.ts
+                    - input: primary
+                      path: frontend/src/semantic/bootstrap.ts
+                children:
+                  - id: >-
+                      browser-portal-app/browser-runtime/semantic-bootstrap/bundled-diagrams/starter-diagram-bundle
+                    type: core/web-app.types.group
+                    name: Starter Diagram Bundle
+                    description: Bundled starter diagram assets used during bootstrap.
+                    props:
+                      mode: typed
+                      groupType: core/code.types.module
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/semantic/bundled-diagrams.ts
+                        - input: primary
+                          path: frontend/src/semantic/bootstrap.ts
+                    children:
+                      - id: >-
+                          browser-portal-app/browser-runtime/semantic-bootstrap/bundled-diagrams/starter-diagram-bundle/starter-diagram-raw
+                        type: core/code.types.module
+                        name: Starter Diagram Raw
+                        description: Bundled raw starter diagram input.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: frontend/src/semantic/bundled-diagrams.ts
+                            - input: primary
+                              path: frontend/src/semantic/bootstrap.ts
+                      - id: >-
+                          browser-portal-app/browser-runtime/semantic-bootstrap/bundled-diagrams/starter-diagram-bundle/starter-diagram-aliases
+                        type: core/code.types.module
+                        name: Starter Diagram Aliases
+                        description: Named aliases for the bundled starter diagram.
+                        provenance:
+                          locations:
+                            - input: primary
+                              path: frontend/src/semantic/bundled-diagrams.ts
+                  - id: >-
+                      browser-portal-app/browser-runtime/semantic-bootstrap/bundled-diagrams/starter-diagram-raw
+                    type: core/code.types.module
+                    name: Starter Diagram Raw
+                    description: Primary bundled starter diagram asset.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/semantic/bundled-diagrams.ts
+                  - id: >-
+                      browser-portal-app/browser-runtime/semantic-bootstrap/bundled-diagrams/starter-diagram-aliases
+                    type: core/code.types.module
+                    name: Starter Diagram Aliases
+                    description: Secondary export aliases for the starter diagram asset.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/semantic/bundled-diagrams.ts
+              - id: browser-portal-app/browser-runtime/semantic-bootstrap/trusted-bundled-assets
+                type: core/web-app.types.group
+                name: Trusted Bundled Assets
+                description: Trusted parse boundary for bundled semantic assets.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: frontend/src/semantic/trusted-bundled-assets.ts
+                    - input: primary
+                      path: frontend/src/semantic/bootstrap.ts
+                children:
+                  - id: >-
+                      browser-portal-app/browser-runtime/semantic-bootstrap/trusted-bundled-assets/trusted-document-parser
+                    type: core/web-app.types.application
+                    name: Trusted Document Parser
+                    description: Parse-only wrapper for bundled semantic documents.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/semantic/trusted-bundled-assets.ts
+                  - id: >-
+                      browser-portal-app/browser-runtime/semantic-bootstrap/trusted-bundled-assets/trusted-schema-parser
+                    type: core/web-app.types.application
+                    name: Trusted Schema Parser
+                    description: Parse-only wrapper for bundled schema modules.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/semantic/trusted-bundled-assets.ts
+      - id: browser-portal-app/public-gallery-shell
+        type: core/web-app.types.group
+        name: Public Gallery Shell
+        description: Public gallery split into listing and viewer surfaces.
+        props:
+          framework: react
+          runtime: browser
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: frontend/src/PublicGalleryShell.tsx
+            - input: primary
+              path: frontend/src/gallery/PublicGalleryIndex.tsx
+            - input: primary
+              path: frontend/src/gallery/PublicGalleryViewer.tsx
+        children:
+          - id: browser-portal-app/public-gallery-shell/public-gallery-index
+            type: core/frontend.types.frontend
+            name: Public Gallery Index
+            description: Searchable gallery listing surface.
+            props:
+              framework: react
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: frontend/src/gallery/PublicGalleryIndex.tsx
+                - input: primary
+                  path: frontend/src/PublicGalleryShell.tsx
+          - id: browser-portal-app/public-gallery-shell/public-gallery-viewer
+            type: core/web-app.types.group
+            name: Public Gallery Viewer
+            description: >-
+              Public gallery viewer split into the browser surface and the semantic rendering
+              boundary.
+            props:
+              framework: react
+              runtime: browser
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: frontend/src/gallery/PublicGalleryViewer.tsx
+                - input: primary
+                  path: frontend/src/PublicGalleryShell.tsx
+            children:
+              - id: browser-portal-app/public-gallery-shell/public-gallery-viewer/viewer-shell
+                type: core/frontend.types.frontend
+                name: Viewer Shell
+                description: Single-diagram viewer surface.
+                props:
+                  framework: react
+                  runtime: browser
+                provenance:
+                  locations:
+                    - input: primary
+                      path: frontend/src/gallery/PublicGalleryViewer.tsx
+                    - input: primary
+                      path: frontend/src/PublicGalleryShell.tsx
+              - id: >-
+                  browser-portal-app/public-gallery-shell/public-gallery-viewer/viewer-rendering-pipeline
+                type: core/web-app.types.group
+                name: Viewer Rendering Pipeline
+                description: >-
+                  Rendering pipeline for loading, running, and presenting a selected gallery
+                  diagram.
+                props:
+                  mode: mixed
+                provenance:
+                  locations:
+                    - input: primary
+                      path: frontend/src/gallery/PublicGalleryViewer.tsx
+                    - input: primary
+                      path: frontend/src/PublicGalleryShell.tsx
+                children:
+                  - id: >-
+                      browser-portal-app/public-gallery-shell/public-gallery-viewer/viewer-rendering-pipeline/gallery-diagram-loader
+                    type: core/web-app.types.application
+                    name: Gallery Diagram Loader
+                    description: Fetches and normalizes the selected gallery diagram.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/gallery/PublicGalleryViewer.tsx
+                        - input: primary
+                          path: frontend/src/PublicGalleryShell.tsx
+                  - id: >-
+                      browser-portal-app/public-gallery-shell/public-gallery-viewer/viewer-rendering-pipeline/semantic-render-runtime
+                    type: core/web-app.types.application
+                    name: Semantic Render Runtime
+                    description: Builds the semantic runtime, engine, and surface state.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/gallery/PublicGalleryViewer.tsx
+                  - id: >-
+                      browser-portal-app/public-gallery-shell/public-gallery-viewer/viewer-rendering-pipeline/viewer-chrome
+                    type: core/web-app.types.application
+                    name: Viewer Chrome
+                    description: Toolbar, inspector, and search reveal chrome.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/gallery/PublicGalleryViewer.tsx
+      - id: browser-portal-app/studio-shell
+        type: core/web-app.types.group
+        name: Studio Shell
+        description: Studio shell split into the editor entrypoint and schema editing UI.
+        props:
+          framework: react
+          runtime: browser
+          mode: mixed
+        provenance:
+          locations:
+            - input: primary
+              path: frontend/src/EditorShell.tsx
+            - input: primary
+              path: frontend/src/App.tsx
+            - input: primary
+              path: frontend/src/model/validation/schema-closure.ts
+            - input: primary
+              path: frontend/src/ui/editor/SchemaManagerPanel.tsx
+        children:
+          - id: browser-portal-app/studio-shell/editor-shell
+            type: core/frontend.types.frontend
+            name: Editor Shell
+            description: Authenticated editor shell centered on the workspace controller.
+            props:
+              framework: react
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: frontend/src/EditorShell.tsx
+                - input: primary
+                  path: frontend/src/App.tsx
+                - input: primary
+                  path: frontend/src/model/validation/schema-closure.ts
+            children:
+              - id: browser-portal-app/studio-shell/editor-shell/workspace-controller
+                type: core/code.types.module
+                name: Workspace Controller
+                description: Workspace controller for the studio editor surface and authoring loop.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: frontend/src/EditorShell.tsx
+                    - input: primary
+                      path: frontend/src/App.tsx
+                    - input: primary
+                      path: frontend/src/model/validation/schema-closure.ts
+                children:
+                  - id: >-
+                      browser-portal-app/studio-shell/editor-shell/workspace-controller/workspace-layout-controller
+                    type: core/code.types.module
+                    name: Workspace Layout Controller
+                    description: Assembles the authenticated editor surface.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/EditorShell.tsx
+                        - input: primary
+                          path: frontend/src/App.tsx
+                  - id: >-
+                      browser-portal-app/studio-shell/editor-shell/workspace-controller/schema-closure-builder
+                    type: core/code.types.module
+                    name: Schema Closure Builder
+                    description: Derives the schema closure for authoring flows.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/model/validation/schema-closure.ts
+                        - input: primary
+                          path: frontend/src/App.tsx
+                  - id: >-
+                      browser-portal-app/studio-shell/editor-shell/workspace-controller/schema-manager-bridge
+                    type: core/code.types.module
+                    name: Schema Manager Bridge
+                    description: Routes schema manager panel events back into the workspace.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/App.tsx
+                        - input: primary
+                          path: frontend/src/ui/editor/SchemaManagerPanel.tsx
+          - id: browser-portal-app/studio-shell/schema-manager-panel
+            type: core/frontend.types.frontend
+            name: Schema Manager Panel
+            description: Schema editing UI.
+            props:
+              framework: react
+              runtime: browser
+            provenance:
+              locations:
+                - input: primary
+                  path: frontend/src/ui/editor/SchemaManagerPanel.tsx
+                - input: primary
+                  path: frontend/src/App.tsx
+  - id: backend-api-contract
+    type: core/web-app.types.external-api
+    name: Hosted Backend API
+    description: Hosted backend API boundary.
+    props:
+      category: external-service
+      direction: outbound
+      protocol: rest
+      specificity: unknown
+    provenance:
+      locations:
+        - input: primary
+          path: README.md
+        - input: primary
+          path: openapi/tarskia-api.yaml
+        - input: primary
+          path: frontend/src/api/client/custom-fetch.ts
+        - input: primary
+          path: frontend/src/api/generated/gallery/gallery.ts
+        - input: primary
+          path: frontend/src/api/generated/schemas/schemas.ts
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+        - input: primary
+          path: frontend/src/PublicGalleryShell.tsx
+  - id: gallery-source-corpus
+    type: core/web-app.types.datastore
+    name: Gallery Source Corpus
+    description: Checked-in gallery source data split into loader logic and curated files.
+    provenance:
+      locations:
+        - input: primary
+          path: README.md
+        - input: primary
+          path: gallery/curated/manifest.json
+        - input: primary
+          path: gallery/curated/outline.yaml
+        - input: primary
+          path: frontend/src/gallery/local-gallery.ts
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+    children:
+      - id: gallery-source-corpus/gallery-local-loader
+        type: core/code.types.module
+        name: Gallery Local Loader
+        description: >-
+          Local gallery retrieval split into query orchestration, file loading, and the fallback
+          corpus boundary.
+        props:
+          language: typescript
+          runtime: browser
+        provenance:
+          locations:
+            - input: primary
+              path: frontend/src/gallery/local-gallery.ts
+            - input: primary
+              path: frontend/src/gallery/gallery-query.ts
+            - input: primary
+              path: README.md
+        children:
+          - id: gallery-source-corpus/gallery-local-loader/gallery-query
+            type: core/code.types.module
+            name: Gallery Query
+            description: Gallery retrieval split into routing and local fallback client paths.
+            provenance:
+              locations:
+                - input: primary
+                  path: frontend/src/gallery/gallery-query.ts
+                - input: primary
+                  path: README.md
+            children:
+              - id: gallery-source-corpus/gallery-local-loader/gallery-query/query-router
+                type: core/code.types.module
+                name: Query Router
+                description: >-
+                  Query router that classifies retryable gallery failures, retries API fetches, and
+                  routes to local fallback.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: frontend/src/gallery/gallery-query.ts
+                    - input: primary
+                      path: README.md
+                children:
+                  - id: >-
+                      gallery-source-corpus/gallery-local-loader/gallery-query/query-router/gallery-query-policy
+                    type: core/code.types.module
+                    name: Gallery Query Policy
+                    description: Classifies retryable failures and backoff.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/gallery/gallery-query.ts
+                        - input: primary
+                          path: README.md
+                  - id: >-
+                      gallery-source-corpus/gallery-local-loader/gallery-query/query-router/gallery-api-fetcher
+                    type: core/code.types.module
+                    name: Gallery API Fetcher
+                    description: Loads gallery data through retryable API calls.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/gallery/gallery-query.ts
+                  - id: >-
+                      gallery-source-corpus/gallery-local-loader/gallery-query/query-router/local-fallback-router
+                    type: core/code.types.module
+                    name: Local Fallback Router
+                    description: Selects the local gallery source on fallback.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/gallery/gallery-query.ts
+                        - input: primary
+                          path: README.md
+              - id: gallery-source-corpus/gallery-local-loader/gallery-query/local-gallery-client
+                type: core/code.types.module
+                name: Local Gallery Client
+                description: Calls the local loader on fallback.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: frontend/src/gallery/gallery-query.ts
+          - id: gallery-source-corpus/gallery-local-loader/local-gallery
+            type: core/code.types.module
+            name: Local Gallery
+            description: Curated file loader.
+            provenance:
+              locations:
+                - input: primary
+                  path: frontend/src/gallery/local-gallery.ts
+                - input: primary
+                  path: frontend/src/gallery/gallery-query.ts
+          - id: gallery-source-corpus/gallery-local-loader/fallback-corpus
+            type: core/web-app.types.group
+            name: Fallback Corpus
+            description: Local fallback corpus split into data access and query handoff.
+            props:
+              mode: mixed
+            provenance:
+              locations:
+                - input: primary
+                  path: README.md
+                - input: primary
+                  path: frontend/src/gallery/local-gallery.ts
+            children:
+              - id: gallery-source-corpus/gallery-local-loader/fallback-corpus/corpus-access
+                type: core/code.types.module
+                name: Corpus Access
+                description: Repository-backed local gallery corpus access and return-to-query handoff.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: README.md
+                    - input: primary
+                      path: frontend/src/gallery/local-gallery.ts
+                children:
+                  - id: >-
+                      gallery-source-corpus/gallery-local-loader/fallback-corpus/corpus-access/local-corpus-reader
+                    type: core/code.types.module
+                    name: Local Corpus Reader
+                    description: Reads the repository-backed fallback corpus.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: README.md
+                        - input: primary
+                          path: frontend/src/gallery/local-gallery.ts
+                  - id: >-
+                      gallery-source-corpus/gallery-local-loader/fallback-corpus/corpus-access/fallback-source-policy
+                    type: core/code.types.module
+                    name: Fallback Source Policy
+                    description: Decides when the local corpus is the active source.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: frontend/src/gallery/local-gallery.ts
+                  - id: >-
+                      gallery-source-corpus/gallery-local-loader/fallback-corpus/corpus-access/query-handoff-bridge
+                    type: core/code.types.module
+                    name: Query Handoff Bridge
+                    description: Returns control to the gallery query path.
+                    provenance:
+                      locations:
+                        - input: primary
+                          path: README.md
+                        - input: primary
+                          path: frontend/src/gallery/local-gallery.ts
+              - id: gallery-source-corpus/gallery-local-loader/fallback-corpus/query-handoff
+                type: core/code.types.module
+                name: Query Handoff
+                description: Feeds the fallback result back into gallery query logic.
+                provenance:
+                  locations:
+                    - input: primary
+                      path: README.md
+                    - input: primary
+                      path: frontend/src/gallery/gallery-query.ts
+      - id: gallery-source-corpus/curated-diagram-files
+        type: core/web-app.types.datastore
+        name: Curated Diagram Files
+        description: Checked-in curated gallery YAML corpus.
+        provenance:
+          locations:
+            - input: primary
+              path: gallery/curated/manifest.json
+            - input: primary
+              path: gallery/curated/outline.yaml
+            - input: primary
+              path: README.md
+relations:
+  - id: >-
+      browser-portal-app-calls-backend-api--core--software-relations-calls--browser-portal-app--browser-runtime--route-dispatch--gallery-query--to--backend-api-contract
+    from: browser-portal-app/browser-runtime/route-dispatch/gallery-query/remote-gallery-client
+    to: backend-api-contract
+    type: core/software.relations.calls
+    description: Browser app calls the hosted backend API for gallery and schema operations.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+        - input: primary
+          path: frontend/src/api/client/custom-fetch.ts
+        - input: primary
+          path: frontend/src/api/generated/gallery/gallery.ts
+        - input: primary
+          path: frontend/src/api/generated/schemas/schemas.ts
+        - input: primary
+          path: frontend/src/PublicGalleryShell.tsx
+        - input: primary
+          path: openapi/tarskia-api.yaml
+  - id: >-
+      browser-portal-app-calls-backend-api--core--software-relations-calls--browser-portal-app--browser-runtime--route-dispatch--schema-authoring-support--to--backend-api-contract
+    from: browser-portal-app/browser-runtime/route-dispatch/schema-authoring-support
+    to: backend-api-contract
+    type: core/software.relations.calls
+    description: Browser app calls the hosted backend API for gallery and schema operations.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+        - input: primary
+          path: frontend/src/api/client/custom-fetch.ts
+        - input: primary
+          path: frontend/src/api/generated/gallery/gallery.ts
+        - input: primary
+          path: frontend/src/api/generated/schemas/schemas.ts
+        - input: primary
+          path: frontend/src/PublicGalleryShell.tsx
+        - input: primary
+          path: openapi/tarskia-api.yaml
+  - id: browser-portal-app-reads-gallery-source-corpus
+    from: browser-portal-app/browser-runtime/route-dispatch/local-gallery
+    to: gallery-source-corpus
+    type: core/software.relations.reads
+    description: Browser app reads the checked-in gallery corpus when the local fallback path is needed.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/local-gallery.ts
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+        - input: primary
+          path: frontend/src/PublicGalleryShell.tsx
+        - input: primary
+          path: gallery/curated/manifest.json
+        - input: primary
+          path: gallery/curated/outline.yaml
+        - input: primary
+          path: README.md
+  - id: browser-portal-app--browser-runtime-calls-public-gallery-shell
+    from: browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-index
+    to: browser-portal-app/public-gallery-shell/public-gallery-index
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/PublicGalleryShell.tsx
+        - input: primary
+          path: frontend/src/gallery/PublicGalleryIndex.tsx
+  - id: browser-portal-app--browser-runtime-calls-studio-shell
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/editor-shell-runtime
+    to: browser-portal-app/studio-shell/editor-shell/workspace-controller/workspace-layout-controller
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/AppShell.tsx
+        - input: primary
+          path: frontend/src/App.tsx
+  - id: gallery-source-corpus--gallery-local-loader-reads-curated-diagram-files
+    from: gallery-source-corpus/gallery-local-loader/local-gallery
+    to: gallery-source-corpus/curated-diagram-files
+    type: core/software.relations.reads
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/local-gallery.ts
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: gallery-source-corpus--gallery-local-loader-read-writes-curated-diagram-files
+    from: gallery-source-corpus/gallery-local-loader/local-gallery
+    to: gallery-source-corpus/curated-diagram-files
+    type: core/software.relations.read-writes
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/local-gallery.ts
+        - input: primary
+          path: README.md
+  - id: gallery-source-corpus--gallery-local-loader-writes-curated-diagram-files
+    from: gallery-source-corpus/gallery-local-loader/local-gallery
+    to: gallery-source-corpus/curated-diagram-files
+    type: core/software.relations.writes
+    provenance:
+      locations:
+        - input: primary
+          path: README.md
+  - id: >-
+      browser-portal-app-reads-gallery-source-corpus--core--software-relations-reads--browser-portal-app--browser-runtime--to--gallery-source-corpus
+    from: browser-portal-app/browser-runtime/route-dispatch/local-gallery
+    to: gallery-source-corpus/curated-diagram-files
+    type: core/software.relations.reads
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/local-gallery.ts
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: >-
+      browser-portal-app-reads-gallery-source-corpus--core--software-relations-writes--browser-portal-app--browser-runtime--to--gallery-source-corpus
+    from: browser-portal-app/browser-runtime/route-dispatch/local-gallery
+    to: gallery-source-corpus/curated-diagram-files
+    type: core/software.relations.writes
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/local-gallery.ts
+        - input: primary
+          path: README.md
+  - id: >-
+      browser-portal-app-reads-gallery-source-corpus--core--software-relations-read-writes--browser-portal-app--browser-runtime--to--gallery-source-corpus
+    from: browser-portal-app/browser-runtime/route-dispatch/local-gallery
+    to: gallery-source-corpus/curated-diagram-files
+    type: core/software.relations.read-writes
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/local-gallery.ts
+        - input: primary
+          path: README.md
+  - id: browser-portal-app--browser-runtime--route-dispatch-calls-semantic-bootstrap
+    from: browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-viewer
+    to: browser-portal-app/browser-runtime/semantic-bootstrap/bootstrap/bootstrap-runtime
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/semantic/bootstrap.ts
+        - input: primary
+          path: frontend/src/AppShell.tsx
+  - id: browser-portal-app--public-gallery-shell--public-gallery-index-calls-public-gallery-viewer
+    from: browser-portal-app/public-gallery-shell/public-gallery-index
+    to: browser-portal-app/public-gallery-shell/public-gallery-viewer/viewer-shell
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/PublicGalleryShell.tsx
+        - input: primary
+          path: frontend/src/gallery/PublicGalleryIndex.tsx
+  - id: browser-portal-app--studio-shell--editor-shell-calls-schema-manager-panel
+    from: browser-portal-app/studio-shell/editor-shell/workspace-controller/schema-manager-bridge
+    to: browser-portal-app/studio-shell/schema-manager-panel
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/ui/editor/SchemaManagerPanel.tsx
+  - id: gallery-source-corpus--gallery-local-loader--gallery-query-calls-local-gallery
+    from: gallery-source-corpus/gallery-local-loader/gallery-query/local-gallery-client
+    to: gallery-source-corpus/gallery-local-loader/local-gallery
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: gallery-source-corpus--gallery-local-loader--local-gallery-calls-fallback-corpus
+    from: gallery-source-corpus/gallery-local-loader/local-gallery
+    to: gallery-source-corpus/gallery-local-loader/fallback-corpus/corpus-access/local-corpus-reader
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/local-gallery.ts
+        - input: primary
+          path: README.md
+  - id: gallery-source-corpus--gallery-local-loader--fallback-corpus-calls-gallery-query
+    from: gallery-source-corpus/gallery-local-loader/fallback-corpus/query-handoff
+    to: gallery-source-corpus/gallery-local-loader/gallery-query/query-router/gallery-query-policy
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+        - input: primary
+          path: README.md
+  - id: browser-portal-app--browser-runtime--route-dispatch--public-gallery-shell-calls-gallery-query
+    from: browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-index
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router/gallery-query-policy
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/PublicGalleryShell.tsx
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: browser-portal-app--browser-runtime--route-dispatch--gallery-query-calls-local-gallery
+    from: browser-portal-app/browser-runtime/route-dispatch/gallery-query/local-fallback-client
+    to: browser-portal-app/browser-runtime/route-dispatch/local-gallery
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell-calls-schema-authoring-support
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/editor-shell-runtime
+    to: browser-portal-app/browser-runtime/route-dispatch/schema-authoring-support
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: browser-portal-app--browser-runtime--semantic-bootstrap--bootstrap-calls-bundled-diagrams
+    from: browser-portal-app/browser-runtime/semantic-bootstrap/bootstrap/bootstrap-runtime
+    to: >-
+      browser-portal-app/browser-runtime/semantic-bootstrap/bundled-diagrams/starter-diagram-bundle/starter-diagram-raw
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/semantic/bootstrap.ts
+  - id: >-
+      browser-portal-app--browser-runtime--semantic-bootstrap--bootstrap-calls-trusted-bundled-assets
+    from: browser-portal-app/browser-runtime/semantic-bootstrap/bootstrap/bootstrap-runtime
+    to: >-
+      browser-portal-app/browser-runtime/semantic-bootstrap/trusted-bundled-assets/trusted-document-parser
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/semantic/bootstrap.ts
+        - input: primary
+          path: frontend/src/semantic/trusted-bundled-assets.ts
+  - id: >-
+      browser-portal-app--public-gallery-shell--public-gallery-viewer--viewer-shell-calls-viewer-rendering-pipeline
+    from: browser-portal-app/public-gallery-shell/public-gallery-viewer/viewer-shell
+    to: >-
+      browser-portal-app/public-gallery-shell/public-gallery-viewer/viewer-rendering-pipeline/gallery-diagram-loader
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/PublicGalleryViewer.tsx
+  - id: >-
+      gallery-source-corpus--gallery-local-loader--gallery-query--query-router-calls-local-gallery-client
+    from: gallery-source-corpus/gallery-local-loader/gallery-query/query-router/local-fallback-router
+    to: gallery-source-corpus/gallery-local-loader/gallery-query/local-gallery-client
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: >-
+      gallery-source-corpus--gallery-local-loader--fallback-corpus--corpus-access-calls-query-handoff
+    from: gallery-source-corpus/gallery-local-loader/fallback-corpus/corpus-access/query-handoff-bridge
+    to: gallery-source-corpus/gallery-local-loader/fallback-corpus/query-handoff
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/local-gallery.ts
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--public-gallery-shell--public-gallery-index-calls-public-gallery-viewer
+    from: browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-index
+    to: browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-viewer
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/PublicGalleryShell.tsx
+        - input: primary
+          path: frontend/src/gallery/PublicGalleryIndex.tsx
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--gallery-query--query-router-calls-remote-gallery-client
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router/remote-query-route
+    to: browser-portal-app/browser-runtime/route-dispatch/gallery-query/remote-gallery-client
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--gallery-query--query-router-calls-local-fallback-client
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router/local-fallback-route
+    to: browser-portal-app/browser-runtime/route-dispatch/gallery-query/local-fallback-client
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell-calls-schema-authoring-support
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/editor-shell-runtime
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/schema-authoring-support/schema-editor-assessment
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--schema-authoring-support-calls-publish-assessment
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/schema-authoring-support/publish-assessment-bridge
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/publish-assessment/published-diagram-impact
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--publish-assessment-calls-schema-manager-panel
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/publish-assessment/schema-manager-bridge
+    to: browser-portal-app/browser-runtime/route-dispatch/studio-shell/schema-manager-panel
+    type: core/software.relations.calls
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/ui/editor/SchemaManagerPanel.tsx
+  - id: >-
+      browser-portal-app--public-gallery-shell--public-gallery-viewer--viewer-rendering-pipeline--loader-to-runtime
+    from: >-
+      browser-portal-app/public-gallery-shell/public-gallery-viewer/viewer-rendering-pipeline/gallery-diagram-loader
+    to: >-
+      browser-portal-app/public-gallery-shell/public-gallery-viewer/viewer-rendering-pipeline/semantic-render-runtime
+    type: core/software.relations.calls
+    description: Document loading feeds the semantic runtime.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/PublicGalleryViewer.tsx
+  - id: >-
+      browser-portal-app--public-gallery-shell--public-gallery-viewer--viewer-rendering-pipeline--runtime-to-chrome
+    from: >-
+      browser-portal-app/public-gallery-shell/public-gallery-viewer/viewer-rendering-pipeline/semantic-render-runtime
+    to: >-
+      browser-portal-app/public-gallery-shell/public-gallery-viewer/viewer-rendering-pipeline/viewer-chrome
+    type: core/software.relations.calls
+    description: Runtime state feeds the viewer chrome.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/PublicGalleryViewer.tsx
+  - id: browser-portal-app--studio-shell--editor-shell--workspace-controller--layout-to-closure
+    from: browser-portal-app/studio-shell/editor-shell/workspace-controller/workspace-layout-controller
+    to: browser-portal-app/studio-shell/editor-shell/workspace-controller/schema-closure-builder
+    type: core/software.relations.calls
+    description: Layout controller builds schema closure.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/model/validation/schema-closure.ts
+  - id: browser-portal-app--studio-shell--editor-shell--workspace-controller--closure-to-bridge
+    from: browser-portal-app/studio-shell/editor-shell/workspace-controller/schema-closure-builder
+    to: browser-portal-app/studio-shell/editor-shell/workspace-controller/schema-manager-bridge
+    type: core/software.relations.calls
+    description: Schema closure feeds the panel bridge.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/ui/editor/SchemaManagerPanel.tsx
+  - id: gallery-source-corpus--gallery-local-loader--gallery-query--query-router--policy-to-fetcher
+    from: gallery-source-corpus/gallery-local-loader/gallery-query/query-router/gallery-query-policy
+    to: gallery-source-corpus/gallery-local-loader/gallery-query/query-router/gallery-api-fetcher
+    type: core/software.relations.calls
+    description: Retry policy feeds API fetches.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: gallery-source-corpus--gallery-local-loader--gallery-query--query-router--fetcher-to-fallback
+    from: gallery-source-corpus/gallery-local-loader/gallery-query/query-router/gallery-api-fetcher
+    to: gallery-source-corpus/gallery-local-loader/gallery-query/query-router/local-fallback-router
+    type: core/software.relations.calls
+    description: API fetches hand off to local fallback routing.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: gallery-source-corpus--gallery-local-loader--fallback-corpus--corpus-access--reader-to-policy
+    from: gallery-source-corpus/gallery-local-loader/fallback-corpus/corpus-access/local-corpus-reader
+    to: >-
+      gallery-source-corpus/gallery-local-loader/fallback-corpus/corpus-access/fallback-source-policy
+    type: core/software.relations.calls
+    description: Corpus reading feeds fallback policy.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/local-gallery.ts
+  - id: gallery-source-corpus--gallery-local-loader--fallback-corpus--corpus-access--policy-to-handoff
+    from: >-
+      gallery-source-corpus/gallery-local-loader/fallback-corpus/corpus-access/fallback-source-policy
+    to: gallery-source-corpus/gallery-local-loader/fallback-corpus/corpus-access/query-handoff-bridge
+    type: core/software.relations.calls
+    description: Fallback policy hands back to query routing.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/local-gallery.ts
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--gallery-query--query-router--policy-to-remote
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router/gallery-query-policy
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router/remote-query-route
+    type: core/software.relations.calls
+    description: Query policy feeds the remote route.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--gallery-query--query-router--remote-to-fallback
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router/remote-query-route
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router/local-fallback-route
+    type: core/software.relations.calls
+    description: Remote route hands off to local fallback.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/gallery/gallery-query.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--schema-authoring-support--assessment-to-impact
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/schema-authoring-support/schema-editor-assessment
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/schema-authoring-support/diagram-impact-analysis
+    type: core/software.relations.calls
+    description: Draft assessment feeds diagram impact analysis.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--schema-authoring-support--impact-to-publish
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/schema-authoring-support/diagram-impact-analysis
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/schema-authoring-support/publish-assessment-bridge
+    type: core/software.relations.calls
+    description: Impact analysis feeds publish assessment.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--publish-assessment--impact-to-cookbook
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/publish-assessment/published-diagram-impact
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/publish-assessment/schema-cookbook-availability
+    type: core/software.relations.calls
+    description: Impact analysis feeds cookbook availability.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--publish-assessment--cookbook-to-bridge
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/publish-assessment/schema-cookbook-availability
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/publish-assessment/schema-manager-bridge
+    type: core/software.relations.calls
+    description: Cookbook availability feeds the panel bridge.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--semantic-bootstrap--bundled-diagrams--starter-diagram-bundle--raw-to-aliases
+    from: >-
+      browser-portal-app/browser-runtime/semantic-bootstrap/bundled-diagrams/starter-diagram-bundle/starter-diagram-raw
+    to: >-
+      browser-portal-app/browser-runtime/semantic-bootstrap/bundled-diagrams/starter-diagram-bundle/starter-diagram-aliases
+    type: core/software.relations.calls
+    description: Raw bundle feeds alias exports.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/semantic/bundled-diagrams.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--runtime-to-layout-controller
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller/schema-manager-bridge/schema-manager-state
+    type: core/software.relations.calls
+    description: Runtime drives workspace layout orchestration.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/EditorShell.tsx
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--runtime-to-schema-authoring-support
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/schema-editor-assessment/schema-editor-assessment-core
+    type: core/software.relations.calls
+    description: Runtime drives schema authoring support.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--editor-shell-runtime--runtime-to-layout-controller
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/editor-shell-runtime
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/workspace-layout-controller/schema-closure-builder
+    type: core/software.relations.calls
+    description: Runtime drives workspace layout orchestration.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/EditorShell.tsx
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--editor-shell-runtime--runtime-to-schema-authoring
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/editor-shell-runtime
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-authoring-support/schema-authoring-core
+    type: core/software.relations.calls
+    description: Runtime drives schema authoring support.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--editor-shell-runtime--runtime-to-assessment
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/editor-shell-runtime
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-editor-assessment/schema-editor-assessment-core
+    type: core/software.relations.calls
+    description: Runtime drives schema assessment.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--editor-shell-runtime--authoring-to-assessment
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-authoring-support/schema-assessment-engine
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-editor-assessment/schema-editor-assessment-core
+    type: core/software.relations.calls
+    description: Authoring support feeds assessment.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--workspace-layout-controller--bridge-to-builder
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller/schema-manager-bridge/schema-manager-bridge-core
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller/schema-closure-builder/schema-closure-resolution
+    type: core/software.relations.calls
+    description: Bridge drives closure computation.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/model/validation/schema-closure.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--schema-authoring-support--assessment-to-impact
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/schema-editor-assessment/schema-assessment-impact-bridge
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/diagram-impact-analysis/diagram-impact-core
+    type: core/software.relations.calls
+    description: Draft assessment feeds impact analysis.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--schema-authoring-support--impact-to-publish
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/diagram-impact-analysis/diagram-impact-publish-bridge
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/publish-assessment/schema-publish-assessment-core
+    type: core/software.relations.calls
+    description: Impact analysis feeds publish readiness.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--editor-shell-runtime--editor-shell-runtime--runtime-to-layout-controller
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/editor-shell-runtime
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/workspace-layout-controller
+    type: core/software.relations.calls
+    description: Runtime drives workspace layout orchestration.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/EditorShell.tsx
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--editor-shell-runtime--editor-shell-runtime--runtime-to-schema-authoring
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/editor-shell-runtime
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/schema-authoring-support
+    type: core/software.relations.calls
+    description: Runtime drives schema authoring support.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--editor-shell-runtime--editor-shell-runtime--runtime-to-assessment
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/editor-shell-runtime
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/schema-editor-assessment
+    type: core/software.relations.calls
+    description: Runtime drives schema assessment.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--editor-shell-runtime--editor-shell-runtime--layout-to-authoring
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/workspace-layout-controller
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/schema-authoring-support
+    type: core/software.relations.calls
+    description: Workspace layout orchestrates schema authoring support.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/EditorShell.tsx
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--editor-shell-runtime--editor-shell-runtime--authoring-to-assessment
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/schema-authoring-support
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/schema-editor-assessment
+    type: core/software.relations.calls
+    description: Authoring support feeds assessment.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--editor-shell-runtime--editor-shell-runtime--assessment-to-layout-controller
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/schema-editor-assessment
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/editor-shell-runtime/workspace-layout-controller
+    type: core/software.relations.calls
+    description: Assessment feeds workspace orchestration.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/App.tsx
+        - input: primary
+          path: frontend/src/EditorShell.tsx
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--editor-shell-runtime--workspace-layout-controller--closure-to-manager-bridge
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/workspace-layout-controller/schema-closure-builder
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/workspace-layout-controller/schema-manager-bridge
+    type: core/software.relations.calls
+    description: Closure building feeds schema manager orchestration.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/useAppShellController.tsx
+        - input: primary
+          path: frontend/src/App.tsx
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--editor-shell-runtime--schema-authoring-support--authoring-to-assessment
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-authoring-support/schema-authoring-core
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-authoring-support/schema-assessment-engine
+    type: core/software.relations.calls
+    description: Authoring core invokes assessment work.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+        - input: primary
+          path: frontend/src/model/validation/schema-editor-assessment.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--editor-shell-runtime--schema-editor-assessment--editor-to-publish
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-editor-assessment/schema-editor-assessment-core
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/editor-shell-runtime/schema-editor-assessment/schema-publish-assessment
+    type: core/software.relations.calls
+    description: Editor assessment invokes publish assessment.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/model/validation/schema-editor-assessment.ts
+        - input: primary
+          path: frontend/src/model/validation/schema-publish.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--workspace-layout-controller--schema-manager-bridge--state-to-bridge
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller/schema-manager-bridge/schema-manager-state
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller/schema-manager-bridge/schema-manager-bridge-core
+    type: core/software.relations.calls
+    description: State derivation feeds the bridge boundary.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/useAppShellController.tsx
+        - input: primary
+          path: frontend/src/App.tsx
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--workspace-layout-controller--schema-closure-builder--resolution-to-materialization
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller/schema-closure-builder/schema-closure-resolution
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/workspace-layout-controller/schema-closure-builder/schema-closure-materialization
+    type: core/software.relations.calls
+    description: Resolved closure feeds runtime materialization.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/model/validation/schema-closure.ts
+        - input: primary
+          path: frontend/src/App.tsx
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--schema-authoring-support--schema-editor-assessment--assessment-to-impact-bridge
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/schema-editor-assessment/schema-editor-assessment-core
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/schema-editor-assessment/schema-assessment-impact-bridge
+    type: core/software.relations.calls
+    description: Assessment computation hands off to impact analysis bridge.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+        - input: primary
+          path: frontend/src/model/validation/schema-editor-assessment.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--schema-authoring-support--diagram-impact-analysis--impact-core-to-publish-bridge
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/diagram-impact-analysis/diagram-impact-core
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/diagram-impact-analysis/diagram-impact-publish-bridge
+    type: core/software.relations.calls
+    description: Impact computation hands off to publish readiness.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+  - id: >-
+      browser-portal-app--browser-runtime--route-dispatch--studio-shell--editor-shell--editor-shell-boundary--schema-authoring-support--publish-assessment--publish-core-to-bridge
+    from: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/publish-assessment/schema-publish-assessment-core
+    to: >-
+      browser-portal-app/browser-runtime/route-dispatch/studio-shell/editor-shell/editor-shell-boundary/schema-authoring-support/publish-assessment/schema-publish-bridge
+    type: core/software.relations.calls
+    description: Publish assessment hands off to the bridge boundary.
+    provenance:
+      locations:
+        - input: primary
+          path: frontend/src/shell/schema-authoring-support.ts
+inputs:
+  - id: primary
+    kind: git
+    repo: https://github.com/tarskia/tarskia
+    revision: 552bffae4e104fba3b3fdad4b6ce44bd98e4e90e
+    role: primary
+metadata:
+  workerBuild:
+    inputTokens: 18274901
+    cachedInputTokens: 16699904
+    outputTokens: 305578
+    approxTotalTokens: 35280383
+    mode: advanced
+    model: gpt-5.4-mini
+    builtAt: "2026-05-04T11:30:14.547Z"
+    durationMs: 12387446
+    turns: 64
+    nodes: 103
+    edges: 69
+  sourceRepository:
+    repo: https://github.com/tarskia/tarskia
+    url: https://github.com/tarskia/tarskia
+    commit: 552bffae4e104fba3b3fdad4b6ce44bd98e4e90e
+  description: TypeScript monorepo with a Vite/React browser app, a shared diagram-semantics...
+  name: Tarskia
