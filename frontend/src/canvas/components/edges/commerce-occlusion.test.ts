@@ -38,11 +38,9 @@ describe('commerce occlusion', () => {
     const scene = buildLayoutResult({
       graph,
       viewState,
-      layout: doc.view?.layout,
       canvasSize: { width: 1800, height: 1200 },
     });
     const presentation = buildStaticCanvasPresentation({
-      graph,
       scene,
     });
     const renderState = resolveEdgeOverlayRenderState({

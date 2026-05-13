@@ -116,6 +116,34 @@ describe('architecture boundaries', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('keeps presentation input at the scene boundary instead of reopening graph model access', () => {
+    const presentationPath = path.join(
+      srcRoot,
+      'canvas',
+      'rendering',
+      'presentation',
+      'presentation.ts',
+    );
+    const source = readFileSync(presentationPath, 'utf8');
+
+    expect(source).not.toMatch(/graph-model|GraphModel/);
+    expect(source).not.toMatch(/\bgraph:/);
+  });
+
+  it('keeps document layout state out of the layout engine input contract', () => {
+    const layoutPipelinePath = path.join(
+      srcRoot,
+      'canvas',
+      'rendering',
+      'layout',
+      'layout-pipeline.ts',
+    );
+    const source = readFileSync(layoutPipelinePath, 'utf8');
+
+    expect(source).not.toMatch(/DocumentLayout/);
+    expect(source).not.toMatch(/\blayout\?:/);
+  });
+
   it('keeps raw graph/document structure out of rendering modules after view compilation', () => {
     const renderingRoot = path.join(srcRoot, 'canvas', 'rendering');
     const allowedFiles = new Set([

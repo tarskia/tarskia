@@ -211,7 +211,7 @@ const withView = (
 const buildTestLayout = (doc: SemanticDocument, canvasSize?: { width: number; height: number }) => {
   const graph = buildGraphModel(doc, schema);
   const viewState = compileDiagramViewState({ doc, schema });
-  return buildLayoutResult({ graph, viewState, layout: doc.view?.layout, canvasSize });
+  return buildLayoutResult({ graph, viewState, canvasSize });
 };
 
 describe('buildLayoutResult', () => {

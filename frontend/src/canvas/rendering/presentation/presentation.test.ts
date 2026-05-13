@@ -164,13 +164,11 @@ const withView = (
 const buildScene = (doc: SemanticDocument, canvasSize?: { width: number; height: number }) => {
   const graph = buildGraphModel(doc, schema);
   const viewState = compileDiagramViewState({ doc, schema });
-  const scene = buildLayoutResult({
+  return buildLayoutResult({
     graph,
     viewState,
-    layout: doc.view?.layout,
     canvasSize,
   });
-  return { graph, scene };
 };
 
 const buildPresentationFor = (params?: {
@@ -180,9 +178,8 @@ const buildPresentationFor = (params?: {
   const viewDoc = withView(params?.doc ?? baseDoc, {
     expanded: params?.expanded ?? {},
   });
-  const { graph, scene } = buildScene(viewDoc);
+  const scene = buildScene(viewDoc);
   return buildStaticCanvasPresentation({
-    graph,
     scene,
   });
 };
@@ -781,9 +778,8 @@ describe('buildStaticCanvasPresentation', () => {
       relations: [],
     };
     const viewDoc = withView(focusDoc, { scopeRootId: 'ordersdb' });
-    const { graph, scene } = buildScene(viewDoc, { width: 1600, height: 900 });
+    const scene = buildScene(viewDoc, { width: 1600, height: 900 });
     const presentation = buildStaticCanvasPresentation({
-      graph,
       scene,
     });
 

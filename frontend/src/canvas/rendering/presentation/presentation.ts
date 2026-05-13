@@ -1,6 +1,5 @@
 import { getSchemaObjectLocalId } from '../../../model/schema-ids';
 import type { DiagramViewNodeControls } from '../../../semantic';
-import type { GraphModel } from '../graph/graph-model';
 import type { CanvasScene } from '../scene/scene';
 import type { ResolvedNodeRichContent, ResolvedNodeVisual } from '../visual/node-visuals';
 import {
@@ -282,15 +281,13 @@ const assignOverlayEdgeAnchors = (edges: RawOverlayEdgeSpec[]) =>
   );
 
 export const buildStaticCanvasPresentation = ({
-  graph,
   scene,
   debug,
 }: {
-  graph: GraphModel;
   scene: CanvasScene;
   debug?: boolean;
 }): CanvasRenderSnapshot => {
-  const tagById = new Map((graph.schema.tags ?? []).map((tag) => [tag.id, tag]));
+  const tagById = new Map((scene.schema.tags ?? []).map((tag) => [tag.id, tag]));
 
   const resolvePrimaryTagHue = (primaryTag: string | undefined) => {
     if (!primaryTag) return undefined;

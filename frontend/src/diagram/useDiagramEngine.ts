@@ -95,11 +95,10 @@ export function useDiagramEngine({
   const stableSnapshot = useMemo(
     () =>
       buildStaticCanvasPresentation({
-        graph: rendering.graph,
         scene: rendering.layout,
         debug: showDebug,
       }),
-    [rendering.graph, rendering.layout, showDebug],
+    [rendering.layout, showDebug],
   );
 
   const getEffectiveLeftOcclusion = useCallback(
