@@ -255,6 +255,24 @@ const rectsVisuallyEqual = (
   numbersVisuallyEqual(left.width, right.width) &&
   numbersVisuallyEqual(left.height, right.height);
 
+const pointsVisuallyEqual = (left: { x: number; y: number }, right: { x: number; y: number }) =>
+  numbersVisuallyEqual(left.x, right.x) && numbersVisuallyEqual(left.y, right.y);
+
+const stringListsEqual = (left: readonly string[], right: readonly string[]) =>
+  left.length === right.length && left.every((value, index) => value === right[index]);
+
+const edgeGeometryVisuallyEqual = (
+  left: CanvasRenderSnapshot['overlayEdges'][number]['geometry'],
+  right: TransitionOverlayFrame['edges'][number]['geometry'],
+) =>
+  left.sourceSide === right.sourceSide &&
+  left.targetSide === right.targetSide &&
+  pointsVisuallyEqual(left.sourcePoint, right.sourcePoint) &&
+  pointsVisuallyEqual(left.control1, right.control1) &&
+  pointsVisuallyEqual(left.control2, right.control2) &&
+  pointsVisuallyEqual(left.targetPoint, right.targetPoint) &&
+  pointsVisuallyEqual(left.labelAnchor, right.labelAnchor);
+
 export const isTransitionOverlayFrameVisuallyEqualToHost = (params: {
   hostSnapshot: CanvasRenderSnapshot;
   transitionOverlayFrame: TransitionOverlayFrame;
@@ -273,6 +291,31 @@ export const isTransitionOverlayFrameVisuallyEqualToHost = (params: {
       hostNode.kind !== overlayNode.kind ||
       !rectsVisuallyEqual(hostNode.rect, overlayNode.rect) ||
       !numbersVisuallyEqual(hostNode.opacity, overlayNode.opacity)
+    ) {
+      return false;
+    }
+  }
+  if (hostSnapshot.overlayEdges.length !== transitionOverlayFrame.edges.length) {
+    return false;
+  }
+  const overlayEdgesById = new Map(transitionOverlayFrame.edges.map((edge) => [edge.id, edge]));
+  for (const hostEdge of hostSnapshot.overlayEdges) {
+    const overlayEdge = overlayEdgesById.get(hostEdge.id);
+    if (!overlayEdge) {
+      return false;
+    }
+    if (
+      hostEdge.relationId !== overlayEdge.relationId ||
+      hostEdge.kind !== overlayEdge.kind ||
+      hostEdge.sourceId !== overlayEdge.sourceId ||
+      hostEdge.targetId !== overlayEdge.targetId ||
+      hostEdge.scopeId !== overlayEdge.scopeId ||
+      hostEdge.label !== overlayEdge.label ||
+      hostEdge.state !== overlayEdge.state ||
+      hostEdge.matched !== overlayEdge.matched ||
+      !numbersVisuallyEqual(hostEdge.opacity, overlayEdge.opacity) ||
+      !edgeGeometryVisuallyEqual(hostEdge.geometry, overlayEdge.geometry) ||
+      !stringListsEqual(hostEdge.solidOverNodeIds, overlayEdge.solidOverNodeIds)
     ) {
       return false;
     }

@@ -823,12 +823,10 @@ describe('buildTimedTransitionPlan', () => {
     const fromLayout = buildLayoutResult({
       graph: fromGraph,
       viewState: fromViewState,
-      layout: fromDoc.view?.layout,
     });
     const toLayout = buildLayoutResult({
       graph: toGraph,
       viewState: toViewState,
-      layout: toDoc.view?.layout,
     });
 
     const sequence = buildPlan({

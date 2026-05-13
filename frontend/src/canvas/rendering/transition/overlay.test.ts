@@ -90,17 +90,13 @@ const buildScene = (source: SemanticDocument) => {
   const viewState = compileDiagramViewState({ doc: source, schema });
   return {
     graph,
-    scene: buildLayoutResult({ graph, viewState, layout: source.view?.layout }),
+    scene: buildLayoutResult({ graph, viewState }),
   };
 };
 
-const buildPresentation = (params: {
-  graph: ReturnType<typeof buildGraphModel>;
-  scene: ReturnType<typeof buildLayoutResult>;
-}) => {
-  const { graph, scene } = params;
+const buildPresentation = (params: { scene: ReturnType<typeof buildLayoutResult> }) => {
+  const { scene } = params;
   return buildStaticCanvasPresentation({
-    graph,
     scene,
   });
 };
@@ -240,7 +236,6 @@ describe('transition overlay', () => {
   it('interpolates node frames and edge geometry from start to end', () => {
     const fromDoc = withView(doc, {});
     const toDoc = withView(doc, { 'app-a': true });
-    const { graph } = buildScene(toDoc);
     const from = buildScene(fromDoc).scene;
     const to = buildScene(toDoc).scene;
     const planningAdvisory = buildTransitionPlanningAdvisory({
@@ -265,11 +260,9 @@ describe('transition overlay', () => {
       timedPlan,
       timedSequence,
       fromPresentation: buildPresentation({
-        graph,
         scene: from,
       }),
       toPresentation: buildPresentation({
-        graph,
         scene: to,
       }),
     });
@@ -302,8 +295,8 @@ describe('transition overlay', () => {
       },
       { 'group-a': true },
     );
-    const { graph, scene } = buildScene(localDoc);
-    const presentation = buildPresentation({ graph, scene });
+    const { scene } = buildScene(localDoc);
+    const presentation = buildPresentation({ scene });
     const planningAdvisory = buildTransitionPlanningAdvisory({
       direction: 'in',
       fromTree: scene.tree,

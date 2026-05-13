@@ -90,11 +90,10 @@ const withView = (
       : undefined,
 });
 
-const buildScene = (source: SemanticDocument) => {
+const buildScene = (source: SemanticDocument, canvasSize?: { width: number; height: number }) => {
   const graph = buildGraphModel(source, schema);
   const viewState = compileDiagramViewState({ doc: source, schema });
-  const scene = buildLayoutResult({ graph, viewState, layout: source.view?.layout });
-  return { graph, scene };
+  return buildLayoutResult({ graph, viewState, canvasSize });
 };
 
 const noopBindings: CanvasInteractionBindings = {
@@ -110,9 +109,8 @@ const noopBindings: CanvasInteractionBindings = {
 
 const buildHostState = () => {
   const viewDoc = withView(doc, { expanded: { 'app-a': true } });
-  const { graph, scene } = buildScene(viewDoc);
+  const scene = buildScene(viewDoc);
   const presentation = buildStaticCanvasPresentation({
-    graph,
     scene,
   });
   return {
@@ -207,9 +205,8 @@ describe('adaptPresentationToReactFlow', () => {
       },
       { expanded: { 'app-a': true } },
     );
-    const { graph, scene } = buildScene(viewDoc);
+    const scene = buildScene(viewDoc);
     const presentation = buildStaticCanvasPresentation({
-      graph,
       scene,
     });
     const host = adaptPresentationToReactFlow({
@@ -246,9 +243,8 @@ describe('adaptPresentationToReactFlow', () => {
       },
       { expanded: { 'group-a': true } },
     );
-    const { graph, scene } = buildScene(localDoc);
+    const scene = buildScene(localDoc);
     const presentation = buildStaticCanvasPresentation({
-      graph,
       scene,
     });
     const localEdgeId = presentation.overlayEdges.find(
@@ -295,9 +291,8 @@ describe('adaptPresentationToReactFlow', () => {
       expanded: { 'app-a': true },
       scopeRootId: 'app-a',
     });
-    const { graph, scene } = buildScene(viewDoc);
+    const scene = buildScene(viewDoc);
     const presentation = buildStaticCanvasPresentation({
-      graph,
       scene,
     });
     const host = adaptPresentationToReactFlow({
@@ -361,20 +356,8 @@ describe('adaptPresentationToReactFlow', () => {
       relations: [],
     };
     const viewDoc = withView(focusDoc, { scopeRootId: 'ordersdb' });
-    const { graph, scene } = (() => {
-      const built = buildScene(viewDoc);
-      return {
-        ...built,
-        scene: buildLayoutResult({
-          graph: built.graph,
-          viewState: compileDiagramViewState({ doc: viewDoc, schema }),
-          layout: viewDoc.view?.layout,
-          canvasSize: { width: 1600, height: 900 },
-        }),
-      };
-    })();
+    const scene = buildScene(viewDoc, { width: 1600, height: 900 });
     const presentation = buildStaticCanvasPresentation({
-      graph,
       scene,
     });
     const host = adaptPresentationToReactFlow({

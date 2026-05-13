@@ -1,4 +1,4 @@
-import type { CompiledDiagramViewState, DocumentLayout } from '../../../semantic';
+import type { CompiledDiagramViewState } from '../../../semantic';
 import type { GraphModel } from '../graph/graph-model';
 import { buildAbsolutePositions, buildSceneZIndex, type CanvasScene } from '../scene/scene';
 import { buildSceneTree } from '../tree/scene-tree';
@@ -20,7 +20,6 @@ export type LayoutResult = CanvasScene;
 export function buildLayoutResult(params: {
   graph: GraphModel;
   viewState: CompiledDiagramViewState;
-  layout?: DocumentLayout;
   canvasSize?: { width: number; height: number } | null;
 }): LayoutResult {
   const { graph, viewState, canvasSize } = params;

@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LayoutResult } from '../canvas/rendering/layout/layout-pipeline';
+import type { CanvasOverlayEdgeView } from '../canvas/rendering/presentation/presentation';
 import {
   DEFAULT_ANIMATION_SETTINGS,
   DEFAULT_VIEWPORT_FIT_PADDING,
@@ -10,6 +11,7 @@ import {
 import {
   buildStaticTransitionOverlayState,
   resolveTransitionOverlayFrame,
+  type TransitionOverlayFrame,
 } from '../canvas/rendering/transition/overlay';
 import {
   computeViewportForBoundsInVisibleCanvas,
@@ -74,6 +76,36 @@ const buildSnapshot = () => ({
   ],
   overlayEdges: [],
 });
+
+const buildOverlayEdge = (
+  overrides: Partial<CanvasOverlayEdgeView> = {},
+): CanvasOverlayEdgeView => {
+  const geometry = {
+    sourcePoint: { x: 120, y: 32 },
+    control1: { x: 170, y: 32 },
+    control2: { x: 190, y: 32 },
+    targetPoint: { x: 240, y: 32 },
+    labelAnchor: { x: 180, y: 32 },
+    sourceSide: 'right' as const,
+    targetSide: 'left' as const,
+    path: 'M 120 32 C 170 32, 190 32, 240 32',
+  };
+  return {
+    id: 'rel-1:node-1->node-2',
+    relationId: 'rel-1',
+    kind: 'routed',
+    sourceId: 'node-1',
+    targetId: 'node-2',
+    label: 'calls',
+    matched: false,
+    geometry,
+    path: geometry.path,
+    labelAnchor: geometry.labelAnchor,
+    opacity: 1,
+    solidOverNodeIds: [],
+    ...overrides,
+  };
+};
 
 const buildLayout = (): LayoutResult => {
   const root = {
@@ -487,6 +519,42 @@ describe('useDiagramMotionManager', () => {
     expect(
       shouldDisplayTransitionOverlay({
         phase: 'settling',
+        hostSnapshot,
+        transitionOverlay,
+        transitionOverlayFrame,
+      }),
+    ).toBe(true);
+  });
+
+  it('shows the transition overlay when only edge visuals differ from the outgoing host', () => {
+    const hostSnapshot = {
+      ...buildSnapshot(),
+      overlayEdges: [buildOverlayEdge()],
+    };
+    const transitionOverlay = buildStaticTransitionOverlayState({
+      snapshot: hostSnapshot,
+      id: 1,
+      startedAt: 0,
+    });
+    const transitionOverlayFrame = {
+      progress: 0.5,
+      nodes: hostSnapshot.nodes.map((node) => ({
+        id: node.id,
+        kind: node.kind,
+        view: node,
+        rect: node.rect,
+        zIndex: node.zIndex,
+        opacity: node.opacity,
+        contentScale: node.contentScale,
+        childOpacity: node.content.childOpacity ?? 1,
+      })),
+      edges: [buildOverlayEdge({ opacity: 0.35 })],
+      overlayEdges: [],
+    } satisfies TransitionOverlayFrame;
+
+    expect(
+      shouldDisplayTransitionOverlay({
+        phase: 'animating',
         hostSnapshot,
         transitionOverlay,
         transitionOverlayFrame,

@@ -39,7 +39,6 @@ const buildTutorialLayout = (expandedIds: string[]) => {
   return buildLayoutResult({
     graph,
     viewState,
-    layout: doc.view?.layout,
     canvasSize: { width: 1600, height: 900 },
   });
 };
@@ -57,10 +56,9 @@ describe('tutorial layout', () => {
     const scene = buildLayoutResult({
       graph,
       viewState,
-      layout: tutorialDoc.view?.layout,
       canvasSize: { width: 1200, height: 800 },
     });
-    const presentation = buildStaticCanvasPresentation({ graph, scene });
+    const presentation = buildStaticCanvasPresentation({ scene });
     const visibleNodeIds = presentation.nodes
       .filter((node) => !node.style.focusShell && node.opacity > 0.01)
       .map((node) => node.id);

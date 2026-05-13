@@ -1,0 +1,21 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - link "tarskia" [ref=e6] [cursor=pointer]:
+        - /url: /gallery
+        - img [ref=e7]
+        - text: tarskia
+      - generic [ref=e10]: n8n
+      - generic [ref=e12]:
+        - img
+        - textbox "Search diagram" [ref=e13]
+      - generic [ref=e14]:
+        - button "Open gallery feedback menu" [ref=e15]:
+          - img [ref=e16]
+        - button "Toggle theme" [ref=e19]:
+          - img [ref=e20]
+  - generic [ref=e24]:
+    - img [ref=e26]
+    - generic [ref=e28]:
+      - generic [ref=e29]: Loading gallery diagram
+      - generic [ref=e30]: Preparing the viewer.
