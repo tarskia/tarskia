@@ -16,7 +16,6 @@ import {
   EDGE_OCCLUDER_SEAM_PADDING,
   expandOccluderRect,
   flattenOccluders,
-  resolveVisibleOccluderRegions,
   splitOccludersByNodeIds,
 } from './occluder-geometry';
 
@@ -1143,36 +1142,5 @@ describe('buildClipPathFromOccluders', () => {
         exclude: [{ x: 25, y: 25, width: 50, height: 50 }],
       }),
     ).toBe('M 0,0 H 100 V 100 H 0 Z M 25,25 V 75 H 75 V 25 Z');
-  });
-});
-
-describe('resolveVisibleOccluderRegions', () => {
-  it('keeps an ancestor branch span intact when a lower-z ghost node overlaps it', () => {
-    expect(
-      resolveVisibleOccluderRegions({
-        branchOccluders: [{ x: 0, y: 0, width: 100, height: 100, zIndex: 2 }],
-        ghostOccluders: [{ x: 25, y: 25, width: 50, height: 50, zIndex: 1 }],
-      }),
-    ).toEqual({
-      branchOccluders: [{ x: 0, y: 0, width: 100, height: 100, zIndex: 2 }],
-      ghostOccluders: [],
-    });
-  });
-
-  it('cuts a lower-z branch span around a higher-z ghost node', () => {
-    expect(
-      resolveVisibleOccluderRegions({
-        branchOccluders: [{ x: 0, y: 0, width: 100, height: 100, zIndex: 1 }],
-        ghostOccluders: [{ x: 25, y: 25, width: 50, height: 50, zIndex: 2 }],
-      }),
-    ).toEqual({
-      branchOccluders: [
-        { x: 0, y: 0, width: 100, height: 25, zIndex: 1 },
-        { x: 0, y: 75, width: 100, height: 25, zIndex: 1 },
-        { x: 0, y: 25, width: 25, height: 50, zIndex: 1 },
-        { x: 75, y: 25, width: 25, height: 50, zIndex: 1 },
-      ],
-      ghostOccluders: [{ x: 25, y: 25, width: 50, height: 50, zIndex: 2 }],
-    });
   });
 });

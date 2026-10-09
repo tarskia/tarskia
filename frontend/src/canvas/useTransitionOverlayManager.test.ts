@@ -9,7 +9,6 @@ import type {
 } from './rendering/transition/timed-plan';
 import {
   advanceManagedTransitionState,
-  cancelManagedTransitionState,
   createTransitionOverlayManagerState,
   notifyManagedTransitionHostSettled,
   startManagedTransitionState,
@@ -202,31 +201,6 @@ describe('transition overlay manager state', () => {
     expect(interrupted.transitionOverlay?.nodes[0]?.fromRect.x).toBe(
       capturedFrame.nodes[0]?.rect.x,
     );
-  });
-
-  it('cancels transitions without revealing a stale committed snapshot', () => {
-    const next = buildSnapshot(100);
-    const started = startManagedTransitionState(
-      createTransitionOverlayManagerState(buildSnapshot(0)),
-      {
-        incomingSnapshot: next,
-        planningAdvisory,
-        timedPlan,
-        timedSequence,
-        duration: 100,
-        now: 0,
-      },
-    );
-    const midflight = advanceManagedTransitionState(started, 40).state;
-
-    const cancelled = cancelManagedTransitionState(midflight, 40);
-    expect(cancelled.phase).toBe('settling');
-    expect(cancelled.hostSnapshot.nodes[0]?.rect.x).toBe(100);
-
-    const settled = notifyManagedTransitionHostSettled(cancelled, 1);
-    expect(settled.phase).toBe('idle');
-    expect(settled.transitionOverlay).toBeNull();
-    expect(settled.hostSnapshot.nodes[0]?.rect.x).toBe(100);
   });
 
   it('treats semantically identical stable snapshots as unchanged', () => {

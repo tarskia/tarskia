@@ -3,12 +3,10 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { ReactFlowInstance } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
-import {
-  DEFAULT_ANIMATION_SETTINGS,
-  DEFAULT_VIEWPORT_FIT_PADDING,
-} from '../canvas/rendering/transition/animation-constants';
+import { DEFAULT_VIEWPORT_FIT_PADDING } from '../canvas/rendering/transition/animation-constants';
 import { computeViewportForBoundsInVisibleCanvas } from '../canvas/viewport-visibility';
 import { loadGallery } from '../test/curated-rendering';
+import { DEFAULT_FIT_DURATION_MS } from './camera-navigation';
 import { useDiagramEngine } from './useDiagramEngine';
 
 afterEach(() => {
@@ -51,7 +49,6 @@ it.each([
     engine = useDiagramEngine({
       doc: initial.doc,
       schema: gallery.graph.schema,
-      animationSettings: DEFAULT_ANIMATION_SETTINGS,
       skipTransitions: false,
       showDebug: false,
       persistViewport,
@@ -82,8 +79,8 @@ it.each([
       callbacks.clear();
       for (const callback of queued) callback(now);
     });
-    if (engine.requiredHostGeneration !== null)
-      await act(async () => engine.notifyDisplayHostSettled(engine.requiredHostGeneration!));
+    const generation = engine.requiredHostGeneration;
+    if (generation !== null) await act(async () => engine.notifyDisplayHostSettled(generation));
   };
   const settle = async () => {
     for (let i = 0; i < 60 && (callbacks.size || engine.requiredHostGeneration !== null); i++)
@@ -103,7 +100,9 @@ it.each([
     });
     await settle();
     const fittedBefore = { ...viewport };
-    const focusRect = { x: 600, y: 200, width: 400, height: 240 };
+    const focusNode = initial.presentation.nodes.find((node) => node.id === 'browser-editor-shell');
+    if (!focusNode) throw new Error('Expected visible browser-editor-shell fixture');
+    const focusRect = focusNode.rect;
     if (mode === 'manual')
       await act(async () => {
         // React Flow has already moved when the surface reports the first gesture event.
@@ -115,14 +114,16 @@ it.each([
     if (mode === 'focus' || mode === 'transition') {
       await act(async () =>
         engine.requestNavigation({
-          kind: 'fit-rect',
-          rect: focusRect,
-          duration: mode === 'transition' ? 1000 : 0,
+          kind: 'fit-node-set',
+          nodeIds: [focusNode.id],
+          preset: 'focus',
           waitForHostSettle: false,
         }),
       );
-      if (mode === 'transition') await step(now + 400);
-      else await settle();
+      if (mode === 'transition') {
+        await step(now + DEFAULT_FIT_DURATION_MS * 0.4);
+        expect(engine.motionPhase).toBe('animating');
+      } else await settle();
     }
     const beforeResize = { ...viewport };
     const transitionTarget = computeViewportForBoundsInVisibleCanvas({
@@ -131,7 +132,6 @@ it.each([
       minZoom: 0.01,
       maxZoom: 2,
       padding: DEFAULT_VIEWPORT_FIT_PADDING,
-      leftOcclusion: 0,
     });
     size = { width: 1020, height: 1000 };
     await act(async () => resize());
@@ -149,7 +149,6 @@ it.each([
           minZoom: 0.01,
           maxZoom: 2,
           padding: DEFAULT_VIEWPORT_FIT_PADDING,
-          leftOcclusion: 0,
         }),
       );
     } else {
@@ -166,7 +165,6 @@ it.each([
           minZoom: 0.01,
           maxZoom: 2,
           padding: DEFAULT_VIEWPORT_FIT_PADDING,
-          leftOcclusion: 0,
         }),
       );
     }

@@ -10,10 +10,7 @@ import type {
 import type { DeclarativeDiagramViewState } from '../semantic/view/declarative-view-state';
 import type { LayoutResult } from './rendering/layout/layout-pipeline';
 import type { CanvasRenderSnapshot } from './rendering/presentation/presentation';
-import {
-  type AnimationSettings,
-  FOCUS_SCOPE_CAMERA_PAUSE_MS,
-} from './rendering/transition/animation-constants';
+import { FOCUS_SCOPE_CAMERA_PAUSE_MS } from './rendering/transition/animation-constants';
 import type { TransitionPlanningAdvisory } from './rendering/transition/sequencer';
 
 export type TransitionFocus = StructuralTransitionFocus;
@@ -52,11 +49,9 @@ export interface UseCanvasTransitionControllerArgs {
     toTree: LayoutResult['tree'];
     fromEdges: CompiledDiagramEdge[];
     toEdges: CompiledDiagramEdge[];
-    animationSettings: AnimationSettings;
   }) => TransitionPlanningAdvisory;
   resolveViewportFocusRoot: (tree: LayoutResult['tree'], requestedRootId: string) => string;
   viewportOps: ViewportOps;
-  animationSettings: AnimationSettings;
   skipTransitions: boolean;
   getCurrentViewport: () => ViewportState;
   getCurrentDisplaySnapshot: () => CanvasRenderSnapshot;
@@ -69,7 +64,6 @@ export interface UseCanvasTransitionControllerArgs {
   cancelMotion: () => void;
   getPendingStructuralTransitionIntent: () => StructuralTransitionIntent | null;
   clearPendingStructuralTransitionIntent: () => void;
-  traceSelection?: (event: string, payload?: Record<string, unknown>) => void;
 }
 
 export interface CanvasTransitionControllerResult {
@@ -241,7 +235,6 @@ export function useCanvasTransitionController({
   buildTransitionAdvisory,
   resolveViewportFocusRoot,
   viewportOps,
-  animationSettings,
   skipTransitions,
   getCurrentViewport,
   getCurrentDisplaySnapshot,
@@ -251,7 +244,6 @@ export function useCanvasTransitionController({
   cancelMotion,
   getPendingStructuralTransitionIntent,
   clearPendingStructuralTransitionIntent,
-  traceSelection,
 }: UseCanvasTransitionControllerArgs): CanvasTransitionControllerResult {
   const previousDeclarativeViewStateRef = useRef<DeclarativeDiagramViewState | null>(null);
   const previousLayoutRef = useRef<LayoutResult | null>(null);
@@ -349,26 +341,12 @@ export function useCanvasTransitionController({
     }
 
     if (observedScopeTransition) {
-      traceSelection?.('layoutEffect:startingScopeTransition', {
-        direction: observedScopeTransition.direction,
-        fromNodes: observedScopeTransition.fromLayout.tree.byId.size,
-        toNodes: observedScopeTransition.toLayout.tree.byId.size,
-      });
-
       const planningAdvisory = buildTransitionAdvisory({
         direction: observedScopeTransition.direction,
         fromTree: observedScopeTransition.fromLayout.tree,
         toTree: observedScopeTransition.toLayout.tree,
         fromEdges: observedScopeTransition.fromLayout.edges,
         toEdges: observedScopeTransition.toLayout.edges,
-        animationSettings,
-      });
-
-      traceSelection?.('layoutEffect:scopeAdvisoryBuilt', {
-        direction: observedScopeTransition.direction,
-        steps: planningAdvisory.sequence.steps.length,
-        nodeAdvisories: planningAdvisory.sequence.nodeAdvisories.size,
-        edgeAdvisories: planningAdvisory.structure.edgeDiffs.length,
       });
 
       const currentDisplaySnapshot = getCurrentDisplaySnapshot();
@@ -403,9 +381,6 @@ export function useCanvasTransitionController({
         },
         {
           onComplete: () => {
-            traceSelection?.('layoutEffect:scopeTransitionComplete', {
-              direction: observedScopeTransition.direction,
-            });
             if (!exitingScope && observedScopeTransition.navigationIntent) {
               requestNavigation(observedScopeTransition.navigationIntent);
             }
@@ -416,20 +391,12 @@ export function useCanvasTransitionController({
       return;
     }
 
-    traceSelection?.('layoutEffect:startingTransition', {
-      direction: observedTransition.direction,
-      fromNodes: observedTransition.fromLayout.tree.byId.size,
-      toNodes: observedTransition.toLayout.tree.byId.size,
-      changedExpandedNodeIds: observedTransition.changedExpandedNodeIds,
-    });
-
     const planningAdvisory = buildTransitionAdvisory({
       direction: observedTransition.direction,
       fromTree: observedTransition.fromLayout.tree,
       toTree: observedTransition.toLayout.tree,
       fromEdges: observedTransition.fromLayout.edges,
       toEdges: observedTransition.toLayout.edges,
-      animationSettings,
     });
 
     const endPointOfInterestNodeIds = resolvePointOfInterestNodeIds({
@@ -437,14 +404,6 @@ export function useCanvasTransitionController({
       layout: observedTransition.toLayout,
       resolveViewportFocusRoot,
       collectSubtreeIds: viewportOps.collectSubtreeIds,
-    });
-
-    traceSelection?.('layoutEffect:advisoryBuilt', {
-      direction: observedTransition.direction,
-      steps: planningAdvisory.sequence.steps.length,
-      nodeAdvisories: planningAdvisory.sequence.nodeAdvisories.size,
-      edgeAdvisories: planningAdvisory.structure.edgeDiffs.length,
-      endPointOfInterestCount: endPointOfInterestNodeIds.length,
     });
 
     const currentDisplaySnapshot = getCurrentDisplaySnapshot();
@@ -469,21 +428,12 @@ export function useCanvasTransitionController({
       },
       {
         onComplete: () => {
-          traceSelection?.('layoutEffect:transitionComplete', {
-            direction: observedTransition.direction,
-            focusKind: observedTransition.focus?.kind,
-            focusRootId:
-              observedTransition.focus && observedTransition.focus.kind !== 'global'
-                ? observedTransition.focus.rootId
-                : undefined,
-          });
           observedTransition.onComplete?.();
         },
       },
     );
     syncObservedState();
   }, [
-    animationSettings,
     buildTransitionAdvisory,
     clearPendingStructuralTransitionIntent,
     declarativeViewState,
@@ -498,7 +448,7 @@ export function useCanvasTransitionController({
     stableSnapshot,
     startChoreography,
     syncObservedState,
-    traceSelection,
+
     viewportOps.collectSubtreeIds,
   ]);
 

@@ -280,7 +280,6 @@ describe('transition overlay', () => {
     expect(apiEnd).toBeDefined();
     expect(relStart).toBeUndefined();
     expect(relEnd).toBeDefined();
-    expect(overlay.overlayEdges).toEqual([]);
   });
 
   it('round-trips local edges through captured overlay snapshots', () => {

@@ -4,7 +4,6 @@ import { Link, useOutletContext, useParams, useSearchParams } from 'react-router
 import type { DtoGalleryDiagramDetailResponse } from '../api/generated/model';
 import Diagram from '../canvas/Diagram';
 import { LoadingState } from '../components/ui/loading-state';
-import { cloneAnimationSettings } from '../diagram/animation-settings';
 import { useDiagramEngine } from '../diagram/useDiagramEngine';
 import { useDiagramSurface } from '../diagram/useDiagramSurface';
 import { useReducedMotion } from '../hooks/useReducedMotion';
@@ -66,7 +65,6 @@ export default function PublicGalleryViewer() {
   >([]);
   const [selectedEntityId, setSelectedEntity] = useState<string | undefined>();
   const [selectedEdgeId, setSelectedEdge] = useState<string | undefined>();
-  const [animationSettings] = useState(() => cloneAnimationSettings());
   const revealFrameRef = useRef<number | null>(null);
   const viewerCanvasKey = `${namespace}/${slug}`;
   const [loadedViewerCanvasKey, setLoadedViewerCanvasKey] = useState<string | undefined>();
@@ -134,15 +132,11 @@ export default function PublicGalleryViewer() {
   const diagramEngine = useDiagramEngine({
     doc,
     schema,
-    animationSettings,
     skipTransitions: reducedMotion,
     showDebug: false,
     persistViewport,
     savedViewport,
     initialViewportKey: `${namespace}/${slug}`,
-    cameraPolicy: {
-      openingMode: 'immediate',
-    },
     minZoom: MIN_VIEW_ZOOM,
     maxZoom: MAX_VIEW_ZOOM,
   });

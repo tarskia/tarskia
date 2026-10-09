@@ -95,7 +95,6 @@ async function renderController(params?: {
   transitionLiteMode?: boolean;
   graphActionOverrides?: Partial<UseCanvasSurfaceControllerTestGraphActions>;
   canvasLayoutVersion?: number;
-  onLeftOcclusionChange?: (leftOcclusion: number) => void;
 }) {
   vi.resetModules();
   vi.doUnmock('react');
@@ -165,8 +164,6 @@ async function renderController(params?: {
         onCanvasElementChange: vi.fn(),
         onCanvasInit: vi.fn(),
         onCanvasUnmount: vi.fn(),
-        onLeftOcclusionChange:
-          params?.onLeftOcclusionChange ?? vi.fn((_leftOcclusion: number) => {}),
         showDebug: false,
         getCurrentCanvasSize: vi.fn(() => null),
         canvasLayoutVersion: params?.canvasLayoutVersion ?? 0,
@@ -224,10 +221,6 @@ async function renderController(params?: {
         isTransitionQueued: false,
         motionPhase: 'idle',
         requiredHostGeneration: null,
-        frameDurations: [],
-      },
-      telemetry: {
-        traceSelection: vi.fn(),
       },
     });
     return null;
@@ -369,34 +362,24 @@ describe('useCanvasSurfaceController', () => {
     ).toEqual([]);
   });
 
-  it('keys selection auto-reveal by selected node, canvas layout version, and occlusion', () => {
+  it('keys selection auto-reveal by selected node, canvas layout version', () => {
     const baseKey = buildAutoVisibleSelectionKey({
       selectedEntityId: 'node-1',
       canvasLayoutVersion: 1,
-      leftOcclusion: 0,
     });
     const resizedCanvasKey = buildAutoVisibleSelectionKey({
       selectedEntityId: 'node-1',
       canvasLayoutVersion: 2,
-      leftOcclusion: 0,
-    });
-    const occludedKey = buildAutoVisibleSelectionKey({
-      selectedEntityId: 'node-1',
-      canvasLayoutVersion: 1,
-      leftOcclusion: 320,
     });
     const movedNodeKey = buildAutoVisibleSelectionKey({
       selectedEntityId: 'node-1',
       canvasLayoutVersion: 1,
-      leftOcclusion: 0,
     });
 
     expect(baseKey).not.toBeNull();
     expect(resizedCanvasKey).not.toBeNull();
-    expect(occludedKey).not.toBeNull();
     expect(movedNodeKey).not.toBeNull();
     expect(resizedCanvasKey).not.toBe(baseKey);
-    expect(occludedKey).not.toBe(baseKey);
     expect(movedNodeKey).toBe(baseKey);
   });
 
@@ -580,23 +563,5 @@ describe('useCanvasSurfaceController', () => {
     });
 
     expect(reportUserGestureEnd).toHaveBeenCalledWith({ x: 12, y: -20, zoom: 0.75 });
-  });
-
-  it('completes a user viewport gesture even when move end omits the event payload', async () => {
-    const { controller, reportUserGestureEnd } = await renderController();
-
-    controller.canvasProps.onMoveStart({ clientX: 10, clientY: 20 } as MouseEvent, {
-      x: 0,
-      y: 0,
-      zoom: 1,
-    });
-    controller.canvasProps.onMove({ clientX: 12, clientY: 22 } as MouseEvent, {
-      x: 18,
-      y: -8,
-      zoom: 0.9,
-    });
-    controller.canvasProps.onMoveEnd(null, { x: 24, y: -12, zoom: 0.8 });
-
-    expect(reportUserGestureEnd).toHaveBeenCalledWith({ x: 24, y: -12, zoom: 0.8 });
   });
 });

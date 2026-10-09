@@ -33,26 +33,4 @@ describe('CanvasFocusShellOverlay', () => {
     expect(html).toContain('Core tables: Table Group');
     expect(html).not.toContain('At the edge of this focused view.');
   });
-
-  it('shifts shell boundary labels clear of a left occlusion', () => {
-    const html = renderToStaticMarkup(
-      <CanvasFocusShellOverlay
-        shells={[
-          {
-            id: 'ordersdb',
-            depth: 0,
-            displayName: 'Orders DB',
-            typeLabel: 'Datastore',
-            hue: 32,
-            isRoot: true,
-            frame: { left: 16, top: 16, right: 16, bottom: 16 },
-          },
-        ]}
-        leftOcclusion={260}
-        onSelectShell={vi.fn()}
-      />,
-    );
-
-    expect(html).toContain('left:260px');
-  });
 });

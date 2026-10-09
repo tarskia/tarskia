@@ -4,7 +4,6 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { ReactFlowInstance } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
-import { DEFAULT_ANIMATION_SETTINGS } from '../canvas/rendering/transition/animation-constants';
 import { loadGallery } from '../test/curated-rendering';
 import { useDiagramEngine } from './useDiagramEngine';
 
@@ -34,7 +33,6 @@ it.each([
   const target = second.render([]);
   let engine!: ReturnType<typeof useDiagramEngine>;
   const persistViewport = vi.fn();
-  const traceSelection = vi.fn();
   function Harness({
     doc,
     schema,
@@ -48,11 +46,9 @@ it.each([
       doc,
       schema,
       initialViewportKey: diagramKey,
-      animationSettings: DEFAULT_ANIMATION_SETTINGS,
       skipTransitions: false,
       showDebug: false,
       persistViewport,
-      traceSelection,
       minZoom: 0.01,
       maxZoom: 2,
     });
@@ -116,14 +112,15 @@ it.each([
         engine.reportUserGestureStart();
         expect(
           engine.requestNavigation({
-            kind: 'fit-rect',
-            rect: { x: 9000, y: 9000, width: 100, height: 100 },
+            kind: 'fit-node-set',
+            nodeIds: ['browser-editor-shell'],
+            preset: 'focus',
           }).status,
         ).toBe('queued');
         expect(
           engine.requestNavigation({
-            kind: 'fit-rect',
-            rect: { x: 12000, y: 12000, width: 100, height: 100 },
+            kind: 'fit-scene',
+            preset: 'layout',
             deferUntilNextFrame: true,
           }).status,
         ).toBe('queued');

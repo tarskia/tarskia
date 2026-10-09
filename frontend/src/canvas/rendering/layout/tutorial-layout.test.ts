@@ -71,7 +71,6 @@ describe('tutorial layout', () => {
       minZoom: 0.05,
       maxZoom: 2,
       padding: 0.12,
-      leftOcclusion: 0,
     });
 
     expect(viewport.zoom).toBeGreaterThan(1);

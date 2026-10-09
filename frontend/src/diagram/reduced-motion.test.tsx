@@ -4,7 +4,6 @@ import { createRoot } from 'react-dom/client';
 import type { ReactFlowInstance } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
-import { DEFAULT_ANIMATION_SETTINGS } from '../canvas/rendering/transition/animation-constants';
 import type { SemanticDocument } from '../model/types';
 import { loadGallery } from '../test/curated-rendering';
 import { useDiagramEngine } from './useDiagramEngine';
@@ -45,17 +44,14 @@ it('reduced motion expands, collapses and expands all to animated endpoints with
   const run = async (skipTransitions: boolean) => {
     let engine!: ReturnType<typeof useDiagramEngine>;
     const persistViewport = vi.fn();
-    const traceSelection = vi.fn();
     const observedOverlays: boolean[] = [];
     function Harness({ doc }: { doc: SemanticDocument }) {
       engine = useDiagramEngine({
         doc,
         schema: gallery.graph.schema,
-        animationSettings: DEFAULT_ANIMATION_SETTINGS,
         skipTransitions,
         showDebug: false,
         persistViewport,
-        traceSelection,
         minZoom: 0.01,
         maxZoom: 2,
       });
@@ -163,16 +159,13 @@ it.each([
   const initial = gallery.render([]);
   let engine!: ReturnType<typeof useDiagramEngine>;
   const persistViewport = vi.fn();
-  const traceSelection = vi.fn();
   function Harness({ reduced }: { reduced: boolean }) {
     engine = useDiagramEngine({
       doc: initial.doc,
       schema: gallery.graph.schema,
-      animationSettings: DEFAULT_ANIMATION_SETTINGS,
       skipTransitions: reduced,
       showDebug: false,
       persistViewport,
-      traceSelection,
       minZoom: 0.01,
       maxZoom: 2,
     });
@@ -216,9 +209,10 @@ it.each([
     if (generation !== null) await act(async () => engine.notifyDisplayHostSettled(generation));
   };
   const intent = {
-    kind: 'fit-rect' as const,
-    rect: { x: 50, y: 60, width: 300, height: 200 },
-    waitForHostGeneration: false,
+    kind: 'fit-node-set' as const,
+    nodeIds: ['browser-editor-shell'],
+    preset: 'focus' as const,
+    waitForHostSettle: false,
   };
   try {
     await act(async () => root.render(<Harness reduced={false} />));

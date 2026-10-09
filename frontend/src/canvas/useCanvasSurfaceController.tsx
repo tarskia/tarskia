@@ -49,7 +49,6 @@ export interface UseCanvasSurfaceControllerArgs {
     onCanvasElementChange: (element: HTMLDivElement | null) => void;
     onCanvasInit: (instance: ReactFlowInstance) => void;
     onCanvasUnmount: () => void;
-    onLeftOcclusionChange: (leftOcclusion: number) => void;
     showDebug: boolean;
     getCurrentCanvasSize: GetCurrentCanvasSize;
     canvasLayoutVersion: number;
@@ -101,10 +100,6 @@ export interface UseCanvasSurfaceControllerArgs {
     isTransitionQueued: boolean;
     motionPhase: MotionPhase;
     requiredHostGeneration: number | null;
-    frameDurations: number[];
-  };
-  telemetry: {
-    traceSelection?: (event: string, payload?: Record<string, unknown>) => void;
   };
 }
 
@@ -121,13 +116,15 @@ const formatDebugPoint = (point: { x: number; y: number }) =>
 const formatDebugRect = (rect: { x: number; y: number; width: number; height: number }) =>
   `${Math.round(rect.x)},${Math.round(rect.y)} ${Math.round(rect.width)}x${Math.round(rect.height)}`;
 
+const EMPTY_OVERLAY_EDGES: CanvasOverlayEdgeView[] = [];
+
 export const resolveVisibleHostOverlayEdges = (params: {
   overlayEdges: CanvasOverlayEdgeView[];
   hideHostVisuals: boolean;
   suppressForViewportGesture: boolean;
 }) => {
   const { overlayEdges, hideHostVisuals } = params;
-  return hideHostVisuals ? [] : overlayEdges;
+  return hideHostVisuals ? EMPTY_OVERLAY_EDGES : overlayEdges;
 };
 
 export const getHostRenderStateSignature = (state: ReactFlowHostRenderState) => {
@@ -145,19 +142,14 @@ export const getHostRenderStateSignature = (state: ReactFlowHostRenderState) => 
 export const buildAutoVisibleSelectionKey = (params: {
   selectedEntityId?: string;
   canvasLayoutVersion?: number;
-  leftOcclusion?: number;
 }) => {
-  const { selectedEntityId, canvasLayoutVersion = 0, leftOcclusion } = params;
+  const { selectedEntityId, canvasLayoutVersion = 0 } = params;
   if (!selectedEntityId) {
     return null;
   }
   // Keep selection auto-reveal tied to user selection and viewport geometry,
   // not layout-driven node movement during unrelated expand/collapse transitions.
-  return [
-    selectedEntityId,
-    `layout:${canvasLayoutVersion}`,
-    `${Math.round(Math.max(0, leftOcclusion ?? 0))}`,
-  ].join(':');
+  return [selectedEntityId, `layout:${canvasLayoutVersion}`].join(':');
 };
 
 export const shouldCommitAutoVisibleSelectionKey = (result: NavigationRequestResult) =>
@@ -240,14 +232,12 @@ export function useCanvasSurfaceController({
   semantic,
   graphActions,
   transition,
-  telemetry,
 }: UseCanvasSurfaceControllerArgs) {
   const {
     canvasRef,
     onCanvasElementChange,
     onCanvasInit,
     onCanvasUnmount,
-    onLeftOcclusionChange,
     showDebug,
     getCurrentCanvasSize,
     canvasLayoutVersion,
@@ -256,7 +246,6 @@ export function useCanvasSurfaceController({
     nodeVisualMode,
     nodeTypes,
   } = surface;
-  const [leftOcclusion, setLeftOcclusion] = useState(0);
   const {
     doc,
     schema,
@@ -293,11 +282,7 @@ export function useCanvasSurfaceController({
     isTransitionQueued,
     motionPhase,
     requiredHostGeneration,
-    frameDurations,
   } = transition;
-  const { traceSelection } = telemetry;
-  const [zoom, setZoom] = useState(1);
-  const zoomDebounceRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
   const suppressPaneClickRef = useRef(false);
   const autoVisibleSelectionKeyRef = useRef<string | null>(null);
   const viewportGestureActiveRef = useRef(false);
@@ -310,14 +295,6 @@ export function useCanvasSurfaceController({
     globalThis.setTimeout(() => {
       suppressPaneClickRef.current = false;
     }, 0);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (zoomDebounceRef.current) {
-        globalThis.clearTimeout(zoomDebounceRef.current);
-      }
-    };
   }, []);
 
   const decoratedPresentation = useMemo(() => {
@@ -403,12 +380,11 @@ export function useCanvasSurfaceController({
   }, [entityIndex.byId, focusRootId, focusShellHue, focusShellViews, semantic]);
   const handleEdgeSelect = useCallback(
     (edgeId: string) => {
-      traceSelection?.('onEdgeClick', { edgeId, relationId: edgeId });
       setSelectedEntity(undefined);
       setSelectedEdge(edgeId);
       suppressPaneClickOnce();
     },
-    [setSelectedEdge, setSelectedEntity, suppressPaneClickOnce, traceSelection],
+    [setSelectedEdge, setSelectedEntity, suppressPaneClickOnce],
   );
 
   const handleEdgeLabelClick = useCallback(
@@ -420,12 +396,6 @@ export function useCanvasSurfaceController({
     [setSelectedEdge, setSelectedEntity, suppressPaneClickOnce],
   );
 
-  const onMoveStart: OnMoveStart = useCallback((event) => {
-    if (!shouldHandleViewportGestureEvent(event)) {
-      return;
-    }
-  }, []);
-
   const onMove: OnMove = useCallback(
     (event, viewport) => {
       if (!viewportGestureActiveRef.current && !shouldHandleViewportGestureEvent(event)) {
@@ -435,12 +405,6 @@ export function useCanvasSurfaceController({
         reportUserGestureStart();
       }
       viewportGestureActiveRef.current = true;
-      if (zoomDebounceRef.current) {
-        globalThis.clearTimeout(zoomDebounceRef.current);
-      }
-      zoomDebounceRef.current = globalThis.setTimeout(() => {
-        setZoom(viewport.zoom);
-      }, 140);
       reportUserGestureMove({ x: viewport.x, y: viewport.y, zoom: viewport.zoom });
     },
     [reportUserGestureMove, reportUserGestureStart],
@@ -452,10 +416,6 @@ export function useCanvasSurfaceController({
         return;
       }
       viewportGestureActiveRef.current = false;
-      if (zoomDebounceRef.current) {
-        globalThis.clearTimeout(zoomDebounceRef.current);
-      }
-      setZoom(viewport.zoom);
       reportUserGestureEnd({ x: viewport.x, y: viewport.y, zoom: viewport.zoom });
     },
     [reportUserGestureEnd],
@@ -501,55 +461,17 @@ export function useCanvasSurfaceController({
 
   const buildEdgeControlsById = useCallback(
     (selectedIds?: Set<string>) => {
-      const relationById = new Map(doc.relations.map((rel) => [rel.id, rel]));
-      const relationTypeById = new Map(schema.relations.map((relation) => [relation.id, relation]));
-      const labeledEdgeIds = new Set<string>();
-      const edgeGroups = new Map<
-        string,
-        Array<{ edgeId: string; relationId: string; priority: number; order: number }>
-      >();
-      const routedEdges = decoratedPresentation.overlayEdges.filter(
-        (edge) => edge.kind === 'routed',
-      );
-      for (let index = 0; index < routedEdges.length; index += 1) {
-        const edge = routedEdges[index];
-        if (!edge) continue;
-        const relation = relationById.get(edge.relationId);
-        const relationType = relation?.type ? relationTypeById.get(relation.type) : undefined;
-        const priority = relationType?.priority ?? Number.POSITIVE_INFINITY;
-        const key = `${edge.sourceId}->${edge.targetId}`;
-        const list = edgeGroups.get(key) ?? [];
-        list.push({
-          edgeId: edge.id,
-          relationId: edge.relationId,
-          priority,
-          order: index,
-        });
-        edgeGroups.set(key, list);
-      }
-      for (const group of edgeGroups.values()) {
-        group.sort((a, b) => {
-          if (a.priority !== b.priority) return a.priority - b.priority;
-          if (a.relationId !== b.relationId) return a.relationId.localeCompare(b.relationId);
-          return a.order - b.order;
-        });
-        const primary = group[0];
-        if (primary) {
-          labeledEdgeIds.add(primary.edgeId);
-        }
-      }
       const controlsById = new Map<string, CanvasEdgeHostControls>();
       for (const edge of decoratedPresentation.overlayEdges) {
         const representedRelationIds = edge.relationIds ?? [edge.relationId];
         controlsById.set(edge.id, {
           selected: representedRelationIds.some((relationId) => selectedIds?.has(relationId)),
-          hideLabel:
-            edge.kind === 'routed' ? suppressHostEdgeChrome || !labeledEdgeIds.has(edge.id) : false,
+          hideLabel: edge.kind === 'routed' && suppressHostEdgeChrome,
         });
       }
       return controlsById;
     },
-    [decoratedPresentation.overlayEdges, doc.relations, schema.relations, suppressHostEdgeChrome],
+    [decoratedPresentation.overlayEdges, suppressHostEdgeChrome],
   );
 
   const buildNodeControlsById = useCallback(
@@ -635,17 +557,6 @@ export function useCanvasSurfaceController({
     [decoratedPresentation.nodes, selectedEntityId],
   );
 
-  const handleLeftOcclusionChange = useCallback(
-    (nextLeftOcclusion: number) => {
-      const resolvedLeftOcclusion = Math.max(0, nextLeftOcclusion);
-      setLeftOcclusion((current) =>
-        current === resolvedLeftOcclusion ? current : resolvedLeftOcclusion,
-      );
-      onLeftOcclusionChange(resolvedLeftOcclusion);
-    },
-    [onLeftOcclusionChange],
-  );
-
   useLayoutEffect(() => {
     if (!selectedEntityId) {
       autoVisibleSelectionKeyRef.current = null;
@@ -654,7 +565,6 @@ export function useCanvasSurfaceController({
     const nextAutoVisibleSelectionKey = buildAutoVisibleSelectionKey({
       selectedEntityId,
       canvasLayoutVersion,
-      leftOcclusion,
     });
     if (!nextAutoVisibleSelectionKey) {
       return;
@@ -679,7 +589,7 @@ export function useCanvasSurfaceController({
   }, [
     canvasLayoutVersion,
     isTransitionQueued,
-    leftOcclusion,
+
     motionPhase,
     requestNavigation,
     selectedEntityId,
@@ -814,26 +724,6 @@ export function useCanvasSurfaceController({
               edge.relationId === selectedEdgeId ||
               (edge.relationIds ?? []).includes(selectedEdgeId),
           ) ?? null);
-    const frameStats = (() => {
-      const samples = frameDurations;
-      if (!samples.length) return null;
-      const sorted = [...samples].sort((a, b) => a - b);
-      const sum = samples.reduce((acc, value) => acc + value, 0);
-      const p95Index = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95));
-      const over16_7Count = samples.filter((value) => value > 16.7).length;
-      const over25Count = samples.filter((value) => value > 25).length;
-      const over33_3Count = samples.filter((value) => value > 33.3).length;
-      return {
-        avgMs: sum / samples.length,
-        p95Ms: sorted[p95Index] ?? 0,
-        maxMs: sorted[sorted.length - 1] ?? 0,
-        sampleCount: samples.length,
-        over16_7Count,
-        over25Count,
-        over33_3Count,
-      };
-    })();
-
     return {
       total: graph.entities.length,
       layout: layoutIds.size,
@@ -853,7 +743,6 @@ export function useCanvasSurfaceController({
       topBounds,
       viewRect,
       overflowParents: Array.from(overflowParents),
-      frameStats,
       selectedEdgeTrace: selectedResolvedEdge
         ? {
             id: selectedResolvedEdge.id,
@@ -888,7 +777,7 @@ export function useCanvasSurfaceController({
     decoratedPresentation.nodes,
     decoratedPresentation.overlayEdges.length,
     canvasLayoutVersion,
-    frameDurations,
+
     getCurrentCanvasSize,
     isTransitionQueued,
     isTransitionRunning,
@@ -901,31 +790,20 @@ export function useCanvasSurfaceController({
 
   const onNodeClick = useCallback(
     (_event: unknown, node: Node) => {
-      traceSelection?.('onNodeClick', { nodeId: node.id });
       setSelectedEntity(node.id);
       setSelectedEdge(undefined);
       suppressPaneClickOnce();
     },
-    [setSelectedEdge, setSelectedEntity, suppressPaneClickOnce, traceSelection],
+    [setSelectedEdge, setSelectedEntity, suppressPaneClickOnce],
   );
 
   const onCanvasPaneClick = useCallback(() => {
-    traceSelection?.('onPaneClick:start', {
-      suppressPaneClick: suppressPaneClickRef.current,
-      selectedEntityId,
-      selectedEdgeId,
-    });
     if (suppressPaneClickRef.current) {
-      traceSelection?.('onPaneClick:suppressed');
       return;
     }
-    traceSelection?.('onPaneClick:resolved', {
-      nextSelectedEntityId: undefined,
-      nextSelectedEdgeId: undefined,
-    });
     setSelectedEntity(undefined);
     setSelectedEdge(undefined);
-  }, [selectedEntityId, selectedEdgeId, setSelectedEdge, setSelectedEntity, traceSelection]);
+  }, [setSelectedEdge, setSelectedEntity]);
 
   const overlayInteractionBindings = useMemo<EdgeOverlayInteractionBindings>(
     () => ({ onSelectEdge: handleEdgeSelect, onEdgeLabelClick: handleEdgeLabelClick }),
@@ -935,7 +813,6 @@ export function useCanvasSurfaceController({
   const canvasProps: DiagramCanvasProps = {
     canvasRef,
     onCanvasElementChange,
-    onLeftOcclusionChange: handleLeftOcclusionChange,
     nodeVisualMode,
     hideHostVisuals,
     nodes: nodes as Node[],
@@ -954,7 +831,6 @@ export function useCanvasSurfaceController({
     onInit: onCanvasInit,
     onUnmount: onCanvasUnmount,
     onPaneClick: onCanvasPaneClick,
-    onMoveStart,
     onMove,
     onMoveEnd,
     minZoom,
@@ -966,8 +842,6 @@ export function useCanvasSurfaceController({
   };
 
   return {
-    zoom,
-    setZoom,
     canvasProps,
   };
 }

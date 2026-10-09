@@ -2,7 +2,6 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
-import { DEFAULT_ANIMATION_SETTINGS } from '../canvas/rendering/transition/animation-constants';
 import { loadGallery } from '../test/curated-rendering';
 import * as bootstrapModule from './useCanvasBootstrapController';
 import { useDiagramEngine } from './useDiagramEngine';
@@ -25,8 +24,6 @@ it('stops measuring after bootstrap, but measures again for a new diagram', asyn
       sceneBounds: { x: 0, y: 0, width: 200, height: 100 },
       minZoom: 0.01,
       maxZoom: 2,
-      animationSettings: DEFAULT_ANIMATION_SETTINGS,
-      getLeftOcclusion: () => 0,
       canvasReady: true,
       requestNavigation,
     });
@@ -60,27 +57,26 @@ it('keeps camera bounds identity while the stable scene snapshot is unchanged', 
   const gallery = loadGallery('prometheus.yaml');
   const doc = gallery.graph.doc;
   const persistViewport = vi.fn();
-  function Harness({ leftOcclusion }: { leftOcclusion: number }) {
+  function Harness({ renderVersion }: { renderVersion: number }) {
     useDiagramEngine({
       doc,
       schema: gallery.graph.schema,
-      animationSettings: DEFAULT_ANIMATION_SETTINGS,
       skipTransitions: true,
       showDebug: false,
       persistViewport,
       minZoom: 0.01,
       maxZoom: 2,
-      leftOcclusion,
     });
-    return null;
+    return <span>{renderVersion}</span>;
   }
   const root = createRoot(document.createElement('div'));
   try {
-    await act(async () => root.render(<Harness leftOcclusion={0} />));
-    const bounds = bootstrap.mock.lastCall![0].sceneBounds;
+    await act(async () => root.render(<Harness renderVersion={0} />));
+    const bounds = bootstrap.mock.lastCall?.[0].sceneBounds;
+    expect(bounds).toBeDefined();
     expect(bounds).not.toBeNull();
-    await act(async () => root.render(<Harness leftOcclusion={100} />));
-    expect(bootstrap.mock.lastCall![0].sceneBounds).toBe(bounds);
+    await act(async () => root.render(<Harness renderVersion={1} />));
+    expect(bootstrap.mock.lastCall?.[0].sceneBounds).toBe(bounds);
   } finally {
     await act(async () => root.unmount());
   }

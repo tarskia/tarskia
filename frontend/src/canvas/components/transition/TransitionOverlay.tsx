@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { useStore } from 'reactflow';
 import type { NodeVisualMode } from '../../../node-visual-mode';
 import type { CanvasNodeHostControls } from '../../host/reactflow/types';
@@ -11,7 +11,6 @@ import {
   type TransitionOverlayState,
 } from '../../rendering/transition/overlay';
 import type { OverlayFrameStore } from '../../rendering/transition/overlay-frame-store';
-import { EdgeOverlayView } from '../edges/EdgeOverlayView';
 import { resolveEdgeLabelTransform } from '../edges/edge-label-placement';
 import { EntityNodeView } from '../nodes/EntityNodeView';
 import { GroupNodeView } from '../nodes/GroupNodeView';
@@ -100,56 +99,14 @@ export function TransitionOverlay({
   const frameOverride = storedFrame ?? suppliedFrame;
   const transform = useStore((store) => store.transform);
   const [tx, ty, zoom] = transform;
-  const [frameNow, setFrameNow] = useState(() =>
-    typeof performance === 'undefined' ? state.startedAt : performance.now(),
-  );
-
-  useEffect(() => {
-    if (frameStore || frameOverride) {
-      return;
-    }
-    setFrameNow(typeof performance === 'undefined' ? state.startedAt : performance.now());
-  }, [frameStore, frameOverride, state.startedAt]);
-
   const frame = useMemo(
-    () => frameOverride ?? resolveTransitionOverlayFrame(state, frameNow),
-    [frameNow, frameOverride, state],
+    () => frameOverride ?? resolveTransitionOverlayFrame(state, state.startedAt),
+    [frameOverride, state],
   );
-
-  useEffect(() => {
-    if (frameStore || frameOverride || frame.progress >= 1) {
-      return;
-    }
-    let cancelled = false;
-    const rafId = requestAnimationFrame((now) => {
-      if (!cancelled) {
-        setFrameNow(now);
-      }
-    });
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(rafId);
-    };
-  }, [frame.progress, frameOverride, frameStore]);
 
   const edgeById = useMemo(
     () => new Map(frame.edges.map((edge) => [edge.id, edge])),
     [frame.edges],
-  );
-  const overlayNodes = useMemo(
-    () =>
-      frame.nodes.map((node) => ({
-        ...node.view,
-        rect: node.rect,
-        zIndex: node.zIndex ?? node.view.zIndex,
-        opacity: node.opacity,
-        contentScale: node.contentScale,
-        content: {
-          ...node.view.content,
-          childOpacity: node.childOpacity,
-        },
-      })),
-    [frame.nodes],
   );
   const worldStyle = {
     transform: `translate(${tx}px, ${ty}px) scale(${zoom})`,
@@ -169,37 +126,6 @@ export function TransitionOverlay({
             const edge = edgeById.get(edgeTrack.id);
             if (!edge || edge.opacity <= VISIBILITY_EPSILON) {
               return null;
-            }
-            if (edge.kind === 'local') {
-              const labelOpacity =
-                edgeTrack.labelTrack?.label !== undefined
-                  ? resolveTransitionLabelOpacity({
-                      progress: frame.progress,
-                      baseOpacity: edge.opacity,
-                      staticOverlay,
-                    })
-                  : 0;
-              return (
-                <g
-                  key={edgeTrack.id}
-                  className="group-edge"
-                  style={{
-                    opacity: edge.opacity,
-                  }}
-                >
-                  <path className="group-edge-path" d={edge.geometry.path} fill="none" />
-                  {edgeTrack.labelTrack?.label && labelOpacity > VISIBILITY_EPSILON ? (
-                    <text
-                      className="group-edge-label"
-                      x={edge.labelAnchor.x}
-                      y={edge.labelAnchor.y}
-                      opacity={labelOpacity}
-                    >
-                      {edgeTrack.labelTrack.label}
-                    </text>
-                  ) : null}
-                </g>
-              );
             }
             return (
               <path
@@ -252,12 +178,6 @@ export function TransitionOverlay({
             );
           })}
         </div>
-        <EdgeOverlayView
-          edges={frame.overlayEdges}
-          nodes={overlayNodes}
-          transform={{ tx: 0, ty: 0, zoom: 1 }}
-          className="edge-overlay edge-overlay--transition"
-        />
         <div className="transition-overlay-label-layer">
           {frame.edges
             .filter((edge) => edge.kind === 'routed')

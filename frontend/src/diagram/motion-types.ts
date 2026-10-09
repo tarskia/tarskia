@@ -21,10 +21,6 @@ export type FitSceneNavigationPreset = 'default' | 'layout' | 'search-reveal';
 export type FitNodeSetNavigationPreset = 'default' | 'focus';
 export type EnsureVisibleNavigationPreset = 'default' | 'selection';
 
-export interface DiagramCameraPolicy {
-  openingMode?: CameraExecutionMode;
-}
-
 export type StructuralTransitionFocus =
   | { kind: 'single'; rootId: string }
   | { kind: 'local'; rootId: string }
@@ -38,8 +34,6 @@ export interface StructuralTransitionIntent {
 }
 
 interface NavigationIntentBase {
-  mode?: CameraExecutionMode;
-  duration?: number;
   persist?: boolean;
   waitForHostSettle?: boolean;
   deferUntilNextFrame?: boolean;
@@ -54,11 +48,6 @@ export type NavigationIntent =
       preset?: FitSceneNavigationPreset;
     })
   | (NavigationIntentBase & {
-      kind: 'fit-rect';
-      rect: DiagramCameraRect;
-      preset?: FitNodeSetNavigationPreset;
-    })
-  | (NavigationIntentBase & {
       kind: 'fit-node-set';
       nodeIds: string[];
       preset?: FitNodeSetNavigationPreset;
@@ -67,10 +56,6 @@ export type NavigationIntent =
       kind: 'ensure-visible';
       rect: DiagramCameraRect;
       preset?: EnsureVisibleNavigationPreset;
-      padding?: number;
-    })
-  | (NavigationIntentBase & {
-      kind: 'restore-saved';
     });
 
 export type NavigationRequestResult =
@@ -101,7 +86,6 @@ export interface OverlayMotionTrack {
   planningAdvisory: TransitionPlanningAdvisory;
   timedPlan: TimedTransitionPlan;
   timedSequence: TimedTransitionSequence;
-  phaseWindow?: { start: number; end: number };
   sharedNodeGeometry?: 'freeze-from';
 }
 

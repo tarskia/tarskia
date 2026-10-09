@@ -14,7 +14,6 @@ interface ScreenPoint {
 
 export function useCanvasViewportAdapter() {
   const reactFlowRef = useRef<ReactFlowInstance | null>(null);
-  const leftOcclusionRef = useRef(0);
 
   const onCanvasInit = useCallback((instance: ReactFlowInstance) => {
     reactFlowRef.current = instance;
@@ -24,17 +23,11 @@ export function useCanvasViewportAdapter() {
     reactFlowRef.current = null;
   }, []);
 
-  const setLeftOcclusion = useCallback((leftOcclusion: number) => {
-    leftOcclusionRef.current = Math.max(0, leftOcclusion);
-  }, []);
-
   const getCurrentViewport = useCallback((): ViewportState => {
     const live = reactFlowRef.current?.getViewport();
     if (live) return live;
     return { x: 0, y: 0, zoom: 1 };
   }, []);
-
-  const getLeftOcclusion = useCallback(() => leftOcclusionRef.current, []);
 
   const setViewport = useCallback((viewport: ViewportState) => {
     reactFlowRef.current?.setViewport(viewport, { duration: 0 });
@@ -51,9 +44,7 @@ export function useCanvasViewportAdapter() {
   return {
     onCanvasInit,
     onCanvasUnmount,
-    setLeftOcclusion,
     getCurrentViewport,
-    getLeftOcclusion,
     setViewport,
     screenToWorldPosition,
   };

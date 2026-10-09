@@ -2,7 +2,6 @@ import { buildEntityIndex } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
 import type { CanvasRect } from '../canvas/rendering/presentation/geometry';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
-import { DEFAULT_ANIMATION_SETTINGS } from '../canvas/rendering/transition/animation-constants';
 import {
   captureTransitionOverlaySnapshot,
   resolveTransitionOverlayFrame,
@@ -146,14 +145,13 @@ describe.each(galleryFiles)('$file rendering behavior', ({ file }) => {
         const intent = expanded.length
           ? { kind: 'fit-scene' as const }
           : { kind: 'initialize-diagram' as const };
-        const policy = resolveNavigationPolicy(intent, DEFAULT_ANIMATION_SETTINGS);
+        const policy = resolveNavigationPolicy(intent);
         const viewport = resolveNavigationViewport({
           intent,
           policy,
           canvasSize,
           sceneBounds: bounds,
           currentViewport: { x: 0, y: 0, zoom: 1 },
-          leftOcclusion: 0,
           minZoom: 0.01,
           maxZoom: 2,
           getNodeSetBounds: () => bounds,

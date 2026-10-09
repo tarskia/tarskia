@@ -190,52 +190,6 @@ const subtractOccluderRect = (
   return fragments;
 };
 
-export const resolveVisibleOccluderRegions = (params: {
-  branchOccluders: CanvasOverlayOccluder[];
-  ghostOccluders: CanvasOverlayOccluder[];
-}) => {
-  const occluders = [
-    ...params.branchOccluders.map((rect, order) => ({
-      ...normalizeOccluder(rect),
-      kind: 'branch' as const,
-      order,
-    })),
-    ...params.ghostOccluders.map((rect, order) => ({
-      ...normalizeOccluder(rect),
-      kind: 'ghost' as const,
-      order: params.branchOccluders.length + order,
-    })),
-  ].sort((left, right) => {
-    const zOrder = (right.zIndex ?? 0) - (left.zIndex ?? 0);
-    return zOrder !== 0 ? zOrder : right.order - left.order;
-  });
-
-  const coveredByHigher: CanvasOverlayOccluder[] = [];
-  const branchVisible: CanvasOverlayOccluder[] = [];
-  const ghostVisible: CanvasOverlayOccluder[] = [];
-
-  for (const occluder of occluders) {
-    let visibleRegions: CanvasOverlayOccluder[] = [normalizeOccluder(occluder)];
-    for (const higher of coveredByHigher) {
-      visibleRegions = visibleRegions.flatMap((region) => subtractOccluderRect(region, higher));
-      if (visibleRegions.length === 0) {
-        break;
-      }
-    }
-    if (occluder.kind === 'branch') {
-      branchVisible.push(...visibleRegions);
-    } else {
-      ghostVisible.push(...visibleRegions);
-    }
-    coveredByHigher.push(normalizeOccluder(occluder));
-  }
-
-  return {
-    branchOccluders: branchVisible,
-    ghostOccluders: ghostVisible,
-  };
-};
-
 export const splitOccludersByNodeIds = (params: {
   nodes: EdgeOccluderNode[];
   solidOverNodeIds: string[];

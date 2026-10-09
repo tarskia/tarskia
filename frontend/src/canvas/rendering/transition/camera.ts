@@ -37,9 +37,6 @@ type CollapseEpilogueTarget = {
 const CAMERA_INFLATE_X = 24;
 const CAMERA_INFLATE_Y = 48;
 
-const clampLeftOcclusion = (canvasWidth: number, leftOcclusion = 0) =>
-  Math.min(Math.max(0, leftOcclusion), Math.max(0, canvasWidth - 1));
-
 const VIEWPORT_EPSILON = 0.0001;
 
 const getNodeDepth = (layout: LayoutResult, nodeId: string) => {
@@ -105,11 +102,9 @@ const viewportEquals = (
 const getViewportCenter = (params: {
   viewport: ViewportState;
   canvas: { width: number; height: number };
-  leftOcclusion?: number;
 }) => {
   const { viewport, canvas } = params;
-  const leftOcclusion = clampLeftOcclusion(canvas.width, params.leftOcclusion);
-  const minX = (-viewport.x + leftOcclusion) / viewport.zoom;
+  const minX = -viewport.x / viewport.zoom;
   const minY = -viewport.y / viewport.zoom;
   const maxX = (-viewport.x + canvas.width) / viewport.zoom;
   const maxY = (-viewport.y + canvas.height) / viewport.zoom;
@@ -168,7 +163,6 @@ const resolveAnchorId = (params: {
   focus: TransitionCameraFocus;
   currentViewport: ViewportState;
   canvasSize: { width: number; height: number };
-  leftOcclusion?: number;
   collectSubtreeIds: (tree: LayoutResult['tree'], rootId: string) => Set<string>;
 }) => {
   const { fromLayout, focus, currentViewport, canvasSize, collectSubtreeIds } = params;
@@ -179,7 +173,6 @@ const resolveAnchorId = (params: {
   const viewportCenter = getViewportCenter({
     viewport: currentViewport,
     canvas: canvasSize,
-    leftOcclusion: params.leftOcclusion,
   });
   const viewportAnchorId = pickViewportAnchorId(fromLayout, viewportCenter);
   if (!viewportAnchorId) {
@@ -214,7 +207,6 @@ const resolveCollapseCorridorTargets = (params: {
   focus: TransitionCameraFocus;
   currentViewport: ViewportState;
   canvasSize: { width: number; height: number };
-  leftOcclusion?: number;
   collectSubtreeIds: (tree: LayoutResult['tree'], rootId: string) => Set<string>;
 }): CollapseCorridorTargets | null => {
   const { fromLayout, toLayout, focus, currentViewport, canvasSize, collectSubtreeIds } = params;
@@ -223,7 +215,6 @@ const resolveCollapseCorridorTargets = (params: {
     focus,
     currentViewport,
     canvasSize,
-    leftOcclusion: params.leftOcclusion,
     collectSubtreeIds,
   });
   if (!anchorId) {
@@ -254,7 +245,6 @@ const isCollapseAnchorJourneyVisible = (params: {
   focus: TransitionCameraFocus;
   currentViewport: ViewportState;
   canvasSize: { width: number; height: number };
-  leftOcclusion?: number;
   collectSubtreeIds: (tree: LayoutResult['tree'], rootId: string) => Set<string>;
   tolerance?: number;
 }) => {
@@ -266,7 +256,6 @@ const isCollapseAnchorJourneyVisible = (params: {
   const viewRect = computeVisibleViewRect({
     viewport: params.currentViewport,
     canvas: params.canvasSize,
-    leftOcclusion: params.leftOcclusion,
   });
   const containsTargetBounds = (bounds: Bounds) =>
     bounds.minX >= viewRect.minX - tolerance &&
@@ -283,18 +272,15 @@ const resolveCollapseCorridorBounds = (params: {
   focus: TransitionCameraFocus;
   currentViewport: ViewportState;
   canvasSize: { width: number; height: number };
-  leftOcclusion?: number;
   collectSubtreeIds: (tree: LayoutResult['tree'], rootId: string) => Set<string>;
 }): Bounds | null => resolveCollapseCorridorTargets(params)?.corridorBounds ?? null;
 
 const computeVisibleViewRect = (params: {
   viewport: ViewportState;
   canvas: { width: number; height: number };
-  leftOcclusion?: number;
 }) => {
   const { viewport, canvas } = params;
-  const leftOcclusion = clampLeftOcclusion(canvas.width, params.leftOcclusion);
-  const minX = (-viewport.x + leftOcclusion) / viewport.zoom;
+  const minX = -viewport.x / viewport.zoom;
   const minY = -viewport.y / viewport.zoom;
   const maxX = (-viewport.x + canvas.width) / viewport.zoom;
   const maxY = (-viewport.y + canvas.height) / viewport.zoom;
@@ -304,15 +290,13 @@ const computeVisibleViewRect = (params: {
 const computeViewportForVisibleBounds = (params: {
   bounds: Bounds;
   canvas: { width: number; height: number };
-  leftOcclusion?: number;
   padding: number;
   minZoom: number;
   maxZoom: number;
 }) => {
   const { bounds, canvas, padding, minZoom, maxZoom } = params;
-  const leftOcclusion = clampLeftOcclusion(canvas.width, params.leftOcclusion);
   const visibleCanvas = {
-    width: Math.max(1, canvas.width - leftOcclusion),
+    width: Math.max(1, canvas.width),
     height: canvas.height,
   };
   const viewport = computeViewportForBounds({
@@ -323,16 +307,12 @@ const computeViewportForVisibleBounds = (params: {
     minZoom,
     maxZoom,
   });
-  return {
-    ...viewport,
-    x: viewport.x + leftOcclusion,
-  };
+  return viewport;
 };
 
 const computeSceneFitViewportForVisibleBounds = (params: {
   bounds: Bounds;
   canvas: { width: number; height: number };
-  leftOcclusion?: number;
   padding: number | undefined;
   minZoom: number;
   maxZoom: number;
@@ -348,7 +328,6 @@ const computeSceneFitViewportForVisibleBounds = (params: {
     minZoom: params.minZoom,
     maxZoom: params.maxZoom,
     padding: params.padding,
-    leftOcclusion: params.leftOcclusion,
   });
 
 const toViewportBounds = (layout: LayoutResult, nodeIds: string[]) => {
@@ -391,7 +370,6 @@ const resolveCollapseEpilogueTarget = (params: {
   endLayout: LayoutResult;
   currentViewport: ViewportState;
   canvasSize: { width: number; height: number };
-  leftOcclusion?: number;
   endPointOfInterestNodeIds: string[];
   collectSubtreeIds: (tree: LayoutResult['tree'], rootId: string) => Set<string>;
 }): CollapseEpilogueTarget => {
@@ -401,7 +379,6 @@ const resolveCollapseEpilogueTarget = (params: {
     endLayout,
     currentViewport,
     canvasSize,
-    leftOcclusion,
     endPointOfInterestNodeIds,
     collectSubtreeIds,
   } = params;
@@ -431,7 +408,6 @@ const resolveCollapseEpilogueTarget = (params: {
     focus,
     currentViewport,
     canvasSize,
-    leftOcclusion,
     collectSubtreeIds,
   });
   const survivingAncestorId = collapseTargets?.anchorId
@@ -475,7 +451,6 @@ export const buildStructuralCameraAdvisory = (params: {
   endLayout: LayoutResult;
   currentViewport: ViewportState;
   canvasSize: { width: number; height: number } | null;
-  leftOcclusion?: number;
   endPointOfInterestNodeIds: string[];
   collectSubtreeIds: (tree: LayoutResult['tree'], rootId: string) => Set<string>;
   padding: number;
@@ -489,7 +464,6 @@ export const buildStructuralCameraAdvisory = (params: {
     endLayout,
     currentViewport,
     canvasSize,
-    leftOcclusion,
     endPointOfInterestNodeIds,
     collectSubtreeIds,
     padding,
@@ -509,7 +483,6 @@ export const buildStructuralCameraAdvisory = (params: {
           endLayout,
           currentViewport,
           canvasSize,
-          leftOcclusion,
           endPointOfInterestNodeIds,
           collectSubtreeIds,
         })
@@ -526,7 +499,6 @@ export const buildStructuralCameraAdvisory = (params: {
       focus,
       currentViewport,
       canvasSize,
-      leftOcclusion,
       collectSubtreeIds,
     });
     if (rawCorridorBounds) {
@@ -537,14 +509,12 @@ export const buildStructuralCameraAdvisory = (params: {
         focus,
         currentViewport,
         canvasSize,
-        leftOcclusion,
         collectSubtreeIds,
         tolerance: relaxedTolerance,
       });
       const currentViewRect = computeVisibleViewRect({
         viewport: currentViewport,
         canvas: canvasSize,
-        leftOcclusion,
       });
       const corridorAlreadyFits = containsBounds(
         currentViewRect,
@@ -555,7 +525,6 @@ export const buildStructuralCameraAdvisory = (params: {
         advisory.prelude = computeViewportForVisibleBounds({
           bounds: inflateBounds(rawCorridorBounds),
           canvas: canvasSize,
-          leftOcclusion,
           padding,
           minZoom,
           maxZoom,
@@ -567,13 +536,11 @@ export const buildStructuralCameraAdvisory = (params: {
     const currentViewRect = computeVisibleViewRect({
       viewport: currentViewport,
       canvas: canvasSize,
-      leftOcclusion,
     });
     if (focus.kind === 'global') {
       const sceneFitViewport = computeSceneFitViewportForVisibleBounds({
         bounds: endBounds,
         canvas: canvasSize,
-        leftOcclusion,
         padding: DEFAULT_VIEWPORT_FIT_PADDING,
         minZoom,
         maxZoom,
@@ -585,7 +552,6 @@ export const buildStructuralCameraAdvisory = (params: {
       advisory.prelude = computeViewportForVisibleBounds({
         bounds: inflatedEndBounds,
         canvas: canvasSize,
-        leftOcclusion,
         padding,
         minZoom,
         maxZoom,
@@ -598,7 +564,6 @@ export const buildStructuralCameraAdvisory = (params: {
   const postPreludeViewRect = computeVisibleViewRect({
     viewport: postPreludeViewport,
     canvas: canvasSize,
-    leftOcclusion,
   });
   if (endBounds) {
     const epilogueViewport =
@@ -609,12 +574,10 @@ export const buildStructuralCameraAdvisory = (params: {
             minZoom,
             maxZoom,
             padding: DEFAULT_VIEWPORT_FIT_PADDING,
-            leftOcclusion,
           })
         : computeViewportForVisibleBounds({
             bounds: endBounds,
             canvas: canvasSize,
-            leftOcclusion,
             padding,
             minZoom,
             maxZoom,
