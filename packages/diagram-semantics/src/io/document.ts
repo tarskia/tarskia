@@ -1,3 +1,4 @@
+import { normalizeDocumentHierarchy } from '../model/normalize-hierarchy';
 import type { SchemaModule, SemanticDocument, SemanticSourceDocument } from '../model/types';
 import type { DiagramValidationOptions } from '../model/validate';
 import {
@@ -6,7 +7,7 @@ import {
   serializeDocument,
   serializeSourceDocument,
 } from '../util/serialization';
-import { parseAndValidateDiagramDoc } from '../validation/diagram';
+import { validateDiagramDoc } from '../validation/diagram';
 import type { ValidationResult } from '../validation/types';
 import { createYamlParseDiagnostic } from './yaml';
 
@@ -29,17 +30,24 @@ export const parseTrustedSemanticSourceDocument = parseSemanticSourceDocument;
 export const serializeSemanticDocument = serializeDocument;
 export const serializeSemanticSourceDocument = serializeSourceDocument;
 
-const ingestWithParse = <T>(params: {
+const ingestWithParse = <T extends SemanticDocument>(params: {
   raw: string;
   parser: (raw: string) => T;
   path?: string;
   messagePrefix?: string;
 }): ValidationResult<T> => {
   try {
+    const parsed = params.parser(params.raw);
+    // Imported parent references cannot be resolved until all source namespaces
+    // have been compiled. Normalize those documents at the source-graph boundary.
+    if ('imports' in parsed && Array.isArray(parsed.imports) && parsed.imports.length > 0) {
+      return { ok: true, value: parsed, diagnostics: [] };
+    }
+    const normalized = normalizeDocumentHierarchy(parsed);
     return {
-      ok: true,
-      value: params.parser(params.raw),
-      diagnostics: [],
+      ok: normalized.diagnostics.length === 0,
+      value: normalized.doc,
+      diagnostics: normalized.diagnostics,
     };
   } catch (error) {
     return {
@@ -59,7 +67,11 @@ const ingestWithParse = <T>(params: {
 export function ingestSemanticDocument(
   params: IngestSemanticDocumentParams,
 ): ValidationResult<SemanticDocument> {
-  return parseAndValidateDiagramDoc(params.raw, params.schema, params.validationOptions);
+  const parsed = ingestTrustedSemanticDocument({ raw: params.raw });
+  if (!parsed.value) return parsed;
+  const validation = validateDiagramDoc(parsed.value, params.schema, params.validationOptions);
+  const diagnostics = [...parsed.diagnostics, ...validation.diagnostics];
+  return { ok: diagnostics.length === 0, value: parsed.value, diagnostics };
 }
 
 export function ingestTrustedSemanticDocument(params: {
