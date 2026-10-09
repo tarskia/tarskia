@@ -55,8 +55,13 @@ const readNumber = (value: unknown) =>
   typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 
 const parseLocalDiagramMetadata = (raw: string): LocalDiagramMetadata => {
-  const parsed = load(raw) as LocalDiagramDocument | undefined;
-  return isRecord(parsed?.metadata) ? parsed.metadata : {};
+  try {
+    const parsed = load(raw) as LocalDiagramDocument | undefined;
+    return isRecord(parsed?.metadata) ? parsed.metadata : {};
+  } catch {
+    // Metadata is optional; let the viewer report an unreadable diagram.
+    return {};
+  }
 };
 
 const readWorkerBuild = (

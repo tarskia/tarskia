@@ -400,7 +400,7 @@ export default function PublicGalleryViewer() {
     );
   }
 
-  if (detailQuery.isError || !detail || !loadedDiagram) {
+  if (detailQuery.isError) {
     return (
       <div className="mx-auto flex w-full max-w-[1600px] flex-1 items-center px-5 py-10">
         <div className="rounded-xl border border-destructive/25 bg-destructive/5 px-6 py-6 text-sm text-destructive">
@@ -417,6 +417,24 @@ export default function PublicGalleryViewer() {
               Back to gallery
             </Link>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!detail || !loadedDiagram || !loadedDiagram.readable) {
+    return (
+      <div className="mx-auto flex w-full max-w-[1600px] flex-1 items-center px-5 py-10">
+        <div className="rounded-xl border border-border bg-surface px-6 py-6">
+          <h1 className="text-xl font-semibold text-foreground">
+            This diagram couldn't be loaded.
+          </h1>
+          <Link
+            to="/gallery"
+            className="mt-4 inline-block text-sm font-medium text-accent hover:underline"
+          >
+            Back to gallery
+          </Link>
         </div>
       </div>
     );

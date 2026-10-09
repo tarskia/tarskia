@@ -1,0 +1,278 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`'airflow.yaml' preserves compact-list container dimensions 1`] = `{}`;
+
+exports[`'chatwoot.yaml' preserves compact-list container dimensions 1`] = `
+{
+  "persistence-state-plane": {
+    "height": 302,
+    "width": 262,
+  },
+  "rails-control-plane/integration-gateway/provider-ingress/callback-controllers": {
+    "height": 254,
+    "width": 222,
+  },
+  "rails-control-plane/integration-gateway/provider-ingress/webhook-ingress": {
+    "height": 224,
+    "width": 222,
+  },
+  "sidekiq-job-queue": {
+    "height": 194,
+    "width": 212,
+  },
+  "sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/other-callback-jobs": {
+    "height": 224,
+    "width": 228,
+  },
+}
+`;
+
+exports[`'clickhouse.yaml' preserves compact-list container dimensions 1`] = `
+{
+  "client-tool-suite/client-command-suite/client-command-entrypoints": {
+    "height": 194,
+    "width": 202,
+  },
+}
+`;
+
+exports[`'coolify.yaml' preserves compact-list container dimensions 1`] = `
+{
+  "persistence-plane": {
+    "height": 218,
+    "width": 262,
+  },
+}
+`;
+
+exports[`'grafana.yaml' preserves compact-list container dimensions 1`] = `{}`;
+
+exports[`'harbor.yaml' preserves compact-list container dimensions 1`] = `{}`;
+
+exports[`'immich.yaml' preserves compact-list container dimensions 1`] = `
+{
+  "background-worker-plane/worker-suite": {
+    "height": 194,
+    "width": 242,
+  },
+  "persistence-queue-substrate": {
+    "height": 218,
+    "width": 262,
+  },
+  "server-control-plane/admin-api": {
+    "height": 194,
+    "width": 202,
+  },
+  "web-gallery-app/browser-shell": {
+    "height": 218,
+    "width": 212,
+  },
+}
+`;
+
+exports[`'keycloak.yaml' preserves compact-list container dimensions 1`] = `
+{
+  "portal-app/console-suite": {
+    "height": 194,
+    "width": 193,
+  },
+}
+`;
+
+exports[`'n8n.yaml' preserves compact-list container dimensions 1`] = `
+{
+  "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/credential-operations/credential-collection": {
+    "height": 194,
+    "width": 222,
+  },
+  "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/credential-operations/credential-item": {
+    "height": 194,
+    "width": 222,
+  },
+  "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/user-operations/user-collection": {
+    "height": 194,
+    "width": 222,
+  },
+  "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/user-operations/user-item": {
+    "height": 224,
+    "width": 222,
+  },
+  "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/execution-operations/execution-collection": {
+    "height": 194,
+    "width": 222,
+  },
+  "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/execution-operations/execution-item": {
+    "height": 224,
+    "width": 222,
+  },
+  "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/workflow-operations/workflow-collection": {
+    "height": 194,
+    "width": 222,
+  },
+  "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/workflow-operations/workflow-item": {
+    "height": 224,
+    "width": 222,
+  },
+  "api-and-push-surface/public-api/persistence-models": {
+    "height": 194,
+    "width": 262,
+  },
+  "api-and-push-surface/public-api/public-api-v1/identity-api/credential-operations/credential-collection": {
+    "height": 194,
+    "width": 222,
+  },
+  "api-and-push-surface/public-api/public-api-v1/identity-api/credential-operations/credential-item": {
+    "height": 284,
+    "width": 222,
+  },
+  "api-and-push-surface/public-api/public-api-v1/identity-api/user-operations/user-collection": {
+    "height": 194,
+    "width": 222,
+  },
+  "api-and-push-surface/public-api/public-api-v1/identity-api/user-operations/user-item": {
+    "height": 224,
+    "width": 222,
+  },
+  "api-and-push-surface/public-api/public-api-v1/workflows-api/execution-operations/execution-collection": {
+    "height": 194,
+    "width": 222,
+  },
+  "api-and-push-surface/public-api/public-api-v1/workflows-api/execution-operations/execution-item": {
+    "height": 314,
+    "width": 222,
+  },
+  "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-collection": {
+    "height": 194,
+    "width": 222,
+  },
+  "binary-data-storage/binary-data-service/storage-backends": {
+    "height": 218,
+    "width": 262,
+  },
+  "relational-state-store/relational-models": {
+    "height": 194,
+    "width": 262,
+  },
+}
+`;
+
+exports[`'outline.yaml' preserves compact-list container dimensions 1`] = `
+{
+  "browser-product-app/app-bootstrap": {
+    "height": 218,
+    "width": 202,
+  },
+  "object-storage-plane": {
+    "height": 194,
+    "width": 220,
+  },
+  "plugin-and-integration-surface/integration-families": {
+    "height": 254,
+    "width": 202,
+  },
+  "relational-cache-persistence": {
+    "height": 218,
+    "width": 262,
+  },
+}
+`;
+
+exports[`'prometheus.yaml' preserves compact-list container dimensions 1`] = `
+{
+  "tsdb-storage-plane": {
+    "height": 194,
+    "width": 272,
+  },
+}
+`;
+
+exports[`'supabase.yaml' preserves compact-list container dimensions 1`] = `
+{
+  "docs-learn-content-frontend/docs-learn-content-group/docs-app-group/docs-site-frontend/docs-site-runtime-surface": {
+    "height": 218,
+    "width": 222,
+  },
+  "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/index-status-helpers/get-index-statuses/get-index-statuses-sql": {
+    "height": 194,
+    "width": 214,
+  },
+  "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/shared-auth-query-primitives/get-users-common/string-range": {
+    "height": 194,
+    "width": 214,
+  },
+  "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/content-routes-group": {
+    "height": 224,
+    "width": 222,
+  },
+  "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/event-routes-group": {
+    "height": 194,
+    "width": 222,
+  },
+  "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/submission-routes-group": {
+    "height": 284,
+    "width": 222,
+  },
+  "public-website-frontend/website-integrations-group/customerio-integration-group/customerio-app-group": {
+    "height": 194,
+    "width": 214,
+  },
+  "public-website-frontend/website-integrations-group/customerio-integration-group/customerio-track-group": {
+    "height": 194,
+    "width": 214,
+  },
+  "public-website-frontend/website-integrations-group/notion-integration-group/notion-workflows-group": {
+    "height": 194,
+    "width": 214,
+  },
+  "public-website-frontend/website-shell-group/conversion-flows-group/lead-capture-group": {
+    "height": 194,
+    "width": 193,
+  },
+  "self-hosted-runtime-stack/kong-gateway-service/mcp-api-dispatch-group": {
+    "height": 194,
+    "width": 222,
+  },
+  "studio-control-plane/ai-tools-group/ai-support-group/prompt-guidance-group/assistant-guidance-prompts-group": {
+    "height": 284,
+    "width": 214,
+  },
+  "studio-control-plane/ai-tools-group/ai-support-group/prompt-guidance-group/database-guidance-prompts-group": {
+    "height": 194,
+    "width": 214,
+  },
+  "studio-control-plane/ai-tools-group/studio-tools-module/sql-and-knowledge-group/load-knowledge-tool-group/knowledge-library": {
+    "height": 254,
+    "width": 214,
+  },
+  "studio-control-plane/ai-tools-group/studio-tools-module/tool-registry-module/interaction-tools-group": {
+    "height": 194,
+    "width": 214,
+  },
+  "studio-control-plane/ai-tools-group/studio-tools-module/tool-registry-module/sql-and-knowledge-group": {
+    "height": 194,
+    "width": 214,
+  },
+  "studio-control-plane/platform-integrations-surface/github-integrations-group/github-routes-group": {
+    "height": 224,
+    "width": 222,
+  },
+}
+`;
+
+exports[`'tarskia.yaml' preserves compact-list container dimensions 1`] = `
+{
+  "browser-portal-app/browser-runtime/semantic-bootstrap/trusted-bundled-assets": {
+    "height": 194,
+    "width": 214,
+  },
+}
+`;
+
+exports[`'temporal.yaml' preserves compact-list container dimensions 1`] = `
+{
+  "frontend-service-api-gateway/public-rpc-surface": {
+    "height": 224,
+    "width": 222,
+  },
+}
+`;

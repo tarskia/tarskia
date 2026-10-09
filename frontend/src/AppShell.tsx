@@ -1,9 +1,19 @@
-import { Navigate, type RouteObject, useRoutes } from 'react-router-dom';
+import { Navigate, type RouteObject, useParams, useRoutes } from 'react-router-dom';
 
 import AboutPage from './AboutPage';
+import { DiagramErrorBoundary } from './gallery/DiagramErrorBoundary';
 import PublicGalleryIndex from './gallery/PublicGalleryIndex';
 import PublicGalleryViewer from './gallery/PublicGalleryViewer';
 import PublicGalleryShell from './PublicGalleryShell';
+
+function GalleryDiagramRoute() {
+  const { namespace, slug } = useParams();
+  return (
+    <DiagramErrorBoundary key={`${namespace}/${slug}`}>
+      <PublicGalleryViewer />
+    </DiagramErrorBoundary>
+  );
+}
 
 export const appRoutes: RouteObject[] = [
   {
@@ -24,7 +34,7 @@ export const appRoutes: RouteObject[] = [
       },
       {
         path: ':namespace/:slug',
-        element: <PublicGalleryViewer />,
+        element: <GalleryDiagramRoute />,
       },
     ],
   },
