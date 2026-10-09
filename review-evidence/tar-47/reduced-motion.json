@@ -1,0 +1,34 @@
+[
+  {
+    "slug": "n8n",
+    "action": "Expand all",
+    "nodes": 216,
+    "camera": "translate(416.075px, 266.25px) scale(0.35)",
+    "stableBySecondFrame": true,
+    "errors": []
+  },
+  {
+    "slug": "n8n",
+    "action": "Collapse all",
+    "nodes": 10,
+    "camera": "translate(165.923px, 140.524px) scale(0.639026)",
+    "stableBySecondFrame": true,
+    "errors": []
+  },
+  {
+    "slug": "supabase",
+    "action": "Expand all",
+    "nodes": 235,
+    "camera": "translate(437.425px, 272.9px) scale(0.35)",
+    "stableBySecondFrame": true,
+    "errors": []
+  },
+  {
+    "slug": "supabase",
+    "action": "Collapse all",
+    "nodes": 10,
+    "camera": "translate(165.923px, 132.509px) scale(0.687479)",
+    "stableBySecondFrame": true,
+    "errors": []
+  }
+]
