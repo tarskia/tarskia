@@ -9,7 +9,6 @@ import ReactFlow, {
   type OnNodesChange,
   type ReactFlowInstance,
 } from 'reactflow';
-
 import type { NodeVisualMode } from '../node-visual-mode';
 import { type DebugSummary, FlowDebugPanel } from '../ui/FlowDebugPanel';
 import { CanvasFocusShellOverlay } from './CanvasFocusShellOverlay';
@@ -21,10 +20,8 @@ import type {
   CanvasOverlayEdgeView,
   CanvasRenderSnapshot,
 } from './rendering/presentation/presentation';
-import type {
-  TransitionOverlayFrame,
-  TransitionOverlayState,
-} from './rendering/transition/overlay';
+import type { TransitionOverlayState } from './rendering/transition/overlay';
+import type { OverlayFrameStore } from './rendering/transition/overlay-frame-store';
 
 const EMPTY_FLOW_EDGES: never[] = [];
 
@@ -42,7 +39,7 @@ export interface DiagramCanvasProps {
   edgeGeometrySnapshot?: CanvasRenderSnapshot;
   overlayInteractionBindings?: EdgeOverlayInteractionBindings;
   transitionOverlay?: TransitionOverlayState;
-  transitionOverlayFrame?: TransitionOverlayFrame;
+  overlayFrameStore?: OverlayFrameStore;
   nodeTypes: NodeTypes;
   onNodesChange: OnNodesChange;
   onNodeClick: (_event: unknown, node: Node) => void;
@@ -88,7 +85,7 @@ export function DiagramCanvas({
   edgeGeometrySnapshot,
   overlayInteractionBindings,
   transitionOverlay,
-  transitionOverlayFrame,
+  overlayFrameStore,
   nodeTypes,
   onNodesChange,
   onNodeClick,
@@ -186,7 +183,7 @@ export function DiagramCanvas({
         {transitionOverlay ? (
           <TransitionOverlay
             state={transitionOverlay}
-            frame={transitionOverlayFrame}
+            frameStore={overlayFrameStore}
             nodeVisualMode={nodeVisualMode}
           />
         ) : null}

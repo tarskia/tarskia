@@ -113,7 +113,7 @@ export function useDiagramSurface({
       presentation: diagramEngine.presentation,
       compiled: diagramEngine.compiled,
       transitionOverlay: diagramEngine.transitionOverlay,
-      transitionOverlayFrame: diagramEngine.transitionOverlayFrame,
+      overlayFrameStore: diagramEngine.overlayFrameStore,
       hideHostVisuals: diagramEngine.hideHostVisuals,
       transitionLiteMode: diagramEngine.transitionLiteMode,
       isTransitionRunning: diagramEngine.isTransitionRunning,

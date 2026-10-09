@@ -133,7 +133,7 @@ it.each([
     } else {
       await act(async () => engine.onCanvasUnmount());
       expect(engine.transitionOverlay).toBeNull();
-      expect(engine.transitionOverlayFrame).toBeNull();
+      expect(engine.overlayFrameStore.getSnapshot()).toBeNull();
       expect(engine.hideHostVisuals).toBe(false);
       expect(callbacks.size).toBe(0);
     }
@@ -144,7 +144,7 @@ it.each([
     );
     if (reset === 'canvas-unmount') await act(async () => engine.onCanvasInit(instance));
     expect(engine.transitionOverlay).toBeNull();
-    expect(engine.transitionOverlayFrame).toBeNull();
+    expect(engine.overlayFrameStore.getSnapshot()).toBeNull();
     expect(engine.hideHostVisuals).toBe(false);
     expect(engine.motionPhase).toBe('idle');
     expect(engine.presentation.nodes.map((node) => node.id)).toEqual(

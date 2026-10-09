@@ -1,5 +1,6 @@
 import {
   type CompiledDiagramEdge,
+  pluralize,
   resolveTypeDef,
   type SchemaModule,
 } from '@tarskia/diagram-semantics';
@@ -47,13 +48,6 @@ export function applySceneLayout(params: {
     if (id === tree.rootId) continue;
     baseSizes.set(id, nodeVisuals.get(id)?.layout.baseSize ?? DEFAULT_NODE_SIZE);
   }
-
-  const pluralize = (label: string, count: number) => {
-    const base = label.toLowerCase();
-    if (count === 1) return base;
-    if (base.endsWith('s')) return base;
-    return `${base}s`;
-  };
 
   const computeNode = (nodeId: string): LayoutNode => {
     const node = tree.byId.get(nodeId);

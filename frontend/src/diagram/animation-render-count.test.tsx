@@ -1,13 +1,12 @@
 // @vitest-environment happy-dom
 
 import type { SemanticDocument } from '@tarskia/diagram-semantics';
-import { act } from 'react';
+import { act, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { ReactFlowInstance } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
-import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
 import { DEFAULT_ANIMATION_SETTINGS } from '../canvas/rendering/transition/animation-constants';
-import { captureTransitionOverlaySnapshot } from '../canvas/rendering/transition/overlay';
+import { resolveTransitionOverlayFrame } from '../canvas/rendering/transition/overlay';
 import { loadGallery } from '../test/curated-rendering';
 import { useDiagramEngine } from './useDiagramEngine';
 
@@ -16,7 +15,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it('interrupts an n8n expansion at 40% without a display jump and settles at the new target', async () => {
+it.each([
+  30, 60,
+])('delivers all %i animation frames without rerendering the engine host per frame', async (frameCount) => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   let now = 0,
     nextId = 0;
@@ -31,11 +32,23 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
   const initial = gallery.render([]),
     expanded = gallery.render(['browser-editor-shell']);
   expect(expanded.presentation.nodes.length).toBeGreaterThan(initial.presentation.nodes.length);
-  const target = gallery.render([]);
   let engine!: ReturnType<typeof useDiagramEngine>;
   const persistViewport = vi.fn(),
     traceSelection = vi.fn();
+  let hostRenders = 0;
+  const phases = new Set<string>();
+  const receivedFrames = new Set<number>();
+  function OverlayProbe({
+    store,
+  }: {
+    store: ReturnType<typeof useDiagramEngine>['overlayFrameStore'];
+  }) {
+    const frame = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+    if (frame) receivedFrames.add(frame.progress);
+    return null;
+  }
   function Harness({ doc }: { doc: SemanticDocument }) {
+    hostRenders++;
     engine = useDiagramEngine({
       doc,
       schema: gallery.graph.schema,
@@ -47,7 +60,8 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
       minZoom: 0.01,
       maxZoom: 2,
     });
-    return null;
+    phases.add(engine.motionPhase);
+    return <OverlayProbe store={engine.overlayFrameStore} />;
   }
   const host = document.createElement('div');
   document.body.append(host);
@@ -65,21 +79,6 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
     width: 1280,
     height: 720,
     toJSON: () => ({}),
-  });
-  const snapshot = (): CanvasRenderSnapshot =>
-    engine.transitionOverlay && engine.overlayFrameStore.getSnapshot()
-      ? captureTransitionOverlaySnapshot({
-          state: engine.transitionOverlay,
-          frame: engine.overlayFrameStore.getSnapshot()!,
-        })
-      : engine.presentation;
-  const appearance = (value: CanvasRenderSnapshot) => ({
-    nodes: value.nodes
-      .map((node) => ({ id: node.id, rect: node.rect, opacity: node.opacity }))
-      .sort((a, b) => a.id.localeCompare(b.id)),
-    edges: value.overlayEdges
-      .map((edge) => ({ id: edge.id, path: edge.path, opacity: edge.opacity }))
-      .sort((a, b) => a.id.localeCompare(b.id)),
   });
   const advance = async (time: number) => {
     await act(async () => {
@@ -106,6 +105,8 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
     });
     for (let i = 0; i < 30 && (callbacks.size || engine.requiredHostGeneration !== null); i++)
       await advance(now + 100);
+    const transitionStartRenders = hostRenders;
+    phases.clear();
     await act(async () => {
       engine.setPendingStructuralTransitionIntent({ direction: 'in', focus: null });
       root.render(<Harness doc={expanded.scene.doc} />);
@@ -113,23 +114,25 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
     for (let i = 0; i < 30 && !engine.transitionOverlay; i++) await advance(now + 50);
     expect(engine.transitionOverlay).not.toBeNull();
     const overlay = engine.transitionOverlay;
-    if (!overlay) throw new Error('Expansion must create an overlay');
-    await advance(overlay.startedAt + overlay.duration * 0.4);
-    const before = appearance(snapshot());
-    const viewportBeforeInterrupt = { ...engine.getCurrentViewport() };
-    expect(before).not.toEqual(appearance(initial.presentation));
-    expect(before).not.toEqual(appearance(expanded.presentation));
-    await act(async () => {
-      engine.setPendingStructuralTransitionIntent({ direction: 'out', focus: null });
-      root.render(<Harness doc={target.scene.doc} />);
-    });
-    expect(appearance(snapshot())).toEqual(before);
-    expect(engine.getCurrentViewport()).toEqual(viewportBeforeInterrupt);
-    for (let i = 0; i < 200 && (callbacks.size || engine.motionPhase !== 'idle'); i++)
-      await advance(now + 50);
+    if (!overlay) throw new Error('Expected an active overlay');
+    const beforeRenders = hostRenders;
+    receivedFrames.clear();
+    for (let i = 1; i <= frameCount; i++) {
+      await advance(overlay.startedAt + overlay.duration * (0.05 + (0.8 * i) / frameCount));
+      expect(engine.overlayFrameStore.getSnapshot()).toEqual(
+        resolveTransitionOverlayFrame(overlay, now),
+      );
+    }
+    const frameRenders = hostRenders - beforeRenders;
+    expect(receivedFrames.size).toBe(frameCount);
+    expect(frameRenders).toBeLessThanOrEqual(6);
+    for (let i = 0; i < 60 && (callbacks.size || engine.requiredHostGeneration !== null); i++)
+      await advance(now + 100);
     expect(engine.motionPhase).toBe('idle');
-    expect(appearance(snapshot())).toEqual(appearance(target.presentation));
-    expect(callbacks.size).toBe(0);
+    expect(engine.overlayFrameStore.getSnapshot()).toBeNull();
+    expect(phases.has('animating')).toBe(true);
+    expect(phases.has('idle')).toBe(true);
+    expect(hostRenders - transitionStartRenders).toBeLessThanOrEqual(6);
   } finally {
     await act(async () => root.unmount());
     host.remove();

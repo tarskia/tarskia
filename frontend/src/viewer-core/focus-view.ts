@@ -1,8 +1,11 @@
-import type { SemanticDocument } from '@tarskia/diagram-semantics';
+import {
+  applyDiagramViewOperation,
+  buildEntityTree,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SceneTree } from '../canvas/rendering/tree/scene-tree';
 import type { GetCurrentCanvasSize } from '../diagram/canvas-size';
-import { ensureDiagramView } from './diagram-view';
 import type { CommitDoc } from './types';
 
 type FocusTransitionTrigger = (
@@ -66,33 +69,20 @@ export const buildFocusScopeDocument = (params: {
   expandTarget: boolean;
 }): SemanticDocument => {
   const { previous, entityId, expandTarget } = params;
-  const view = ensureDiagramView(previous.view);
-  const nodesById = expandTarget
-    ? {
-        ...(view.nodesById ?? {}),
-        [entityId]: {
-          ...(view.nodesById?.[entityId] ?? {}),
-          expanded: true,
-        },
-      }
-    : view.nodesById;
-  return {
-    ...previous,
-    view: {
-      ...view,
-      scopeRootId: entityId,
-      nodesById,
-    },
-  };
+  const view = applyDiagramViewOperation(buildEntityTree(previous), previous.view, {
+    kind: 'enter-focus',
+    entityId,
+    expandTarget,
+  });
+  return view === previous.view ? previous : { ...previous, view };
 };
 
-export const buildClearFocusScopeDocument = (previous: SemanticDocument): SemanticDocument => ({
-  ...previous,
-  view: {
-    ...ensureDiagramView(previous.view),
-    scopeRootId: undefined,
-  },
-});
+export const buildClearFocusScopeDocument = (previous: SemanticDocument): SemanticDocument => {
+  const view = applyDiagramViewOperation(buildEntityTree(previous), previous.view, {
+    kind: 'clear-focus',
+  });
+  return view === previous.view ? previous : { ...previous, view };
+};
 
 export const canFocusSceneNode = (params: { sceneTree: SceneTree; entityId: string }) => {
   const sceneNode = params.sceneTree.byId.get(params.entityId);

@@ -40,10 +40,8 @@ import type {
   CanvasOverlayEdgeView,
   CanvasPresentation,
 } from './rendering/presentation/presentation';
-import type {
-  TransitionOverlayFrame,
-  TransitionOverlayState,
-} from './rendering/transition/overlay';
+import type { TransitionOverlayState } from './rendering/transition/overlay';
+import type { OverlayFrameStore } from './rendering/transition/overlay-frame-store';
 
 export interface UseCanvasSurfaceControllerArgs {
   surface: {
@@ -96,7 +94,7 @@ export interface UseCanvasSurfaceControllerArgs {
     presentation: CanvasPresentation;
     compiled: CompileResult;
     transitionOverlay: TransitionOverlayState | null;
-    transitionOverlayFrame: TransitionOverlayFrame | null;
+    overlayFrameStore: OverlayFrameStore | null;
     hideHostVisuals: boolean;
     transitionLiteMode: boolean;
     isTransitionRunning: boolean;
@@ -314,7 +312,7 @@ export function useCanvasSurfaceController({
     presentation,
     compiled,
     transitionOverlay,
-    transitionOverlayFrame,
+    overlayFrameStore,
     hideHostVisuals,
     transitionLiteMode,
     isTransitionRunning,
@@ -980,7 +978,7 @@ export function useCanvasSurfaceController({
     }),
     overlayInteractionBindings,
     transitionOverlay: transitionOverlay ?? undefined,
-    transitionOverlayFrame: transitionOverlayFrame ?? undefined,
+    overlayFrameStore: overlayFrameStore ?? undefined,
     nodeTypes,
     onNodesChange,
     onNodeClick,
