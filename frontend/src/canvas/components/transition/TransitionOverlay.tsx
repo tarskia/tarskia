@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useStore } from 'reactflow';
 import type { NodeVisualMode } from '../../../node-visual-mode';
 import type { CanvasNodeHostControls } from '../../host/reactflow/types';
@@ -10,6 +10,7 @@ import {
   type TransitionOverlayFrame,
   type TransitionOverlayState,
 } from '../../rendering/transition/overlay';
+import type { OverlayFrameStore } from '../../rendering/transition/overlay-frame-store';
 import { EdgeOverlayView } from '../edges/EdgeOverlayView';
 import { resolveEdgeLabelTransform } from '../edges/edge-label-placement';
 import { EntityNodeView } from '../nodes/EntityNodeView';
@@ -79,15 +80,26 @@ const buildNodeShellStyle = (params: {
   } satisfies CSSProperties;
 };
 
+const subscribeToNoFrames = () => () => {};
+const getNoFrame = () => null;
+
 export function TransitionOverlay({
   state,
-  frame: frameOverride,
+  frame: suppliedFrame,
+  frameStore,
   nodeVisualMode,
 }: {
   state: TransitionOverlayState;
   frame?: TransitionOverlayFrame;
+  frameStore?: OverlayFrameStore;
   nodeVisualMode: NodeVisualMode;
 }) {
+  const storedFrame = useSyncExternalStore<TransitionOverlayFrame | null>(
+    frameStore?.subscribe ?? subscribeToNoFrames,
+    frameStore?.getSnapshot ?? getNoFrame,
+    frameStore?.getSnapshot ?? getNoFrame,
+  );
+  const frameOverride = storedFrame ?? suppliedFrame;
   const transform = useStore((store) => store.transform);
   const [tx, ty, zoom] = transform;
   const [frameNow, setFrameNow] = useState(() =>
@@ -95,11 +107,11 @@ export function TransitionOverlay({
   );
 
   useEffect(() => {
-    if (frameOverride) {
+    if (frameStore || frameOverride) {
       return;
     }
     setFrameNow(typeof performance === 'undefined' ? state.startedAt : performance.now());
-  }, [frameOverride, state.startedAt]);
+  }, [frameStore, frameOverride, state.startedAt]);
 
   const frame = useMemo(
     () => frameOverride ?? resolveTransitionOverlayFrame(state, frameNow),
@@ -107,7 +119,7 @@ export function TransitionOverlay({
   );
 
   useEffect(() => {
-    if (frameOverride || frame.progress >= 1) {
+    if (frameStore || frameOverride || frame.progress >= 1) {
       return;
     }
     let cancelled = false;
@@ -120,7 +132,7 @@ export function TransitionOverlay({
       cancelled = true;
       cancelAnimationFrame(rafId);
     };
-  }, [frame.progress, frameOverride]);
+  }, [frame.progress, frameOverride, frameStore]);
 
   const edgeById = useMemo(
     () => new Map(frame.edges.map((edge) => [edge.id, edge])),

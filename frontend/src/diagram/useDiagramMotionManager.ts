@@ -15,6 +15,7 @@ import {
   type TransitionOverlayFrame,
   type TransitionOverlayState,
 } from '../canvas/rendering/transition/overlay';
+import { createOverlayFrameStore } from '../canvas/rendering/transition/overlay-frame-store';
 import {
   buildTimedTransitionPlan,
   buildTimedTransitionSequence,
@@ -72,7 +73,6 @@ interface PendingManagedMotion {
 interface DiagramMotionRenderState {
   hostSnapshot: CanvasRenderSnapshot;
   transitionOverlay: TransitionOverlayState | null;
-  transitionOverlayFrame: TransitionOverlayFrame | null;
   hideHostVisuals: boolean;
   motionPhase: MotionPhase;
   requiredHostGeneration: number | null;
@@ -733,11 +733,12 @@ export function useDiagramMotionManager({
   const [renderState, setRenderState] = useState<DiagramMotionRenderState>(() => ({
     hostSnapshot: stableSnapshot,
     transitionOverlay: null,
-    transitionOverlayFrame: null,
     hideHostVisuals: false,
     motionPhase: 'idle',
     requiredHostGeneration: null,
   }));
+  const renderStateRef = useRef(renderState);
+  const [overlayFrameStore] = useState(createOverlayFrameStore);
   const overlayStateRef = useRef(createTransitionOverlayManagerState(stableSnapshot));
   const stableSnapshotRef = useRef(stableSnapshot);
   const skipTransitionsRef = useRef(skipTransitions);
@@ -788,42 +789,43 @@ export function useDiagramMotionManager({
     [setViewport],
   );
 
-  const publish = useCallback((_now: number) => {
-    const overlayState = overlayStateRef.current;
-    const nextTransitionOverlay = overlayState.transitionOverlay;
-    const nextTransitionOverlayFrame = nextTransitionOverlay
-      ? resolveTransitionOverlayFrame(nextTransitionOverlay, _now)
-      : null;
-    const showTransitionOverlay = shouldDisplayTransitionOverlay({
-      phase: overlayState.phase,
-      hostSnapshot: overlayState.hostSnapshot,
-      transitionOverlay: nextTransitionOverlay,
-      transitionOverlayFrame: nextTransitionOverlayFrame,
-    });
-    const transitionOverlay = showTransitionOverlay ? nextTransitionOverlay : null;
-    const transitionOverlayFrame = showTransitionOverlay ? nextTransitionOverlayFrame : null;
-    setRenderState((previous) => {
+  const publish = useCallback(
+    (_now: number) => {
+      const overlayState = overlayStateRef.current;
+      const nextTransitionOverlay = overlayState.transitionOverlay;
+      const nextTransitionOverlayFrame = nextTransitionOverlay
+        ? resolveTransitionOverlayFrame(nextTransitionOverlay, _now)
+        : null;
+      const showTransitionOverlay = shouldDisplayTransitionOverlay({
+        phase: overlayState.phase,
+        hostSnapshot: overlayState.hostSnapshot,
+        transitionOverlay: nextTransitionOverlay,
+        transitionOverlayFrame: nextTransitionOverlayFrame,
+      });
+      const transitionOverlay = showTransitionOverlay ? nextTransitionOverlay : null;
+      const transitionOverlayFrame = showTransitionOverlay ? nextTransitionOverlayFrame : null;
+      const previous = renderStateRef.current;
       const next = {
         hostSnapshot: overlayState.hostSnapshot,
         transitionOverlay,
-        transitionOverlayFrame,
         hideHostVisuals: showTransitionOverlay,
         motionPhase: motionPhaseRef.current,
         requiredHostGeneration: overlayState.requiredHostGeneration,
       } satisfies DiagramMotionRenderState;
       if (
-        areCanvasRenderSnapshotsEqual(previous.hostSnapshot, next.hostSnapshot) &&
-        previous.transitionOverlay === next.transitionOverlay &&
-        previous.transitionOverlayFrame === next.transitionOverlayFrame &&
-        previous.hideHostVisuals === next.hideHostVisuals &&
-        previous.motionPhase === next.motionPhase &&
-        previous.requiredHostGeneration === next.requiredHostGeneration
+        !areCanvasRenderSnapshotsEqual(previous.hostSnapshot, next.hostSnapshot) ||
+        previous.transitionOverlay !== next.transitionOverlay ||
+        previous.hideHostVisuals !== next.hideHostVisuals ||
+        previous.motionPhase !== next.motionPhase ||
+        previous.requiredHostGeneration !== next.requiredHostGeneration
       ) {
-        return previous;
+        renderStateRef.current = next;
+        setRenderState(next);
       }
-      return next;
-    });
-  }, []);
+      overlayFrameStore.publish(transitionOverlayFrame);
+    },
+    [overlayFrameStore],
+  );
 
   const recordFrameDuration = useCallback((now: number) => {
     if (lastFrameAtRef.current === null) {
@@ -1484,7 +1486,7 @@ export function useDiagramMotionManager({
       canvasReady,
       hostSnapshot: renderState.hostSnapshot,
       transitionOverlay: renderState.transitionOverlay,
-      transitionOverlayFrame: renderState.transitionOverlayFrame,
+      overlayFrameStore,
       hideHostVisuals: renderState.hideHostVisuals,
       motionPhase: renderState.motionPhase,
       requiredHostGeneration: renderState.requiredHostGeneration,
@@ -1499,6 +1501,7 @@ export function useDiagramMotionManager({
       onCanvasInit,
       onCanvasUnmount,
       renderState,
+      overlayFrameStore,
       reportUserGestureEnd,
       flushUserGesture,
       reportUserGestureMove,

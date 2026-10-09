@@ -221,7 +221,7 @@ export function useDiagramEngine({
     compiled,
     presentation,
     transitionOverlay: motion.transitionOverlay,
-    transitionOverlayFrame: motion.transitionOverlayFrame,
+    overlayFrameStore: motion.overlayFrameStore,
     hideHostVisuals: motion.hideHostVisuals,
     transitionLiteMode: resolveTransitionLiteMode(Boolean(motion.transitionOverlay)),
     isTransitionRunning: motion.motionPhase === 'animating',
