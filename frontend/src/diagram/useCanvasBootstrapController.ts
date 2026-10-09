@@ -72,6 +72,9 @@ export function useCanvasBootstrapController({
   canvasReady,
   requestNavigation,
 }: UseCanvasBootstrapControllerArgs): CanvasBootstrapControllerResult {
+  const [pendingKey, setPendingKey] = useState<string | undefined>(initialViewportKey);
+  const lastObservedKeyRef = useRef<string | undefined>(initialViewportKey);
+  const lastDefaultViewportRef = useRef<ViewportState | undefined>(undefined);
   const initializeIntent = useMemo<NavigationIntent>(
     () => ({
       kind: 'initialize-diagram',
@@ -86,12 +89,15 @@ export function useCanvasBootstrapController({
     [animationSettings, cameraPolicy, initializeIntent],
   );
   const defaultViewport = useMemo(() => {
+    if (!initialViewportKey || pendingKey !== initialViewportKey) {
+      return lastDefaultViewportRef.current;
+    }
     // ResizeObserver only signals that layout changed; the getter reads the actual size here.
     void canvasLayoutVersion;
     const canvasSize = getCurrentCanvasSize();
     const usableCanvasSize = isBootstrapCanvasSizeUsable(canvasSize) ? canvasSize : null;
     const leftOcclusion = getLeftOcclusion();
-    return (
+    const viewport =
       resolveNavigationViewport({
         intent: initializeIntent,
         policy: {
@@ -106,9 +112,12 @@ export function useCanvasBootstrapController({
         minZoom,
         maxZoom,
         getNodeSetBounds: () => null,
-      }) ?? undefined
-    );
+      }) ?? undefined;
+    lastDefaultViewportRef.current = viewport;
+    return viewport;
   }, [
+    initialViewportKey,
+    pendingKey,
     canvasLayoutVersion,
     getCurrentCanvasSize,
     getLeftOcclusion,
@@ -119,8 +128,6 @@ export function useCanvasBootstrapController({
     savedViewport,
     sceneBounds,
   ]);
-  const [pendingKey, setPendingKey] = useState<string | undefined>(initialViewportKey);
-  const lastObservedKeyRef = useRef<string | undefined>(initialViewportKey);
 
   useEffect(() => {
     if (lastObservedKeyRef.current === initialViewportKey) {
@@ -131,6 +138,9 @@ export function useCanvasBootstrapController({
   }, [initialViewportKey]);
 
   useEffect(() => {
+    if (!initialViewportKey || pendingKey !== initialViewportKey) {
+      return;
+    }
     // Re-run pending bootstrap when the canvas reports a new layout version.
     void canvasLayoutVersion;
     const action = resolvePendingBootstrapAction({
