@@ -948,6 +948,51 @@ button.node-meta-cell:disabled {
   z-index: 5;
 }
 
+.edge-label-pair {
+  display: inline-flex;
+  align-items: center;
+}
+.edge-label-part {
+  display: inline-flex;
+}
+.edge-label-direction {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+.edge-label-direction:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+}
+.edge-label-separator {
+  pointer-events: none;
+  cursor: default;
+  white-space: pre;
+}
+.edge-label-pair-shared {
+  display: inline-block;
+}
+.edge-label-shared-text {
+  pointer-events: none;
+}
+.edge-label-pair-shared .edge-label-part {
+  position: absolute;
+  inset: 0 50% 0 0;
+}
+.edge-label-pair-shared .edge-label-part:last-child {
+  inset: 0 0 0 50%;
+}
+.edge-label-pair-shared .edge-label-direction {
+  width: 100%;
+  height: 100%;
+}
+
 .edge-label-empty {
   opacity: 0.5;
 }

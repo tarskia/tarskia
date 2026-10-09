@@ -1,10 +1,12 @@
 import type { CompiledDiagramEdge, SchemaModule } from '@tarskia/diagram-semantics';
 import { resolveRelationVisualDefaults } from '../../../model/relation-visual-defaults';
+import { type DirectionalEdgeLabel, joinDirectionalLabels } from './edge-labels';
 
 export interface ResolvedVisualEdge extends CompiledDiagramEdge {
   semanticSourceId: string;
   semanticTargetId: string;
   relationIds?: string[];
+  directionalLabels?: DirectionalEdgeLabel[];
 }
 
 export function buildEdgeVisuals(params: {
@@ -32,7 +34,7 @@ export function buildEdgeVisuals(params: {
 
   const groupedByVisibleEndpoints = new Map<string, typeof candidates>();
   for (const candidate of candidates) {
-    const key = `${candidate.sourceId}->${candidate.targetId}`;
+    const key = JSON.stringify([candidate.sourceId, candidate.targetId].sort());
     const group = groupedByVisibleEndpoints.get(key) ?? [];
     group.push(candidate);
     groupedByVisibleEndpoints.set(key, group);
@@ -52,12 +54,27 @@ export function buildEdgeVisuals(params: {
     if (!primary) {
       throw new Error('Expected at least one edge candidate in group');
     }
+    const reverse = group.find(
+      (candidate) =>
+        candidate.sourceId !== primary.sourceId || candidate.targetId !== primary.targetId,
+    );
+    const directionalLabels = reverse
+      ? [primary, reverse].map((candidate) => ({
+          sourceId: candidate.sourceId,
+          targetId: candidate.targetId,
+          relationId: candidate.relationId,
+          label: candidate.state === 'none' ? undefined : candidate.label?.trim() || undefined,
+        }))
+      : undefined;
     const { _priority, _order, ...resolvedPrimary } = primary;
     void _priority;
     void _order;
     return {
       ...resolvedPrimary,
-      relationIds: group.map((candidate) => candidate.relationId),
+      relationIds: [...new Set(group.map((candidate) => candidate.relationId))],
+      ...(directionalLabels
+        ? { directionalLabels, label: joinDirectionalLabels(directionalLabels) }
+        : {}),
       solidOverNodeIds: [
         ...new Set(group.flatMap((candidate) => candidate.solidOverNodeIds ?? [])),
       ],

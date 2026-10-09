@@ -54,8 +54,8 @@ describe('commerce occlusion', () => {
       nodes: presentation.nodes,
     });
 
-    const edge = renderState.edges.find(
-      (candidate) => candidate.relationId === 'rel-orders-cache-products',
+    const edge = renderState.edges.find((candidate) =>
+      candidate.relationIds?.includes('rel-orders-cache-products'),
     );
     const ordersSchema = presentation.nodes.find((node) => node.id === 'orders-schema');
     const orders = presentation.nodes.find((node) => node.id === 'orders');
@@ -116,9 +116,13 @@ describe('commerce occlusion', () => {
     expect(ordersSchema).toBeDefined();
     expect(orders).toBeDefined();
     expect(edge).toMatchObject({
-      relationId: 'rel-orders-cache-products',
-      sourceId: 'cache-session',
-      targetId: 'app-checkout',
+      relationId: 'rel-orders-cache-sessions',
+      relationIds: expect.arrayContaining([
+        'rel-orders-cache-products',
+        'rel-orders-cache-sessions',
+      ]),
+      sourceId: 'app-checkout',
+      targetId: 'cache-session',
       solidOverNodeIds: ['app-checkout', 'cache-session', 'data-platform'],
     });
     expect(cacheEdgeCrossesOrders).toBe(false);
