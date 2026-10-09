@@ -15,7 +15,7 @@ afterEach(() => {
 it('stops measuring after bootstrap, but measures again for a new diagram', async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   const getCurrentCanvasSize = vi.fn(() => ({ width: 1000, height: 700 }));
-  const requestNavigation = vi.fn(() => 'started' as const);
+  const requestNavigation = vi.fn(() => ({ status: 'applied', reason: 'synchronous' }) as const);
   let result!: ReturnType<typeof bootstrapModule.useCanvasBootstrapController>;
   function Harness({ diagramKey, version }: { diagramKey: string; version: number }) {
     result = bootstrapModule.useCanvasBootstrapController({
