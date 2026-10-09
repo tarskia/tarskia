@@ -26,8 +26,8 @@ jobs:
           npm ci
           npm install --no-save @biomejs/cli-linux-x64@2.4.10
 
-      - name: Build semantic assets
-        run: npm run build:semantics
+      - name: Build semantic package
+        run: npm run build -w @tarskia/diagram-semantics
 
       - name: Lint
         run: npm run lint -w @tarskia/frontend

@@ -28,7 +28,6 @@ backend. In local dev, the gallery loads checked-in YAML diagrams from
 - `gallery/curated/`: source-of-truth curated gallery diagrams.
 - `packages/diagram-semantics/`: shared diagram model — parser, validator, and view helpers.
 - `openapi/`: public API contract snapshot for the hosted backend.
-- `scripts/`: shared build scripts.
 
 ## Quick Start
 
@@ -61,7 +60,7 @@ VITE_GALLERY_SOURCE=local npm run dev -w @tarskia/frontend
 ## Verification
 
 ```sh
-npm run build:semantics
+npm run build -w @tarskia/diagram-semantics
 npm run test -w @tarskia/diagram-semantics
 npm run test -w @tarskia/frontend
 npm run build -w @tarskia/frontend
