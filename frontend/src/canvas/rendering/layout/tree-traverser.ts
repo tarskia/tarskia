@@ -13,10 +13,11 @@ import {
   getLeafMinHeight,
   getListItemHeight,
   renderComponentLayout,
+  renderComponentLayoutUncached,
   resolveNodeContentOccluders,
 } from './component-renderer';
 import { DEFAULT_NODE_SIZE } from './defaults';
-import { buildLayoutEdgesForParent } from './layout-edges';
+import { buildLayoutEdgesByParent, buildLayoutEdgesForParent } from './layout-edges';
 
 /**
  * Layout tree builder
@@ -39,8 +40,10 @@ export function applySceneLayout(params: {
   edges: CompiledDiagramEdge[];
   tree: SceneTree;
   nodeVisuals: Map<string, ResolvedNodeVisual>;
+  uncached?: boolean;
 }): SceneTree {
   const { schema, edges, tree, nodeVisuals } = params;
+  const edgesByParent = params.uncached ? undefined : buildLayoutEdgesByParent(tree, edges);
   const focusShellAspect = FOCUS_SHELL_FALLBACK_ASPECT;
 
   const baseSizes = new Map<string, { width: number; height: number }>();
@@ -63,12 +66,14 @@ export function applySceneLayout(params: {
     const isGroup = !isRoot && node.hasChildren;
     const padding = isRoot ? 0 : isGroup ? 16 : 12;
     const childIds = children.map((child) => child.id);
-    const layoutEdges = buildLayoutEdgesForParent({
-      parentId: nodeId,
-      childIds,
-      edges,
-      tree,
-    });
+    const layoutEdges = edgesByParent
+      ? (edgesByParent.get(nodeId) ?? [])
+      : buildLayoutEdgesForParent({
+          parentId: nodeId,
+          childIds,
+          edges,
+          tree,
+        });
 
     const hasDetailsControls = node.controls?.showDetailControls ?? Boolean(node.hasChildren);
     const hasChildGroupControls = node.controls?.showChildGroupControls ?? false;
@@ -171,14 +176,19 @@ export function applySceneLayout(params: {
       rankSep: isRoot ? 56 : 22,
     };
 
-    const layout = renderComponentLayout(childSizes, layoutEdges, spec);
+    const cachedLayout = params.uncached
+      ? undefined
+      : renderComponentLayout(childSizes, layoutEdges, spec);
+    const layout =
+      cachedLayout ?? renderComponentLayoutUncached(childSizes, layoutEdges, spec, true);
     let size = {
       width: Math.max(adjustedBase.width, layout.requiredSize.width),
       height: Math.max(adjustedBase.height, layout.requiredSize.height),
     };
 
     for (const child of childLayouts) {
-      child.position = layout.positions[child.id] ?? { x: 0, y: 0 };
+      const box = cachedLayout?.boxes.get(child.id) ?? layout.positions[child.id];
+      child.position = box ? { x: box.x, y: box.y } : { x: 0, y: 0 };
     }
 
     if (focusScaffoldDepth !== undefined) {

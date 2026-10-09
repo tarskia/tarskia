@@ -20,11 +20,12 @@ export type LayoutResult = CanvasScene;
 export function buildLayoutResult(params: {
   graph: GraphModel;
   viewState: CompiledDiagramViewState;
+  uncached?: boolean;
   canvasSize?: { width: number; height: number } | null;
 }): LayoutResult {
   const { graph, viewState } = params;
   const tree = buildSceneTree({ tree: viewState.tree });
-  const nodeVisuals = buildNodeVisualMap({ schema: graph.schema, tree });
+  const nodeVisuals = buildNodeVisualMap({ schema: graph.schema, tree, uncached: params.uncached });
   const edges = buildEdgeVisuals({
     schema: graph.schema,
     edges: viewState.edges,
@@ -34,6 +35,7 @@ export function buildLayoutResult(params: {
     edges,
     tree,
     nodeVisuals,
+    uncached: params.uncached,
   });
   const visibleIds = (() => {
     return new Set([...tree.byId.keys()].filter((id) => id !== tree.rootId));
