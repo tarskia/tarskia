@@ -1,4 +1,4 @@
-import type { ViewportState } from '@tarskia/diagram-semantics';
+import type { DiagramCamera, ViewportState } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactFlowInstance } from 'reactflow';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
@@ -80,7 +80,9 @@ interface UseDiagramMotionManagerArgs {
   stableSnapshot: CanvasRenderSnapshot;
   skipTransitions?: boolean;
   initialViewportKey?: string;
-  savedViewport?: ViewportState;
+  savedCamera?: DiagramCamera;
+  getAnchorBounds?: (id: string) => DiagramCameraRect | null;
+  scopeRootId?: string;
   getCurrentCanvasSize: GetCurrentCanvasSize;
   minZoom: number;
   maxZoom: number;
@@ -682,7 +684,9 @@ export function useDiagramMotionManager({
   stableSnapshot,
   skipTransitions = false,
   initialViewportKey,
-  savedViewport,
+  savedCamera,
+  getAnchorBounds,
+  scopeRootId,
   getCurrentCanvasSize,
   minZoom,
   maxZoom,
@@ -1122,7 +1126,9 @@ export function useDiagramMotionManager({
       return resolveNavigationViewport({
         intent,
         policy,
-        savedViewport,
+        savedCamera,
+        getAnchorBounds,
+        scopeRootId,
         canvasSize,
         sceneBounds: getSceneBounds(),
         currentViewport: getObservedViewport(),
@@ -1138,7 +1144,9 @@ export function useDiagramMotionManager({
       getSceneBounds,
       maxZoom,
       minZoom,
-      savedViewport,
+      savedCamera,
+      getAnchorBounds,
+      scopeRootId,
     ],
   );
 
@@ -1181,7 +1189,7 @@ export function useDiagramMotionManager({
       }
       previousCanvasSizeRef.current ??= canvasSize;
       if (intent.kind === 'initialize-diagram') {
-        automaticFramingRef.current = savedViewport ? null : { kind: 'fit-scene' };
+        automaticFramingRef.current = savedCamera ? null : { kind: 'fit-scene' };
       } else if (intent.kind === 'fit-scene' || intent.kind === 'fit-node-set') {
         automaticFramingRef.current = intent;
       }
@@ -1210,7 +1218,7 @@ export function useDiagramMotionManager({
     [
       cancelDeferredNavigationFrame,
       computeNavigationViewport,
-      savedViewport,
+      savedCamera,
       getCurrentCanvasSize,
       getObservedViewport,
       startPlan,

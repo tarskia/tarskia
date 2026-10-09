@@ -30,7 +30,7 @@ describe('legacy view flags', () => {
         schemaRefs: [],
         entities: [],
         relations: [],
-        view: { kind: 'semantic-diagram-view', version: 2, nodesById: legacyNodes },
+        view: { kind: 'semantic-diagram-view', version: 3, nodesById: legacyNodes },
       }),
     );
     expect(doc.view?.nodesById).toEqual({ ...expected, off: { highlighted: false } });

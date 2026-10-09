@@ -50,7 +50,7 @@ describe('compileDiagramViewTree', () => {
         ...buildDoc(),
         view: {
           kind: 'semantic-diagram-view',
-          version: 2,
+          version: 3,
           nodesById: {
             platform: { expanded: true },
             database: { expanded: true },
@@ -81,7 +81,7 @@ describe('compileDiagramViewTree', () => {
       relations: [],
       view: {
         kind: 'semantic-diagram-view',
-        version: 2,
+        version: 3,
         scopeRootId: 'platform',
       },
     };
@@ -104,7 +104,7 @@ describe('compileDiagramViewTree', () => {
         ...buildDoc(),
         view: {
           kind: 'semantic-diagram-view',
-          version: 2,
+          version: 3,
           nodesById: {
             platform: { expanded: true },
           },
@@ -122,7 +122,7 @@ describe('compileDiagramViewTree', () => {
         ...buildDoc(),
         view: {
           kind: 'semantic-diagram-view',
-          version: 2,
+          version: 3,
           nodesById: {
             platform: { expanded: true },
           },
@@ -149,7 +149,7 @@ describe('compileDiagramViewTree', () => {
         ...buildDoc(),
         view: {
           kind: 'semantic-diagram-view',
-          version: 2,
+          version: 3,
           nodesById: {
             platform: { expanded: true },
           },
@@ -171,7 +171,7 @@ describe('compileDiagramViewTree', () => {
         ...buildDoc(),
         view: {
           kind: 'semantic-diagram-view',
-          version: 2,
+          version: 3,
           nodesById: {
             platform: { expanded: true },
             database: { expanded: true },
@@ -203,7 +203,7 @@ describe('compileDiagramViewTree', () => {
         ...buildDoc(),
         view: {
           kind: 'semantic-diagram-view',
-          version: 2,
+          version: 3,
           nodesById: {
             platform: { expanded: true },
           },
@@ -240,7 +240,7 @@ describe('compileDiagramViewTree', () => {
       relations: [{ id: 'rel-1', type: 'calls', from: 'notifications', to: 'email' }],
       view: {
         kind: 'semantic-diagram-view',
-        version: 2,
+        version: 3,
         nodesById: {
           checkout: { expanded: true },
           external: { expanded: true },
@@ -269,7 +269,7 @@ describe('compileDiagramViewTree', () => {
         ...buildDoc(),
         view: {
           kind: 'semantic-diagram-view',
-          version: 2,
+          version: 3,
           nodesById: {
             platform: { expanded: true },
             database: { expanded: true },
@@ -305,7 +305,7 @@ describe('structural list containers', () => {
     const doc = buildDoc();
     doc.view = {
       kind: 'semantic-diagram-view',
-      version: 2,
+      version: 3,
       nodesById: {
         platform: { expanded: true },
         database: { expanded: true },

@@ -81,7 +81,7 @@ const withView = (source: SemanticDocument, expanded?: Record<string, boolean>) 
   view: expanded
     ? {
         kind: 'semantic-diagram-view' as const,
-        version: 2 as const,
+        version: 3 as const,
         nodesById: Object.fromEntries(
           Object.entries(expanded).map(([id, value]) => [id, { expanded: value }]),
         ),

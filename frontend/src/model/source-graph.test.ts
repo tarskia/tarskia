@@ -69,11 +69,9 @@ describe('source graph compilation', () => {
             relations: [],
             view: {
               kind: 'semantic-diagram-view',
-              version: 2,
+              version: 3,
               nodesById: { api: { expanded: true } },
-              layout: {
-                viewport: { x: 10, y: 20, zoom: 0.8 },
-              },
+              camera: { rect: { x: 10, y: 20, width: 1440 / 0.8, height: 900 / 0.8 } },
             },
             metadata: { name: 'Billing child' },
           }),
@@ -96,11 +94,9 @@ describe('source graph compilation', () => {
       ],
       view: {
         kind: 'semantic-diagram-view',
-        version: 2,
+        version: 3,
         nodesById: { web: { expanded: true } },
-        layout: {
-          viewport: { x: 1, y: 2, zoom: 1 },
-        },
+        camera: { rect: { x: 1, y: 2, width: 1440 / 1, height: 900 / 1 } },
       },
       metadata: { name: 'Root' },
     });
@@ -118,7 +114,9 @@ describe('source graph compilation', () => {
       'billing/api',
     ]);
     expect(compiled.result?.doc.view?.nodesById).toEqual({ web: { expanded: true } });
-    expect(compiled.result?.doc.view?.layout?.viewport).toEqual({ x: 1, y: 2, zoom: 1 });
+    expect(compiled.result?.doc.view?.camera).toEqual({
+      rect: { x: 1, y: 2, width: 1440, height: 900 },
+    });
     expect(compiled.result?.doc.metadata?.name).toBe('Root');
   });
 

@@ -154,7 +154,7 @@ const withView = (
     params.expanded || params.scopeRootId
       ? {
           kind: 'semantic-diagram-view',
-          version: 2,
+          version: 3,
           scopeRootId: params.scopeRootId,
           nodesById: params.expanded
             ? Object.fromEntries(

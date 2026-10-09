@@ -1,4 +1,4 @@
-import type { ViewportState } from '@tarskia/diagram-semantics';
+import type { DiagramCamera, ViewportState } from '@tarskia/diagram-semantics';
 import {
   ANIMATION_CONSTANTS,
   DEFAULT_VIEWPORT_FIT_PADDING,
@@ -7,6 +7,7 @@ import {
   computeViewportForBoundsInVisibleCanvas,
   computeViewportToKeepRectVisible,
 } from '../canvas/viewport-visibility';
+import { restoreDiagramCamera } from './camera-framing';
 import type { CameraExecutionMode, DiagramCameraRect, NavigationIntent } from './motion-types';
 
 export const DEFAULT_FIT_DURATION_MS = 260;
@@ -24,13 +25,15 @@ export interface ResolvedNavigationPolicy {
 export interface ResolveNavigationViewportArgs {
   intent: NavigationIntent;
   policy: ResolvedNavigationPolicy;
-  savedViewport?: ViewportState;
+  savedCamera?: DiagramCamera;
+  scopeRootId?: string;
   canvasSize: { width: number; height: number } | null;
   sceneBounds: DiagramCameraRect | null;
   currentViewport: ViewportState;
   minZoom: number;
   maxZoom: number;
   getNodeSetBounds: (nodeIds: string[]) => DiagramCameraRect | null;
+  getAnchorBounds?: (id: string) => DiagramCameraRect | null;
 }
 
 export const viewportStatesEqual = (
@@ -83,44 +86,6 @@ export const resolveNavigationPolicy = (intent: NavigationIntent): ResolvedNavig
   };
 };
 
-const resolveRestoreSavedViewport = (params: {
-  savedViewport?: ViewportState;
-  canvasSize: { width: number; height: number } | null;
-  sceneBounds: DiagramCameraRect | null;
-  padding: number | undefined;
-  minZoom: number;
-  maxZoom: number;
-}): ViewportState | null => {
-  const { savedViewport, canvasSize, sceneBounds, padding, minZoom, maxZoom } = params;
-  if (!savedViewport) {
-    return null;
-  }
-  if (!canvasSize || !sceneBounds) {
-    return savedViewport;
-  }
-  const fittedViewport = computeViewportForBoundsInVisibleCanvas({
-    bounds: sceneBounds,
-    canvas: canvasSize,
-    minZoom,
-    maxZoom,
-    padding: padding ?? DEFAULT_VIEWPORT_FIT_PADDING,
-  });
-  if (
-    savedViewport.zoom <= minZoom + VIEWPORT_EPSILON &&
-    fittedViewport.zoom > savedViewport.zoom + VIEWPORT_EPSILON
-  ) {
-    return fittedViewport;
-  }
-  return (
-    computeViewportToKeepRectVisible({
-      viewport: savedViewport,
-      canvas: canvasSize,
-      rect: sceneBounds,
-      padding: DEFAULT_ENSURE_PADDING,
-    }) ?? savedViewport
-  );
-};
-
 const resolveSceneFitViewport = (params: {
   canvasSize: { width: number; height: number } | null;
   sceneBounds: DiagramCameraRect | null;
@@ -144,22 +109,25 @@ const resolveSceneFitViewport = (params: {
 export const resolveNavigationViewport = ({
   intent,
   policy,
-  savedViewport,
+  savedCamera,
+  scopeRootId,
   canvasSize,
   sceneBounds,
   currentViewport,
   minZoom,
   maxZoom,
   getNodeSetBounds,
+  getAnchorBounds,
 }: ResolveNavigationViewportArgs): ViewportState | null => {
   switch (intent.kind) {
     case 'initialize-diagram':
-      return savedViewport
-        ? resolveRestoreSavedViewport({
-            savedViewport,
+      return savedCamera
+        ? restoreDiagramCamera({
+            camera: savedCamera,
             canvasSize,
             sceneBounds,
-            padding: policy.padding,
+            scopeRootId,
+            getNodeBounds: getAnchorBounds ?? ((id) => getNodeSetBounds([id])),
             minZoom,
             maxZoom,
           })

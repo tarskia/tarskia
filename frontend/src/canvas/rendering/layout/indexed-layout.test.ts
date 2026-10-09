@@ -19,7 +19,10 @@ describe('immutable indexed rendering', () => {
     const compiled = compileView(graph, view);
     const scene = buildLayoutResult({ graph, viewState: compiled });
     const presentation = buildStaticCanvasPresentation({ scene });
-    const cameraView = { ...view!, layout: { viewport: { x: 20, y: 40, zoom: 2 } } };
+    const cameraView = {
+      ...view!,
+      camera: { rect: { x: 20, y: 40, width: 1440 / 2, height: 900 / 2 } },
+    };
     expect(compileView(graph, cameraView)).toBe(compiled);
     expect(buildLayoutResult({ graph, viewState: compileView(graph, cameraView) })).toBe(scene);
     expect(buildStaticCanvasPresentation({ scene })).toBe(presentation);
@@ -48,8 +51,8 @@ describe('immutable indexed rendering', () => {
     for (const { file } of galleryFiles) {
       const { graph } = loadGallery(file);
       const view = applyDiagramViewOperation(graph.tree, undefined, { kind: 'expand-all' });
-      const viewport = { x: 123, y: -76, zoom: 0.7 };
-      const saved = { ...graph.content, view: { ...view!, layout: { viewport } } };
+      const camera = { rect: { x: 123, y: -76, width: 1440, height: 900 } };
+      const saved = { ...graph.content, view: { ...view!, camera } };
       const reloaded = parseSemanticDocument(serializeSemanticDocument(saved));
       expect(reloaded.view, file).toEqual(saved.view);
       expect(serializeSemanticDocument(reloaded), file).toBe(serializeSemanticDocument(saved));

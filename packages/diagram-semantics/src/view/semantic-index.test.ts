@@ -33,7 +33,7 @@ const fixture = () => {
 };
 const view = (nodesById: DiagramView['nodesById'], scopeRootId?: string): DiagramView => ({
   kind: 'semantic-diagram-view',
-  version: 2,
+  version: 3,
   nodesById,
   scopeRootId,
 });
@@ -47,11 +47,17 @@ describe('immutable semantic index and compiled view', () => {
     const index = buildSemanticIndex(content, schema);
     expect(buildSemanticIndex({ ...content }, schema)).toBe(index);
     const nodes = { group: { expanded: true }, a: { highlighted: true } };
-    const firstView = { ...view(nodes), layout: { viewport: { x: 1, y: 2, zoom: 0.5 } } };
-    const secondView = { ...firstView, layout: { viewport: { x: 300, y: -10, zoom: 1.5 } } };
+    const firstView = {
+      ...view(nodes),
+      camera: { rect: { x: 1, y: 2, width: 1440 / 0.5, height: 900 / 0.5 } },
+    };
+    const secondView = {
+      ...firstView,
+      camera: { rect: { x: 300, y: -10, width: 1440 / 1.5, height: 900 / 1.5 } },
+    };
     const first = compileView(index, firstView);
     expect(compileView(index, secondView)).toBe(first);
-    expect(secondView.layout.viewport).toEqual({ x: 300, y: -10, zoom: 1.5 });
+    expect(secondView.camera.rect).toEqual({ x: 300, y: -10, width: 960, height: 600 });
     expect(first.tree.byId.get('a')?.view.highlighted).toBe(true);
     expect(first.edges[0]?.label).toBe('Calls');
     expect(compileView(index, view({}))).not.toBe(first);
