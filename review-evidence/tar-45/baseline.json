@@ -1,0 +1,2858 @@
+{
+  "n8n": {
+    "defaultTransform": "translate(166.154px, 141.137px) scale(0.639915)",
+    "defaultNodes": [
+      {
+        "id": "browser-editor-shell",
+        "transform": "translate(0px, 181px)",
+        "width": "228px",
+        "height": "128px"
+      },
+      {
+        "id": "api-and-push-surface",
+        "transform": "translate(1097px, 0px)",
+        "width": "200px",
+        "height": "128px"
+      },
+      {
+        "id": "control-plane-runtime",
+        "transform": "translate(590px, 362px)",
+        "width": "250px",
+        "height": "128px"
+      },
+      {
+        "id": "workflow-queue",
+        "transform": "translate(1092px, 168px)",
+        "width": "210px",
+        "height": "128px"
+      },
+      {
+        "id": "task-broker",
+        "transform": "translate(1092px, 716px)",
+        "width": "210px",
+        "height": "100px"
+      },
+      {
+        "id": "worker-service",
+        "transform": "translate(1495px, 215px)",
+        "width": "236px",
+        "height": "128px"
+      },
+      {
+        "id": "task-runner-plane",
+        "transform": "translate(1503px, 742px)",
+        "width": "220px",
+        "height": "128px"
+      },
+      {
+        "id": "desktop-local-gateway",
+        "transform": "translate(298px, 362px)",
+        "width": "230px",
+        "height": "128px"
+      },
+      {
+        "id": "relational-state-store",
+        "transform": "translate(1082px, 356px)",
+        "width": "230px",
+        "height": "140px"
+      },
+      {
+        "id": "binary-data-storage",
+        "transform": "translate(1082px, 536px)",
+        "width": "230px",
+        "height": "140px"
+      }
+    ],
+    "expandedNodes": [
+      {
+        "id": "browser-editor-shell",
+        "transform": "translate(0px, 4566.62px)",
+        "width": "930px",
+        "height": "348px"
+      },
+      {
+        "id": "browser-editor-shell/shell-runtime",
+        "transform": "translate(16px, 4688.62px)",
+        "width": "434px",
+        "height": "210px"
+      },
+      {
+        "id": "browser-editor-shell/shell-runtime/bootstrap",
+        "transform": "translate(32px, 4810.62px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "browser-editor-shell/shell-runtime/app-shell",
+        "transform": "translate(264px, 4810.62px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "browser-editor-shell/bootstrap",
+        "transform": "translate(512px, 4757.62px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "browser-editor-shell/app-shell",
+        "transform": "translate(744px, 4757.62px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface",
+        "transform": "translate(3183px, 0px)",
+        "width": "4520px",
+        "height": "5727.5px"
+      },
+      {
+        "id": "api-and-push-surface/api-host",
+        "transform": "translate(3199px, 1684.5px)",
+        "width": "2174px",
+        "height": "4027px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime",
+        "transform": "translate(3215px, 1806.5px)",
+        "width": "2142px",
+        "height": "3889px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/bootstrap",
+        "transform": "translate(3231px, 3695px)",
+        "width": "676px",
+        "height": "218px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/bootstrap/bootstrap-entry",
+        "transform": "translate(3247px, 3817px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/bootstrap/command-registry",
+        "transform": "translate(3489px, 3821px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/bootstrap/runtime-handoff",
+        "transform": "translate(3721px, 3821px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host",
+        "transform": "translate(3969px, 1928.5px)",
+        "width": "1372px",
+        "height": "3751px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/host-core",
+        "transform": "translate(3985px, 4281.75px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime",
+        "transform": "translate(4356px, 2050.5px)",
+        "width": "922px",
+        "height": "2720px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/api-router",
+        "transform": "translate(4372px, 3420px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api",
+        "transform": "translate(4976px, 2172.5px)",
+        "width": "286px",
+        "height": "1268px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/credential-operations",
+        "transform": "translate(4992px, 2294.5px)",
+        "width": "254px",
+        "height": "542px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/credential-operations/credential-collection",
+        "transform": "translate(5008px, 2416.5px)",
+        "width": "222px",
+        "height": "194px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/credential-operations/credential-collection/credential-create",
+        "transform": "translate(5024px, 2538.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/credential-operations/credential-collection/credential-list",
+        "transform": "translate(5024px, 2568.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/credential-operations/credential-item",
+        "transform": "translate(5008px, 2626.5px)",
+        "width": "222px",
+        "height": "194px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/credential-operations/credential-item/credential-retrieve",
+        "transform": "translate(5024px, 2748.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/credential-operations/credential-item/credential-delete",
+        "transform": "translate(5024px, 2778.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/user-operations",
+        "transform": "translate(4992px, 2852.5px)",
+        "width": "254px",
+        "height": "572px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/user-operations/user-collection",
+        "transform": "translate(5008px, 2974.5px)",
+        "width": "222px",
+        "height": "194px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/user-operations/user-collection/user-create",
+        "transform": "translate(5024px, 3096.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/user-operations/user-collection/user-list",
+        "transform": "translate(5024px, 3126.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/user-operations/user-item",
+        "transform": "translate(5008px, 3184.5px)",
+        "width": "222px",
+        "height": "224px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/user-operations/user-item/user-retrieve",
+        "transform": "translate(5024px, 3306.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/user-operations/user-item/user-update",
+        "transform": "translate(5024px, 3336.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/identity-api/user-operations/user-item/user-delete",
+        "transform": "translate(5024px, 3366.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api",
+        "transform": "translate(4976px, 3456.5px)",
+        "width": "286px",
+        "height": "1298px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/workflow-operations",
+        "transform": "translate(4992px, 3578.5px)",
+        "width": "254px",
+        "height": "572px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/workflow-operations/workflow-collection",
+        "transform": "translate(5008px, 3700.5px)",
+        "width": "222px",
+        "height": "194px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/workflow-operations/workflow-collection/workflow-create",
+        "transform": "translate(5024px, 3822.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/workflow-operations/workflow-collection/workflow-list",
+        "transform": "translate(5024px, 3852.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/workflow-operations/workflow-item",
+        "transform": "translate(5008px, 3910.5px)",
+        "width": "222px",
+        "height": "224px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/workflow-operations/workflow-item/workflow-retrieve",
+        "transform": "translate(5024px, 4032.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/workflow-operations/workflow-item/workflow-update",
+        "transform": "translate(5024px, 4062.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/workflow-operations/workflow-item/workflow-delete",
+        "transform": "translate(5024px, 4092.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/execution-operations",
+        "transform": "translate(4992px, 4166.5px)",
+        "width": "254px",
+        "height": "572px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/execution-operations/execution-collection",
+        "transform": "translate(5008px, 4288.5px)",
+        "width": "222px",
+        "height": "194px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/execution-operations/execution-collection/execution-list",
+        "transform": "translate(5024px, 4410.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/execution-operations/execution-collection/execution-stop-many",
+        "transform": "translate(5024px, 4440.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/execution-operations/execution-item",
+        "transform": "translate(5008px, 4498.5px)",
+        "width": "222px",
+        "height": "224px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/execution-operations/execution-item/execution-retrieve",
+        "transform": "translate(5024px, 4620.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/execution-operations/execution-item/execution-delete",
+        "transform": "translate(5024px, 4650.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/public-api-runtime/workflows-api/execution-operations/execution-item/execution-retry",
+        "transform": "translate(5024px, 4680.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/push-runtime",
+        "transform": "translate(4309px, 4786.5px)",
+        "width": "1016px",
+        "height": "877px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/push-runtime/websocket-server",
+        "transform": "translate(4325px, 4908.5px)",
+        "width": "984px",
+        "height": "375px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/push-runtime/websocket-server/websocket-handler",
+        "transform": "translate(4341px, 5113px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/push-runtime/websocket-server/connection-lifecycle",
+        "transform": "translate(4573px, 5030.5px)",
+        "width": "720px",
+        "height": "237px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/push-runtime/websocket-server/connection-lifecycle/lifecycle-manager",
+        "transform": "translate(4589px, 5179.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/push-runtime/websocket-server/connection-lifecycle/heartbeat-loop",
+        "transform": "translate(4821px, 5152.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/push-runtime/websocket-server/connection-lifecycle/reconnect-loop",
+        "transform": "translate(5107px, 5179.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/push-runtime/eventsource-server",
+        "transform": "translate(4468px, 5299.5px)",
+        "width": "698px",
+        "height": "348px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/push-runtime/eventsource-server/eventsource-handler",
+        "transform": "translate(4484px, 5490.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/push-runtime/eventsource-server/stream-lifecycle",
+        "transform": "translate(4716px, 5421.5px)",
+        "width": "434px",
+        "height": "210px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/push-runtime/eventsource-server/stream-lifecycle/lifecycle-manager",
+        "transform": "translate(4732px, 5543.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/api-host/server-runtime/server-host/push-runtime/eventsource-server/stream-lifecycle/heartbeat-loop",
+        "transform": "translate(4964px, 5543.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/public-api",
+        "transform": "translate(5459px, 122px)",
+        "width": "2228px",
+        "height": "4410px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1",
+        "transform": "translate(5475px, 244px)",
+        "width": "1770px",
+        "height": "4272px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api",
+        "transform": "translate(5491px, 366px)",
+        "width": "1738px",
+        "height": "2760px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/api-router",
+        "transform": "translate(5507px, 2083.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations",
+        "transform": "translate(6041px, 488px)",
+        "width": "1172px",
+        "height": "1944px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-collection",
+        "transform": "translate(6516px, 610px)",
+        "width": "222px",
+        "height": "194px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-collection/workflow-create",
+        "transform": "translate(6532px, 732px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-collection/workflow-list",
+        "transform": "translate(6532px, 762px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item",
+        "transform": "translate(6057px, 820px)",
+        "width": "1140px",
+        "height": "1596px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-detail-operations",
+        "transform": "translate(6073px, 942px)",
+        "width": "1108px",
+        "height": "440px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-detail-operations/workflow-retrieve",
+        "transform": "translate(6089px, 1064px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-detail-operations/workflow-update",
+        "transform": "translate(6089px, 1170px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-detail-operations/workflow-delete",
+        "transform": "translate(6089px, 1276px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-detail-operations/workflow-handler",
+        "transform": "translate(6395px, 1179px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-detail-operations/workflow-service",
+        "transform": "translate(6627px, 1179px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-detail-operations/workflow-store",
+        "transform": "translate(6935px, 1145px)",
+        "width": "230px",
+        "height": "140px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-state-operations",
+        "transform": "translate(6075.5px, 1398px)",
+        "width": "1103px",
+        "height": "652px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-state-operations/workflow-activate",
+        "transform": "translate(6091.5px, 1520px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-state-operations/workflow-deactivate",
+        "transform": "translate(6091.5px, 1626px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-state-operations/workflow-archive",
+        "transform": "translate(6091.5px, 1732px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-state-operations/workflow-unarchive",
+        "transform": "translate(6091.5px, 1838px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-state-operations/workflow-transfer",
+        "transform": "translate(6091.5px, 1944px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-state-operations/workflow-handler",
+        "transform": "translate(6413.5px, 1741px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-state-operations/workflow-service",
+        "transform": "translate(6645.5px, 1741px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-state-operations/workflow-store",
+        "transform": "translate(6932.5px, 1707px)",
+        "width": "230px",
+        "height": "140px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-tag-operations",
+        "transform": "translate(6077px, 2066px)",
+        "width": "1100px",
+        "height": "334px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-tag-operations/workflow-tags-list",
+        "transform": "translate(6093px, 2188px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-tag-operations/workflow-tags-update",
+        "transform": "translate(6093px, 2294px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-tag-operations/workflow-handler",
+        "transform": "translate(6391px, 2250px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-tag-operations/workflow-service",
+        "transform": "translate(6623px, 2250px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/workflow-operations/workflow-item/workflow-tag-operations/workflow-store",
+        "transform": "translate(6931px, 2216px)",
+        "width": "230px",
+        "height": "140px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/execution-operations",
+        "transform": "translate(6500px, 2448px)",
+        "width": "254px",
+        "height": "662px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/execution-operations/execution-collection",
+        "transform": "translate(6516px, 2570px)",
+        "width": "222px",
+        "height": "194px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/execution-operations/execution-collection/execution-list",
+        "transform": "translate(6532px, 2692px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/execution-operations/execution-collection/execution-stop-many",
+        "transform": "translate(6532px, 2722px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/execution-operations/execution-item",
+        "transform": "translate(6516px, 2780px)",
+        "width": "222px",
+        "height": "314px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/execution-operations/execution-item/execution-retrieve",
+        "transform": "translate(6532px, 2902px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/execution-operations/execution-item/execution-delete",
+        "transform": "translate(6532px, 2932px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/execution-operations/execution-item/execution-stop",
+        "transform": "translate(6532px, 2962px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/execution-operations/execution-item/execution-retry",
+        "transform": "translate(6532px, 2992px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/execution-operations/execution-item/execution-tags-read",
+        "transform": "translate(6532px, 3022px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/workflows-api/execution-operations/execution-item/execution-tags-update",
+        "transform": "translate(6532px, 3052px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api",
+        "transform": "translate(6008px, 3142px)",
+        "width": "704px",
+        "height": "1358px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/api-router",
+        "transform": "translate(6024px, 3853px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/credential-operations",
+        "transform": "translate(6442px, 3264px)",
+        "width": "254px",
+        "height": "632px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/credential-operations/credential-collection",
+        "transform": "translate(6458px, 3386px)",
+        "width": "222px",
+        "height": "194px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/credential-operations/credential-collection/credential-create",
+        "transform": "translate(6474px, 3508px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/credential-operations/credential-collection/credential-list",
+        "transform": "translate(6474px, 3538px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/credential-operations/credential-item",
+        "transform": "translate(6458px, 3596px)",
+        "width": "222px",
+        "height": "284px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/credential-operations/credential-item/credential-retrieve",
+        "transform": "translate(6474px, 3718px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/credential-operations/credential-item/credential-update",
+        "transform": "translate(6474px, 3748px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/credential-operations/credential-item/credential-delete",
+        "transform": "translate(6474px, 3778px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/credential-operations/credential-item/credential-test",
+        "transform": "translate(6474px, 3808px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/credential-operations/credential-item/credential-transfer",
+        "transform": "translate(6474px, 3838px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/user-operations",
+        "transform": "translate(6442px, 3912px)",
+        "width": "254px",
+        "height": "572px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/user-operations/user-collection",
+        "transform": "translate(6458px, 4034px)",
+        "width": "222px",
+        "height": "194px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/user-operations/user-collection/user-list",
+        "transform": "translate(6474px, 4156px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/user-operations/user-collection/user-create",
+        "transform": "translate(6474px, 4186px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/user-operations/user-item",
+        "transform": "translate(6458px, 4244px)",
+        "width": "222px",
+        "height": "224px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/user-operations/user-item/user-retrieve",
+        "transform": "translate(6474px, 4366px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/user-operations/user-item/user-delete",
+        "transform": "translate(6474px, 4396px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/public-api-v1/identity-api/user-operations/user-item/user-role-change",
+        "transform": "translate(6474px, 4426px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/persistence-models",
+        "transform": "translate(7409px, 2283px)",
+        "width": "262px",
+        "height": "194px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/persistence-models/workflow-state",
+        "transform": "translate(7425px, 2405px)",
+        "width": "230px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/public-api/persistence-models/identity-state",
+        "transform": "translate(7425px, 2435px)",
+        "width": "230px",
+        "height": "26px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport",
+        "transform": "translate(5740px, 4548px)",
+        "width": "1666px",
+        "height": "1042px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/client-facade",
+        "transform": "translate(5756px, 5086px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/websocket-client",
+        "transform": "translate(6034px, 4998px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/eventsource-client",
+        "transform": "translate(6034px, 5086px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/push-server",
+        "transform": "translate(6374px, 4670px)",
+        "width": "1016px",
+        "height": "904px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/push-server/websocket-server",
+        "transform": "translate(6390px, 4792px)",
+        "width": "984px",
+        "height": "375px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/push-server/websocket-server/websocket-handler",
+        "transform": "translate(6406px, 4996.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/push-server/websocket-server/connection-lifecycle",
+        "transform": "translate(6638px, 4914px)",
+        "width": "720px",
+        "height": "237px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/push-server/websocket-server/connection-lifecycle/lifecycle-manager",
+        "transform": "translate(6654px, 5063px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/push-server/websocket-server/connection-lifecycle/heartbeat-loop",
+        "transform": "translate(6886px, 5036px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/push-server/websocket-server/connection-lifecycle/reconnect-loop",
+        "transform": "translate(7172px, 5063px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/push-server/eventsource-server",
+        "transform": "translate(6390px, 5183px)",
+        "width": "984px",
+        "height": "375px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/push-server/eventsource-server/eventsource-handler",
+        "transform": "translate(6406px, 5387.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/push-server/eventsource-server/stream-lifecycle",
+        "transform": "translate(6638px, 5305px)",
+        "width": "720px",
+        "height": "237px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/push-server/eventsource-server/stream-lifecycle/lifecycle-manager",
+        "transform": "translate(6654px, 5454px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/push-server/eventsource-server/stream-lifecycle/heartbeat-loop",
+        "transform": "translate(6886px, 5427px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "api-and-push-surface/push-transport/push-server/eventsource-server/stream-lifecycle/reconnect-loop",
+        "transform": "translate(7172px, 5454px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "control-plane-runtime",
+        "transform": "translate(2234px, 6305.5px)",
+        "width": "762px",
+        "height": "624px"
+      },
+      {
+        "id": "control-plane-runtime/runtime-host",
+        "transform": "translate(2250px, 6427.5px)",
+        "width": "730px",
+        "height": "486px"
+      },
+      {
+        "id": "control-plane-runtime/runtime-host/bootstrap",
+        "transform": "translate(2266px, 6687.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "control-plane-runtime/runtime-host/runtime-server",
+        "transform": "translate(2498px, 6549.5px)",
+        "width": "466px",
+        "height": "348px"
+      },
+      {
+        "id": "control-plane-runtime/runtime-host/runtime-server/server-entrypoint",
+        "transform": "translate(2514px, 6740.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "control-plane-runtime/runtime-host/runtime-server/http-host",
+        "transform": "translate(2746px, 6671.5px)",
+        "width": "202px",
+        "height": "210px"
+      },
+      {
+        "id": "control-plane-runtime/runtime-host/runtime-server/http-host/http-host-core",
+        "transform": "translate(2762px, 6793.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "workflow-queue",
+        "transform": "translate(4523px, 5767.5px)",
+        "width": "1840px",
+        "height": "624px"
+      },
+      {
+        "id": "workflow-queue/queue-runtime",
+        "transform": "translate(4539px, 5889.5px)",
+        "width": "1512px",
+        "height": "486px"
+      },
+      {
+        "id": "workflow-queue/queue-runtime/worker-command",
+        "transform": "translate(4555px, 6149.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "workflow-queue/queue-runtime/workflow-runner",
+        "transform": "translate(4841px, 6011.5px)",
+        "width": "962px",
+        "height": "348px"
+      },
+      {
+        "id": "workflow-queue/queue-runtime/workflow-runner/queue-executor",
+        "transform": "translate(4857px, 6133.5px)",
+        "width": "434px",
+        "height": "210px"
+      },
+      {
+        "id": "workflow-queue/queue-runtime/workflow-runner/queue-executor/queue-consumer",
+        "transform": "translate(4873px, 6255.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "workflow-queue/queue-runtime/workflow-runner/queue-executor/lifecycle-bridge",
+        "transform": "translate(5105px, 6255.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "workflow-queue/queue-runtime/workflow-runner/execution-lifecycle",
+        "transform": "translate(5353px, 6133.5px)",
+        "width": "434px",
+        "height": "210px"
+      },
+      {
+        "id": "workflow-queue/queue-runtime/workflow-runner/execution-lifecycle/lifecycle-hooks",
+        "transform": "translate(5369px, 6255.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "workflow-queue/queue-runtime/workflow-runner/execution-lifecycle/coordination-publisher",
+        "transform": "translate(5601px, 6255.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "workflow-queue/queue-runtime/publisher-service",
+        "transform": "translate(5865px, 6149.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "workflow-queue/workflow-execution-queue",
+        "transform": "translate(6167px, 6089.5px)",
+        "width": "180px",
+        "height": "86px"
+      },
+      {
+        "id": "task-broker",
+        "transform": "translate(5338px, 7525.5px)",
+        "width": "210px",
+        "height": "100px"
+      },
+      {
+        "id": "worker-service",
+        "transform": "translate(7886px, 5938.5px)",
+        "width": "1770px",
+        "height": "624px"
+      },
+      {
+        "id": "worker-service/worker-scheduler",
+        "transform": "translate(7902px, 6125px)",
+        "width": "210px",
+        "height": "96px"
+      },
+      {
+        "id": "worker-service/execution-runner",
+        "transform": "translate(8182px, 6060.5px)",
+        "width": "1226px",
+        "height": "486px"
+      },
+      {
+        "id": "worker-service/execution-runner/execution-core",
+        "transform": "translate(8198px, 6182.5px)",
+        "width": "962px",
+        "height": "348px"
+      },
+      {
+        "id": "worker-service/execution-runner/execution-core/queue-executor",
+        "transform": "translate(8214px, 6304.5px)",
+        "width": "434px",
+        "height": "210px"
+      },
+      {
+        "id": "worker-service/execution-runner/execution-core/queue-executor/queue-consumer",
+        "transform": "translate(8230px, 6426.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "worker-service/execution-runner/execution-core/queue-executor/lifecycle-bridge",
+        "transform": "translate(8462px, 6426.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "worker-service/execution-runner/execution-core/execution-lifecycle",
+        "transform": "translate(8710px, 6304.5px)",
+        "width": "434px",
+        "height": "210px"
+      },
+      {
+        "id": "worker-service/execution-runner/execution-core/execution-lifecycle/lifecycle-hooks",
+        "transform": "translate(8726px, 6426.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "worker-service/execution-runner/execution-core/execution-lifecycle/lifecycle-publisher",
+        "transform": "translate(8958px, 6426.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "worker-service/execution-runner/coordination-publisher",
+        "transform": "translate(9222px, 6320.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "worker-service/queue-pubsub",
+        "transform": "translate(9470px, 6137px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "task-runner-plane",
+        "transform": "translate(7999px, 7303.5px)",
+        "width": "1544px",
+        "height": "624px"
+      },
+      {
+        "id": "task-runner-plane/task-runner-host",
+        "transform": "translate(8015px, 7425.5px)",
+        "width": "1226px",
+        "height": "486px"
+      },
+      {
+        "id": "task-runner-plane/task-runner-host/startup",
+        "transform": "translate(8031px, 7685.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "task-runner-plane/task-runner-host/host-core",
+        "transform": "translate(8263px, 7547.5px)",
+        "width": "962px",
+        "height": "348px"
+      },
+      {
+        "id": "task-runner-plane/task-runner-host/host-core/broker-adapter",
+        "transform": "translate(8279px, 7669.5px)",
+        "width": "434px",
+        "height": "210px"
+      },
+      {
+        "id": "task-runner-plane/task-runner-host/host-core/broker-adapter/broker-consumer",
+        "transform": "translate(8295px, 7791.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "task-runner-plane/task-runner-host/host-core/broker-adapter/execution-dispatcher",
+        "transform": "translate(8527px, 7791.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "task-runner-plane/task-runner-host/host-core/execution-bridge",
+        "transform": "translate(8775px, 7669.5px)",
+        "width": "434px",
+        "height": "210px"
+      },
+      {
+        "id": "task-runner-plane/task-runner-host/host-core/execution-bridge/js-runner-adapter",
+        "transform": "translate(8791px, 7791.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "task-runner-plane/task-runner-host/host-core/execution-bridge/control-plane-client",
+        "transform": "translate(9023px, 7791.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "task-runner-plane/js-task-runner",
+        "transform": "translate(9357px, 7632.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "desktop-local-gateway",
+        "transform": "translate(1038px, 6305.5px)",
+        "width": "1134px",
+        "height": "624px"
+      },
+      {
+        "id": "desktop-local-gateway/gateway-host",
+        "transform": "translate(1054px, 6427.5px)",
+        "width": "762px",
+        "height": "486px"
+      },
+      {
+        "id": "desktop-local-gateway/gateway-host/gateway-runtime",
+        "transform": "translate(1070px, 6549.5px)",
+        "width": "730px",
+        "height": "348px"
+      },
+      {
+        "id": "desktop-local-gateway/gateway-host/gateway-runtime/electron-host",
+        "transform": "translate(1086px, 6671.5px)",
+        "width": "434px",
+        "height": "210px"
+      },
+      {
+        "id": "desktop-local-gateway/gateway-host/gateway-runtime/electron-host/connection-manager",
+        "transform": "translate(1102px, 6793.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "desktop-local-gateway/gateway-host/gateway-runtime/electron-host/daemon-manager",
+        "transform": "translate(1334px, 6793.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "desktop-local-gateway/gateway-host/gateway-runtime/daemon-lifecycle",
+        "transform": "translate(1582px, 6671.5px)",
+        "width": "202px",
+        "height": "210px"
+      },
+      {
+        "id": "desktop-local-gateway/gateway-host/gateway-runtime/daemon-lifecycle/lifecycle-controller",
+        "transform": "translate(1598px, 6793.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "desktop-local-gateway/daemon-controller",
+        "transform": "translate(1986px, 6590.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "desktop-local-gateway/computer-use-cli",
+        "transform": "translate(1986px, 6678.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "relational-state-store",
+        "transform": "translate(5296px, 6451.5px)",
+        "width": "294px",
+        "height": "332px"
+      },
+      {
+        "id": "relational-state-store/relational-models",
+        "transform": "translate(5312px, 6573.5px)",
+        "width": "262px",
+        "height": "194px"
+      },
+      {
+        "id": "relational-state-store/relational-models/workflow-state",
+        "transform": "translate(5328px, 6695.5px)",
+        "width": "230px",
+        "height": "26px"
+      },
+      {
+        "id": "relational-state-store/relational-models/identity-state",
+        "transform": "translate(5328px, 6725.5px)",
+        "width": "230px",
+        "height": "26px"
+      },
+      {
+        "id": "binary-data-storage",
+        "transform": "translate(4605px, 6823.5px)",
+        "width": "1676px",
+        "height": "662px"
+      },
+      {
+        "id": "binary-data-storage/binary-data-service",
+        "transform": "translate(4621px, 6945.5px)",
+        "width": "1308px",
+        "height": "524px"
+      },
+      {
+        "id": "binary-data-storage/binary-data-service/routing-service",
+        "transform": "translate(4637px, 7067.5px)",
+        "width": "952px",
+        "height": "386px"
+      },
+      {
+        "id": "binary-data-storage/binary-data-service/routing-service/service-entry",
+        "transform": "translate(4653px, 7277.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "binary-data-storage/binary-data-service/routing-service/service-facade",
+        "transform": "translate(4885px, 7277.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "binary-data-storage/binary-data-service/routing-service/backend-router",
+        "transform": "translate(5117px, 7277.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "binary-data-storage/binary-data-service/routing-service/filesystem-access",
+        "transform": "translate(5403px, 7189.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "binary-data-storage/binary-data-service/routing-service/object-store-access",
+        "transform": "translate(5403px, 7277.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "binary-data-storage/binary-data-service/routing-service/metadata-access",
+        "transform": "translate(5403px, 7365.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "binary-data-storage/binary-data-service/storage-backends",
+        "transform": "translate(5651px, 7151.5px)",
+        "width": "262px",
+        "height": "218px"
+      },
+      {
+        "id": "binary-data-storage/binary-data-service/storage-backends/filesystem-store",
+        "transform": "translate(5667px, 7273.5px)",
+        "width": "230px",
+        "height": "38px"
+      },
+      {
+        "id": "binary-data-storage/binary-data-service/storage-backends/object-store-backend",
+        "transform": "translate(5667px, 7315.5px)",
+        "width": "230px",
+        "height": "38px"
+      },
+      {
+        "id": "binary-data-storage/filesystem-store",
+        "transform": "translate(6035px, 6991.5px)",
+        "width": "230px",
+        "height": "140px"
+      },
+      {
+        "id": "binary-data-storage/object-store-backend",
+        "transform": "translate(6040px, 7147.5px)",
+        "width": "220px",
+        "height": "120px"
+      },
+      {
+        "id": "binary-data-storage/binary-data-metadata",
+        "transform": "translate(6035px, 7283.5px)",
+        "width": "230px",
+        "height": "140px"
+      }
+    ],
+    "expandedTransform": "translate(326.948px, 96.8077px) scale(0.0814109)",
+    "beforeWheel": "translate(166.154px, 141.137px) scale(0.639915)",
+    "wheel": "translate(146.199px, 229.663px) scale(0.557078)",
+    "ctrlWheel": "translate(128.827px, 306.729px) scale(0.484965)",
+    "drag": "translate(178.827px, 276.729px) scale(0.484965)",
+    "doubleClick": "translate(345.654px, -271.542px) scale(0.969929)",
+    "max": "translate(699.996px, -1436.08px) scale(2)",
+    "min": "translate(29.1999px, 768.473px) scale(0.05)"
+  },
+  "supabase": {
+    "defaultTransform": "translate(166.154px, 133.111px) scale(0.688435)",
+    "defaultNodes": [
+      {
+        "id": "studio-control-plane",
+        "transform": "translate(633px, 262px)",
+        "width": "260px",
+        "height": "140px"
+      },
+      {
+        "id": "public-website-frontend",
+        "transform": "translate(663px, 442px)",
+        "width": "200px",
+        "height": "128px"
+      },
+      {
+        "id": "docs-learn-content-frontend",
+        "transform": "translate(1005.5px, 536px)",
+        "width": "193px",
+        "height": "128px"
+      },
+      {
+        "id": "lite-studio-frontend",
+        "transform": "translate(0px, 268px)",
+        "width": "193px",
+        "height": "128px"
+      },
+      {
+        "id": "edge-function-plane",
+        "transform": "translate(987px, 704px)",
+        "width": "230px",
+        "height": "128px"
+      },
+      {
+        "id": "self-hosted-runtime-stack",
+        "transform": "translate(255px, 247px)",
+        "width": "300px",
+        "height": "170px"
+      },
+      {
+        "id": "supabase-postgres-datastore",
+        "transform": "translate(1379px, 0px)",
+        "width": "230px",
+        "height": "140px"
+      },
+      {
+        "id": "pg-meta-shared-kernel",
+        "transform": "translate(1012.5px, 100px)",
+        "width": "179px",
+        "height": "128px"
+      },
+      {
+        "id": "ai-commands-shared-kernel",
+        "transform": "translate(1016px, 268px)",
+        "width": "172px",
+        "height": "128px"
+      },
+      {
+        "id": "outbound-integrations-plane",
+        "transform": "translate(1409px, 444px)",
+        "width": "170px",
+        "height": "70px"
+      }
+    ],
+    "expandedNodes": [
+      {
+        "id": "studio-control-plane",
+        "transform": "translate(2065px, 496.5px)",
+        "width": "2058px",
+        "height": "2758px"
+      },
+      {
+        "id": "studio-control-plane/mcp-api",
+        "transform": "translate(2994px, 618.5px)",
+        "width": "200px",
+        "height": "90px"
+      },
+      {
+        "id": "studio-control-plane/platform-pg-meta-api",
+        "transform": "translate(3009px, 724.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "studio-control-plane/platform-integrations-surface",
+        "transform": "translate(2808px, 812.5px)",
+        "width": "572px",
+        "height": "744px"
+      },
+      {
+        "id": "studio-control-plane/platform-integrations-surface/github-integrations-group",
+        "transform": "translate(2824px, 934.5px)",
+        "width": "540px",
+        "height": "362px"
+      },
+      {
+        "id": "studio-control-plane/platform-integrations-surface/github-integrations-group/github-routes-group",
+        "transform": "translate(2840px, 1056.5px)",
+        "width": "222px",
+        "height": "224px"
+      },
+      {
+        "id": "studio-control-plane/platform-integrations-surface/github-integrations-group/github-routes-group/github-repositories-endpoint",
+        "transform": "translate(2856px, 1178.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/platform-integrations-surface/github-integrations-group/github-routes-group/github-authorization-endpoint",
+        "transform": "translate(2856px, 1208.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/platform-integrations-surface/github-integrations-group/github-routes-group/github-connections-endpoint",
+        "transform": "translate(2856px, 1238.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/platform-integrations-surface/github-integrations-group/github-client-module",
+        "transform": "translate(3178px, 1132.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "studio-control-plane/platform-integrations-surface/stripe-sync-group",
+        "transform": "translate(2867px, 1312.5px)",
+        "width": "454px",
+        "height": "228px"
+      },
+      {
+        "id": "studio-control-plane/platform-integrations-surface/stripe-sync-group/stripe-sync-endpoint",
+        "transform": "translate(2883px, 1434.5px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "studio-control-plane/platform-integrations-surface/stripe-sync-group/stripe-api",
+        "transform": "translate(3135px, 1444.5px)",
+        "width": "170px",
+        "height": "70px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group",
+        "transform": "translate(2081px, 1572.5px)",
+        "width": "2026px",
+        "height": "1666px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module",
+        "transform": "translate(2739px, 1694.5px)",
+        "width": "1352px",
+        "height": "1528px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/tool-registry-module",
+        "transform": "translate(2755px, 2279px)",
+        "width": "246px",
+        "height": "542px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/tool-registry-module/sql-and-knowledge-group",
+        "transform": "translate(2771px, 2401px)",
+        "width": "214px",
+        "height": "194px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/tool-registry-module/sql-and-knowledge-group/execute-sql-tool",
+        "transform": "translate(2787px, 2523px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/tool-registry-module/sql-and-knowledge-group/load-knowledge-tool",
+        "transform": "translate(2787px, 2553px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/tool-registry-module/interaction-tools-group",
+        "transform": "translate(2771px, 2611px)",
+        "width": "214px",
+        "height": "194px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/tool-registry-module/interaction-tools-group/deploy-edge-function-tool",
+        "transform": "translate(2787px, 2733px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/tool-registry-module/interaction-tools-group/rename-chat-tool",
+        "transform": "translate(2787px, 2763px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/sql-and-knowledge-group",
+        "transform": "translate(3340px, 1816.5px)",
+        "width": "520px",
+        "height": "764px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/sql-and-knowledge-group/execute-sql-tool-group",
+        "transform": "translate(3378px, 1938.5px)",
+        "width": "444px",
+        "height": "218px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/sql-and-knowledge-group/execute-sql-tool-group/execute-sql-tool",
+        "transform": "translate(3394px, 2064.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/sql-and-knowledge-group/execute-sql-tool-group/sql-escape-util",
+        "transform": "translate(3626px, 2060.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/sql-and-knowledge-group/load-knowledge-tool-group",
+        "transform": "translate(3356px, 2172.5px)",
+        "width": "488px",
+        "height": "392px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/sql-and-knowledge-group/load-knowledge-tool-group/load-knowledge-tool",
+        "transform": "translate(3372px, 2381.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/sql-and-knowledge-group/load-knowledge-tool-group/knowledge-library",
+        "transform": "translate(3614px, 2294.5px)",
+        "width": "214px",
+        "height": "254px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/sql-and-knowledge-group/load-knowledge-tool-group/knowledge-library/pg-best-practices",
+        "transform": "translate(3630px, 2416.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/sql-and-knowledge-group/load-knowledge-tool-group/knowledge-library/rls",
+        "transform": "translate(3630px, 2446.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/sql-and-knowledge-group/load-knowledge-tool-group/knowledge-library/edge-functions",
+        "transform": "translate(3630px, 2476.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/sql-and-knowledge-group/load-knowledge-tool-group/knowledge-library/realtime",
+        "transform": "translate(3630px, 2506.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group",
+        "transform": "translate(3125px, 2596.5px)",
+        "width": "950px",
+        "height": "610px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/deploy-edge-function-tool-group",
+        "transform": "translate(3257px, 2718.5px)",
+        "width": "686px",
+        "height": "228px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/deploy-edge-function-tool-group/deploy-edge-function-tool",
+        "transform": "translate(3273px, 2845.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/deploy-edge-function-tool-group/edge-function-renderer",
+        "transform": "translate(3515px, 2850.5px)",
+        "width": "160px",
+        "height": "70px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/deploy-edge-function-tool-group/edge-function-deploy-endpoint",
+        "transform": "translate(3737px, 2840.5px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/rename-chat-tool-group",
+        "transform": "translate(3141px, 2962.5px)",
+        "width": "918px",
+        "height": "228px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/rename-chat-tool-group/assistant-chat-ui",
+        "transform": "translate(3157px, 3094.5px)",
+        "width": "160px",
+        "height": "70px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/rename-chat-tool-group/assistant-response-endpoint",
+        "transform": "translate(3379px, 3084.5px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/rename-chat-tool-group/assistant-response-generation",
+        "transform": "translate(3631px, 3093.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/rename-chat-tool-group/rename-chat-tool",
+        "transform": "translate(3863px, 3089.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group",
+        "transform": "translate(2097px, 1770.5px)",
+        "width": "518px",
+        "height": "1376px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/prompt-guidance-group",
+        "transform": "translate(2233px, 1892.5px)",
+        "width": "246px",
+        "height": "632px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/prompt-guidance-group/database-guidance-prompts-group",
+        "transform": "translate(2249px, 2014.5px)",
+        "width": "214px",
+        "height": "194px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/prompt-guidance-group/database-guidance-prompts-group/database-knowledge-guidance",
+        "transform": "translate(2265px, 2136.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/prompt-guidance-group/database-guidance-prompts-group/completion-guidance",
+        "transform": "translate(2265px, 2166.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/prompt-guidance-group/assistant-guidance-prompts-group",
+        "transform": "translate(2249px, 2224.5px)",
+        "width": "214px",
+        "height": "284px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/prompt-guidance-group/assistant-guidance-prompts-group/edge-function-prompt",
+        "transform": "translate(2265px, 2346.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/prompt-guidance-group/assistant-guidance-prompts-group/realtime-prompt",
+        "transform": "translate(2265px, 2376.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/prompt-guidance-group/assistant-guidance-prompts-group/general-prompt",
+        "transform": "translate(2265px, 2406.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/prompt-guidance-group/assistant-guidance-prompts-group/chat-prompt",
+        "transform": "translate(2265px, 2436.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/prompt-guidance-group/assistant-guidance-prompts-group/output-only-prompt",
+        "transform": "translate(2265px, 2466.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/mcp-bridge-group",
+        "transform": "translate(2113px, 2540.5px)",
+        "width": "486px",
+        "height": "590px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/mcp-bridge-group/mcp-server-setup-group",
+        "transform": "translate(2134px, 2662.5px)",
+        "width": "444px",
+        "height": "218px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/mcp-bridge-group/mcp-server-setup-group/mcp-server",
+        "transform": "translate(2150px, 2784.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/mcp-bridge-group/mcp-server-setup-group/api-platform",
+        "transform": "translate(2392px, 2789.5px)",
+        "width": "170px",
+        "height": "70px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/mcp-bridge-group/mcp-client-setup-group",
+        "transform": "translate(2129px, 2896.5px)",
+        "width": "454px",
+        "height": "218px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/mcp-bridge-group/mcp-client-setup-group/linked-transport",
+        "transform": "translate(2387px, 3018.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "studio-control-plane/ai-tools-group/ai-support-group/mcp-bridge-group/mcp-client-setup-group/mcp-client",
+        "transform": "translate(2145px, 3018.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "public-website-frontend",
+        "transform": "translate(2453px, 3294.5px)",
+        "width": "1282px",
+        "height": "4050px"
+      },
+      {
+        "id": "public-website-frontend/website-shell-group",
+        "transform": "translate(2469px, 3416.5px)",
+        "width": "832px",
+        "height": "1164px"
+      },
+      {
+        "id": "public-website-frontend/website-shell-group/website-shell-frontend",
+        "transform": "translate(2485px, 4016.5px)",
+        "width": "160px",
+        "height": "70px"
+      },
+      {
+        "id": "public-website-frontend/website-shell-group/conversion-flows-group",
+        "transform": "translate(2777px, 3538.5px)",
+        "width": "508px",
+        "height": "1026px"
+      },
+      {
+        "id": "public-website-frontend/website-shell-group/conversion-flows-group/newsletter-conversion-group",
+        "transform": "translate(2793px, 3660.5px)",
+        "width": "476px",
+        "height": "590px"
+      },
+      {
+        "id": "public-website-frontend/website-shell-group/conversion-flows-group/newsletter-conversion-group/footer-newsletter-surface-group",
+        "transform": "translate(2935px, 3782.5px)",
+        "width": "192px",
+        "height": "208px"
+      },
+      {
+        "id": "public-website-frontend/website-shell-group/conversion-flows-group/newsletter-conversion-group/footer-newsletter-surface-group/footer-newsletter-form",
+        "transform": "translate(2951px, 3904.5px)",
+        "width": "160px",
+        "height": "70px"
+      },
+      {
+        "id": "public-website-frontend/website-shell-group/conversion-flows-group/newsletter-conversion-group/security-newsletter-surface-group",
+        "transform": "translate(2809px, 4006.5px)",
+        "width": "444px",
+        "height": "228px"
+      },
+      {
+        "id": "public-website-frontend/website-shell-group/conversion-flows-group/newsletter-conversion-group/security-newsletter-surface-group/security-newsletter-form",
+        "transform": "translate(2825px, 4138.5px)",
+        "width": "160px",
+        "height": "70px"
+      },
+      {
+        "id": "public-website-frontend/website-shell-group/conversion-flows-group/newsletter-conversion-group/security-newsletter-surface-group/security-newsletter-submit",
+        "transform": "translate(3047px, 4128.5px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "public-website-frontend/website-shell-group/conversion-flows-group/lead-capture-group",
+        "transform": "translate(2934.5px, 4266.5px)",
+        "width": "193px",
+        "height": "194px"
+      },
+      {
+        "id": "public-website-frontend/website-shell-group/conversion-flows-group/lead-capture-group/apply-to-supa-squad-form",
+        "transform": "translate(2950.5px, 4388.5px)",
+        "width": "160px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-shell-group/conversion-flows-group/lead-capture-group/request-demo-form",
+        "transform": "translate(2950.5px, 4418.5px)",
+        "width": "160px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-shell-group/conversion-flows-group/launch-week-registration-module",
+        "transform": "translate(2946px, 4476.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module",
+        "transform": "translate(3433px, 3493.5px)",
+        "width": "286px",
+        "height": "1010px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group",
+        "transform": "translate(3449px, 3615.5px)",
+        "width": "254px",
+        "height": "872px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/submission-routes-group",
+        "transform": "translate(3465px, 3737.5px)",
+        "width": "222px",
+        "height": "284px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/submission-routes-group/apply-to-supasquad-endpoint",
+        "transform": "translate(3481px, 3859.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/submission-routes-group/newsletter-submission-endpoint",
+        "transform": "translate(3481px, 3889.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/submission-routes-group/security-newsletter-endpoint",
+        "transform": "translate(3481px, 3919.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/submission-routes-group/contact-sales-endpoint",
+        "transform": "translate(3481px, 3949.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/submission-routes-group/partnership-lead-endpoint",
+        "transform": "translate(3481px, 3979.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/content-routes-group",
+        "transform": "translate(3465px, 4037.5px)",
+        "width": "222px",
+        "height": "224px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/content-routes-group/blog-posts-endpoint",
+        "transform": "translate(3481px, 4159.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/content-routes-group/contribute-threads-endpoint",
+        "transform": "translate(3481px, 4189.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/content-routes-group/markdown-content-endpoint",
+        "transform": "translate(3481px, 4219.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/event-routes-group",
+        "transform": "translate(3465px, 4277.5px)",
+        "width": "222px",
+        "height": "194px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/event-routes-group/luma-events-endpoint",
+        "transform": "translate(3481px, 4399.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-api-v2-module/api-v2-route-surface-group/event-routes-group/ticket-og-endpoint",
+        "transform": "translate(3481px, 4429.5px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group",
+        "transform": "translate(2607px, 4596.5px)",
+        "width": "556px",
+        "height": "1028px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/notion-integration-group",
+        "transform": "translate(2646px, 4718.5px)",
+        "width": "478px",
+        "height": "332px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/notion-integration-group/notion-workflows-group",
+        "transform": "translate(2662px, 4840.5px)",
+        "width": "214px",
+        "height": "194px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/notion-integration-group/notion-workflows-group/notion-database-read-workflows",
+        "transform": "translate(2678px, 4962.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/notion-integration-group/notion-workflows-group/notion-database-write-workflow",
+        "transform": "translate(2678px, 4992.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/notion-integration-group/notion-api",
+        "transform": "translate(2938px, 4902.5px)",
+        "width": "170px",
+        "height": "70px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/customerio-integration-group",
+        "transform": "translate(2623px, 5066.5px)",
+        "width": "524px",
+        "height": "542px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/customerio-integration-group/customerio-track-group",
+        "transform": "translate(2639px, 5188.5px)",
+        "width": "214px",
+        "height": "194px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/customerio-integration-group/customerio-track-group/notion-database-read-workflows",
+        "transform": "translate(2655px, 5310.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/customerio-integration-group/customerio-track-group/notion-database-write-workflow",
+        "transform": "translate(2655px, 5340.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/customerio-integration-group/customerio-app-group",
+        "transform": "translate(2639px, 5398.5px)",
+        "width": "214px",
+        "height": "194px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/customerio-integration-group/customerio-app-group/customerio-customer-workflows",
+        "transform": "translate(2655px, 5520.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/customerio-integration-group/customerio-app-group/customerio-transactional-email-workflow",
+        "transform": "translate(2655px, 5550.5px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/customerio-integration-group/customerio-track-api",
+        "transform": "translate(2961px, 5250.5px)",
+        "width": "170px",
+        "height": "70px"
+      },
+      {
+        "id": "public-website-frontend/website-integrations-group/customerio-integration-group/customerio-app-api",
+        "transform": "translate(2961px, 5460.5px)",
+        "width": "170px",
+        "height": "70px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group",
+        "transform": "translate(2506px, 5640.5px)",
+        "width": "758px",
+        "height": "1688px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/notification-functions-group",
+        "transform": "translate(2522px, 5762.5px)",
+        "width": "726px",
+        "height": "590px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/notification-functions-group/contact-notification-group",
+        "transform": "translate(2659px, 5884.5px)",
+        "width": "212px",
+        "height": "218px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/notification-functions-group/contact-notification-group/contact-notification-edge-function",
+        "transform": "translate(2675px, 6006.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/notification-functions-group/hubspot-notification-group",
+        "transform": "translate(2538px, 6118.5px)",
+        "width": "454px",
+        "height": "218px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/notification-functions-group/hubspot-notification-group/hubspot-notification-handler",
+        "transform": "translate(2554px, 6240.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/notification-functions-group/hubspot-notification-group/hubspot-form-submission",
+        "transform": "translate(2796px, 6240.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/notification-functions-group/smtp-api",
+        "transform": "translate(3062px, 5958.5px)",
+        "width": "170px",
+        "height": "70px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/notification-functions-group/hubspot-api",
+        "transform": "translate(3062px, 6192.5px)",
+        "width": "170px",
+        "height": "70px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/launch-week-functions-group",
+        "transform": "translate(2624.5px, 6368.5px)",
+        "width": "521px",
+        "height": "944px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-og-function",
+        "transform": "translate(2640.5px, 6490.5px)",
+        "width": "489px",
+        "height": "258px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-og-function/lwx-og-handler",
+        "transform": "translate(2656.5px, 6632.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-og-function/lwx-og-images-store",
+        "transform": "translate(2893.5px, 6612.5px)",
+        "width": "220px",
+        "height": "120px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-ticket-og-function",
+        "transform": "translate(2640.5px, 6764.5px)",
+        "width": "489px",
+        "height": "258px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-ticket-og-function/lwx-ticket-og-handler",
+        "transform": "translate(2656.5px, 6906.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-ticket-og-function/lwx-ticket-og-images-store",
+        "transform": "translate(2893.5px, 6886.5px)",
+        "width": "220px",
+        "height": "120px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-ticket-function",
+        "transform": "translate(2640.5px, 7038.5px)",
+        "width": "489px",
+        "height": "258px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-ticket-function/lwx-ticket-handler",
+        "transform": "translate(2656.5px, 7180.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-ticket-function/lwx-ticket-images-store",
+        "transform": "translate(2893.5px, 7160.5px)",
+        "width": "220px",
+        "height": "120px"
+      },
+      {
+        "id": "docs-learn-content-frontend",
+        "transform": "translate(5156px, 5454.5px)",
+        "width": "832px",
+        "height": "1270px"
+      },
+      {
+        "id": "docs-learn-content-frontend/docs-learn-content-group",
+        "transform": "translate(5172px, 5576.5px)",
+        "width": "800px",
+        "height": "1132px"
+      },
+      {
+        "id": "docs-learn-content-frontend/docs-learn-content-group/docs-app-group",
+        "transform": "translate(5313px, 5698.5px)",
+        "width": "518px",
+        "height": "494px"
+      },
+      {
+        "id": "docs-learn-content-frontend/docs-learn-content-group/docs-app-group/docs-site-frontend",
+        "transform": "translate(5329px, 5820.5px)",
+        "width": "254px",
+        "height": "356px"
+      },
+      {
+        "id": "docs-learn-content-frontend/docs-learn-content-group/docs-app-group/docs-site-frontend/docs-site-runtime-surface",
+        "transform": "translate(5345px, 5942.5px)",
+        "width": "222px",
+        "height": "218px"
+      },
+      {
+        "id": "docs-learn-content-frontend/docs-learn-content-group/docs-app-group/docs-site-frontend/docs-site-runtime-surface/docs-site-page",
+        "transform": "translate(5361px, 6064.5px)",
+        "width": "190px",
+        "height": "38px"
+      },
+      {
+        "id": "docs-learn-content-frontend/docs-learn-content-group/docs-app-group/docs-site-frontend/docs-site-runtime-surface/docs-graphql-route",
+        "transform": "translate(5361px, 6106.5px)",
+        "width": "190px",
+        "height": "38px"
+      },
+      {
+        "id": "docs-learn-content-frontend/docs-learn-content-group/docs-app-group/docs-outbound-integrations",
+        "transform": "translate(5645px, 5963.5px)",
+        "width": "170px",
+        "height": "70px"
+      },
+      {
+        "id": "docs-learn-content-frontend/docs-learn-content-group/learn-app-group",
+        "transform": "translate(5188px, 6208.5px)",
+        "width": "768px",
+        "height": "484px"
+      },
+      {
+        "id": "docs-learn-content-frontend/docs-learn-content-group/learn-app-group/learn-site-frontend",
+        "transform": "translate(5494px, 6330.5px)",
+        "width": "446px",
+        "height": "346px"
+      },
+      {
+        "id": "docs-learn-content-frontend/docs-learn-content-group/learn-app-group/learn-site-frontend/learn-site-frontend-surface",
+        "transform": "translate(5510px, 6452.5px)",
+        "width": "414px",
+        "height": "208px"
+      },
+      {
+        "id": "docs-learn-content-frontend/docs-learn-content-group/learn-app-group/learn-site-frontend/learn-site-frontend-surface/learn-home-page",
+        "transform": "translate(5526px, 6574.5px)",
+        "width": "160px",
+        "height": "70px"
+      },
+      {
+        "id": "docs-learn-content-frontend/docs-learn-content-group/learn-app-group/learn-site-frontend/learn-site-frontend-surface/learn-chapter-page",
+        "transform": "translate(5748px, 6574.5px)",
+        "width": "160px",
+        "height": "70px"
+      },
+      {
+        "id": "docs-learn-content-frontend/docs-learn-content-group/learn-app-group/learn-content-corpus",
+        "transform": "translate(5204px, 6443.5px)",
+        "width": "220px",
+        "height": "120px"
+      },
+      {
+        "id": "lite-studio-frontend",
+        "transform": "translate(0px, 2012px)",
+        "width": "752px",
+        "height": "720px"
+      },
+      {
+        "id": "lite-studio-frontend/lite-studio-app-group",
+        "transform": "translate(16px, 2134px)",
+        "width": "720px",
+        "height": "582px"
+      },
+      {
+        "id": "lite-studio-frontend/lite-studio-app-group/lite-studio-frontend-shell",
+        "transform": "translate(32px, 2443px)",
+        "width": "160px",
+        "height": "70px"
+      },
+      {
+        "id": "lite-studio-frontend/lite-studio-app-group/lite-studio-route-surface-group",
+        "transform": "translate(254px, 2256px)",
+        "width": "466px",
+        "height": "444px"
+      },
+      {
+        "id": "lite-studio-frontend/lite-studio-app-group/lite-studio-route-surface-group/project-workspace-page",
+        "transform": "translate(270px, 2378px)",
+        "width": "434px",
+        "height": "210px"
+      },
+      {
+        "id": "lite-studio-frontend/lite-studio-app-group/lite-studio-route-surface-group/project-workspace-page/project-workspace-index-route",
+        "transform": "translate(286px, 2500px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "lite-studio-frontend/lite-studio-app-group/lite-studio-route-surface-group/project-workspace-page/project-workspace-page-route",
+        "transform": "translate(518px, 2500px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "lite-studio-frontend/lite-studio-app-group/lite-studio-route-surface-group/welcome-screen",
+        "transform": "translate(397px, 2604px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "edge-function-plane",
+        "transform": "translate(4642px, 6889.5px)",
+        "width": "1860px",
+        "height": "1010px"
+      },
+      {
+        "id": "edge-function-plane/shared-edge-functions-module",
+        "transform": "translate(5470px, 7129.5px)",
+        "width": "1016px",
+        "height": "636px"
+      },
+      {
+        "id": "edge-function-plane/shared-edge-functions-module/og-images-function-group",
+        "transform": "translate(5486px, 7251.5px)",
+        "width": "984px",
+        "height": "410px"
+      },
+      {
+        "id": "edge-function-plane/shared-edge-functions-module/og-images-function-group/og-image-request-surface",
+        "transform": "translate(5502px, 7474.5px)",
+        "width": "160px",
+        "height": "70px"
+      },
+      {
+        "id": "edge-function-plane/shared-edge-functions-module/og-images-function-group/og-image-entry",
+        "transform": "translate(5724px, 7404.5px)",
+        "width": "434px",
+        "height": "210px"
+      },
+      {
+        "id": "edge-function-plane/shared-edge-functions-module/og-images-function-group/og-image-entry/og-image-request-controller",
+        "transform": "translate(5740px, 7526.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "edge-function-plane/shared-edge-functions-module/og-images-function-group/og-image-entry/og-image-template-renderer",
+        "transform": "translate(5972px, 7526.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "edge-function-plane/shared-edge-functions-module/og-images-function-group/docs-image-template",
+        "transform": "translate(6274px, 7373.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "edge-function-plane/shared-edge-functions-module/og-images-function-group/customer-story-image-template",
+        "transform": "translate(6274px, 7469.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "edge-function-plane/shared-edge-functions-module/og-images-function-group/events-image-template",
+        "transform": "translate(6274px, 7565.5px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "edge-function-plane/shared-edge-functions-module/search-embeddings-module",
+        "transform": "translate(5893px, 7677.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "edge-function-plane/website-edge-functions-group",
+        "transform": "translate(4658px, 7011.5px)",
+        "width": "742px",
+        "height": "872px"
+      },
+      {
+        "id": "edge-function-plane/website-edge-functions-group/notification-functions-group",
+        "transform": "translate(4674px, 7133.5px)",
+        "width": "710px",
+        "height": "298px"
+      },
+      {
+        "id": "edge-function-plane/website-edge-functions-group/notification-functions-group/website-notification-source",
+        "transform": "translate(4690px, 7300.5px)",
+        "width": "160px",
+        "height": "70px"
+      },
+      {
+        "id": "edge-function-plane/website-edge-functions-group/notification-functions-group/contact-notification-function",
+        "transform": "translate(4920px, 7255.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "edge-function-plane/website-edge-functions-group/notification-functions-group/hubspot-notification-function",
+        "transform": "translate(4920px, 7343.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "edge-function-plane/website-edge-functions-group/notification-functions-group/smtp-api",
+        "transform": "translate(5198px, 7256.5px)",
+        "width": "170px",
+        "height": "70px"
+      },
+      {
+        "id": "edge-function-plane/website-edge-functions-group/notification-functions-group/hubspot-api",
+        "transform": "translate(5198px, 7344.5px)",
+        "width": "170px",
+        "height": "70px"
+      },
+      {
+        "id": "edge-function-plane/website-edge-functions-group/launch-week-functions-group",
+        "transform": "translate(4735.5px, 7447.5px)",
+        "width": "587px",
+        "height": "420px"
+      },
+      {
+        "id": "edge-function-plane/website-edge-functions-group/launch-week-functions-group/lwx-og-function",
+        "transform": "translate(4751.5px, 7603.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "edge-function-plane/website-edge-functions-group/launch-week-functions-group/lwx-ticket-og-function",
+        "transform": "translate(4751.5px, 7779.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "edge-function-plane/website-edge-functions-group/launch-week-functions-group/lwx-ticket-function",
+        "transform": "translate(4751.5px, 7691.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "edge-function-plane/website-edge-functions-group/launch-week-functions-group/launch-week-store",
+        "transform": "translate(5081.5px, 7730.5px)",
+        "width": "220px",
+        "height": "120px"
+      },
+      {
+        "id": "edge-function-plane/website-edge-functions-group/launch-week-functions-group/launch-week-db",
+        "transform": "translate(5076.5px, 7569.5px)",
+        "width": "230px",
+        "height": "140px"
+      },
+      {
+        "id": "self-hosted-runtime-stack",
+        "transform": "translate(814px, 2015px)",
+        "width": "1140px",
+        "height": "714px"
+      },
+      {
+        "id": "self-hosted-runtime-stack/kong-gateway-service",
+        "transform": "translate(830px, 2137px)",
+        "width": "476px",
+        "height": "576px"
+      },
+      {
+        "id": "self-hosted-runtime-stack/kong-gateway-service/mcp-api-dispatch-group",
+        "transform": "translate(957px, 2259px)",
+        "width": "222px",
+        "height": "194px"
+      },
+      {
+        "id": "self-hosted-runtime-stack/kong-gateway-service/mcp-api-dispatch-group/mcp-local-access",
+        "transform": "translate(973px, 2381px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "self-hosted-runtime-stack/kong-gateway-service/mcp-api-dispatch-group/mcp-blocker",
+        "transform": "translate(973px, 2411px)",
+        "width": "190px",
+        "height": "26px"
+      },
+      {
+        "id": "self-hosted-runtime-stack/kong-gateway-service/functions-runtime-dispatch-group",
+        "transform": "translate(846px, 2469px)",
+        "width": "444px",
+        "height": "228px"
+      },
+      {
+        "id": "self-hosted-runtime-stack/kong-gateway-service/functions-runtime-dispatch-group/functions-dispatch-surface",
+        "transform": "translate(862px, 2601px)",
+        "width": "160px",
+        "height": "70px"
+      },
+      {
+        "id": "self-hosted-runtime-stack/kong-gateway-service/functions-runtime-dispatch-group/functions-v1-endpoint",
+        "transform": "translate(1084px, 2591px)",
+        "width": "190px",
+        "height": "90px"
+      },
+      {
+        "id": "self-hosted-runtime-stack/functions-runtime",
+        "transform": "translate(1368px, 2320px)",
+        "width": "202px",
+        "height": "210px"
+      },
+      {
+        "id": "self-hosted-runtime-stack/functions-runtime/functions-bootstrap-module",
+        "transform": "translate(1384px, 2442px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "self-hosted-runtime-stack/postgres-datastore",
+        "transform": "translate(1708px, 2355px)",
+        "width": "230px",
+        "height": "140px"
+      },
+      {
+        "id": "supabase-postgres-datastore",
+        "transform": "translate(7011px, 383.25px)",
+        "width": "230px",
+        "height": "140px"
+      },
+      {
+        "id": "pg-meta-shared-kernel",
+        "transform": "translate(4311px, 0px)",
+        "width": "2522px",
+        "height": "1873px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module",
+        "transform": "translate(4327px, 122px)",
+        "width": "2258px",
+        "height": "1735px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-facade-module",
+        "transform": "translate(4343px, 1006.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group",
+        "transform": "translate(4575px, 244px)",
+        "width": "1994px",
+        "height": "1597px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/database-helpers-core",
+        "transform": "translate(4591px, 886.25px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/table-editor-helpers",
+        "transform": "translate(4871px, 366px)",
+        "width": "1680px",
+        "height": "375px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/table-editor-helpers/table-editor-table-module",
+        "transform": "translate(4887px, 570.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/table-editor-helpers/table-editor-foreign-key-module",
+        "transform": "translate(5119px, 570.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/table-editor-helpers/table-editor-metadata-group",
+        "transform": "translate(5351px, 488px)",
+        "width": "1184px",
+        "height": "237px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/table-editor-helpers/table-editor-metadata-group/table-editor-entities",
+        "transform": "translate(5367px, 637px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/table-editor-helpers/table-editor-metadata-group/table-editor-constraints",
+        "transform": "translate(5599px, 610px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/table-editor-helpers/table-editor-metadata-group/table-editor-identity",
+        "transform": "translate(5831px, 610px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/table-editor-helpers/table-editor-metadata-group/table-editor-primary-keys",
+        "transform": "translate(6063px, 610px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/table-editor-helpers/table-editor-metadata-group/table-editor-rls",
+        "transform": "translate(6349px, 637px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers",
+        "transform": "translate(4869px, 757px)",
+        "width": "1684px",
+        "height": "1068px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-user-query-surface",
+        "transform": "translate(4885px, 1225.5px)",
+        "width": "720px",
+        "height": "237px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-user-query-surface/get-users-paginated",
+        "transform": "translate(4901px, 1374.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-user-query-surface/get-users-count",
+        "transform": "translate(5133px, 1347.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-user-query-surface/get-user",
+        "transform": "translate(5419px, 1374.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface",
+        "transform": "translate(5667px, 879px)",
+        "width": "870px",
+        "height": "930px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/shared-auth-query-primitives",
+        "transform": "translate(6023px, 1001px)",
+        "width": "498px",
+        "height": "792px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/shared-auth-query-primitives/get-users-common",
+        "transform": "translate(6039px, 1123px)",
+        "width": "466px",
+        "height": "558px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/shared-auth-query-primitives/get-users-common/prefix-to-uuid",
+        "transform": "translate(6055px, 1245px)",
+        "width": "434px",
+        "height": "210px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/shared-auth-query-primitives/get-users-common/prefix-to-uuid/prefix-to-uuid-impl",
+        "transform": "translate(6071px, 1367px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/shared-auth-query-primitives/get-users-common/prefix-to-uuid/prefix-to-uuid-adjustments",
+        "transform": "translate(6303px, 1367px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/shared-auth-query-primitives/get-users-common/string-range",
+        "transform": "translate(6165px, 1471px)",
+        "width": "214px",
+        "height": "194px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/shared-auth-query-primitives/get-users-common/string-range/empty-prefix-case",
+        "transform": "translate(6181px, 1593px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/shared-auth-query-primitives/get-users-common/string-range/upper-bound-case",
+        "transform": "translate(6181px, 1623px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/shared-auth-query-primitives/get-users-types",
+        "transform": "translate(6182px, 1697px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/index-status-helpers",
+        "transform": "translate(5683px, 1066px)",
+        "width": "278px",
+        "height": "662px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/index-status-helpers/get-index-statuses",
+        "transform": "translate(5699px, 1188px)",
+        "width": "246px",
+        "height": "428px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/index-status-helpers/get-index-statuses/get-index-statuses-sql",
+        "transform": "translate(5715px, 1310px)",
+        "width": "214px",
+        "height": "194px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/index-status-helpers/get-index-statuses/get-index-statuses-sql/search-index-names",
+        "transform": "translate(5731px, 1432px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/index-status-helpers/get-index-statuses/get-index-statuses-sql/status-sql-fragment",
+        "transform": "translate(5731px, 1462px)",
+        "width": "180px",
+        "height": "26px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/index-status-helpers/get-index-statuses/user-search-indexes",
+        "transform": "translate(5732px, 1520px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/index-status-helpers/get-index-worker-status",
+        "transform": "translate(5732px, 1632px)",
+        "width": "180px",
+        "height": "80px"
+      },
+      {
+        "id": "pg-meta-shared-kernel/query-module",
+        "transform": "translate(6647px, 953.5px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "ai-commands-shared-kernel",
+        "transform": "translate(4654px, 1913px)",
+        "width": "1836px",
+        "height": "918px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/ai-command-runtime-module",
+        "transform": "translate(4670px, 2035px)",
+        "width": "1076px",
+        "height": "780px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/ai-command-runtime-module/edge-runtime-module",
+        "transform": "translate(4686px, 2442px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group",
+        "transform": "translate(4964px, 2157px)",
+        "width": "766px",
+        "height": "642px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/docs-module",
+        "transform": "translate(4980px, 2279px)",
+        "width": "734px",
+        "height": "278px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/docs-module/docs-runtime-module",
+        "transform": "translate(5296px, 2435px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/docs-module/openai-api",
+        "transform": "translate(5528px, 2436px)",
+        "width": "170px",
+        "height": "70px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/docs-module/supabase-database",
+        "transform": "translate(4996px, 2401px)",
+        "width": "230px",
+        "height": "140px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/sql-functions-module",
+        "transform": "translate(5130px, 2573px)",
+        "width": "434px",
+        "height": "210px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/sql-functions-module/sql-functions-runtime-module",
+        "transform": "translate(5146px, 2695px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/sql-functions-module/openai-api",
+        "transform": "translate(5378px, 2696px)",
+        "width": "170px",
+        "height": "70px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/command-support-group",
+        "transform": "translate(5808px, 2320px)",
+        "width": "666px",
+        "height": "210px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/command-support-group/docs-module",
+        "transform": "translate(5824px, 2442px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/command-support-group/sql-functions-module",
+        "transform": "translate(6056px, 2442px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "ai-commands-shared-kernel/command-support-group/errors-module",
+        "transform": "translate(6288px, 2442px)",
+        "width": "170px",
+        "height": "72px"
+      },
+      {
+        "id": "outbound-integrations-plane",
+        "transform": "translate(7041px, 5284.5px)",
+        "width": "170px",
+        "height": "70px"
+      }
+    ],
+    "expandedTransform": "translate(424.207px, 96.8077px) scale(0.0816994)",
+    "beforeWheel": "translate(166.154px, 133.111px) scale(0.688435)",
+    "wheel": "translate(146.199px, 222.676px) scale(0.599318)",
+    "ctrlWheel": "translate(128.827px, 300.646px) scale(0.521736)",
+    "drag": "translate(178.827px, 270.646px) scale(0.521736)",
+    "doubleClick": "translate(345.654px, -283.708px) scale(1.04347)",
+    "max": "translate(651.506px, -1300.03px) scale(2)",
+    "min": "translate(27.9877px, 771.874px) scale(0.05)"
+  }
+}
