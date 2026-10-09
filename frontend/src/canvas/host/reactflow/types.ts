@@ -19,9 +19,6 @@ export interface CanvasNodeHostControls {
   selected: boolean;
   disableControlActions: boolean;
   hideLocalEdgeLabels: boolean;
-  showConnectionHandles?: boolean;
-  highlightSourceHandle: boolean;
-  highlightTargetHandle: boolean;
 }
 
 export interface CanvasEdgeHostControls {

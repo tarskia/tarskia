@@ -756,6 +756,8 @@ export function useDiagramMotionManager({
   const userGestureActiveRef = useRef(false);
   const deferredNavigationFrameRef = useRef<number | null>(null);
   const currentViewportRef = useRef<ViewportState>(getCurrentViewport());
+  const previousCanvasSizeRef = useRef<CanvasSize | null>(null);
+  const automaticFramingRef = useRef<NavigationIntent | null>(null);
 
   stableSnapshotRef.current = stableSnapshot;
 
@@ -1195,6 +1197,18 @@ export function useDiagramMotionManager({
           ? { status: 'noop', reason: 'no-target' }
           : { status: 'unavailable', reason: 'missing-canvas' };
       }
+      previousCanvasSizeRef.current ??= canvasSize;
+      if (intent.kind === 'initialize-diagram') {
+        automaticFramingRef.current = savedViewport ? null : { kind: 'fit-scene' };
+      } else if (
+        intent.kind === 'fit-scene' ||
+        intent.kind === 'fit-rect' ||
+        intent.kind === 'fit-node-set'
+      ) {
+        automaticFramingRef.current = intent;
+      } else if (intent.kind === 'restore-saved') {
+        automaticFramingRef.current = null;
+      }
       const currentViewport = getObservedViewport();
       if (viewportStatesEqual(currentViewport, targetViewport)) {
         if (policy.persist) {
@@ -1224,6 +1238,7 @@ export function useDiagramMotionManager({
       animationSettings,
       cancelDeferredNavigationFrame,
       computeNavigationViewport,
+      savedViewport,
       getCurrentCanvasSize,
       getObservedViewport,
       persistNow,
@@ -1239,6 +1254,9 @@ export function useDiagramMotionManager({
 
   const startChoreography = useCallback(
     (request: StructuralChoreographyRequest, options?: { onComplete?: () => void }) => {
+      automaticFramingRef.current = request.endPointOfInterestNodeIds.length
+        ? { kind: 'fit-node-set', nodeIds: request.endPointOfInterestNodeIds, preset: 'focus' }
+        : { kind: 'fit-scene' };
       startPlan(
         buildMotionPlanFromChoreographyRequest({
           request,
@@ -1263,7 +1281,70 @@ export function useDiagramMotionManager({
     ],
   );
 
+  const notifyCanvasResize = useCallback(
+    (canvasSize: CanvasSize | null) => {
+      if (!canvasSize) return;
+      const previous = previousCanvasSizeRef.current;
+      previousCanvasSizeRef.current = canvasSize;
+      if (!previous || !canvasReadyRef.current) return;
+      const dx = (canvasSize.width - previous.width) / 2;
+      const dy = (canvasSize.height - previous.height) / 2;
+      if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) return;
+      const shift = (viewport: ViewportState): ViewportState => ({
+        ...viewport,
+        x: viewport.x + dx,
+        y: viewport.y + dy,
+      });
+      const shiftPlan = (plan: MotionPlan): MotionPlan => ({
+        ...plan,
+        segments: plan.segments.map((segment) =>
+          segment.camera
+            ? {
+                ...segment,
+                camera: { from: shift(segment.camera.from), to: shift(segment.camera.to) },
+              }
+            : segment,
+        ),
+      });
+      const active = activeMotionRef.current;
+      if (active) {
+        // Shift both interpolation endpoints so the current frame and remaining path stay continuous.
+        activeMotionRef.current = {
+          ...active,
+          plan: shiftPlan(active.plan),
+          segmentSourceViewport: active.segmentSourceViewport
+            ? shift(active.segmentSourceViewport)
+            : null,
+        };
+      }
+      const pending = pendingManagedMotionRef.current;
+      if (pending) pendingManagedMotionRef.current = { ...pending, plan: shiftPlan(pending.plan) };
+      const framing = automaticFramingRef.current;
+      const fitted =
+        !active && !pending && !userGestureActiveRef.current && framing
+          ? computeNavigationViewport(
+              framing,
+              resolveNavigationPolicy(framing, animationSettings, cameraPolicy),
+              canvasSize,
+            )
+          : null;
+      const next = fitted ?? shift(getObservedViewport());
+      applyViewport(next);
+      if (!active && !pending) persistNow(next);
+    },
+    [
+      animationSettings,
+      cameraPolicy,
+      computeNavigationViewport,
+      applyViewport,
+      getObservedViewport,
+      persistNow,
+    ],
+  );
+
   const reportUserGestureStart = useCallback(() => {
+    // The surface reports the start on the first actual move, after the host viewport changed.
+    automaticFramingRef.current = null;
     cancelScheduledFrame();
     userGestureActiveRef.current = true;
     const now = performance.now();
@@ -1283,12 +1364,16 @@ export function useDiagramMotionManager({
   }, [cancelScheduledFrame, getCurrentViewport, publish]);
 
   const reportUserGestureMove = useCallback((viewport: ViewportState) => {
+    if (!viewportStatesEqual(currentViewportRef.current, viewport))
+      automaticFramingRef.current = null;
     currentViewportRef.current = viewport;
   }, []);
 
   const reportUserGestureEnd = useCallback(
     (viewport: ViewportState) => {
       userGestureActiveRef.current = false;
+      if (!viewportStatesEqual(currentViewportRef.current, viewport))
+        automaticFramingRef.current = null;
       currentViewportRef.current = viewport;
       persistNow(viewport);
       const pendingManagedMotion = pendingManagedMotionRef.current;
@@ -1425,6 +1510,8 @@ export function useDiagramMotionManager({
     activeMotionRef.current = null;
     pendingManagedMotionRef.current = null;
     userGestureActiveRef.current = false;
+    previousCanvasSizeRef.current = null;
+    automaticFramingRef.current = null;
     overlayStateRef.current = preserveOverlayCounters(
       createTransitionOverlayManagerState(stableSnapshotRef.current),
       overlayStateRef.current,
@@ -1491,6 +1578,7 @@ export function useDiagramMotionManager({
     () => ({
       onCanvasInit,
       onCanvasUnmount,
+      notifyCanvasResize,
       getCurrentDisplaySnapshot,
       requestNavigation,
       startChoreography,
@@ -1515,6 +1603,7 @@ export function useDiagramMotionManager({
     [
       getCurrentDisplaySnapshot,
       getObservedViewport,
+      notifyCanvasResize,
       notifyDisplayHostSettled,
       onCanvasInit,
       onCanvasUnmount,

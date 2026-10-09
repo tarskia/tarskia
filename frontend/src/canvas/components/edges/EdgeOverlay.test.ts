@@ -181,7 +181,10 @@ describe('EdgeOverlayView', () => {
 
     expect(renderState.shellOccluders).toHaveLength(2);
     expect(renderState.contentOccluders).toHaveLength(1);
-    expect(renderState.edges[0]?.blockerOccluders).toHaveLength(2);
+    // The unrelated shell at x=140 is outside the path and its 28px hit envelope.
+    expect(renderState.edges[0]?.blockerOccluders).toEqual([
+      { x: 18, y: 20, width: 60, height: 18 },
+    ]);
   });
 
   it('flattens overlapping blocker occluders into a single non-overlapping mask', () => {
@@ -936,11 +939,7 @@ describe('EdgeOverlay', () => {
                 },
                 contentOccluders: [],
               },
-              controls: {
-                showConnectionHandles: true,
-                highlightSourceHandle: false,
-                highlightTargetHandle: false,
-              },
+              controls: {},
             },
           },
           {
@@ -988,11 +987,7 @@ describe('EdgeOverlay', () => {
                 },
                 contentOccluders: [],
               },
-              controls: {
-                showConnectionHandles: true,
-                highlightSourceHandle: false,
-                highlightTargetHandle: false,
-              },
+              controls: {},
             },
           },
           {
@@ -1040,11 +1035,7 @@ describe('EdgeOverlay', () => {
                 },
                 contentOccluders: [{ x: 30, y: 20, width: 40, height: 16 }],
               },
-              controls: {
-                showConnectionHandles: true,
-                highlightSourceHandle: false,
-                highlightTargetHandle: false,
-              },
+              controls: {},
             },
           },
         ] as never,

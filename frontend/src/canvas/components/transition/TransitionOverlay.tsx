@@ -20,8 +20,6 @@ const overlayNodeControls: CanvasNodeHostControls = {
   selected: false,
   disableControlActions: true,
   hideLocalEdgeLabels: false,
-  highlightSourceHandle: false,
-  highlightTargetHandle: false,
 };
 
 const VISIBILITY_EPSILON = 0.001;

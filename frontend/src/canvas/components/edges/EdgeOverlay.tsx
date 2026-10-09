@@ -2,39 +2,22 @@ import { useMemo } from 'react';
 import type { Node } from 'reactflow';
 import { useStore } from 'reactflow';
 import type { CanvasNodeHostControls, ReactFlowHostNodeData } from '../../host/reactflow/types';
-import type { CanvasPoint, CanvasRect } from '../../rendering/presentation/geometry';
 import type {
   CanvasNodeView,
   CanvasOverlayEdgeView,
+  CanvasRenderSnapshot,
 } from '../../rendering/presentation/presentation';
 import { EdgeOverlayView } from './EdgeOverlayView';
 import { resolveEdgeLabelTransform } from './edge-label-placement';
-import { resolveEdgeOverlayRenderState } from './edge-overlay-state';
-import { buildClipPathFromOccluders } from './occluder-geometry';
+import {
+  resolveCachedEdgeOverlayRenderState,
+  resolveEdgeOverlayRenderState,
+} from './edge-overlay-state';
 
 export interface EdgeOverlayInteractionBindings {
   onSelectEdge?: (edgeId: string) => void;
   onEdgeLabelClick?: (edgeId: string) => void;
 }
-
-export interface EdgeOverlayHandleDescriptor {
-  nodeId: string;
-  role: 'source' | 'target';
-  point: CanvasPoint;
-  highlighted: boolean;
-}
-
-const HANDLE_CENTER_OFFSET_PX = 3;
-
-const resolveSourceHandlePoint = (rect: CanvasRect): CanvasPoint => ({
-  x: rect.x + rect.width,
-  y: rect.y + rect.height / 2,
-});
-
-const resolveTargetHandlePoint = (rect: CanvasRect): CanvasPoint => ({
-  x: rect.x,
-  y: rect.y + rect.height / 2,
-});
 
 const labelInteractivityEnabled = (edge: CanvasOverlayEdgeView) => edge.opacity > 0.15;
 
@@ -59,35 +42,6 @@ const resolveEdgeLabelText = (edge: CanvasOverlayEdgeView) => {
 export const resolveEdgeSelectionId = (edge: { relationId?: string; id: string }) =>
   edge.relationId ?? edge.id;
 
-export const buildOverlayHandleDescriptors = (
-  nodes: Node<ReactFlowHostNodeData>[],
-): EdgeOverlayHandleDescriptor[] =>
-  nodes.flatMap((node) => {
-    const data = node.data;
-    const view = data?.view;
-    const controls = data?.controls;
-    if (!view || !controls) {
-      return [];
-    }
-    if (view.content.focusShell || controls.showConnectionHandles === false) {
-      return [];
-    }
-    return [
-      {
-        nodeId: view.id,
-        role: 'source' as const,
-        point: resolveSourceHandlePoint(view.rect),
-        highlighted: controls.highlightSourceHandle,
-      },
-      {
-        nodeId: view.id,
-        role: 'target' as const,
-        point: resolveTargetHandlePoint(view.rect),
-        highlighted: controls.highlightTargetHandle,
-      },
-    ];
-  });
-
 const resolveOverlayNodes = (
   nodes: Node<ReactFlowHostNodeData>[],
 ): Array<{ view: CanvasNodeView; controls: CanvasNodeHostControls }> =>
@@ -100,7 +54,9 @@ export function EdgeOverlay({
   edges,
   nodes,
   bindings,
+  geometrySnapshot,
 }: {
+  geometrySnapshot?: CanvasRenderSnapshot;
   edges: CanvasOverlayEdgeView[];
   nodes: Node<ReactFlowHostNodeData>[];
   bindings?: EdgeOverlayInteractionBindings;
@@ -111,14 +67,15 @@ export function EdgeOverlay({
   const nodeViews = useMemo(() => overlayNodes.map((node) => node.view), [overlayNodes]);
   const overlayRenderState = useMemo(
     () =>
-      resolveEdgeOverlayRenderState({
-        edges,
-        nodes: nodeViews,
-      }),
-    [edges, nodeViews],
+      geometrySnapshot
+        ? resolveCachedEdgeOverlayRenderState(geometrySnapshot, edges)
+        : resolveEdgeOverlayRenderState({
+            edges,
+            nodes: nodeViews,
+          }),
+    [edges, nodeViews, geometrySnapshot],
   );
   const resolvedEdges = overlayRenderState.edges;
-  const handleDescriptors = useMemo(() => buildOverlayHandleDescriptors(nodes), [nodes]);
   const transformStyle = useMemo(
     () =>
       ({
@@ -152,13 +109,7 @@ export function EdgeOverlay({
                 id={`edge-overlay-clip-${interactionScopeId}-solid-${edge.id.replace(/[^a-zA-Z0-9_-]/g, '_')}`}
                 clipPathUnits="userSpaceOnUse"
               >
-                <path
-                  d={buildClipPathFromOccluders({
-                    include: [overlayRenderState.overlayWorldBounds],
-                    exclude: edge.blockerOccluders,
-                  })}
-                  clipRule="nonzero"
-                />
+                <path d={edge.solidClipPath} clipRule="nonzero" />
               </clipPath>
             ))}
           </defs>
@@ -208,22 +159,6 @@ export function EdgeOverlay({
               </button>
             ),
           )}
-        </div>
-        <div className="edge-overlay-world edge-overlay-world-handles" style={transformStyle}>
-          {handleDescriptors.map((handle) => {
-            return (
-              <div
-                key={`${handle.nodeId}-${handle.role}`}
-                className={`edge-handle-button edge-handle-button-${handle.role}${handle.highlighted ? ' edge-handle-button-highlighted' : ''}`}
-                data-node-id={handle.nodeId}
-                data-edge-handle-role={handle.role}
-                style={{
-                  transform: `translate(${handle.point.x - HANDLE_CENTER_OFFSET_PX}px, ${handle.point.y - HANDLE_CENTER_OFFSET_PX}px)`,
-                  pointerEvents: 'none',
-                }}
-              />
-            );
-          })}
         </div>
       </div>
     </div>

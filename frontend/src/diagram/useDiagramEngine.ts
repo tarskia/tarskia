@@ -6,7 +6,7 @@ import type { AnimationSettings } from '../canvas/rendering/transition/animation
 import { useCanvasTransitionController } from '../canvas/useCanvasTransitionController';
 import { useCanvasViewportAdapter } from '../canvas/useCanvasViewportAdapter';
 import { useDiagramRenderingController } from '../canvas/useDiagramRenderingController';
-import { measureCanvasElement } from './canvas-size';
+import { type CanvasSize, measureCanvasElement } from './canvas-size';
 import type {
   DiagramCameraPolicy,
   DiagramCameraRect,
@@ -50,6 +50,7 @@ export function useDiagramEngine({
 }: UseDiagramEngineArgs) {
   const viewportAdapter = useCanvasViewportAdapter();
   const canvasRef = useRef<HTMLDivElement | null>(null);
+  const canvasResizeHandlerRef = useRef<(size: CanvasSize | null) => void>(() => {});
   const [canvasElement, setCanvasElement] = useState<HTMLDivElement | null>(null);
   const [canvasLayoutVersion, setCanvasLayoutVersion] = useState(0);
   const sceneBoundsRef = useRef<DiagramCameraRect | null>(null);
@@ -75,6 +76,7 @@ export function useDiagramEngine({
     }
     const element = canvasElement;
     const notifyLayoutChanged = () => {
+      canvasResizeHandlerRef.current(measureCanvasElement(element));
       setCanvasLayoutVersion((current) => current + 1);
     };
     notifyLayoutChanged();
@@ -138,6 +140,8 @@ export function useDiagramEngine({
     },
     setViewport: viewportAdapter.setViewport,
   });
+
+  canvasResizeHandlerRef.current = motion.notifyCanvasResize;
 
   const transitions = useCanvasTransitionController({
     layout: rendering.layout,
