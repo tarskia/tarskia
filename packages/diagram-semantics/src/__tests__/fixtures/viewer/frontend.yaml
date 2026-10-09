@@ -1,0 +1,51 @@
+owner: core
+name: frontend
+version: "0.3"
+description: Browser-facing runtime boundaries for client application surfaces. Use this schema for top-level frontend/client boundaries.
+use:
+  - schema: core/software@0.1
+    alias: sw
+
+traits:
+  - id: client-like
+    label: HTTP Client
+    extends: core/software.traits.compute
+    analysis:
+      flowType: source
+
+types:
+  - id: frontend
+    label: Frontend
+    description: >-
+      Aggregate boundary for one or more related browser or client application surfaces, such as
+      entrypoints, shells, route trees, widgets, and public pages. Use this to group frontend things
+      that belong to the same client-facing runtime area; use separate frontend nodes only for
+      materially distinct client runtimes or products.
+    traits: [core/frontend.traits.client-like, core/base.traits.container]
+    analysis:
+      topLevelBias: prefer
+    containment:
+      allowedChildTraits: [core/base.traits.group-like]
+    display:
+      style:
+        hue: 188
+      count:
+        childTypes: [group]
+        label: components
+    properties:
+      - id: runtime
+        type: enum
+        description: Primary execution environment for this node or subtree. Populate it when one runtime is uniformly true for the boundary. If major children would have different runtimes, prefer separate boundaries instead of mixing them under one node.
+        values: [browser, server, worker, edge, cli, external]
+        allowOther: true
+        display:
+          priority: 1
+      - id: framework
+        type: enum
+        description: Dominant framework or runtime stack for this node or subtree when one choice is uniformly true. Prefer it on the highest boundary where it stays accurate instead of repeating it across every descendant.
+        values: [react, nextjs, vue, svelte, express, fastify, koa, nestjs, socketio]
+        allowOther: true
+        display:
+          priority: 2
+
+relations: []

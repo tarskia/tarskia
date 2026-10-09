@@ -1,6 +1,9 @@
+import {
+  compileDiagramViewState,
+  type SchemaModule,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import type { SchemaModule, SemanticDocument } from '../../../model/types';
-import { compileDiagramViewState } from '../../../semantic';
 import { buildGraphModel } from '../graph/graph-model';
 import { getGroupHeaderHeight } from './component-renderer';
 import { buildLayoutResult } from './layout-pipeline';

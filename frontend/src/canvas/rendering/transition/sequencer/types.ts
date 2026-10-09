@@ -1,4 +1,4 @@
-import type { CompiledDiagramEdge, DiagramViewNodeControls } from '../../../../semantic';
+import type { CompiledDiagramEdge, DiagramViewNodeControls } from '@tarskia/diagram-semantics';
 
 export interface PhaseWindow {
   start: number;

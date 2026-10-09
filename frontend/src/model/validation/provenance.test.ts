@@ -1,14 +1,18 @@
+import {
+  buildRawSchemaSet,
+  buildSchemaActivation,
+  buildSchemaRuntime,
+  buildSchemaSelection,
+  parseSchema,
+  type SemanticDocument,
+  STRICT_WORKER_GENERATED_DIAGRAM_VALIDATION_OPTIONS,
+  validateDiagramDoc,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
 import baseRaw from '../../schemas/base.yaml?raw';
 import codeRaw from '../../schemas/code.yaml?raw';
 import softwareRaw from '../../schemas/software.yaml?raw';
 import webAppRaw from '../../schemas/web-app.yaml?raw';
-import { parseSchema } from '../../util/serialization';
-import { buildSchemaActivation } from '../schema-ref';
-import { buildRawSchemaSet, buildSchemaRuntime, buildSchemaSelection } from '../schema-runtime';
-import type { SemanticDocument } from '../types';
-import { STRICT_WORKER_GENERATED_DIAGRAM_VALIDATION_OPTIONS } from '../validate';
-import { validateDiagramDoc } from './diagram';
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
 

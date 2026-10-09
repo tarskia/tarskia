@@ -1,9 +1,13 @@
 import type { SchemaSemantics } from '@tarskia/diagram-semantics';
+import {
+  buildEntityIndex,
+  type EntityIndex,
+  type SchemaModule,
+  type SchemaRuntime,
+  type SemanticDocument,
+  type Diagnostic as ValidationDiagnostic,
+} from '@tarskia/diagram-semantics';
 import { useMemo } from 'react';
-
-import type { Diagnostic as ValidationDiagnostic } from '../model/diagnostics';
-import { buildEntityIndex, type EntityIndex } from '../model/entity-tree';
-import type { SchemaModule, SchemaRuntime, SemanticDocument } from '../model/types';
 import { validateDiagramDoc } from '../model/validation';
 import {
   buildSchemaRuntimeFromCatalog,

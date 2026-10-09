@@ -1,18 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import baseRaw from '../schemas/base.yaml?raw';
-import codeRaw from '../schemas/code.yaml?raw';
-import dataModelRaw from '../schemas/data-model.yaml?raw';
-import frontendRaw from '../schemas/frontend.yaml?raw';
-import kubernetesRaw from '../schemas/kubernetes.yaml?raw';
-import softwareRaw from '../schemas/software.yaml?raw';
-import webAppRaw from '../schemas/web-app.yaml?raw';
-import { starterDiagramRaw } from '../semantic/bundled-diagrams';
-import { parseDocument, parseSchema } from '../util/serialization';
-import { diagnosticsToMessages } from './diagnostics';
-import { buildSchemaActivation } from './schema-ref';
-import { buildRawSchemaSet, buildSchemaRuntime, buildSchemaSelection } from './schema-runtime';
-import type { SchemaModule, SemanticDocument } from './types';
-import { validateDocument } from './validate';
+import baseRaw from '../../__tests__/fixtures/viewer/base.yaml?raw';
+import codeRaw from '../../__tests__/fixtures/viewer/code.yaml?raw';
+import dataModelRaw from '../../__tests__/fixtures/viewer/data-model.yaml?raw';
+import frontendRaw from '../../__tests__/fixtures/viewer/frontend.yaml?raw';
+import kubernetesRaw from '../../__tests__/fixtures/viewer/kubernetes.yaml?raw';
+import softwareRaw from '../../__tests__/fixtures/viewer/software.yaml?raw';
+import starterDiagramRaw from '../../__tests__/fixtures/viewer/starter.yaml?raw';
+import webAppRaw from '../../__tests__/fixtures/viewer/web-app.yaml?raw';
+import {
+  buildRawSchemaSet,
+  buildSchemaActivation,
+  buildSchemaRuntime,
+  buildSchemaSelection,
+  diagnosticsToMessages,
+  parseDocument,
+  parseSchema,
+  type SchemaModule,
+  type SemanticDocument,
+  validateDocument,
+} from '../../index';
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
 

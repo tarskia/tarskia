@@ -1,5 +1,8 @@
-import { buildEntityIndex, removeEntitiesWithDescendants } from './entity-tree';
-import type { SemanticDocument } from './types';
+import {
+  buildEntityIndex,
+  removeEntitiesWithDescendants,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 
 export function removeEntitiesFromDocument(
   doc: SemanticDocument,

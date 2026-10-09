@@ -1,5 +1,8 @@
-import { getSchemaObjectLocalId, getSchemaObjectOwnerId } from './schema-ids';
-import { getSchemaDisplayName } from './schema-ref';
+import {
+  getSchemaDisplayName,
+  getSchemaObjectLocalId,
+  getSchemaObjectOwnerId,
+} from '@tarskia/diagram-semantics';
 
 type SchemaChoice = {
   id: string;

@@ -1,5 +1,5 @@
+import type { SchemaModule, SemanticDocument } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import type { SchemaModule, SemanticDocument } from '../../model/types';
 import { compileDiagramViewState, compileDiagramViewTree } from './compile-diagram-view-tree';
 
 const schema: SchemaModule = {

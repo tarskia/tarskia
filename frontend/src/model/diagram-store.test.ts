@@ -1,5 +1,9 @@
+import {
+  buildSchemaActivation,
+  type SemanticDocument,
+  serializeDocument,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { serializeDocument } from '../util/serialization';
 import {
   ACTIVE_DIAGRAM_ID_STORAGE_KEY,
   createEmptyDiagramStoreSnapshot,
@@ -11,8 +15,6 @@ import {
   LocalDiagramStore,
   resolveDiagramStreamName,
 } from './diagram-store';
-import { buildSchemaActivation } from './schema-ref';
-import type { SemanticDocument } from './types';
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
 

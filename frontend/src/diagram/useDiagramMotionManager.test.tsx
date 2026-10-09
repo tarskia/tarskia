@@ -1,6 +1,6 @@
+import { indexTree } from '@tarskia/diagram-semantics';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import type { LayoutResult } from '../canvas/rendering/layout/layout-pipeline';
 import type { CanvasOverlayEdgeView } from '../canvas/rendering/presentation/presentation';
 import {
@@ -17,7 +17,6 @@ import {
   computeViewportForBoundsInVisibleCanvas,
   computeViewportToKeepRectVisible,
 } from '../canvas/viewport-visibility';
-import { indexTree } from '../semantic';
 import {
   buildMotionPlanFromChoreographyRequest,
   buildRetainedOnlySnapshot,

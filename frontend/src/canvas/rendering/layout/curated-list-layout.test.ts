@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
+import { compileDiagramViewState } from '@tarskia/diagram-semantics';
 import { expect, test } from 'vitest';
 import { buildSchemaVersionCatalog } from '../../../model/validation/schema-closure';
-import { compileDiagramViewState } from '../../../semantic';
 import { semanticBootstrap } from '../../../semantic/bootstrap';
 import { buildDiagramSemanticRuntime } from '../../../semantic/runtime';
 import { loadDiagramDocFromRaw } from '../../../viewer-core/loadDiagramDocFromRaw';

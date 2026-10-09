@@ -1,13 +1,13 @@
 import {
   CORE_GROUP_TYPE_ID,
-  createEntityDisplayTypeResolver,
   type Entity,
   type EntityIndex,
   getSchemaObjectLocalId,
   resolveTypeDef,
-  resolveTypeDisplayOptions,
   type SchemaModule,
-} from '../semantic';
+} from '@tarskia/diagram-semantics';
+import { resolveTypeDisplayOptions } from '../model/display-contract';
+import { createEntityDisplayTypeResolver } from '../model/entity-display';
 import type { CanvasSemanticBindings } from './view-models';
 
 const getEntityTypeLabel = (schema: SchemaModule, entity: Entity) => {

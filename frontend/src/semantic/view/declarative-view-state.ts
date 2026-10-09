@@ -1,10 +1,10 @@
-import { normalizeDiagramViewState } from '@tarskia/diagram-semantics';
-import type {
-  DiagramView,
-  DocumentLayout,
-  SemanticDocument,
-  ViewportState,
-} from '../../model/types';
+import {
+  type DiagramView,
+  type DocumentLayout,
+  normalizeDiagramViewState,
+  type SemanticDocument,
+  type ViewportState,
+} from '@tarskia/diagram-semantics';
 
 export interface DiagramSemanticState {
   version: SemanticDocument['version'];

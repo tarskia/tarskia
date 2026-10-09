@@ -1,4 +1,4 @@
-import type { SchemaModule, SemanticDocument } from '../../../semantic';
+import type { SchemaModule, SemanticDocument } from '@tarskia/diagram-semantics';
 import type { EdgePlan } from '../transition/sequencer/types';
 import type { SceneTree } from '../tree/scene-tree';
 import type { ResolvedVisualEdge } from '../visual/edge-visuals';

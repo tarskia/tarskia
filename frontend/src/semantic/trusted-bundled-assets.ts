@@ -1,5 +1,9 @@
-import type { SchemaModule, SemanticDocument } from '../model/types';
-import { parseTrustedSchemaModule, parseTrustedSemanticDocument } from './index';
+import {
+  parseTrustedSchemaModule,
+  parseTrustedSemanticDocument,
+  type SchemaModule,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 
 /**
  * Bundled starter/schema assets are validated in Vitest before deploy.

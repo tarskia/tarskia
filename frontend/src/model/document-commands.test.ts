@@ -1,3 +1,12 @@
+import {
+  buildEntityIndex,
+  buildQualifiedSchemaObjectId,
+  CORE_GROUP_TYPE_ID,
+  CORE_TABLE_TYPE_ID,
+  type Entity,
+  getSchemaObjectLocalId,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
 import {
   addEntityToDocument,
@@ -10,14 +19,6 @@ import {
   updateEntityNameInDocument,
   updateEntityTagsInDocument,
 } from './document-commands';
-import { buildEntityIndex } from './entity-tree';
-import {
-  buildQualifiedSchemaObjectId,
-  CORE_GROUP_TYPE_ID,
-  CORE_TABLE_TYPE_ID,
-  getSchemaObjectLocalId,
-} from './schema-ids';
-import type { Entity, SemanticDocument } from './types';
 
 const SERVICE_TYPE_ID = buildQualifiedSchemaObjectId('user/test', 'types', 'service');
 const ENDPOINT_TYPE_ID = buildQualifiedSchemaObjectId('user/test', 'types', 'endpoint');

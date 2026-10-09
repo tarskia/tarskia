@@ -2,8 +2,6 @@ import { createMapSourceGraphResolver, type SourceGraphResolver } from '@tarskia
 import type { DiagramStoreSnapshot } from './diagram-store';
 import { getDiagramHeadRevision } from './diagram-store';
 
-export * from '@tarskia/diagram-semantics';
-
 export const createSnapshotSourceGraphResolver = (
   snapshot: DiagramStoreSnapshot,
 ): SourceGraphResolver =>

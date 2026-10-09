@@ -1,8 +1,6 @@
+import { CORE_GROUP_TYPE_ID, type Entity } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-
 import { createEntityDisplayTypeResolver } from './entity-display';
-import { CORE_GROUP_TYPE_ID } from './schema-ids';
-import type { Entity } from './types';
 
 const APPLICATION_TYPE_ID = 'user/test.types.application';
 const WORKER_TYPE_ID = 'user/test.types.worker';

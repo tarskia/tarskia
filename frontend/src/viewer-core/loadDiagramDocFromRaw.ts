@@ -1,10 +1,10 @@
-import type { SemanticDocument } from '../semantic';
 import {
   compileSourceGraph,
-  createSnapshotSourceGraphResolver,
-  type DiagramStoreSnapshot,
   ingestSemanticSourceDocument,
-} from '../semantic';
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
+import type { DiagramStoreSnapshot } from '../model/diagram-store';
+import { createSnapshotSourceGraphResolver } from '../model/source-graph';
 
 export interface LoadedDiagramDoc {
   readable: boolean;

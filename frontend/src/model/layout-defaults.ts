@@ -1,4 +1,4 @@
-import type { EntityTypeDef } from './types';
+import type { EntityTypeDef } from '@tarskia/diagram-semantics';
 
 export interface TypeLayoutDefaults {
   baseSize?: {

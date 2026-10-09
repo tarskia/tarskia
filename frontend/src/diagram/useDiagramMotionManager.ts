@@ -1,3 +1,4 @@
+import type { ViewportState } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactFlowInstance } from 'reactflow';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
@@ -28,7 +29,6 @@ import {
   type TransitionOverlayManagerState,
 } from '../canvas/useTransitionOverlayManager';
 import { computeViewportForBoundsInVisibleCanvas } from '../canvas/viewport-visibility';
-import type { ViewportState } from '../model/types';
 import {
   type ResolvedNavigationPolicy,
   resolveNavigationPolicy,

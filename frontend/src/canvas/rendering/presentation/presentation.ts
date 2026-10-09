@@ -1,5 +1,4 @@
-import { getSchemaObjectLocalId } from '../../../model/schema-ids';
-import type { DiagramViewNodeControls } from '../../../semantic';
+import { type DiagramViewNodeControls, getSchemaObjectLocalId } from '@tarskia/diagram-semantics';
 import type { CanvasScene } from '../scene/scene';
 import type { ResolvedNodeRichContent, ResolvedNodeVisual } from '../visual/node-visuals';
 import {

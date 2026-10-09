@@ -1,3 +1,4 @@
+import type { ViewportState } from '@tarskia/diagram-semantics';
 import {
   type AnimationSettings,
   DEFAULT_VIEWPORT_FIT_PADDING,
@@ -6,7 +7,6 @@ import {
   computeViewportForBoundsInVisibleCanvas,
   computeViewportToKeepRectVisible,
 } from '../canvas/viewport-visibility';
-import type { ViewportState } from '../model/types';
 import type {
   CameraExecutionMode,
   DiagramCameraPolicy,
