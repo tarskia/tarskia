@@ -6,7 +6,6 @@ import type { LayoutNode, LayoutTree } from '../layout/tree-traverser';
 import { buildAbsolutePositions } from '../scene/scene';
 import { DEFAULT_VIEWPORT_FIT_PADDING } from './animation-constants';
 import { buildStructuralCameraAdvisory } from './camera';
-import { computeViewportForBounds } from './viewport';
 
 type NodeDef = {
   id: string;
@@ -142,16 +141,15 @@ describe('buildStructuralCameraAdvisory', () => {
     });
 
     expect(advisory.prelude).toEqual(
-      computeViewportForBounds({
+      computeViewportForBoundsInVisibleCanvas({
         bounds: {
-          minX: 16,
-          minY: -8,
-          maxX: 284,
-          maxY: 308,
+          x: 16,
+          y: -8,
+          width: 268,
+          height: 316,
         },
         canvas: { width: 260, height: 260 },
-        mode: 'center-top',
-        padding: 40,
+        padding: DEFAULT_VIEWPORT_FIT_PADDING,
         minZoom: 0.5,
         maxZoom: 2,
       }),
@@ -199,20 +197,40 @@ describe('buildStructuralCameraAdvisory', () => {
     });
 
     expect(advisory.prelude).toEqual(
-      computeViewportForBounds({
+      computeViewportForBoundsInVisibleCanvas({
         bounds: {
-          minX: -24,
-          minY: -48,
-          maxX: 344,
-          maxY: 368,
+          x: -24,
+          y: -48,
+          width: 368,
+          height: 416,
         },
         canvas: { width: 240, height: 240 },
-        mode: 'center-top',
-        padding: 40,
+        padding: DEFAULT_VIEWPORT_FIT_PADDING,
         minZoom: 0.5,
         maxZoom: 2,
       }),
     );
+  });
+
+  it('only pans enough to reveal an expanded subtree that fits at the current zoom', () => {
+    const fromLayout = buildLayout([
+      { id: 'A', pos: { x: 900, y: 80 }, size: { width: 100, height: 100 } },
+    ]);
+    const toLayout = buildLayout([
+      { id: 'A', pos: { x: 900, y: 80 }, size: { width: 200, height: 150 } },
+    ]);
+    const advisory = buildStructuralCameraAdvisory({
+      direction: 'in',
+      focus: { kind: 'single', rootId: 'A' },
+      startLayout: fromLayout,
+      endLayout: toLayout,
+      currentViewport: { x: 0, y: 0, zoom: 1 },
+      canvasSize: { width: 1000, height: 600 },
+      endPointOfInterestNodeIds: ['A'],
+      ...defaultCameraParams,
+    });
+    expect(advisory.prelude).toEqual({ x: -140, y: 0, zoom: 1 });
+    expect(advisory.epilogue).toBeUndefined();
   });
 
   it('prefits single-focus expansions to the expanded end subtree', () => {
@@ -298,7 +316,7 @@ describe('buildStructuralCameraAdvisory', () => {
     expect(advisory.epilogue).toBeUndefined();
   });
 
-  it('recenters global expands even when the expanded scene already fits', () => {
+  it('keeps the camera unchanged when a global expansion already fits', () => {
     const fromLayout = buildLayout([
       {
         id: 'A',
@@ -325,20 +343,7 @@ describe('buildStructuralCameraAdvisory', () => {
       ...defaultCameraParams,
     });
 
-    expect(advisory.prelude).toEqual(
-      computeViewportForBoundsInVisibleCanvas({
-        bounds: {
-          x: 80,
-          y: 80,
-          width: 420,
-          height: 160,
-        },
-        canvas: { width: 800, height: 600 },
-        minZoom: 0.5,
-        maxZoom: 2,
-        padding: DEFAULT_VIEWPORT_FIT_PADDING,
-      }),
-    );
+    expect(advisory.prelude).toBeUndefined();
     expect(advisory.epilogue).toBeUndefined();
   });
 

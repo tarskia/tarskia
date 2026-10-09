@@ -1,8 +1,10 @@
 import type { ViewportState } from '@tarskia/diagram-semantics';
-import { computeViewportForBoundsInVisibleCanvas } from '../../viewport-visibility';
+import {
+  computeViewportForBoundsInVisibleCanvas,
+  computeViewportToKeepRectVisible,
+} from '../../viewport-visibility';
 import type { LayoutResult } from '../layout/layout-pipeline';
 import { DEFAULT_VIEWPORT_FIT_PADDING } from './animation-constants';
-import { computeViewportForBounds } from './viewport';
 
 export type TransitionCameraFocus =
   | { kind: 'single'; rootId: string }
@@ -31,7 +33,6 @@ export interface StructuralCameraAdvisory {
 type CollapseEpilogueTarget = {
   bounds: Bounds | null;
   recenterEvenIfVisible: boolean;
-  matchSceneLayoutFit: boolean;
 };
 
 const CAMERA_INFLATE_X = 24;
@@ -290,30 +291,6 @@ const computeVisibleViewRect = (params: {
 const computeViewportForVisibleBounds = (params: {
   bounds: Bounds;
   canvas: { width: number; height: number };
-  padding: number;
-  minZoom: number;
-  maxZoom: number;
-}) => {
-  const { bounds, canvas, padding, minZoom, maxZoom } = params;
-  const visibleCanvas = {
-    width: Math.max(1, canvas.width),
-    height: canvas.height,
-  };
-  const viewport = computeViewportForBounds({
-    bounds,
-    canvas: visibleCanvas,
-    mode: 'center-top',
-    padding,
-    minZoom,
-    maxZoom,
-  });
-  return viewport;
-};
-
-const computeSceneFitViewportForVisibleBounds = (params: {
-  bounds: Bounds;
-  canvas: { width: number; height: number };
-  padding: number | undefined;
   minZoom: number;
   maxZoom: number;
 }) =>
@@ -327,7 +304,7 @@ const computeSceneFitViewportForVisibleBounds = (params: {
     canvas: params.canvas,
     minZoom: params.minZoom,
     maxZoom: params.maxZoom,
-    padding: params.padding,
+    padding: DEFAULT_VIEWPORT_FIT_PADDING,
   });
 
 const toViewportBounds = (layout: LayoutResult, nodeIds: string[]) => {
@@ -390,7 +367,6 @@ const resolveCollapseEpilogueTarget = (params: {
     return {
       bounds: endBounds,
       recenterEvenIfVisible: false,
-      matchSceneLayoutFit: false,
     };
   }
 
@@ -398,7 +374,6 @@ const resolveCollapseEpilogueTarget = (params: {
     return {
       bounds: sceneBounds ?? endBounds,
       recenterEvenIfVisible: true,
-      matchSceneLayoutFit: true,
     };
   }
 
@@ -422,7 +397,6 @@ const resolveCollapseEpilogueTarget = (params: {
     return {
       bounds: endBounds,
       recenterEvenIfVisible: false,
-      matchSceneLayoutFit: false,
     };
   }
 
@@ -433,14 +407,12 @@ const resolveCollapseEpilogueTarget = (params: {
     return {
       bounds: sceneBounds ?? endBounds,
       recenterEvenIfVisible: true,
-      matchSceneLayoutFit: true,
     };
   }
 
   return {
     bounds: endBounds,
     recenterEvenIfVisible: false,
-    matchSceneLayoutFit: false,
   };
 };
 
@@ -492,6 +464,34 @@ export const buildStructuralCameraAdvisory = (params: {
       ? (collapseEpilogueTarget?.bounds ?? null)
       : toViewportBounds(endLayout, endPointOfInterestNodeIds);
 
+  if (direction === 'in') {
+    if (!endBounds) return advisory;
+    const rect = {
+      x: endBounds.minX,
+      y: endBounds.minY,
+      width: endBounds.maxX - endBounds.minX,
+      height: endBounds.maxY - endBounds.minY,
+    };
+    const fits =
+      rect.width * currentViewport.zoom <= Math.max(1, canvasSize.width - padding * 2) &&
+      rect.height * currentViewport.zoom <= Math.max(1, canvasSize.height - padding * 2);
+    const next = fits
+      ? computeViewportToKeepRectVisible({
+          viewport: currentViewport,
+          canvas: canvasSize,
+          rect,
+          padding,
+        })
+      : computeViewportForVisibleBounds({
+          bounds: endBounds,
+          canvas: canvasSize,
+          minZoom,
+          maxZoom: Math.min(maxZoom, currentViewport.zoom),
+        });
+    if (next && !viewportEquals(currentViewport, next)) advisory.prelude = next;
+    return advisory;
+  }
+
   if (direction === 'out' && focus) {
     const rawCorridorBounds = resolveCollapseCorridorBounds({
       fromLayout: startLayout,
@@ -525,37 +525,10 @@ export const buildStructuralCameraAdvisory = (params: {
         advisory.prelude = computeViewportForVisibleBounds({
           bounds: inflateBounds(rawCorridorBounds),
           canvas: canvasSize,
-          padding,
           minZoom,
           maxZoom,
         });
       }
-    }
-  } else if (direction === 'in' && focus && endBounds) {
-    const inflatedEndBounds = inflateBounds(endBounds);
-    const currentViewRect = computeVisibleViewRect({
-      viewport: currentViewport,
-      canvas: canvasSize,
-    });
-    if (focus.kind === 'global') {
-      const sceneFitViewport = computeSceneFitViewportForVisibleBounds({
-        bounds: endBounds,
-        canvas: canvasSize,
-        padding: DEFAULT_VIEWPORT_FIT_PADDING,
-        minZoom,
-        maxZoom,
-      });
-      if (!viewportEquals(currentViewport, sceneFitViewport)) {
-        advisory.prelude = sceneFitViewport;
-      }
-    } else if (!containsBounds(currentViewRect, inflatedEndBounds)) {
-      advisory.prelude = computeViewportForVisibleBounds({
-        bounds: inflatedEndBounds,
-        canvas: canvasSize,
-        padding,
-        minZoom,
-        maxZoom,
-      });
     }
   }
 
@@ -566,22 +539,12 @@ export const buildStructuralCameraAdvisory = (params: {
     canvas: canvasSize,
   });
   if (endBounds) {
-    const epilogueViewport =
-      direction === 'out' && collapseEpilogueTarget?.matchSceneLayoutFit
-        ? computeSceneFitViewportForVisibleBounds({
-            bounds: endBounds,
-            canvas: canvasSize,
-            minZoom,
-            maxZoom,
-            padding: DEFAULT_VIEWPORT_FIT_PADDING,
-          })
-        : computeViewportForVisibleBounds({
-            bounds: endBounds,
-            canvas: canvasSize,
-            padding,
-            minZoom,
-            maxZoom,
-          });
+    const epilogueViewport = computeViewportForVisibleBounds({
+      bounds: endBounds,
+      canvas: canvasSize,
+      minZoom,
+      maxZoom,
+    });
     const shouldRecentreCollapse =
       direction === 'out' && Boolean(collapseEpilogueTarget?.recenterEvenIfVisible);
     const needsVisibilityFit = !containsBounds(
