@@ -24,6 +24,7 @@ export interface SceneNode {
   parentId?: string;
   children: SceneNode[];
   hasChildren?: boolean;
+  isListContainer?: boolean;
   diagramChildCount?: number;
   diagramChildTypeCounts?: Record<string, number>;
   reveal?: RevealMetadata;
@@ -47,6 +48,7 @@ interface SceneTreeSourceNode<TNode> extends TreeNodeLike<TNode> {
   entity: Entity;
   hasDiagramChildren?: boolean;
   hasChildren?: boolean;
+  isListContainer?: boolean;
   diagramChildCount?: number;
   diagramChildTypeCounts?: Record<string, number>;
   reveal?: RevealMetadata;
@@ -74,6 +76,7 @@ export function buildSceneTree<TNode extends SceneTreeSourceNode<TNode>>(params:
       parentId,
       children: [],
       hasChildren: node.hasDiagramChildren ?? node.hasChildren ?? false,
+      isListContainer: node.isListContainer,
       diagramChildCount: node.diagramChildCount,
       diagramChildTypeCounts: node.diagramChildTypeCounts,
       reveal,

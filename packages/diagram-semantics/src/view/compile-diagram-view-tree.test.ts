@@ -328,3 +328,28 @@ describe('compileDiagramViewTree', () => {
     expect(state.edges).toEqual([]);
   });
 });
+
+describe('structural list containers', () => {
+  it.each([false, true])('classifies leaf lists independently of expansion (%s)', (expanded) => {
+    const doc = buildDoc();
+    doc.view = {
+      kind: 'semantic-diagram-view',
+      version: 2,
+      nodesById: {
+        platform: { expanded: true },
+        database: { expanded: true },
+        'table-group': { expanded },
+        workers: { expanded },
+      },
+    };
+    const tree = compileDiagramViewTree({ doc, schema });
+    expect(tree.byId.get('table-group')?.isListContainer).toBe(true);
+    expect(tree.byId.get('database')?.isListContainer).toBe(false);
+    expect(tree.byId.get('workers')?.isListContainer).toBe(false);
+    expect(tree.root.isListContainer).toBe(false);
+    doc.relations.push({ id: 'internal', type: 'calls', from: 'orders', to: 'customers' });
+    expect(compileDiagramViewTree({ doc, schema }).byId.get('table-group')?.isListContainer).toBe(
+      false,
+    );
+  });
+});

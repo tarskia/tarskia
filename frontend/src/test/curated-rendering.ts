@@ -33,13 +33,14 @@ export const loadGallery = (file: string) => {
     fallbackSchema: semanticBootstrap.schemaModules[0],
   });
   const graph = buildGraphModel(loaded.doc, runtime.schema);
-  const render = (expanded?: string[]) => {
+  const render = (expanded?: string[], scopeRootId?: string) => {
     const doc: SemanticDocument = expanded
       ? {
           ...loaded.doc,
           view: {
             kind: 'semantic-diagram-view',
             version: 2,
+            scopeRootId,
             nodesById: Object.fromEntries(
               graph.entities.map((entity) => [
                 entity.id,

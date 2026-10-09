@@ -21,7 +21,7 @@ import {
   buildInspectorViewModel,
 } from '../viewer-core/buildInspectorViewModel';
 import { ensureDiagramView } from '../viewer-core/diagram-view';
-import { useFocusViewController } from '../viewer-core/focus-view';
+import { canFocusSceneNode, useFocusViewController } from '../viewer-core/focus-view';
 import {
   createBlankDiagramDocument,
   loadDiagramDocFromRaw,
@@ -202,12 +202,9 @@ export default function PublicGalleryViewer() {
     () => doc.relations.find((relation) => relation.id === selectedEdgeId),
     [doc.relations, selectedEdgeId],
   );
-  const selectedSceneNode = useMemo(
-    () => (selectedEntity ? compiled.scene.tree.byId.get(selectedEntity.id) : undefined),
-    [compiled.scene.tree.byId, selectedEntity],
-  );
   const selectedEntityCanFocus = Boolean(
-    selectedEntity && selectedSceneNode?.hasChildren && selectedSceneNode.layoutMode !== 'list',
+    selectedEntity &&
+      canFocusSceneNode({ sceneTree: compiled.scene.tree, entityId: selectedEntity.id }),
   );
   const diagramProvenance = useMemo(() => buildDiagramProvenanceSource(doc), [doc]);
   const inspectorViewModel = useMemo(

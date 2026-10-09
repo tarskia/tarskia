@@ -96,7 +96,8 @@ export const buildClearFocusScopeDocument = (previous: SemanticDocument): Semant
 
 export const canFocusSceneNode = (params: { sceneTree: SceneTree; entityId: string }) => {
   const sceneNode = params.sceneTree.byId.get(params.entityId);
-  return Boolean(sceneNode?.hasChildren && sceneNode.layoutMode !== 'list');
+  // List containers also support focus; capability must not depend on expanded layout.
+  return Boolean(sceneNode?.hasChildren);
 };
 
 export function useFocusViewController({

@@ -122,7 +122,10 @@ export function applySceneLayout(params: {
     // 1) More than one child (single items should render as cards)
     // 2) No internal edges within this container
     // 3) Every child is a structural leaf in the full tree (not just currently collapsed)
+    // Root children render as standalone cards, including the children of a focused list.
     const listMode =
+      !isRoot &&
+      node.isListContainer !== false &&
       focusScaffoldDepth === undefined &&
       children.length > 1 &&
       layoutEdges.length === 0 &&
@@ -244,6 +247,7 @@ export function applySceneLayout(params: {
     }
     const nodeVisual = nodeVisuals.get(nodeId);
     const isGroup = Boolean(node.hasChildren);
+    // Root children render as standalone cards, including the children of a focused list.
     const listMode = node.parentId ? tree.byId.get(node.parentId)?.layoutMode === 'list' : false;
     const richContent = nodeVisual?.projection.richContent;
     const hasVisibleLabel = listMode ? true : Boolean(nodeVisual?.projection.explicitLabel);

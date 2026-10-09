@@ -21,6 +21,7 @@ export interface SemanticViewWorkingNode {
   };
   visual: {
     hasDiagramChildren: boolean;
+    isListContainer?: boolean;
     diagramChildCount?: number;
     diagramChildTypeCounts?: Record<string, number>;
     controls: DiagramViewNodeControls;
