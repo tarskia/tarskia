@@ -59,7 +59,7 @@ export const loadDiagramDocFromRaw = (params: {
   }
 
   const compiled = compileSourceGraph({
-    raw: params.raw,
+    source: parsedSource,
     sourceLabel: params.sourceLabel,
     ...(params.snapshot ? { resolver: createSnapshotSourceGraphResolver(params.snapshot) } : {}),
   });
