@@ -2,7 +2,7 @@ import { buildEntityIndex } from '@tarskia/diagram-semantics';
 import { expect, it } from 'vitest';
 import { galleryFiles, loadGallery, planGalleryTransition } from '../../../test/curated-rendering';
 import type { CanvasPoint, CanvasRect } from '../presentation/geometry';
-import { resolveTransitionOverlayFrame, type TransitionOverlayEdgeFrame } from './overlay';
+import { resolveAnimationFrame, type TransitionFrameEdgeFrame } from './overlay';
 
 const onBoundary = (point: CanvasPoint, rect: CanvasRect) => {
   const insideX = point.x >= rect.x - 1 && point.x <= rect.x + rect.width + 1;
@@ -23,7 +23,7 @@ const edgeKey = (edge: { relationId: string; sourceId: string; targetId: string 
 
 const edgeAppearance = (
   edge: Pick<
-    TransitionOverlayEdgeFrame,
+    TransitionFrameEdgeFrame,
     'kind' | 'scopeId' | 'label' | 'state' | 'matched' | 'opacity' | 'geometry' | 'solidOverNodeIds'
   >,
 ) => ({
@@ -55,7 +55,7 @@ it.each(galleryFiles)('$title keeps every single-node toggle edge attached and s
     ] as const) {
       const { overlay } = planGalleryTransition(from, to, direction);
       for (let step = 0; step <= 20; step++) {
-        const frame = resolveTransitionOverlayFrame(overlay, step * 50);
+        const frame = resolveAnimationFrame(overlay, step * 50);
         const rects = new Map(frame.nodes.map((node) => [node.id, node.rect]));
         for (const edge of frame.edges) {
           sampledEdges++;
@@ -69,7 +69,7 @@ it.each(galleryFiles)('$title keeps every single-node toggle edge attached and s
           ).toBe(true);
         }
       }
-      const end = resolveTransitionOverlayFrame(overlay, 1000);
+      const end = resolveAnimationFrame(overlay, 1000);
       expect(end.edges).toHaveLength(to.presentation.overlayEdges.length);
       const actual = new Map(end.edges.map((edge) => [edgeKey(edge), edgeAppearance(edge)]));
       expect(actual.size).toBe(end.edges.length);

@@ -53,7 +53,7 @@ type VisibleTransitionEdgeSource = Pick<
   | 'solidOverNodeIds'
 >;
 
-export interface TransitionOverlayNodeTrack {
+export interface TransitionFrameNodeTrack {
   id: string;
   kind: CanvasNodeView['kind'];
   parentId?: string;
@@ -80,12 +80,12 @@ export interface TransitionOverlayNodeTrack {
   childFade?: ChildFadeTiming;
 }
 
-export interface TransitionOverlayLabelTrack {
+export interface TransitionFrameLabelTrack {
   label?: string;
   state?: 'undecided' | 'none';
 }
 
-export interface TransitionOverlayEdgeTrack {
+export interface TransitionFrameEdgeTrack {
   id: string;
   relationId: string;
   relationIds?: string[];
@@ -101,18 +101,18 @@ export interface TransitionOverlayEdgeTrack {
   toOpacity: number;
   fade?: PhaseWindow;
   fadeMode?: 'in' | 'out';
-  labelTrack?: TransitionOverlayLabelTrack;
+  labelTrack?: TransitionFrameLabelTrack;
 }
 
-export interface TransitionOverlayState {
+export interface TransitionFrameState {
   id: number;
   startedAt: number;
   duration: number;
-  nodes: TransitionOverlayNodeTrack[];
-  edges: TransitionOverlayEdgeTrack[];
+  nodes: TransitionFrameNodeTrack[];
+  edges: TransitionFrameEdgeTrack[];
 }
 
-export interface TransitionOverlayNodeFrame {
+export interface TransitionFrameNodeFrame {
   id: string;
   kind: CanvasNodeView['kind'];
   view: CanvasNodeView;
@@ -123,7 +123,7 @@ export interface TransitionOverlayNodeFrame {
   childOpacity: number;
 }
 
-export interface TransitionOverlayEdgeFrame {
+export interface TransitionFrameEdgeFrame {
   id: string;
   relationId: string;
   relationIds?: string[];
@@ -141,10 +141,10 @@ export interface TransitionOverlayEdgeFrame {
   solidOverNodeIds: string[];
 }
 
-export interface TransitionOverlayFrame {
+export interface AnimationFrame {
   progress: number;
-  nodes: TransitionOverlayNodeFrame[];
-  edges: TransitionOverlayEdgeFrame[];
+  nodes: TransitionFrameNodeFrame[];
+  edges: TransitionFrameEdgeFrame[];
 }
 
 const EMPTY_TIMED_PLAN: TimedTransitionPlan = {
@@ -276,7 +276,7 @@ const resolveControlTransitionDirection = (params: {
 };
 
 const resolveNodeControls = (params: {
-  track: TransitionOverlayNodeTrack;
+  track: TransitionFrameNodeTrack;
   progress: number;
   baseViewControls: DiagramViewNodeControls;
 }) => {
@@ -348,7 +348,7 @@ const resolveNodeControls = (params: {
   };
 };
 
-const resolveViewSwitchProgress = (track: TransitionOverlayNodeTrack) => {
+const resolveViewSwitchProgress = (track: TransitionFrameNodeTrack) => {
   const childFadeStart = track.childFade?.window.start;
   const childFadeEnd = track.childFade?.window.end;
   const timingStarts = [
@@ -473,10 +473,10 @@ const buildNormalizedGeometry = (params: {
   });
 };
 
-const resolveSequenceProgress = (state: TransitionOverlayState, now: number) =>
+const resolveSequenceProgress = (state: TransitionFrameState, now: number) =>
   clamp((now - state.startedAt) / Math.max(state.duration, 1), 0, 1);
 
-const resolveNodeRect = (track: TransitionOverlayNodeTrack, progress: number): CanvasRect => {
+const resolveNodeRect = (track: TransitionFrameNodeTrack, progress: number): CanvasRect => {
   const hasGeometryTiming = Boolean(
     track.timing?.moveX || track.timing?.moveY || track.timing?.resizeX || track.timing?.resizeY,
   );
@@ -522,7 +522,7 @@ const resolveNodeRect = (track: TransitionOverlayNodeTrack, progress: number): C
   };
 };
 
-const resolveNodeFrame = (track: TransitionOverlayNodeTrack, progress: number) => {
+const resolveNodeFrame = (track: TransitionFrameNodeTrack, progress: number) => {
   const rect = resolveNodeRect(track, progress);
   const opacity = resolveFadeOpacity({
     progress,
@@ -569,11 +569,11 @@ const resolveNodeFrame = (track: TransitionOverlayNodeTrack, progress: number) =
     opacity,
     contentScale: lerp(track.fromContentScale, track.toContentScale, progress),
     childOpacity,
-  } satisfies TransitionOverlayNodeFrame;
+  } satisfies TransitionFrameNodeFrame;
 };
 
 const resolveEdgeFrame = (
-  track: TransitionOverlayEdgeTrack,
+  track: TransitionFrameEdgeTrack,
   progress: number,
   rectByNodeId: Map<string, CanvasRect>,
 ) => {
@@ -608,20 +608,17 @@ const resolveEdgeFrame = (
     geometry,
     labelAnchor: geometry.labelAnchor,
     solidOverNodeIds: track.solidOverNodeIds,
-  } satisfies TransitionOverlayEdgeFrame;
+  } satisfies TransitionFrameEdgeFrame;
 };
 
-export const resolveTransitionOverlayFrame = (
-  state: TransitionOverlayState,
-  now: number,
-): TransitionOverlayFrame => {
+export const resolveAnimationFrame = (state: TransitionFrameState, now: number): AnimationFrame => {
   const progress = resolveSequenceProgress(state, now);
-  const rawNodeById = new Map<string, TransitionOverlayNodeFrame>();
+  const rawNodeById = new Map<string, TransitionFrameNodeFrame>();
   for (const track of state.nodes) {
     rawNodeById.set(track.id, resolveNodeFrame(track, progress));
   }
 
-  const nodes: TransitionOverlayNodeFrame[] = [];
+  const nodes: TransitionFrameNodeFrame[] = [];
   const rectByNodeId = new Map<string, CanvasRect>();
   for (const track of state.nodes) {
     const rawNode = rawNodeById.get(track.id);
@@ -638,7 +635,7 @@ export const resolveTransitionOverlayFrame = (
     rectByNodeId.set(node.id, node.rect);
   }
 
-  const edges: TransitionOverlayEdgeFrame[] = [];
+  const edges: TransitionFrameEdgeFrame[] = [];
   for (const track of state.edges) {
     if (!rectByNodeId.has(track.sourceId) || !rectByNodeId.has(track.targetId)) {
       continue;
@@ -660,7 +657,7 @@ export const resolveTransitionOverlayFrame = (
   };
 };
 
-export const buildTransitionOverlayState = (params: {
+export const buildTransitionFrameState = (params: {
   id: number;
   startedAt: number;
   duration: number;
@@ -687,7 +684,7 @@ export const buildTransitionOverlayState = (params: {
   const fromNodeRects = new Map(fromPresentation.nodes.map((node) => [node.id, node.rect]));
   const toNodeRects = new Map(toPresentation.nodes.map((node) => [node.id, node.rect]));
   const nodeIds = new Set([...fromNodeById.keys(), ...toNodeById.keys()]);
-  const nodes: TransitionOverlayNodeTrack[] = [...nodeIds].flatMap((nodeId) => {
+  const nodes: TransitionFrameNodeTrack[] = [...nodeIds].flatMap((nodeId) => {
     const fromNode = fromNodeById.get(nodeId);
     const toNode = toNodeById.get(nodeId);
     if (!fromNode && !toNode) return [];
@@ -756,7 +753,7 @@ export const buildTransitionOverlayState = (params: {
         toChildOpacity: toNode?.content.childOpacity ?? 1,
         timing: timedPlan.nodeTimings.get(nodeId),
         childFade: timedPlan.childFadeByParent.get(nodeId),
-      } satisfies TransitionOverlayNodeTrack,
+      } satisfies TransitionFrameNodeTrack,
     ];
   });
 
@@ -767,7 +764,7 @@ export const buildTransitionOverlayState = (params: {
     id: string,
     fromEdge: VisibleTransitionEdgeSource | undefined,
     toEdge: VisibleTransitionEdgeSource | undefined,
-  ): TransitionOverlayEdgeTrack[] => {
+  ): TransitionFrameEdgeTrack[] => {
     if (!fromEdge && !toEdge) return [];
     const kind = toEdge?.kind ?? fromEdge?.kind;
     if (!kind) return [];
@@ -839,7 +836,7 @@ export const buildTransitionOverlayState = (params: {
           : label !== undefined || edgeState !== undefined
             ? { label, state: edgeState }
             : undefined,
-      }) satisfies TransitionOverlayEdgeTrack;
+      }) satisfies TransitionFrameEdgeTrack;
 
     if (fromEdge && toEdge && edgeAttachmentChanged({ fromEdge, toEdge })) {
       const fadeWindows = resolveAttachmentChangeFadeWindows(edgePlan);
@@ -907,7 +904,7 @@ export const buildTransitionOverlayState = (params: {
   };
 
   const visibleEdgeIds = new Set([...fromVisibleEdgeById.keys(), ...toVisibleEdgeById.keys()]);
-  const edges: TransitionOverlayEdgeTrack[] = [];
+  const edges: TransitionFrameEdgeTrack[] = [];
   for (const edgeId of visibleEdgeIds) {
     edges.push(
       ...buildEdgeTracks(edgeId, fromVisibleEdgeById.get(edgeId), toVisibleEdgeById.get(edgeId)),
@@ -920,14 +917,14 @@ export const buildTransitionOverlayState = (params: {
     duration,
     nodes,
     edges,
-  } satisfies TransitionOverlayState;
+  } satisfies TransitionFrameState;
 };
 
 export const overlayNodeBindings = noopNodeBindings;
 
-export const captureTransitionOverlaySnapshot = (params: {
-  state: TransitionOverlayState;
-  frame: TransitionOverlayFrame;
+export const captureTransitionFrameSnapshot = (params: {
+  state: TransitionFrameState;
+  frame: AnimationFrame;
 }): CanvasPresentation => {
   const { frame } = params;
   const nodesById = new Map<string, CanvasNodeView>();
@@ -971,12 +968,12 @@ export const captureTransitionOverlaySnapshot = (params: {
   };
 };
 
-export const buildStaticTransitionOverlayState = (params: {
+export const buildStaticTransitionFrameState = (params: {
   snapshot: CanvasPresentation;
   id: number;
   startedAt: number;
-}): TransitionOverlayState =>
-  buildTransitionOverlayState({
+}): TransitionFrameState =>
+  buildTransitionFrameState({
     id: params.id,
     startedAt: params.startedAt,
     duration: 1,

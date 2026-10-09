@@ -3,7 +3,7 @@ import path from 'node:path';
 import { buildSemanticIndex, compileView, type SemanticDocument } from '@tarskia/diagram-semantics';
 import { buildLayoutResult } from '../canvas/rendering/layout/layout-pipeline';
 import { buildStaticCanvasPresentation } from '../canvas/rendering/presentation/presentation';
-import { buildTransitionOverlayState } from '../canvas/rendering/transition/overlay';
+import { buildTransitionFrameState } from '../canvas/rendering/transition/overlay';
 import { buildTransitionPlanningAdvisory } from '../canvas/rendering/transition/sequencer';
 import {
   buildTimedTransitionPlan,
@@ -73,7 +73,7 @@ export const planGalleryTransition = (
   });
   const timedPlan = buildTimedTransitionPlan({ planningAdvisory });
   const timedSequence = buildTimedTransitionSequence({ planningAdvisory });
-  const overlay = buildTransitionOverlayState({
+  const overlay = buildTransitionFrameState({
     id: 1,
     startedAt: 0,
     duration: 1000,

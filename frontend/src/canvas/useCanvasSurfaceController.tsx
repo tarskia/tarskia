@@ -9,17 +9,18 @@ import type {
 import type { NodeVisualMode } from '../node-visual-mode';
 import type { CanvasSemanticBindings } from '../viewer-core/view-models';
 import type { CanvasCamera } from './camera';
-import type { CanvasInteractionBindings, CanvasMoveHandler, CanvasNode } from './canvas-types';
-import type { EdgeOverlayInteractionBindings } from './components/edges/EdgeOverlay';
+import type {
+  CanvasInteractionBindings,
+  CanvasMoveHandler,
+  CanvasNode,
+  EdgeOverlayInteractionBindings,
+} from './canvas-types';
 import type { DiagramCanvasProps } from './DiagramCanvas';
 import { collapseFocusShellDescriptors } from './focus-shells';
 import { buildCanvasRenderState } from './node-presentation';
 import type { LayoutResult } from './rendering/layout/layout-pipeline';
-import type {
-  CanvasOverlayEdgeView,
-  CanvasPresentation,
-} from './rendering/presentation/presentation';
-import type { TransitionOverlayState } from './rendering/transition/overlay';
+import type { CanvasPresentation } from './rendering/presentation/presentation';
+import type { TransitionFrameState } from './rendering/transition/overlay';
 import type { OverlayFrameStore } from './rendering/transition/overlay-frame-store';
 
 export interface UseCanvasSurfaceControllerArgs {
@@ -67,17 +68,13 @@ export interface UseCanvasSurfaceControllerArgs {
     reportUserGestureStart: () => void;
     reportUserGestureMove: (viewport: { x: number; y: number; zoom: number }) => void;
     reportUserGestureEnd: (viewport: { x: number; y: number; zoom: number }) => void;
-    notifyDisplayHostSettled: (generation: number) => void;
     presentation: CanvasPresentation;
     compiled: LayoutResult;
-    transitionOverlay: TransitionOverlayState | null;
+    transitionFrame: TransitionFrameState | null;
     overlayFrameStore: OverlayFrameStore | null;
-    hideHostVisuals: boolean;
-    transitionLiteMode: boolean;
     isTransitionRunning: boolean;
     isTransitionQueued: boolean;
     motionPhase: MotionPhase;
-    requiredHostGeneration: number | null;
   };
 }
 
@@ -85,17 +82,6 @@ const FOCUS_SHELL_OUTER_INSET_X = 18;
 const FOCUS_SHELL_OUTER_INSET_Y = 18;
 const FOCUS_SHELL_STEP_X = 16;
 const FOCUS_SHELL_STEP_Y = 32;
-const EMPTY_OVERLAY_EDGES: CanvasOverlayEdgeView[] = [];
-
-export const resolveVisibleHostOverlayEdges = (params: {
-  overlayEdges: CanvasOverlayEdgeView[];
-  hideHostVisuals: boolean;
-  suppressForViewportGesture: boolean;
-}) => {
-  const { overlayEdges, hideHostVisuals } = params;
-  return hideHostVisuals ? EMPTY_OVERLAY_EDGES : overlayEdges;
-};
-
 export const buildAutoVisibleSelectionKey = (params: {
   selectedEntityId?: string;
   canvasLayoutVersion?: number;
@@ -111,23 +97,6 @@ export const buildAutoVisibleSelectionKey = (params: {
 
 export const shouldCommitAutoVisibleSelectionKey = (result: NavigationRequestResult) =>
   result.status === 'queued' || result.status === 'applied';
-
-export const shouldSuppressHostInteractiveControls = (transitionLiteMode: boolean) =>
-  transitionLiteMode;
-
-export const shouldSuppressHostEdgeChrome = (params: {
-  transitionLiteMode: boolean;
-  motionPhase: MotionPhase;
-  hasTransitionOverlay: boolean;
-  hasQueuedStructuralTransition: boolean;
-}) => {
-  const { transitionLiteMode, motionPhase, hasTransitionOverlay, hasQueuedStructuralTransition } =
-    params;
-  return (
-    transitionLiteMode ||
-    (motionPhase === 'animating' && !hasTransitionOverlay && hasQueuedStructuralTransition)
-  );
-};
 
 const getClientPoint = (event: unknown): { x: number; y: number } | null => {
   if (!event || typeof event !== 'object') return null;
@@ -214,22 +183,17 @@ export function useCanvasSurfaceController({
     reportUserGestureStart,
     reportUserGestureMove,
     reportUserGestureEnd,
-    notifyDisplayHostSettled,
     presentation,
     compiled,
-    transitionOverlay,
+    transitionFrame,
     overlayFrameStore,
-    hideHostVisuals,
-    transitionLiteMode,
     isTransitionRunning,
     isTransitionQueued,
     motionPhase,
-    requiredHostGeneration,
   } = transition;
   const suppressPaneClickRef = useRef(false);
   const autoVisibleSelectionKeyRef = useRef<string | null>(null);
   const viewportGestureActiveRef = useRef(false);
-  const notifiedDisplayGenerationRef = useRef<number | null>(null);
   const suppressPaneClickOnce = useCallback(() => {
     // Ignore the immediate pane click after node/edge/popup interactions.
     suppressPaneClickRef.current = true;
@@ -370,13 +334,6 @@ export function useCanvasSurfaceController({
     [setSelectedEdge, setSelectedEntity],
   );
 
-  const suppressHostEdgeChrome = shouldSuppressHostEdgeChrome({
-    transitionLiteMode,
-    motionPhase,
-    hasTransitionOverlay: Boolean(transitionOverlay),
-    hasQueuedStructuralTransition: isTransitionQueued,
-  });
-
   const interactionBindings = useMemo<CanvasInteractionBindings>(
     () => ({
       onZoomTrigger: triggerEntityZoom,
@@ -407,32 +364,11 @@ export function useCanvasSurfaceController({
         bindings: interactionBindings,
         selectedEntityId,
         selectedEdgeId,
-        hideEdgeLabels: suppressHostEdgeChrome,
-        disableControlActions: shouldSuppressHostInteractiveControls(transitionLiteMode),
       }),
-    [
-      decoratedPresentation,
-      interactionBindings,
-      selectedEntityId,
-      selectedEdgeId,
-      suppressHostEdgeChrome,
-      transitionLiteMode,
-    ],
+    [decoratedPresentation, interactionBindings, selectedEntityId, selectedEdgeId],
   );
   const { nodes, overlayEdges } = hostRenderState;
   const edgeGeometrySnapshot = presentation;
-  // The node list is now rendered directly. A layout effect runs after its DOM commit;
-  // there is no React Flow dimension echo or second state synchronization to await.
-  useLayoutEffect(() => {
-    if (
-      requiredHostGeneration !== null &&
-      requiredHostGeneration !== notifiedDisplayGenerationRef.current
-    ) {
-      notifiedDisplayGenerationRef.current = requiredHostGeneration;
-      notifyDisplayHostSettled(requiredHostGeneration);
-    }
-  }, [requiredHostGeneration, notifyDisplayHostSettled]);
-
   const selectedNodeView = useMemo(
     () => decoratedPresentation.nodes.find((node) => node.id === selectedEntityId),
     [decoratedPresentation.nodes, selectedEntityId],
@@ -506,16 +442,14 @@ export function useCanvasSurfaceController({
     canvasRef,
     onCanvasElementChange,
     nodeVisualMode,
-    hideHostVisuals,
     nodes: nodes as CanvasNode[],
+    interactionBindings,
+    selectedEntityId,
+    selectedEdgeId,
     edgeGeometrySnapshot,
-    overlayEdges: resolveVisibleHostOverlayEdges({
-      overlayEdges,
-      hideHostVisuals,
-      suppressForViewportGesture: false,
-    }),
+    overlayEdges,
     overlayInteractionBindings,
-    transitionOverlay: transitionOverlay ?? undefined,
+    transitionFrame: transitionFrame ?? undefined,
     overlayFrameStore: overlayFrameStore ?? undefined,
     nodeTypes,
     onNodeClick,

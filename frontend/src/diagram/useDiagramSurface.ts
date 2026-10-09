@@ -102,17 +102,13 @@ export function useDiagramSurface({
       reportUserGestureStart: diagramEngine.reportUserGestureStart,
       reportUserGestureMove: diagramEngine.reportUserGestureMove,
       reportUserGestureEnd: diagramEngine.reportUserGestureEnd,
-      notifyDisplayHostSettled: diagramEngine.notifyDisplayHostSettled,
       presentation: diagramEngine.presentation,
       compiled: diagramEngine.compiled,
-      transitionOverlay: diagramEngine.transitionOverlay,
+      transitionFrame: diagramEngine.transitionFrame,
       overlayFrameStore: diagramEngine.overlayFrameStore,
-      hideHostVisuals: diagramEngine.hideHostVisuals,
-      transitionLiteMode: diagramEngine.transitionLiteMode,
       isTransitionRunning: diagramEngine.isTransitionRunning,
       isTransitionQueued: diagramEngine.isTransitionQueued,
       motionPhase: diagramEngine.motionPhase,
-      requiredHostGeneration: diagramEngine.requiredHostGeneration,
     },
   });
 }

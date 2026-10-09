@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import type { CanvasRect } from '../canvas/rendering/presentation/geometry';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
 import {
-  captureTransitionOverlaySnapshot,
-  resolveTransitionOverlayFrame,
+  captureTransitionFrameSnapshot,
+  resolveAnimationFrame,
 } from '../canvas/rendering/transition/overlay';
 import { resolveNavigationPolicy, resolveNavigationViewport } from '../diagram/camera-navigation';
 import { galleryFiles, loadGallery, planGalleryTransition } from '../test/curated-rendering';
@@ -107,8 +107,8 @@ describe.each(galleryFiles)('$file rendering behavior', ({ file }) => {
       ] as const) {
         const { overlay } = planGalleryTransition(from, to, direction);
         for (let step = 0; step <= 20; step++) {
-          const frame = resolveTransitionOverlayFrame(overlay, step * 50);
-          const snapshot = captureTransitionOverlaySnapshot({ state: overlay, frame });
+          const frame = resolveAnimationFrame(overlay, step * 50);
+          const snapshot = captureTransitionFrameSnapshot({ state: overlay, frame });
           expect(
             snapshot.nodes.every(
               (node) =>

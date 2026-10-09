@@ -56,7 +56,7 @@ it('reduced motion expands, collapses and expands all to animated endpoints with
         minZoom: 0.01,
         maxZoom: 2,
       });
-      observedOverlays.push(engine.transitionOverlay !== null);
+      observedOverlays.push(engine.transitionFrame !== null);
       return null;
     }
     const host = document.createElement('div');
@@ -81,8 +81,6 @@ it('reduced motion expands, collapses and expands all to animated endpoints with
     });
     const settle = async () => {
       for (let i = 0; i < 200; i++) {
-        const generation = engine.requiredHostGeneration;
-        if (generation !== null) await act(async () => engine.notifyDisplayHostSettled(generation));
         if (!callbacks.size && engine.motionPhase === 'idle') break;
         await act(async () => {
           now += 50;
@@ -116,7 +114,7 @@ it('reduced motion expands, collapses and expands all to animated endpoints with
         });
         if (skipTransitions) {
           // Host acknowledgement may remain, but no motion rAF is needed to reach the target.
-          expect(engine.transitionOverlay).toBeNull();
+          expect(engine.transitionFrame).toBeNull();
           expect(engine.motionPhase).toBe('idle');
           expect(callbacks.size).toBe(0);
           expect(appearance(engine.presentation)).toEqual(appearance(rendered.presentation));
@@ -206,14 +204,11 @@ it.each([
       callbacks.clear();
       for (const callback of pending) callback(now);
     });
-    const generation = engine.requiredHostGeneration;
-    if (generation !== null) await act(async () => engine.notifyDisplayHostSettled(generation));
   };
   const intent = {
     kind: 'fit-node-set' as const,
     nodeIds: ['browser-editor-shell'],
     preset: 'focus' as const,
-    waitForHostSettle: false,
   };
   try {
     await act(async () => root.render(<Harness reduced={false} />));
@@ -255,7 +250,7 @@ it.each([
       });
     expect(engine.getCurrentViewport()).toEqual(target);
     expect(engine.motionPhase).toBe('idle');
-    expect(engine.transitionOverlay).toBeNull();
+    expect(engine.transitionFrame).toBeNull();
     expect(callbacks.size).toBe(0);
   } finally {
     await act(async () => root.unmount());

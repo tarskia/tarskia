@@ -1,59 +1,26 @@
 import type { MutableRefObject } from 'react';
-import { lazy, memo, Suspense, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import type { NodeVisualMode } from '../node-visual-mode';
 import type { CanvasDebugInputs } from './CanvasDebugPanel';
 import { CanvasFocusShellOverlay } from './CanvasFocusShellOverlay';
 import { type CanvasCamera, mountCanvasCamera } from './camera';
-import type { CanvasMoveHandler, CanvasNode, CanvasNodeTypes } from './canvas-types';
-import { EdgeOverlay, type EdgeOverlayInteractionBindings } from './components/edges/EdgeOverlay';
-import { TransitionOverlay } from './components/transition/TransitionOverlay';
+import type {
+  CanvasInteractionBindings,
+  CanvasMoveHandler,
+  CanvasNode,
+  CanvasNodeTypes,
+  EdgeOverlayInteractionBindings,
+} from './canvas-types';
+import { DiagramRenderer } from './DiagramRenderer';
 import { scheduleHotReloadSafeUnmount } from './hot-reload-unmount';
 import type {
   CanvasOverlayEdgeView,
   CanvasRenderSnapshot,
 } from './rendering/presentation/presentation';
-import type { TransitionOverlayState } from './rendering/transition/overlay';
+import type { TransitionFrameState } from './rendering/transition/overlay';
 import type { OverlayFrameStore } from './rendering/transition/overlay-frame-store';
 
 const CanvasDebugPanel = lazy(() => import('./CanvasDebugPanel'));
-
-const StaticNodeLayer = memo(function StaticNodeLayer({
-  nodes,
-  nodeTypes,
-}: {
-  nodes: CanvasNode[];
-  nodeTypes: CanvasNodeTypes;
-}) {
-  const first = nodes.find((node) => node.selectable !== false)?.id;
-  return (
-    <div className="canvas-nodes">
-      {nodes.map((node) => {
-        const Component = nodeTypes[node.type];
-        if (!Component) return null;
-        return (
-          <div
-            key={node.id}
-            className={`canvas-node${node.selectable !== false ? ' selectable' : ''}${node.selected ? ' selected' : ''}`}
-            data-entity-id={node.id}
-            role="treeitem"
-            aria-label={node.data.view.content.label || node.id}
-            aria-selected={Boolean(node.selected)}
-            tabIndex={node.selectable === false ? undefined : node.id === first ? 0 : -1}
-            style={{
-              ...node.style,
-              position: 'absolute',
-              transform: `translate(${node.position.x}px, ${node.position.y}px)`,
-              zIndex: node.zIndex,
-            }}
-          >
-            <Component id={node.id} data={node.data} selected={node.selected} />
-          </div>
-        );
-      })}
-    </div>
-  );
-});
-const StaticEdgeLayer = memo(EdgeOverlay);
 
 export interface DiagramCanvasProps {
   canvasRef: MutableRefObject<HTMLDivElement | null>;
@@ -61,12 +28,14 @@ export interface DiagramCanvasProps {
   defaultViewport?: { x: number; y: number; zoom: number };
   hidden?: boolean;
   nodeVisualMode: NodeVisualMode;
-  hideHostVisuals: boolean;
   nodes: CanvasNode[];
+  interactionBindings?: CanvasInteractionBindings;
+  selectedEntityId?: string;
+  selectedEdgeId?: string;
   overlayEdges: CanvasOverlayEdgeView[];
   edgeGeometrySnapshot?: CanvasRenderSnapshot;
   overlayInteractionBindings?: EdgeOverlayInteractionBindings;
-  transitionOverlay?: TransitionOverlayState;
+  transitionFrame?: TransitionFrameState;
   overlayFrameStore?: OverlayFrameStore;
   nodeTypes: CanvasNodeTypes;
   onNodeClick: (_event: unknown, node: CanvasNode) => void;
@@ -103,12 +72,14 @@ export function DiagramCanvas({
   defaultViewport,
   hidden = false,
   nodeVisualMode,
-  hideHostVisuals,
   nodes,
+  interactionBindings,
+  selectedEntityId,
+  selectedEdgeId,
   overlayEdges,
   edgeGeometrySnapshot,
   overlayInteractionBindings,
-  transitionOverlay,
+  transitionFrame,
   overlayFrameStore,
   nodeTypes,
   onNodeClick,
@@ -165,17 +136,18 @@ export function DiagramCanvas({
         getCurrentEffectGeneration: () => unmountEffectGenerationRef.current,
       });
   }, [onUnmount]);
+  const renderedNodesRef = useRef(nodes);
   const nodeAt = (target: EventTarget | null) => {
     const element =
       target instanceof Element ? target.closest<HTMLElement>('[data-entity-id]') : null;
-    return element ? nodes.find((node) => node.id === element.dataset.entityId) : undefined;
+    return renderedNodesRef.current.find((node) => node.id === element?.dataset.entityId);
   };
   return (
     <div
       role="tree"
       aria-label="Diagram"
       ref={handleCanvasElementRef}
-      className={`canvas canvas-host h-full w-full canvas-visual-${nodeVisualMode}${hideHostVisuals ? ' canvas-host-hidden' : ''}${hidden ? ' invisible' : ''}`}
+      className={`canvas canvas-host h-full w-full canvas-visual-${nodeVisualMode}${hidden ? ' invisible' : ''}`}
       onClick={(event) => {
         const target = event.target as Element;
         const relation = target.closest<HTMLElement>('[data-relation-id]');
@@ -215,7 +187,12 @@ export function DiagramCanvas({
         if (event.key === 'Tab') {
           const elements = [
             ...(worldRef.current?.querySelectorAll<HTMLElement>('.canvas-node.selectable') ?? []),
-          ];
+          ].filter(
+            (element) =>
+              element.style.display !== 'none' &&
+              element.style.pointerEvents !== 'none' &&
+              (element.style.opacity === '' || Number(element.style.opacity) > 0.001),
+          );
           const next = elements[elements.indexOf(target) + (event.shiftKey ? -1 : 1)];
           if (next) {
             event.preventDefault();
@@ -228,19 +205,18 @@ export function DiagramCanvas({
     >
       <div ref={gridRef} className="canvas-grid" aria-hidden />
       <div ref={worldRef} className="canvas-world">
-        <StaticNodeLayer nodes={nodes} nodeTypes={nodeTypes} />
-        <StaticEdgeLayer
-          edges={overlayEdges}
-          geometrySnapshot={edgeGeometrySnapshot}
+        <DiagramRenderer
           nodes={nodes}
+          bindings={interactionBindings}
+          selectedEntityId={selectedEntityId}
+          selectedEdgeId={selectedEdgeId}
+          nodeRecordsRef={renderedNodesRef}
+          geometrySnapshot={edgeGeometrySnapshot}
+          edges={overlayEdges}
+          nodeTypes={nodeTypes}
+          state={transitionFrame}
+          frameStore={overlayFrameStore}
         />
-        {transitionOverlay ? (
-          <TransitionOverlay
-            state={transitionOverlay}
-            frameStore={overlayFrameStore}
-            nodeVisualMode={nodeVisualMode}
-          />
-        ) : null}
       </div>
       <Suspense fallback={null}>
         {showDebug && debugInputs ? <CanvasDebugPanel {...debugInputs} /> : null}

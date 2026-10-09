@@ -19,7 +19,6 @@ export interface ResolvedNavigationPolicy {
   mode: CameraExecutionMode;
   padding: number | undefined;
   durationMs: number;
-  waitForHostGeneration: boolean;
 }
 
 export interface ResolveNavigationViewportArgs {
@@ -49,23 +48,19 @@ export const resolveNavigationPolicy = (intent: NavigationIntent): ResolvedNavig
 
   let defaultPadding: number | undefined;
   let defaultDurationMs = DEFAULT_FIT_DURATION_MS;
-  let defaultWaitForHostGeneration = true;
 
   switch (intent.kind) {
     case 'initialize-diagram':
       defaultPadding = DEFAULT_VIEWPORT_FIT_PADDING;
       defaultDurationMs = ANIMATION_CONSTANTS.viewport.fitDuration;
-      defaultWaitForHostGeneration = false;
       break;
     case 'ensure-visible':
       defaultPadding = DEFAULT_ENSURE_PADDING;
       defaultDurationMs = DEFAULT_ENSURE_DURATION_MS;
-      defaultWaitForHostGeneration = false;
       break;
     case 'fit-node-set':
       defaultPadding = DEFAULT_VIEWPORT_FIT_PADDING;
       defaultDurationMs = DEFAULT_FIT_DURATION_MS;
-      defaultWaitForHostGeneration = true;
       break;
     case 'fit-scene':
       defaultPadding = DEFAULT_VIEWPORT_FIT_PADDING;
@@ -73,7 +68,6 @@ export const resolveNavigationPolicy = (intent: NavigationIntent): ResolvedNavig
         intent.preset === 'layout'
           ? ANIMATION_CONSTANTS.viewport.fitDuration
           : DEFAULT_FIT_DURATION_MS;
-      defaultWaitForHostGeneration = true;
       break;
   }
 
@@ -81,8 +75,6 @@ export const resolveNavigationPolicy = (intent: NavigationIntent): ResolvedNavig
     mode,
     padding: defaultPadding,
     durationMs: mode === 'immediate' ? 0 : defaultDurationMs,
-    waitForHostGeneration:
-      mode === 'immediate' ? false : (intent.waitForHostSettle ?? defaultWaitForHostGeneration),
   };
 };
 

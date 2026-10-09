@@ -13,9 +13,9 @@ import {
   type CanvasRenderSnapshot,
 } from '../presentation/presentation';
 import {
-  buildTransitionOverlayState,
-  captureTransitionOverlaySnapshot,
-  resolveTransitionOverlayFrame,
+  buildTransitionFrameState,
+  captureTransitionFrameSnapshot,
+  resolveAnimationFrame,
 } from './overlay';
 import type { TransitionPlanningAdvisory } from './sequencer';
 import { buildTransitionPlanningAdvisory } from './sequencer';
@@ -256,7 +256,7 @@ describe('transition overlay', () => {
       planningAdvisory,
       timedSequence,
     });
-    const overlay = buildTransitionOverlayState({
+    const overlay = buildTransitionFrameState({
       id: 1,
       startedAt: 100,
       duration: 400,
@@ -270,8 +270,8 @@ describe('transition overlay', () => {
         scene: to,
       }),
     });
-    const startFrame = resolveTransitionOverlayFrame(overlay, 100);
-    const endFrame = resolveTransitionOverlayFrame(overlay, 500);
+    const startFrame = resolveAnimationFrame(overlay, 100);
+    const endFrame = resolveAnimationFrame(overlay, 500);
     const apiStart = startFrame.nodes.find((node) => node.id === 'api-a');
     const apiEnd = endFrame.nodes.find((node) => node.id === 'api-a');
     const relStart = startFrame.edges.find((edge) => edge.id === 'rel-1:api-a->app-b');
@@ -314,7 +314,7 @@ describe('transition overlay', () => {
       planningAdvisory,
       timedSequence,
     });
-    const state = buildTransitionOverlayState({
+    const state = buildTransitionFrameState({
       id: 7,
       startedAt: 100,
       duration: 1,
@@ -324,8 +324,8 @@ describe('transition overlay', () => {
       fromPresentation: presentation,
       toPresentation: presentation,
     });
-    const frame = resolveTransitionOverlayFrame(state, 101);
-    const snapshot = captureTransitionOverlaySnapshot({ state, frame });
+    const frame = resolveAnimationFrame(state, 101);
+    const snapshot = captureTransitionFrameSnapshot({ state, frame });
     const scopeNode = snapshot.nodes.find((node) => node.id === 'group-a');
     const localEdge = snapshot.overlayEdges.find((edge) => edge.relationId === 'rel-local');
 
@@ -355,7 +355,7 @@ describe('transition overlay', () => {
       },
     });
 
-    const overlay = buildTransitionOverlayState({
+    const overlay = buildTransitionFrameState({
       id: 1,
       startedAt: 0,
       duration: 100,
@@ -414,9 +414,9 @@ describe('transition overlay', () => {
 
     expect(overlay.edges).toHaveLength(2);
 
-    const startFrame = resolveTransitionOverlayFrame(overlay, 0);
-    const midFrame = resolveTransitionOverlayFrame(overlay, 50);
-    const endFrame = resolveTransitionOverlayFrame(overlay, 100);
+    const startFrame = resolveAnimationFrame(overlay, 0);
+    const midFrame = resolveAnimationFrame(overlay, 50);
+    const endFrame = resolveAnimationFrame(overlay, 100);
 
     expect(startFrame.edges).toHaveLength(1);
     expect(startFrame.edges[0]).toMatchObject({
@@ -506,7 +506,7 @@ describe('transition overlay', () => {
         }),
       ],
     } satisfies CanvasRenderSnapshot;
-    const overlay = buildTransitionOverlayState({
+    const overlay = buildTransitionFrameState({
       id: 1,
       startedAt: 0,
       duration: 100,
@@ -528,12 +528,12 @@ describe('transition overlay', () => {
       toPresentation,
     });
 
-    const beforeMove = resolveTransitionOverlayFrame(overlay, 10);
-    const duringMove = resolveTransitionOverlayFrame(overlay, 35);
-    const duringResize = resolveTransitionOverlayFrame(overlay, 65);
-    const afterMove = resolveTransitionOverlayFrame(overlay, 80);
-    const staticFrame = resolveTransitionOverlayFrame(
-      buildTransitionOverlayState({
+    const beforeMove = resolveAnimationFrame(overlay, 10);
+    const duringMove = resolveAnimationFrame(overlay, 35);
+    const duringResize = resolveAnimationFrame(overlay, 65);
+    const afterMove = resolveAnimationFrame(overlay, 80);
+    const staticFrame = resolveAnimationFrame(
+      buildTransitionFrameState({
         id: 2,
         startedAt: 0,
         duration: 1,
@@ -559,7 +559,7 @@ describe('transition overlay', () => {
   });
 
   it('switches node views from the sampled frame instead of pinning an endpoint view', () => {
-    const overlay = buildTransitionOverlayState({
+    const overlay = buildTransitionFrameState({
       id: 1,
       startedAt: 0,
       duration: 100,
@@ -570,8 +570,8 @@ describe('transition overlay', () => {
       toPresentation: buildSimpleSnapshot('End'),
     });
 
-    const startFrame = resolveTransitionOverlayFrame(overlay, 0);
-    const switchedFrame = resolveTransitionOverlayFrame(overlay, 60);
+    const startFrame = resolveAnimationFrame(overlay, 0);
+    const switchedFrame = resolveAnimationFrame(overlay, 60);
 
     expect(startFrame.nodes[0]?.view.content.label).toBe('Start');
     expect(switchedFrame.nodes[0]?.view.content.label).toBe('End');
@@ -586,7 +586,7 @@ describe('transition overlay', () => {
         rect: { x: 240, y: 120, width: 180, height: 80 },
       })),
     };
-    const overlay = buildTransitionOverlayState({
+    const overlay = buildTransitionFrameState({
       id: 1,
       startedAt: 0,
       duration: 100,
@@ -598,8 +598,8 @@ describe('transition overlay', () => {
       toPresentation,
     });
 
-    const midFrame = resolveTransitionOverlayFrame(overlay, 50);
-    const endFrame = resolveTransitionOverlayFrame(overlay, 100);
+    const midFrame = resolveAnimationFrame(overlay, 50);
+    const endFrame = resolveAnimationFrame(overlay, 100);
 
     expect(midFrame.nodes[0]?.rect).toEqual(fromPresentation.nodes[0]?.rect);
     expect(endFrame.nodes[0]?.rect).toEqual(fromPresentation.nodes[0]?.rect);
@@ -644,7 +644,7 @@ describe('transition overlay', () => {
       ]),
     };
 
-    const overlay = buildTransitionOverlayState({
+    const overlay = buildTransitionFrameState({
       id: 1,
       startedAt: 0,
       duration: 100,
@@ -667,8 +667,8 @@ describe('transition overlay', () => {
       },
     });
 
-    const beforeSwitch = resolveTransitionOverlayFrame(overlay, 20);
-    const afterSwitch = resolveTransitionOverlayFrame(overlay, 90);
+    const beforeSwitch = resolveAnimationFrame(overlay, 20);
+    const afterSwitch = resolveAnimationFrame(overlay, 90);
 
     expect(beforeSwitch.nodes[0]?.view.controls.showChildGroupControls).toBe(false);
     expect(afterSwitch.nodes[0]?.view.controls.showChildGroupControls).toBe(true);
@@ -712,7 +712,7 @@ describe('transition overlay', () => {
       ]),
     };
 
-    const overlay = buildTransitionOverlayState({
+    const overlay = buildTransitionFrameState({
       id: 1,
       startedAt: 0,
       duration: 100,
@@ -735,15 +735,15 @@ describe('transition overlay', () => {
       toPresentation: buildSimpleSnapshot('End'),
     });
 
-    const beforeSwitch = resolveTransitionOverlayFrame(overlay, 20);
-    const afterSwitch = resolveTransitionOverlayFrame(overlay, 30);
+    const beforeSwitch = resolveAnimationFrame(overlay, 20);
+    const afterSwitch = resolveAnimationFrame(overlay, 30);
 
     expect(beforeSwitch.nodes[0]?.view.controls.showChildGroupControls).toBe(true);
     expect(afterSwitch.nodes[0]?.view.controls.showChildGroupControls).toBe(false);
   });
 
   it('keeps persistent nodes on their source view until their staged motion finishes', () => {
-    const overlay = buildTransitionOverlayState({
+    const overlay = buildTransitionFrameState({
       id: 1,
       startedAt: 0,
       duration: 100,
@@ -773,8 +773,8 @@ describe('transition overlay', () => {
       },
     });
 
-    const midFrame = resolveTransitionOverlayFrame(overlay, 50);
-    const finishedFrame = resolveTransitionOverlayFrame(overlay, 70);
+    const midFrame = resolveAnimationFrame(overlay, 50);
+    const finishedFrame = resolveAnimationFrame(overlay, 70);
 
     expect(midFrame.nodes[0]?.view.content.label).toBe('Start');
     expect(finishedFrame.nodes[0]?.view.content.label).toBe('End');
@@ -834,7 +834,7 @@ describe('transition overlay', () => {
       ],
       overlayEdges: [],
     } satisfies CanvasRenderSnapshot;
-    const overlay = buildTransitionOverlayState({
+    const overlay = buildTransitionFrameState({
       id: 1,
       startedAt: 0,
       duration: 100,
@@ -845,7 +845,7 @@ describe('transition overlay', () => {
       toPresentation,
     });
 
-    const midFrame = resolveTransitionOverlayFrame(overlay, 25);
+    const midFrame = resolveAnimationFrame(overlay, 25);
     const child = midFrame.nodes.find((node) => node.id === 'child');
     const parent = midFrame.nodes.find((node) => node.id === 'parent');
 
@@ -857,7 +857,7 @@ describe('transition overlay', () => {
   });
 
   it('keeps expanded content hidden until growth windows finish', () => {
-    const overlay = buildTransitionOverlayState({
+    const overlay = buildTransitionFrameState({
       id: 1,
       startedAt: 0,
       duration: 100,
@@ -887,8 +887,8 @@ describe('transition overlay', () => {
       },
     });
 
-    const earlyFrame = resolveTransitionOverlayFrame(overlay, 20);
-    const completedResizeFrame = resolveTransitionOverlayFrame(overlay, 90);
+    const earlyFrame = resolveAnimationFrame(overlay, 20);
+    const completedResizeFrame = resolveAnimationFrame(overlay, 90);
 
     expect(earlyFrame.nodes[0]?.view.content.label).toBe('Start');
     expect(completedResizeFrame.nodes[0]?.view.content.label).toBe('End');
@@ -896,7 +896,7 @@ describe('transition overlay', () => {
 
   it('pins fade-in nodes to their endpoint geometry when no move or resize windows exist', () => {
     const finalRect = { x: 220, y: 140, width: 180, height: 96 };
-    const overlay = buildTransitionOverlayState({
+    const overlay = buildTransitionFrameState({
       id: 1,
       startedAt: 0,
       duration: 100,
@@ -926,14 +926,14 @@ describe('transition overlay', () => {
       },
     });
 
-    const midFrame = resolveTransitionOverlayFrame(overlay, 50);
+    const midFrame = resolveAnimationFrame(overlay, 50);
 
     expect(midFrame.nodes[0]?.rect).toEqual(finalRect);
   });
 
   it('pins fade-out nodes to their source geometry when no move or resize windows exist', () => {
     const initialRect = { x: 40, y: 80, width: 180, height: 96 };
-    const overlay = buildTransitionOverlayState({
+    const overlay = buildTransitionFrameState({
       id: 1,
       startedAt: 0,
       duration: 100,
@@ -963,13 +963,13 @@ describe('transition overlay', () => {
       toPresentation: emptySnapshot(),
     });
 
-    const midFrame = resolveTransitionOverlayFrame(overlay, 50);
+    const midFrame = resolveAnimationFrame(overlay, 50);
 
     expect(midFrame.nodes[0]?.rect).toEqual(initialRect);
   });
 
   it('respects staged axis windows instead of front-loading the whole sequence', () => {
-    const overlay = buildTransitionOverlayState({
+    const overlay = buildTransitionFrameState({
       id: 1,
       startedAt: 0,
       duration: 100,
@@ -1007,8 +1007,8 @@ describe('transition overlay', () => {
       },
     });
 
-    const earlyFrame = resolveTransitionOverlayFrame(overlay, 10);
-    const midFrame = resolveTransitionOverlayFrame(overlay, 50);
+    const earlyFrame = resolveAnimationFrame(overlay, 10);
+    const midFrame = resolveAnimationFrame(overlay, 50);
 
     expect(earlyFrame.nodes[0]?.rect.x).toBeCloseTo(50, 4);
     expect(earlyFrame.nodes[0]?.rect.y).toBeCloseTo(0, 4);

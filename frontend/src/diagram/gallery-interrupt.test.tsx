@@ -7,7 +7,7 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { CanvasCamera } from '../canvas/camera';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
-import { captureTransitionOverlaySnapshot } from '../canvas/rendering/transition/overlay';
+import { captureTransitionFrameSnapshot } from '../canvas/rendering/transition/overlay';
 import { loadGallery } from '../test/curated-rendering';
 import { useDiagramEngine } from './useDiagramEngine';
 
@@ -64,9 +64,9 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
     toJSON: () => ({}),
   });
   const snapshot = (): CanvasRenderSnapshot =>
-    engine.transitionOverlay && engine.overlayFrameStore.getSnapshot()
-      ? captureTransitionOverlaySnapshot({
-          state: engine.transitionOverlay,
+    engine.transitionFrame && engine.overlayFrameStore.getSnapshot()
+      ? captureTransitionFrameSnapshot({
+          state: engine.transitionFrame,
           frame: engine.overlayFrameStore.getSnapshot()!,
         })
       : engine.presentation;
@@ -85,9 +85,6 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
       callbacks.clear();
       for (const callback of pending) callback(now);
     });
-    const requiredGeneration = engine.requiredHostGeneration;
-    if (requiredGeneration !== null)
-      await act(async () => engine.notifyDisplayHostSettled(requiredGeneration));
   };
   try {
     await act(async () => root.render(<Harness doc={initial.doc} />));
@@ -101,15 +98,14 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
         },
       } as unknown as CanvasCamera);
     });
-    for (let i = 0; i < 30 && (callbacks.size || engine.requiredHostGeneration !== null); i++)
-      await advance(now + 100);
+    for (let i = 0; i < 30 && callbacks.size; i++) await advance(now + 100);
     await act(async () => {
       engine.setPendingStructuralTransitionIntent({ direction: 'in', focus: null });
       root.render(<Harness doc={expanded.doc} />);
     });
-    for (let i = 0; i < 30 && !engine.transitionOverlay; i++) await advance(now + 50);
-    expect(engine.transitionOverlay).not.toBeNull();
-    const overlay = engine.transitionOverlay;
+    for (let i = 0; i < 30 && !engine.transitionFrame; i++) await advance(now + 50);
+    expect(engine.transitionFrame).not.toBeNull();
+    const overlay = engine.transitionFrame;
     if (!overlay) throw new Error('Expansion must create an overlay');
     await advance(overlay.startedAt + overlay.duration * 0.4);
     const before = appearance(snapshot());

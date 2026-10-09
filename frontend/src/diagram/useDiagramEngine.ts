@@ -31,7 +31,7 @@ export interface UseDiagramEngineArgs {
   maxZoom: number;
 }
 
-export const resolveTransitionLiteMode = (hasTransitionOverlay: boolean) => hasTransitionOverlay;
+export const resolveTransitionLiteMode = (hasTransitionFrame: boolean) => hasTransitionFrame;
 
 export function useDiagramEngine({
   doc,
@@ -253,21 +253,17 @@ export function useDiagramEngine({
     reportUserGestureMove: motion.reportUserGestureMove,
     reportUserGestureEnd: motion.reportUserGestureEnd,
     flushUserGesture: motion.flushUserGesture,
-    notifyDisplayHostSettled: motion.notifyDisplayHostSettled,
     initialViewport: bootstrap.defaultViewport,
     setPendingStructuralTransitionIntent,
     graph: rendering.graph,
     compiled,
     presentation,
-    transitionOverlay: motion.transitionOverlay,
+    transitionFrame: motion.transitionFrame,
     overlayFrameStore: motion.overlayFrameStore,
-    hideHostVisuals: motion.hideHostVisuals,
-    transitionLiteMode: resolveTransitionLiteMode(Boolean(motion.transitionOverlay)),
     isTransitionRunning: motion.motionPhase === 'animating',
     isTransitionQueued,
     motionPhase: motion.motionPhase,
     initialViewportPending: bootstrap.initialViewportPending,
-    requiredHostGeneration: motion.requiredHostGeneration,
     cancelTransitions,
   };
 }

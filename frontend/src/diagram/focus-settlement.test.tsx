@@ -109,12 +109,9 @@ it.each([
       frames.clear();
       for (const callback of pending) callback(now);
     });
-    const generation = engine.requiredHostGeneration;
-    if (generation !== null) await act(async () => engine.notifyDisplayHostSettled(generation));
   };
   const settle = async () => {
-    for (let i = 0; i < 120 && (frames.size || engine.requiredHostGeneration !== null); i++)
-      await advance(now + 50);
+    for (let i = 0; i < 120 && frames.size; i++) await advance(now + 50);
   };
   try {
     await act(async () => root.render(<Harness />));
@@ -134,8 +131,8 @@ it.each([
     await act(async () => {
       expect(focus.focusViewOnEntity('browser-editor-shell')).toBe(true);
     });
-    for (let i = 0; i < 40 && !engine.transitionOverlay; i++) await advance(now + 50);
-    const overlay = engine.transitionOverlay;
+    for (let i = 0; i < 40 && !engine.transitionFrame; i++) await advance(now + 50);
+    const overlay = engine.transitionFrame;
     if (!overlay) throw new Error('Expected focus expansion animation');
     await advance(overlay.startedAt + overlay.duration * 0.4);
     expect(doc.view?.scopeRootId).toBeUndefined();
@@ -146,8 +143,7 @@ it.each([
         replaceDocument(structuredClone(initial.doc));
         setDocumentKey('replacement');
       } else if (interruption === 'gesture') engine.reportUserGestureStart();
-      else
-        engine.requestNavigation({ kind: 'fit-scene', preset: 'layout', waitForHostSettle: false });
+      else engine.requestNavigation({ kind: 'fit-scene', preset: 'layout' });
     });
     expect(doc.view?.scopeRootId).toBe(
       interruption === 'replaced-document' ? undefined : 'browser-editor-shell',
@@ -162,7 +158,7 @@ it.each([
       interruption === 'replaced-document' ? undefined : 'browser-editor-shell',
     );
     expect(engine.motionPhase).toBe('idle');
-    expect(engine.transitionOverlay).toBeNull();
+    expect(engine.transitionFrame).toBeNull();
   } finally {
     await act(async () => root.unmount());
   }

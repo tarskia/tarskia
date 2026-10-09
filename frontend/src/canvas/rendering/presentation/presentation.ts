@@ -213,12 +213,6 @@ interface RawOverlayEdgeSpec
   semanticTargetId?: string;
 }
 
-/** Immutable render snapshots are revisions; unchanged inputs retain their identity. */
-export const areCanvasRenderSnapshotsEqual = (
-  left: CanvasRenderSnapshot,
-  right: CanvasRenderSnapshot,
-): boolean => left === right;
-
 const buildStaticCanvasPresentationUncached = ({
   scene,
   debug,

@@ -818,52 +818,6 @@ button.node-meta-cell:disabled {
   pointer-events: none;
 }
 
-.transition-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 7;
-}
-
-.transition-overlay-world {
-  position: absolute;
-  inset: 0;
-  transform-origin: 0 0;
-}
-
-.transition-overlay-svg {
-  position: absolute;
-  inset: 0;
-  overflow: visible;
-}
-
-.transition-overlay-node-layer,
-.transition-overlay-label-layer {
-  position: absolute;
-  inset: 0;
-}
-
-.transition-overlay-label-layer {
-  z-index: 3;
-}
-
-.transition-overlay-node-layer {
-  z-index: 1;
-}
-
-.transition-overlay-node-shell {
-  box-sizing: border-box;
-  border-radius: 4px;
-  background: var(--node-bg);
-  border: var(--node-border);
-}
-
-.transition-overlay-edge-path {
-  fill: none;
-  stroke: var(--stroke-default);
-  stroke-width: 1.5px;
-}
-
 .edge-overlay-svg {
   position: absolute;
   inset: 0;
@@ -1024,72 +978,6 @@ button.node-meta-cell:disabled {
   background: rgb(from var(--canvas-bg) r g b / 1);
 }
 
-.transition-overlay-label-layer .edge-label {
-  pointer-events: none;
-}
-
-.canvas-host-hidden .canvas-nodes,
-.canvas-host-hidden .edge-overlay--host {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.canvas-host-hidden .edge-overlay--host {
-  display: none;
-}
-
-.canvas-host-hidden .canvas-node {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* ----------------------------------------------------------------
- * Outline mode – transparent node interiors on the regular canvas.
- * Restores the pre-blueprint "outline only" treatment.
- *
- * NOTE: The `box-shadow` values below are hardcoded and do NOT pick up
- * the `--shadow-*` chrome tokens defined in `index.css`. Those tokens
- * apply to app chrome (panels, toolbars, popovers); diagram nodes are
- * rendered by Tarskia's canvas
- * and so their elevation is owned by these rules. Both the live-node
- * block (`.canvas-visual-outline .canvas-node`) and the
- * transition-overlay block below must be kept in sync.
- * ---------------------------------------------------------------- */
-
-.transition-overlay-visual-outline .transition-overlay-node-shell {
-  background: var(--node-fill);
-  border-width: 1px;
-  border-style: solid;
-  box-shadow: var(--node-shadow);
-}
-
-.transition-overlay-visual-outline .transition-overlay-node-shell .node {
-  background: transparent;
-}
-
-.transition-overlay-visual-outline .transition-overlay-node-shell .node-subtitle,
-.transition-overlay-visual-outline .transition-overlay-node-shell .node-title-placeholder {
-  color: rgba(218, 237, 250, 0.78) !important;
-}
-
-.transition-overlay-visual-outline .transition-overlay-edge-path,
-.transition-overlay-visual-outline .group-edge-path {
-  stroke: rgba(226, 241, 255, 0.22);
-  stroke-width: 1.3px;
-}
-
-.transition-overlay-visual-outline .edge-overlay-path {
-  stroke: rgba(225, 241, 255, 0.13);
-  stroke-width: 0.95;
-  stroke-dasharray: 1.9 6.2;
-}
-
-.transition-overlay-visual-outline .edge-overlay-path.edge-overlay-path-selected {
-  stroke: rgba(255, 191, 112, 0.28);
-  stroke-width: 1.08;
-}
-
 .canvas-visual-outline .canvas-node {
   background: var(--node-fill);
   border-width: 1px;
@@ -1137,38 +1025,13 @@ button.node-meta-cell:disabled {
   stroke: rgba(255, 191, 112, 0.74);
   stroke-width: 2.1px;
 }
-
-/*
- * Light-theme overrides. Triggered by the `.light` class on `<html>`, which the
- * theme bootstrap (index.html + src/ui/useTheme.ts) maintains based on the
- * user's preference (system / light / dark, with `system` resolved eagerly).
- */
-:root.light .transition-overlay-visual-outline .transition-overlay-node-shell .node-subtitle,
-:root.light
-  .transition-overlay-visual-outline
-  .transition-overlay-node-shell
-  .node-title-placeholder,
 :root.light .canvas-visual-outline .canvas-node .node-subtitle,
 :root.light .canvas-visual-outline .canvas-node .node-title-placeholder {
   color: rgba(28, 57, 84, 0.74) !important;
 }
-
-:root.light .transition-overlay-visual-outline .transition-overlay-edge-path {
-  stroke: rgba(31, 63, 93, 0.22);
-}
-
-/* Underlay = the main edge line. The outline-mode base rules use a
- * cyan-tinted stroke calibrated for dark canvases; on light we need a
- * slate ink so it actually reads. */
-:root.light .transition-overlay-visual-outline .transition-overlay-edge-path,
 :root.light .canvas-visual-outline .edge-underlay-path {
   stroke: rgba(31, 63, 93, 0.42);
 }
-
-/* Overlay = the decorative dashed accent painted over the underlay.
- * Base `opacity: 0.58` multiplies stroke alpha, so the raw value needs
- * to be roughly 2x what you actually want to see. */
-:root.light .transition-overlay-visual-outline .edge-overlay-path,
 :root.light .canvas-visual-outline .edge-overlay-path {
   stroke: rgba(31, 63, 93, 0.34);
 }
