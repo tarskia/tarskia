@@ -28,7 +28,6 @@ projects:
               paths:
                 - frontend/**
                 - packages/diagram-semantics/**
-                - scripts/build-semantics.mjs
                 - openapi/**
                 - .node-version
                 - render.yaml
@@ -62,7 +61,6 @@ projects:
               paths:
                 - frontend/**
                 - packages/diagram-semantics/**
-                - scripts/build-semantics.mjs
                 - openapi/**
                 - .node-version
                 - render.yaml

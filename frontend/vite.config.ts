@@ -3,6 +3,8 @@ import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 
+import { semanticsSourceAlias } from './semantics-source-alias';
+
 const DEV_WORKER_DIAGRAM_ENDPOINT = '/__dev/worker-diagram';
 const FRONTEND_ROOT = import.meta.dirname;
 const WORKSPACE_ROOT = path.resolve(FRONTEND_ROOT, '..');
@@ -90,6 +92,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     root: FRONTEND_ROOT,
+    resolve: { alias: [semanticsSourceAlias] },
     envDir: WORKSPACE_ROOT,
     plugins: [
       react(),

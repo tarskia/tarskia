@@ -7,11 +7,12 @@ This repository contains the public, open-source parts of Tarskia:
 - `frontend/`: Vite + React + TypeScript app for the public gallery viewer.
 - `gallery/curated/`: source-of-truth curated gallery diagrams.
 - `packages/diagram-semantics/`: shared semantic diagram model and validation package.
-- `scripts/`: shared build support, currently semantic asset preparation.
 - `openapi/`: public API contract snapshot consumed by the generated frontend client.
 
 The backend and diagram-generation worker are private repositories while the
 worker pipeline is still experimental.
+
+The frontend consumes `packages/diagram-semantics/src` directly through an alias; `dist/` is only for the package’s own build.
 
 ## Working Norms
 
@@ -44,7 +45,6 @@ Generated or derived locations include:
 
 - `npm run build`: build all npm workspaces.
 - `npm run test`: run tests across npm workspaces.
-- `npm run build:semantics`: rebuild shared semantic assets.
 - `npm run validate:schemas`: run frontend schema validation checks.
 
 Frontend commands can also be run with `-w @tarskia/frontend`:
