@@ -4,8 +4,10 @@ import {
   resolveTypeDef,
   traitMatches,
 } from './schema';
+import { CORE_GROUP_TYPE_ID } from './schema-ids';
 import { buildSchemaActivationMap, buildSchemaId, parseSchemaRef } from './schema-ref';
 import type {
+  Entity,
   RelationFulfillment,
   RelationTypeDef,
   SchemaActivation,
@@ -218,6 +220,105 @@ export const relationTypeMatchesEndpoints = ({
   return directed ? forwardMatches : forwardMatches || reverseMatches;
 };
 
+export interface ContainmentEvaluation {
+  allowed: boolean;
+  failure?: 'invalid_parent' | 'invalid_child';
+  explicitContainmentOk: boolean;
+  genericCrossLayerContainmentOk: boolean;
+  parentLayer?: number;
+  childLayer?: number;
+}
+
+export const evaluateContainment = ({
+  schema,
+  parentTypeId,
+  childTypeId,
+  schemaActivations,
+}: {
+  schema: SchemaModule;
+  parentTypeId: string;
+  childTypeId: string;
+  schemaActivations?: SchemaActivation[];
+}): ContainmentEvaluation => {
+  const parentType = resolveTypeDef(schema, parentTypeId);
+  const childType = resolveTypeDef(schema, childTypeId);
+  const containment = parentType?.containment;
+  const activationMap = schemaActivations ? buildSchemaActivationMap(schemaActivations) : undefined;
+  const parentLayer =
+    parentType?.originSchemaId && activationMap
+      ? activationMap.get(buildSchemaId(parseSchemaRef(parentType.originSchemaId)))?.layer
+      : undefined;
+  const childLayer =
+    childType?.originSchemaId && activationMap
+      ? activationMap.get(buildSchemaId(parseSchemaRef(childType.originSchemaId)))?.layer
+      : undefined;
+  const explicitContainmentOk = matchesExplicitContainment(schema, containment, childTypeId);
+  const structuralGroupContainmentOk =
+    explicitContainmentOk && traitMatches(schema, childTypeId, [GROUP_LIKE_TRAIT_ID]);
+  const genericCrossLayerContainmentOk =
+    parentLayer !== undefined &&
+    childLayer !== undefined &&
+    childLayer - parentLayer === 1 &&
+    traitMatches(schema, parentTypeId, [CONTAINER_TRAIT_ID]) &&
+    traitMatches(schema, childTypeId, [CONTAINABLE_TRAIT_ID]);
+  const invalidLayerDirection =
+    parentLayer !== undefined &&
+    childLayer !== undefined &&
+    (childLayer < parentLayer || childLayer > parentLayer + 1);
+  const failure =
+    (!containment && !genericCrossLayerContainmentOk) ||
+    (invalidLayerDirection && !structuralGroupContainmentOk)
+      ? 'invalid_parent'
+      : !genericCrossLayerContainmentOk && !explicitContainmentOk
+        ? 'invalid_child'
+        : undefined;
+  return {
+    allowed: failure === undefined,
+    failure,
+    explicitContainmentOk,
+    genericCrossLayerContainmentOk,
+    parentLayer,
+    childLayer,
+  };
+};
+
+export const typedGroupAllowsChild = ({
+  schema,
+  parent,
+  childTypeId,
+}: {
+  schema: SchemaModule;
+  parent: Pick<Entity, 'type' | 'props'>;
+  childTypeId: string;
+}): boolean => {
+  if (parent.type !== CORE_GROUP_TYPE_ID) return true;
+  const groupType = parent.props?.groupType;
+  const typed = parent.props?.mode === 'typed' || typeof groupType === 'string';
+  // Invalid group declarations are diagnosed on the group itself.
+  if (
+    !typed ||
+    typeof groupType !== 'string' ||
+    groupType.length === 0 ||
+    !schema.types.some((type) => type.id === groupType)
+  )
+    return true;
+  return childTypeId === CORE_GROUP_TYPE_ID || childTypeId === groupType;
+};
+
+export const canContainEntity = ({
+  schema,
+  parent,
+  childTypeId,
+  schemaActivations,
+}: {
+  schema: SchemaModule;
+  parent: Pick<Entity, 'type' | 'props'>;
+  childTypeId: string;
+  schemaActivations?: SchemaActivation[];
+}): boolean =>
+  evaluateContainment({ schema, parentTypeId: parent.type, childTypeId, schemaActivations })
+    .allowed && typedGroupAllowsChild({ schema, parent, childTypeId });
+
 export const getAllowedChildTypeIds = ({
   schema,
   parentTypeId,
@@ -226,53 +327,15 @@ export const getAllowedChildTypeIds = ({
   schema: SchemaModule;
   parentTypeId: string;
   schemaActivations?: SchemaActivation[];
-}): string[] => {
-  const parentType = resolveTypeDef(schema, parentTypeId);
-  const containment = parentType?.containment;
-  const activationMap = schemaActivations ? buildSchemaActivationMap(schemaActivations) : undefined;
-  const parentLayer =
-    parentType?.originSchemaId && activationMap
-      ? activationMap.get(buildSchemaId(parseSchemaRef(parentType.originSchemaId)))?.layer
-      : undefined;
-
-  return schema.types
-    .filter((candidate) => {
-      const candidateType = resolveTypeDef(schema, candidate.id);
-      const childLayer =
-        candidateType?.originSchemaId && activationMap
-          ? activationMap.get(buildSchemaId(parseSchemaRef(candidateType.originSchemaId)))?.layer
-          : undefined;
-
-      const explicitContainmentOk = matchesExplicitContainment(schema, containment, candidate.id);
-      const structuralGroupContainmentOk =
-        explicitContainmentOk && traitMatches(schema, candidate.id, [GROUP_LIKE_TRAIT_ID]);
-
-      if (structuralGroupContainmentOk) {
-        return true;
-      }
-
-      if (parentLayer !== undefined && childLayer !== undefined) {
-        const layerDelta = childLayer - parentLayer;
-        if (layerDelta < 0 || layerDelta > 1) {
-          return false;
-        }
-        if (layerDelta === 1) {
-          return (
-            traitMatches(schema, parentTypeId, [CONTAINER_TRAIT_ID]) &&
-            traitMatches(schema, candidate.id, [CONTAINABLE_TRAIT_ID])
-          );
-        }
-      }
-
-      if (!containment) {
-        return false;
-      }
-
-      return explicitContainmentOk;
-    })
+}): string[] =>
+  schema.types
+    .filter(
+      (candidate) =>
+        evaluateContainment({ schema, parentTypeId, childTypeId: candidate.id, schemaActivations })
+          .allowed,
+    )
     .map((candidate) => candidate.id)
     .sort((left, right) => left.localeCompare(right));
-};
 
 export const isAllowedChildType = ({
   schema,
