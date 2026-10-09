@@ -46,15 +46,12 @@ export {
   validateSchemaModuleObject,
 } from '@tarskia/diagram-semantics';
 export * from '../model/diagnostics';
-export * from '../model/diagram-changelog';
 export * from '../model/diagram-store';
 export * from '../model/display-contract';
 export * from '../model/document-commands';
 export * from '../model/document-mutations';
 export * from '../model/entity-display';
 export * from '../model/entity-tree';
-export * from '../model/history';
-export * from '../model/personal-schema-registry';
 export * from '../model/schema';
 export * from '../model/schema-display';
 export * from '../model/schema-ids';
