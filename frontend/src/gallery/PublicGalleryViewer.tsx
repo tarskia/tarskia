@@ -7,6 +7,7 @@ import { LoadingState } from '../components/ui/loading-state';
 import { cloneAnimationSettings } from '../diagram/animation-settings';
 import { useDiagramEngine } from '../diagram/useDiagramEngine';
 import { useDiagramSurface } from '../diagram/useDiagramSurface';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import { buildSchemaVersionCatalog } from '../model/validation/schema-closure';
 import type { PublicGalleryShellContext } from '../PublicGalleryShell';
 import { semanticBootstrap } from '../semantic/bootstrap';
@@ -48,6 +49,7 @@ export const shouldDelayGalleryCanvasMount = (params: {
   (params.hasSceneContent && !params.defaultViewport && !params.isLiveCanvasVisible);
 
 export default function PublicGalleryViewer() {
+  const reducedMotion = useReducedMotion();
   const { namespace = '', slug = '' } = useParams();
   const [searchParams] = useSearchParams();
   const { setViewerSearchChrome } = useOutletContext<PublicGalleryShellContext>();
@@ -150,7 +152,7 @@ export default function PublicGalleryViewer() {
     doc,
     schema,
     animationSettings,
-    skipTransitions: false,
+    skipTransitions: reducedMotion,
     showDebug: false,
     persistViewport,
     savedViewport: doc.view?.layout?.viewport,

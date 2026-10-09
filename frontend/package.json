@@ -11,7 +11,7 @@
     "generate:api": "orval --config orval.config.ts",
     "lint": "biome check --diagnostic-level=error .",
     "format": "biome check --write --unsafe .",
-    "validate:schemas": "vitest run --run src/semantic/bundled-assets.test.ts src/model/validation/schema.test.ts src/model/validation/schema-module-examples.test.ts",
+    "validate:schemas": "vitest run --run src/semantic/bundled-assets.test.ts src/model/validation/schema-module-examples.test.ts && npm run test -w @tarskia/diagram-semantics -- src/__tests__/viewer-migrated/validation/schema.test.ts",
     "test": "vitest run"
   },
   "dependencies": {
