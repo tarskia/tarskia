@@ -211,10 +211,10 @@ const withView = (
       : undefined,
 });
 
-const buildTestLayout = (doc: SemanticDocument, canvasSize?: { width: number; height: number }) => {
+const buildTestLayout = (doc: SemanticDocument) => {
   const graph = buildGraphModel(doc, schema);
   const viewState = compileDiagramViewState({ doc, schema });
-  return buildLayoutResult({ graph, viewState, canvasSize });
+  return buildLayoutResult({ graph, viewState });
 };
 
 describe('buildLayoutResult', () => {
@@ -447,7 +447,6 @@ describe('buildLayoutResult', () => {
       withView(doc, {
         scopeRootId: 'platform',
       }),
-      { width: 1600, height: 900 },
     );
 
     expect(layout.visibleIds.has('platform')).toBe(false);
@@ -464,7 +463,7 @@ describe('buildLayoutResult', () => {
     expect((database?.size.width ?? 0) - (tableGroup?.size.width ?? 0)).toBeGreaterThan(100);
   });
 
-  it('lets the descended focus shell fill the viewport aspect instead of shrinking to its content', () => {
+  it('lets the descended focus shell use the fixed 16:9 frame instead of shrinking to its content', () => {
     const doc: SemanticDocument = {
       version: '1',
       schemaRefs: [],
@@ -490,7 +489,6 @@ describe('buildLayoutResult', () => {
       withView(doc, {
         scopeRootId: 'ordersdb',
       }),
-      { width: 1600, height: 900 },
     );
 
     const tableGroup = layout.tree.byId.get('table-group');

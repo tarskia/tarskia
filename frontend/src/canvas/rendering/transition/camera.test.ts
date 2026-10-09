@@ -62,7 +62,6 @@ const buildLayout = (defs: NodeDef[]) => {
     visibleIds: new Set([...tree.byId.keys()].filter((id) => id !== tree.rootId)),
     absolutePositions: buildAbsolutePositions(tree),
     zIndexById: new Map(),
-    layoutMeta: { level: 0 },
   } as unknown as LayoutResult;
 };
 

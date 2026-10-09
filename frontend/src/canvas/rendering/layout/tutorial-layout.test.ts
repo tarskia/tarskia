@@ -39,7 +39,6 @@ const buildTutorialLayout = (expandedIds: string[]) => {
   return buildLayoutResult({
     graph,
     viewState,
-    canvasSize: { width: 1600, height: 900 },
   });
 };
 
@@ -56,7 +55,6 @@ describe('tutorial layout', () => {
     const scene = buildLayoutResult({
       graph,
       viewState,
-      canvasSize: { width: 1200, height: 800 },
     });
     const presentation = buildStaticCanvasPresentation({ scene });
     const visibleNodeIds = presentation.nodes

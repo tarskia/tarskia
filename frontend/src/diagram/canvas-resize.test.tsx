@@ -49,7 +49,7 @@ it.each([
   const persistViewport = vi.fn();
   function Harness() {
     engine = useDiagramEngine({
-      doc: initial.scene.doc,
+      doc: initial.doc,
       schema: gallery.graph.schema,
       animationSettings: DEFAULT_ANIMATION_SETTINGS,
       skipTransitions: false,

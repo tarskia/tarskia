@@ -1,8 +1,4 @@
-import {
-  buildDiagramViewForSearchReveal,
-  getDiagramViewExpandedMap,
-  searchDiagramText,
-} from '@tarskia/diagram-semantics';
+import { buildDiagramViewForSearchReveal, searchDiagramText } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import type { DtoGalleryDiagramDetailResponse } from '../api/generated/model';
@@ -128,7 +124,6 @@ export default function PublicGalleryViewer() {
     sourceDiagnostics,
   });
   const { schema, entityIndex } = semanticRuntime;
-  const expanded = useMemo(() => getDiagramViewExpandedMap(doc.view), [doc.view]);
   const focusRootId = doc.view?.scopeRootId;
   const diagramSearchQuery = searchParams.get('q') ?? '';
   const diagramSearchMatches = useMemo(
@@ -199,8 +194,7 @@ export default function PublicGalleryViewer() {
     [doc.relations, selectedEdgeId],
   );
   const selectedEntityCanFocus = Boolean(
-    selectedEntity &&
-      canFocusSceneNode({ sceneTree: compiled.scene.tree, entityId: selectedEntity.id }),
+    selectedEntity && canFocusSceneNode({ sceneTree: compiled.tree, entityId: selectedEntity.id }),
   );
   const diagramProvenance = useMemo(() => buildDiagramProvenanceSource(doc), [doc]);
   const inspectorViewModel = useMemo(
@@ -277,8 +271,7 @@ export default function PublicGalleryViewer() {
   );
 
   const { clearFocus, focusViewOnEntity } = useFocusViewController({
-    sceneTree: compiled.scene.tree,
-    expanded,
+    sceneTree: compiled.tree,
     getCurrentCanvasSize: diagramEngine.getCurrentCanvasSize,
     canvasLayoutVersion: diagramEngine.canvasLayoutVersion,
     showInspector,
@@ -293,19 +286,19 @@ export default function PublicGalleryViewer() {
     diagramSearchMatches.matchingEntityIds.size + diagramSearchMatches.matchingRelationIds.size;
   const visibleSearchEntityMatchCount = useMemo(
     () =>
-      [...diagramSearchMatches.matchingEntityIds].filter((id) => compiled.scene.visibleIds.has(id))
+      [...diagramSearchMatches.matchingEntityIds].filter((id) => compiled.visibleIds.has(id))
         .length,
-    [compiled.scene.visibleIds, diagramSearchMatches.matchingEntityIds],
+    [compiled.visibleIds, diagramSearchMatches.matchingEntityIds],
   );
   const visibleSearchRelationMatchCount = useMemo(
     () =>
       doc.relations.filter(
         (relation) =>
           diagramSearchMatches.matchingRelationIds.has(relation.id) &&
-          compiled.scene.visibleIds.has(relation.from) &&
-          compiled.scene.visibleIds.has(relation.to),
+          compiled.visibleIds.has(relation.from) &&
+          compiled.visibleIds.has(relation.to),
       ).length,
-    [compiled.scene.visibleIds, diagramSearchMatches.matchingRelationIds, doc.relations],
+    [compiled.visibleIds, diagramSearchMatches.matchingRelationIds, doc.relations],
   );
   const searchHiddenMatches = Math.max(
     0,

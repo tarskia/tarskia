@@ -92,7 +92,6 @@ const buildOverlay = (fromTree: LayoutTree, toTree: LayoutTree, direction: 'in' 
         nodeVisuals: buildNodeVisualMap({ schema, tree }),
         absolutePositions: buildAbsolutePositions(tree),
         zIndexById: new Map(),
-        layoutMeta: { level: 0 },
       },
     });
   const planningAdvisory = buildTransitionPlanningAdvisory({ direction, fromTree, toTree });

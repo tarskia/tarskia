@@ -98,7 +98,7 @@ it('reduced motion expands, collapses and expands all to animated endpoints with
       expect(callbacks.size).toBe(0);
     };
     try {
-      await act(async () => root.render(<Harness doc={collapsed.scene.doc} />));
+      await act(async () => root.render(<Harness doc={collapsed.doc} />));
       await act(async () => {
         engine.onCanvasElementChange(canvas);
         engine.onCanvasInit({
@@ -115,7 +115,7 @@ it('reduced motion expands, collapses and expands all to animated endpoints with
       for (const { rendered, direction } of targets) {
         await act(async () => {
           engine.setPendingStructuralTransitionIntent({ direction, focus: null });
-          root.render(<Harness doc={rendered.scene.doc} />);
+          root.render(<Harness doc={rendered.doc} />);
         });
         if (skipTransitions) {
           // Host acknowledgement may remain, but no motion rAF is needed to reach the target.
@@ -166,7 +166,7 @@ it.each([
   const traceSelection = vi.fn();
   function Harness({ reduced }: { reduced: boolean }) {
     engine = useDiagramEngine({
-      doc: initial.scene.doc,
+      doc: initial.doc,
       schema: gallery.graph.schema,
       animationSettings: DEFAULT_ANIMATION_SETTINGS,
       skipTransitions: reduced,

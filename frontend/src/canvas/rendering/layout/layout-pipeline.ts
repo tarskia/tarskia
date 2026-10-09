@@ -21,7 +21,6 @@ export function buildLayoutResult(params: {
   graph: GraphModel;
   viewState: CompiledDiagramViewState;
   uncached?: boolean;
-  canvasSize?: { width: number; height: number } | null;
 }): LayoutResult {
   const { graph, viewState } = params;
   const tree = buildSceneTree({ tree: viewState.tree });
@@ -31,7 +30,6 @@ export function buildLayoutResult(params: {
     edges: viewState.edges,
   });
   applySceneLayout({
-    schema: graph.schema,
     edges,
     tree,
     nodeVisuals,
@@ -41,7 +39,6 @@ export function buildLayoutResult(params: {
     return new Set([...tree.byId.keys()].filter((id) => id !== tree.rootId));
   })();
   return {
-    doc: graph.doc,
     schema: graph.schema,
     tree,
     edges,
@@ -49,8 +46,5 @@ export function buildLayoutResult(params: {
     visibleIds,
     absolutePositions: buildAbsolutePositions(tree),
     zIndexById: buildSceneZIndex(viewState.nodePaintOrder),
-    layoutMeta: {
-      level: 0,
-    },
   };
 }

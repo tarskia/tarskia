@@ -23,7 +23,6 @@ import type {
 } from '../diagram/motion-types';
 import type { NodeVisualMode } from '../node-visual-mode';
 import type { CanvasSemanticBindings } from '../viewer-core/view-models';
-import type { CompileResult } from './compiler/compile';
 import type { EdgeOverlayInteractionBindings } from './components/edges/EdgeOverlay';
 import { resolveCachedEdgeOverlayRenderState } from './components/edges/edge-overlay-state';
 import type { DiagramCanvasProps } from './DiagramCanvas';
@@ -36,6 +35,7 @@ import type {
   ReactFlowHostRenderState,
 } from './host/reactflow/types';
 import type { GraphModel } from './rendering/graph/graph-model';
+import type { LayoutResult } from './rendering/layout/layout-pipeline';
 import type {
   CanvasOverlayEdgeView,
   CanvasPresentation,
@@ -92,7 +92,7 @@ export interface UseCanvasSurfaceControllerArgs {
     reportUserGestureEnd: (viewport: { x: number; y: number; zoom: number }) => void;
     notifyDisplayHostSettled: (generation: number) => void;
     presentation: CanvasPresentation;
-    compiled: CompileResult;
+    compiled: LayoutResult;
     transitionOverlay: TransitionOverlayState | null;
     overlayFrameStore: OverlayFrameStore | null;
     hideHostVisuals: boolean;
@@ -735,7 +735,7 @@ export function useCanvasSurfaceController({
     void canvasLayoutVersion;
     if (!showDebug) return null;
     const allIds = graph.entities.map((entity) => entity.id);
-    const layoutIds = compiled.scene.visibleIds;
+    const layoutIds = compiled.visibleIds;
     const renderedIds = new Set(hostRenderState.nodes.map((node) => node.id));
     const overlayEdges = decoratedPresentation.overlayEdges.length;
     const hiddenStateIds = nodes.filter((node) => node.hidden).map((node) => node.id);
@@ -883,7 +883,7 @@ export function useCanvasSurfaceController({
   }, [
     showDebug,
     graph.entities,
-    compiled.scene.visibleIds,
+    compiled.visibleIds,
     hostRenderState.nodes,
     decoratedPresentation.nodes,
     decoratedPresentation.overlayEdges.length,

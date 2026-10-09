@@ -1,3 +1,4 @@
+import { buildEntityIndex } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
 import type { CanvasRect } from '../canvas/rendering/presentation/geometry';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
@@ -51,8 +52,9 @@ describe.each(galleryFiles)('$file rendering behavior', ({ file }) => {
     }
     return value;
   };
+  const entityIndex = buildEntityIndex(gallery.graph.doc.entities);
   const collapsed = render([]);
-  const topIds = gallery.graph.topLevelEntities
+  const topIds = gallery.graph.doc.entities
     .filter((entity) => (gallery.graph.childrenByParent.get(entity.id)?.length ?? 0) > 0)
     .map((entity) => entity.id);
   const variants = [
@@ -75,7 +77,7 @@ describe.each(galleryFiles)('$file rendering behavior', ({ file }) => {
       const visible = new Set(presentation.nodes.map((node) => node.id));
       const nearest = (id: string): string | undefined => {
         let current: string | undefined = id;
-        while (current && !visible.has(current)) current = gallery.graph.parentById.get(current);
+        while (current && !visible.has(current)) current = entityIndex.parentById.get(current);
         return current;
       };
       for (const edge of presentation.overlayEdges) {

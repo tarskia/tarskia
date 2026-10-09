@@ -4,18 +4,31 @@ export interface NormalizedDiagramViewState {
   view: DiagramView;
   layout: DocumentLayout;
   expanded: Record<string, boolean>;
-  hiddenIds: Set<string>;
   highlightedIds: Set<string>;
 }
+
+/** Retain supported boolean values, including explicit false flags in saved documents. */
+export const sanitizeDiagramViewNodesById = (
+  nodesById: DiagramView['nodesById'],
+): DiagramView['nodesById'] => {
+  if (!nodesById) return undefined;
+  const entries = Object.entries(nodesById)
+    .map(([id, state]): [string, DiagramViewNodeState] => [
+      id,
+      {
+        ...(typeof state?.expanded === 'boolean' ? { expanded: state.expanded } : {}),
+        ...(typeof state?.highlighted === 'boolean' ? { highlighted: state.highlighted } : {}),
+      },
+    ])
+    .filter(([, state]) => Object.keys(state).length > 0);
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+};
 
 export const normalizeDiagramViewNodesById = (
   nodesById: DiagramView['nodesById'],
 ): DiagramView['nodesById'] => {
-  if (!nodesById) {
-    return undefined;
-  }
-  const entries = Object.entries(nodesById)
-    .filter(([, state]) => Boolean(state?.expanded || state?.hidden || state?.highlighted))
+  const entries = Object.entries(sanitizeDiagramViewNodesById(nodesById) ?? {})
+    .filter(([, state]) => Boolean(state.expanded || state.highlighted))
     .sort(([leftId], [rightId]) => leftId.localeCompare(rightId));
   return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 };
@@ -58,7 +71,6 @@ export const normalizeDiagramViewState = (view?: DiagramView): NormalizedDiagram
     view: normalizedView,
     layout: normalizeDocumentLayout(normalizedView.layout),
     expanded: getDiagramViewExpandedMap(normalizedView),
-    hiddenIds: getNodeIdsByFlag(normalizedView.nodesById, 'hidden'),
     highlightedIds: getNodeIdsByFlag(normalizedView.nodesById, 'highlighted'),
   };
 };
