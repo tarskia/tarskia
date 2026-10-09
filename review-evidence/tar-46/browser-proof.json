@@ -1,0 +1,10 @@
+{
+  "enteringSelected": "true",
+  "emptyCleared": 0,
+  "afterInterrupt": 10,
+  "sameNode": true,
+  "afterControl": 10,
+  "switched": 0,
+  "supabaseNodes": 10,
+  "errors": []
+}
