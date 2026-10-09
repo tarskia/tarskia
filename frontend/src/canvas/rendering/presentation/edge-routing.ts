@@ -1,3 +1,4 @@
+import { type DirectionalEdgeLabel, joinDirectionalLabels } from '../visual/edge-labels';
 import { assignDistributedEdgeAnchors } from './edge-anchors';
 import { buildBezierEdgeGeometry, type CanvasEdgeGeometry, type CanvasRect } from './geometry';
 
@@ -12,6 +13,7 @@ interface RoutingEdge {
   sourceId: string;
   targetId: string;
   label?: string;
+  directionalLabels?: DirectionalEdgeLabel[];
   state?: string;
   hideLabel?: boolean;
   geometry: CanvasEdgeGeometry;
@@ -191,6 +193,21 @@ export const getRoutingChannelReservations = (
 ) => buildEdgeChannels(nodes, edges, incidentCounts).reservations;
 
 export const routeCanvasEdges = <T extends RoutingEdge>(nodes: RoutingNode[], edges: T[]): T[] => {
+  const rects = new Map(nodes.map((node) => [node.id, node.rect]));
+  edges = edges.map((edge) => {
+    if (!edge.directionalLabels?.length) return edge;
+    const first = edge.directionalLabels[0];
+    const source = rects.get(first.sourceId),
+      target = rects.get(first.targetId);
+    if (!source || !target) return edge;
+    const dx = target.x + target.width / 2 - source.x - source.width / 2;
+    const dy = target.y + target.height / 2 - source.y - source.height / 2;
+    const reversed = Math.abs(dx) > 0.001 ? dx < 0 : dy < 0;
+    const directionalLabels = reversed
+      ? [...edge.directionalLabels].reverse()
+      : edge.directionalLabels;
+    return { ...edge, directionalLabels, label: joinDirectionalLabels(directionalLabels) };
+  });
   const { anchors, reservations } = buildEdgeChannels(nodes, edges);
   const routed = new Map<string, T>();
   const pending: {

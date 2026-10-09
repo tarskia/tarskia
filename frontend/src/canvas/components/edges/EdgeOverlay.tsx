@@ -7,8 +7,8 @@ import type {
   CanvasOverlayEdgeView,
   CanvasRenderSnapshot,
 } from '../../rendering/presentation/presentation';
+import { EdgeLabel } from './EdgeLabel';
 import { EdgeOverlayView } from './EdgeOverlayView';
-import { resolveEdgeLabelTransform } from './edge-label-placement';
 import {
   resolveCachedEdgeOverlayRenderState,
   resolveEdgeOverlayRenderState,
@@ -20,24 +20,6 @@ export interface EdgeOverlayInteractionBindings {
 }
 
 const labelInteractivityEnabled = (edge: CanvasOverlayEdgeView) => edge.opacity > 0.15;
-
-const resolveEdgeLabelClassName = (edge: CanvasOverlayEdgeView) => {
-  const matchedClass = edge.matched ? ' edge-label-matched' : '';
-  if (edge.state === 'none') {
-    return `edge-label edge-label-dot${matchedClass}`;
-  }
-  if (edge.label) {
-    return `edge-label edge-label-text${matchedClass}`;
-  }
-  return `edge-label edge-label-text edge-label-empty${matchedClass}`;
-};
-
-const resolveEdgeLabelText = (edge: CanvasOverlayEdgeView) => {
-  if (edge.state === 'none') {
-    return '';
-  }
-  return edge.label || 'set';
-};
 
 export const resolveEdgeSelectionId = (edge: { relationId?: string; id: string }) =>
   edge.relationId ?? edge.id;
@@ -135,28 +117,11 @@ export function EdgeOverlay({
         <div className="edge-overlay-world edge-overlay-world-labels" style={transformStyle}>
           {resolvedEdges.map((edge) =>
             edge.hideLabel ? null : (
-              <button
+              <EdgeLabel
                 key={`${edge.id}-label`}
-                type="button"
-                className={resolveEdgeLabelClassName(edge)}
-                style={{
-                  transform: resolveEdgeLabelTransform(edge),
-                  opacity: edge.opacity,
-                  pointerEvents: labelInteractivityEnabled(edge) ? 'all' : 'none',
-                }}
-                onPointerDown={(event) => {
-                  event.stopPropagation();
-                }}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  if (!labelInteractivityEnabled(edge)) {
-                    return;
-                  }
-                  bindings?.onEdgeLabelClick?.(resolveEdgeSelectionId(edge));
-                }}
-              >
-                {resolveEdgeLabelText(edge)}
-              </button>
+                edge={edge}
+                onSelect={bindings?.onEdgeLabelClick}
+              />
             ),
           )}
         </div>

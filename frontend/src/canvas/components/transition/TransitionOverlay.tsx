@@ -11,7 +11,7 @@ import {
   type TransitionOverlayState,
 } from '../../rendering/transition/overlay';
 import type { OverlayFrameStore } from '../../rendering/transition/overlay-frame-store';
-import { resolveEdgeLabelTransform } from '../edges/edge-label-placement';
+import { EdgeLabel } from '../edges/EdgeLabel';
 import { EntityNodeView } from '../nodes/EntityNodeView';
 import { GroupNodeView } from '../nodes/GroupNodeView';
 
@@ -182,7 +182,6 @@ export function TransitionOverlay({
           {frame.edges
             .filter((edge) => edge.kind === 'routed')
             .map((edge) => {
-              const labelText = edge.state === 'none' ? '' : (edge.label ?? 'set');
               const labelOpacity = resolveTransitionLabelOpacity({
                 progress: frame.progress,
                 baseOpacity: edge.opacity,
@@ -192,24 +191,11 @@ export function TransitionOverlay({
                 return null;
               }
               return (
-                <div
+                <EdgeLabel
                   key={`${edge.id}:label`}
-                  className={
-                    edge.state === 'none'
-                      ? 'edge-label edge-label-dot'
-                      : labelText
-                        ? 'edge-label edge-label-text'
-                        : 'edge-label edge-label-text edge-label-empty'
-                  }
-                  style={{
-                    transform: resolveEdgeLabelTransform(edge),
-                    opacity: labelOpacity,
-                    display: labelOpacity > VISIBILITY_EPSILON ? undefined : 'none',
-                    pointerEvents: 'none',
-                  }}
-                >
-                  {edge.state === 'none' ? '' : labelText}
-                </div>
+                  edge={{ ...edge, opacity: labelOpacity }}
+                  interactive={false}
+                />
               );
             })}
         </div>

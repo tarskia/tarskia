@@ -147,3 +147,76 @@ describe('buildEdgeVisuals', () => {
     ]);
   });
 });
+
+describe('opposite visual directions', () => {
+  const directed = (
+    relationId: string,
+    sourceId: string,
+    targetId: string,
+    type = CALLS_RELATION_ID,
+    label?: string,
+  ): CompiledDiagramEdge => ({
+    id: `${relationId}:${sourceId}->${targetId}`,
+    relationId,
+    sourceId,
+    targetId,
+    type,
+    label,
+  });
+  it('groups after flow reversal, keeping each direction primary and the highest-priority style', () => {
+    const prioritySchema = {
+      ...schema,
+      relations: schema.relations.map((r) => ({
+        ...r,
+        priority: r.id === CALLS_RELATION_ID ? 1 : 2,
+      })),
+    };
+    const [edge] = buildEdgeVisuals({
+      schema: prioritySchema,
+      edges: [
+        directed('z-call', 'a', 'b', CALLS_RELATION_ID, 'call'),
+        directed('read', 'a', 'b', READS_RELATION_ID, 'read'),
+        directed('a-call', 'a', 'b', CALLS_RELATION_ID, 'call'),
+      ],
+    });
+    expect(edge).toMatchObject({
+      relationId: 'a-call',
+      type: CALLS_RELATION_ID,
+      sourceId: 'a',
+      targetId: 'b',
+      label: 'call / read',
+      relationIds: ['a-call', 'z-call', 'read'],
+      directionalLabels: [
+        { sourceId: 'a', targetId: 'b', relationId: 'a-call', label: 'call' },
+        { sourceId: 'b', targetId: 'a', relationId: 'read', label: 'read' },
+      ],
+    });
+  });
+  it('does not invent an opposite direction when reverse flow aligns the endpoints', () => {
+    const [edge] = buildEdgeVisuals({
+      schema,
+      edges: [
+        directed('call', 'a', 'b', CALLS_RELATION_ID, 'call'),
+        directed('read', 'b', 'a', READS_RELATION_ID, 'read'),
+      ],
+    });
+    expect(edge.directionalLabels).toBeUndefined();
+    expect(edge.relationIds).toHaveLength(2);
+  });
+  it.each([
+    [undefined, 'call', 'call'],
+    ['call', undefined, 'call'],
+    ['call', 'call', 'call'],
+    [undefined, undefined, undefined],
+  ])('shows blank/equal label pair %s / %s once', (a, b, expected) => {
+    const [edge] = buildEdgeVisuals({
+      schema,
+      edges: [
+        directed('a', 'x', 'y', CALLS_RELATION_ID, a),
+        directed('b', 'y', 'x', CALLS_RELATION_ID, b),
+      ],
+    });
+    expect(edge.label).toBe(expected);
+    expect(edge.directionalLabels?.map((label) => label.relationId)).toEqual(['a', 'b']);
+  });
+});

@@ -7,6 +7,7 @@ import type {
   CanvasOverlayEdgeView,
   CanvasPresentation,
 } from '../presentation/presentation';
+import type { DirectionalEdgeLabel } from '../visual/edge-labels';
 import type {
   ChildFadeTiming,
   NodeControlSwitchAdvisory,
@@ -37,6 +38,8 @@ type VisibleTransitionEdgeSource = Pick<
   CanvasOverlayEdgeView,
   | 'id'
   | 'relationId'
+  | 'relationIds'
+  | 'directionalLabels'
   | 'kind'
   | 'sourceId'
   | 'targetId'
@@ -85,6 +88,8 @@ export interface TransitionOverlayLabelTrack {
 export interface TransitionOverlayEdgeTrack {
   id: string;
   relationId: string;
+  relationIds?: string[];
+  directionalLabels?: DirectionalEdgeLabel[];
   kind: 'local' | 'routed';
   sourceId: string;
   targetId: string;
@@ -121,6 +126,8 @@ export interface TransitionOverlayNodeFrame {
 export interface TransitionOverlayEdgeFrame {
   id: string;
   relationId: string;
+  relationIds?: string[];
+  directionalLabels?: DirectionalEdgeLabel[];
   kind: 'local' | 'routed';
   sourceId: string;
   targetId: string;
@@ -588,6 +595,8 @@ const resolveEdgeFrame = (
   return {
     id: track.id,
     relationId: track.relationId,
+    relationIds: track.relationIds,
+    directionalLabels: track.directionalLabels,
     kind: track.kind,
     sourceId: track.sourceId,
     targetId: track.targetId,
@@ -797,6 +806,7 @@ export const buildTransitionOverlayState = (params: {
     });
     const buildTrack = (params: {
       trackId: string;
+      metadataEdge?: VisibleTransitionEdgeSource;
       kind: 'local' | 'routed';
       sourceId: string;
       targetId: string;
@@ -811,6 +821,8 @@ export const buildTransitionOverlayState = (params: {
       ({
         id: params.trackId,
         relationId,
+        relationIds: (params.metadataEdge ?? toEdge ?? fromEdge)?.relationIds,
+        directionalLabels: (params.metadataEdge ?? toEdge ?? fromEdge)?.directionalLabels,
         kind: params.kind,
         sourceId: params.sourceId,
         targetId: params.targetId,
@@ -822,8 +834,11 @@ export const buildTransitionOverlayState = (params: {
         toOpacity: params.toOpacity,
         fade: params.fade,
         fadeMode: params.fadeMode,
-        labelTrack:
-          label !== undefined || edgeState !== undefined ? { label, state: edgeState } : undefined,
+        labelTrack: params.metadataEdge
+          ? { label: params.metadataEdge.label, state: params.metadataEdge.state }
+          : label !== undefined || edgeState !== undefined
+            ? { label, state: edgeState }
+            : undefined,
       }) satisfies TransitionOverlayEdgeTrack;
 
     if (fromEdge && toEdge && edgeAttachmentChanged({ fromEdge, toEdge })) {
@@ -831,6 +846,7 @@ export const buildTransitionOverlayState = (params: {
       return [
         buildTrack({
           trackId: `${id}::out`,
+          metadataEdge: fromEdge,
           kind: fromEdge.kind,
           sourceId: fromEdge.sourceId,
           targetId: fromEdge.targetId,
@@ -847,6 +863,7 @@ export const buildTransitionOverlayState = (params: {
         }),
         buildTrack({
           trackId: `${id}::in`,
+          metadataEdge: toEdge,
           kind: toEdge.kind,
           sourceId: toEdge.sourceId,
           targetId: toEdge.targetId,
@@ -932,6 +949,8 @@ export const captureTransitionOverlaySnapshot = (params: {
   const overlayEdges: CanvasOverlayEdgeView[] = frame.edges.map((edge) => ({
     id: edge.id,
     relationId: edge.relationId,
+    relationIds: edge.relationIds,
+    directionalLabels: edge.directionalLabels,
     kind: edge.kind,
     sourceId: edge.sourceId,
     targetId: edge.targetId,

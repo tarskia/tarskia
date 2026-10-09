@@ -1,5 +1,6 @@
 import { type DiagramViewNodeControls, getSchemaObjectLocalId } from '@tarskia/diagram-semantics';
 import type { CanvasScene } from '../scene/scene';
+import type { DirectionalEdgeLabel } from '../visual/edge-labels';
 import type { ResolvedNodeRichContent, ResolvedNodeVisual } from '../visual/node-visuals';
 import { routeCanvasEdges } from './edge-routing';
 import {
@@ -180,6 +181,7 @@ export interface CanvasOverlayEdgeView {
   id: string;
   relationId: string;
   relationIds?: string[];
+  directionalLabels?: DirectionalEdgeLabel[];
   kind: 'routed' | 'local';
   sourceId: string;
   targetId: string;
@@ -394,6 +396,7 @@ const buildStaticCanvasPresentationUncached = ({
         id: edge.id,
         relationId: edge.relationId,
         relationIds: edge.relationIds,
+        directionalLabels: edge.directionalLabels,
         semanticSourceId: edge.semanticSourceId,
         semanticTargetId: edge.semanticTargetId,
         kind: 'routed',
@@ -423,6 +426,7 @@ const buildStaticCanvasPresentationUncached = ({
       id: edge.id,
       relationId: edge.relationId,
       relationIds: edge.relationIds,
+      directionalLabels: edge.directionalLabels,
       kind: edge.kind,
       sourceId: edge.sourceId,
       targetId: edge.targetId,
