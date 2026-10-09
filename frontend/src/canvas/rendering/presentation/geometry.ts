@@ -12,12 +12,6 @@ export interface CanvasRect {
   height: number;
 }
 
-export const offsetRect = (rect: CanvasRect, dx: number, dy: number): CanvasRect => ({
-  ...rect,
-  x: rect.x + dx,
-  y: rect.y + dy,
-});
-
 export interface CanvasEdgeGeometry {
   firstLegLabel?: boolean;
   sourcePoint: CanvasPoint;

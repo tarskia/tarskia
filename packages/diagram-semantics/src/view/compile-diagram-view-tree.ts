@@ -6,22 +6,17 @@ import {
   getChildren,
   indexTree,
 } from '../tree/canonical-tree';
-import { buildEntityTree, type SemanticEntityTree } from '../tree/entity-tree';
+import { buildEntityTree } from '../tree/entity-tree';
 import { resolveRelationDisplayLabel } from './display-labels';
 import { buildDiagramViewNodeControls, type DiagramViewNodeControls } from './node-controls';
 import {
   type NormalizedDiagramViewState,
   normalizeDiagramViewState,
 } from './normalize-diagram-view';
-import {
-  type RevealAnnotations,
-  type RevealMetadata,
-  resolveRevealAnnotations,
-} from './reveal-tree';
+import { type RevealAnnotations, resolveRevealAnnotations } from './reveal-tree';
 import {
   buildSemanticViewWorkingTree,
   EMPTY_CONTROLS,
-  EMPTY_REVEAL,
   type SemanticViewWorkingNode,
   type SemanticViewWorkingTree,
 } from './working-tree';
@@ -38,11 +33,8 @@ export interface DiagramViewNode {
   diagramChildTypeCounts?: Record<string, number>;
   view: {
     expanded: boolean;
-    hidden: boolean;
     highlighted: boolean;
-    isOnlyChild: boolean;
     focusChainDepth?: number;
-    reveal: RevealMetadata;
     controls: DiagramViewNodeControls;
   };
 }
@@ -65,11 +57,6 @@ export type DiagramViewTree = CanonicalTree<DiagramViewNode>;
 export interface CompileDiagramViewTreeParams {
   doc: SemanticDocument;
   schema: SchemaModule;
-  entityTree?: SemanticEntityTree;
-  targetEntityIds?: Set<string>;
-  targetRelationIds?: Set<string>;
-  forceRevealTargets?: boolean;
-  preserveExpandedBranches?: boolean;
 }
 
 export interface CompiledDiagramViewState {
@@ -165,7 +152,6 @@ export const applyEffectiveExpansion = (params: {
 
   for (const node of tree.byId.values()) {
     node.view.expanded = node.id === tree.rootId ? true : Boolean(effectiveExpanded[node.id]);
-    node.view.hidden = node.id !== tree.rootId && normalizedViewState.hiddenIds.has(node.id);
     node.view.highlighted =
       node.id !== tree.rootId && normalizedViewState.highlightedIds.has(node.id);
     node.view.focusChainDepth = focusChainDepthById.get(node.id);
@@ -181,29 +167,14 @@ export const applyRevealAndVisibility = (params: {
   tree: SemanticViewWorkingTree;
   scopeRootId?: string;
   effectiveExpanded: Record<string, boolean>;
-  targetEntityIds?: Set<string>;
-  targetRelationIds?: Set<string>;
-  relations?: Relation[];
-  forceRevealTargets?: boolean;
-  preserveExpandedBranches?: boolean;
 }): RevealAndVisibilityResult => {
   const annotations = resolveRevealAnnotations({
     tree: params.tree,
     expanded: params.effectiveExpanded,
     scopeRootId: params.scopeRootId,
-    targetNodeIds: params.targetEntityIds,
-    targetEdgeIds: params.targetRelationIds,
-    edges: (params.relations ?? []).map((relation) => ({
-      id: relation.id,
-      from: relation.from,
-      to: relation.to,
-    })),
-    forceExpandToTargets: params.forceRevealTargets,
-    preserveExpandedBranches: params.preserveExpandedBranches,
   });
 
   for (const node of params.tree.byId.values()) {
-    node.view.reveal = EMPTY_REVEAL;
     node.view.includedInProjection = false;
   }
   for (const nodeId of annotations.includedNodeIds) {
@@ -211,7 +182,6 @@ export const applyRevealAndVisibility = (params: {
     if (!node) {
       continue;
     }
-    node.view.reveal = annotations.revealById.get(nodeId) ?? EMPTY_REVEAL;
     node.view.includedInProjection = true;
   }
 
@@ -271,11 +241,8 @@ export const projectCompiledDiagramView = (params: {
       diagramChildTypeCounts: node.visual.diagramChildTypeCounts,
       view: {
         expanded: node.view.expanded,
-        hidden: node.view.hidden,
         highlighted: node.view.highlighted,
-        isOnlyChild: node.view.isOnlyChild,
         focusChainDepth: node.view.focusChainDepth,
-        reveal: node.view.reveal,
         controls: node.visual.controls,
       },
     };
@@ -300,10 +267,7 @@ export const projectCompiledDiagramView = (params: {
     diagramChildTypeCounts: tree.root.visual.diagramChildTypeCounts,
     view: {
       expanded: true,
-      hidden: false,
       highlighted: false,
-      isOnlyChild: false,
-      reveal: tree.root.view.reveal,
       controls: tree.root.visual.controls,
     },
   };
@@ -399,15 +363,8 @@ const projectCompiledDiagramEdges = (params: {
 export function compileDiagramViewState(
   params: CompileDiagramViewTreeParams,
 ): CompiledDiagramViewState {
-  const {
-    doc,
-    schema,
-    entityTree = buildEntityTree(doc),
-    targetEntityIds,
-    targetRelationIds,
-    forceRevealTargets = false,
-    preserveExpandedBranches = false,
-  } = params;
+  const { doc, schema } = params;
+  const entityTree = buildEntityTree(doc);
   const renderableRelations = doc.relations.filter((relation) =>
     isRenderableRelationType(relation.type),
   );
@@ -422,11 +379,6 @@ export function compileDiagramViewState(
     tree: workingTree,
     scopeRootId: effectiveExpansion.scopeRootId,
     effectiveExpanded: effectiveExpansion.effectiveExpanded,
-    targetEntityIds,
-    targetRelationIds,
-    relations: renderableRelations,
-    forceRevealTargets,
-    preserveExpandedBranches,
   });
   applySemanticVisualAugmentation({
     tree: workingTree,

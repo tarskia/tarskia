@@ -18,7 +18,6 @@ const geometry = (scene: CanvasScene) =>
     id,
     size: node.size,
     position: node.position,
-    computed: node.computedChildPositions,
     mode: node.layoutMode,
     summary: node.summaryLabel,
     occluders: node.contentOccluders,

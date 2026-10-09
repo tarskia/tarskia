@@ -1,9 +1,5 @@
-import {
-  type CompiledDiagramEdge,
-  pluralize,
-  resolveTypeDef,
-  type SchemaModule,
-} from '@tarskia/diagram-semantics';
+import type { CompiledDiagramEdge } from '@tarskia/diagram-semantics';
+import { countEdgeIncidents } from '../presentation/edge-routing';
 import { reserveScopeRoutingSpace } from '../presentation/routing-space';
 import type { SceneNode, SceneTree } from '../tree/scene-tree';
 import type { ResolvedNodeVisual } from '../visual/node-visuals';
@@ -37,15 +33,15 @@ const FOCUS_SHELL_INSET_X = 72;
 const FOCUS_SHELL_INSET_Y = 56;
 
 export function applySceneLayout(params: {
-  schema: SchemaModule;
   edges: CompiledDiagramEdge[];
   tree: SceneTree;
   nodeVisuals: Map<string, ResolvedNodeVisual>;
   uncached?: boolean;
 }): SceneTree {
-  const { schema, edges, tree, nodeVisuals } = params;
+  const { edges, tree, nodeVisuals } = params;
   const edgesByParent = params.uncached ? undefined : buildLayoutEdgesByParent(tree, edges);
   const focusShellAspect = FOCUS_SHELL_FALLBACK_ASPECT;
+  const routingIncidentCounts = countEdgeIncidents(edges);
 
   const baseSizes = new Map<string, { width: number; height: number }>();
   for (const [id, _node] of tree.byId.entries()) {
@@ -63,7 +59,7 @@ export function applySceneLayout(params: {
     const isRoot = nodeId === tree.rootId;
     const nodeVisual = nodeVisuals.get(nodeId);
     const richContent = nodeVisual?.projection.richContent;
-    let summaryLabel = nodeVisual?.projection.summaryLabel;
+    const summaryLabel = nodeVisual?.projection.summaryLabel;
     const isGroup = !isRoot && node.hasChildren;
     const padding = isRoot ? 0 : isGroup ? 16 : 12;
     const childIds = children.map((child) => child.id);
@@ -109,7 +105,6 @@ export function applySceneLayout(params: {
     node.baseSize = base;
     node.size = adjustedBase;
     node.summaryLabel = summaryLabel;
-    node.computedChildPositions = undefined;
     node.layoutMode = undefined;
     node.listShowType = undefined;
     if (children.length === 0) {
@@ -136,15 +131,6 @@ export function applySceneLayout(params: {
     if (listMode && children.length > 0) {
       const childTypes = new Set(children.map((child) => child.entity.type));
       listShowType = childTypes.size > 1;
-      if (!summaryLabel && childTypes.size === 1) {
-        const onlyType = children[0]?.entity.type;
-        if (onlyType) {
-          const childType = resolveTypeDef(schema, onlyType);
-          const label = childType?.label ?? onlyType;
-          const count = children.length;
-          summaryLabel = `${count} ${pluralize(label, count)}`;
-        }
-      }
     }
     const childSizes: Record<string, { width: number; height: number }> = {};
     for (const childId of childIds) {
@@ -184,12 +170,11 @@ export function applySceneLayout(params: {
       cachedLayout ?? renderComponentLayoutUncached(childSizes, layoutEdges, spec, true);
     const reserved = listMode
       ? { positions: baseLayout.positions, extraWidth: 0 }
-      : reserveScopeRoutingSpace(nodeId, tree, edges, baseLayout.positions);
+      : reserveScopeRoutingSpace(nodeId, tree, edges, baseLayout.positions, routingIncidentCounts);
     // Never mutate cached layout products; relation labels affect only this presentation spacing.
     const layout = {
       ...baseLayout,
       positions: reserved.positions,
-      computedPositions: reserved.positions,
       requiredSize: {
         ...baseLayout.requiredSize,
         width: baseLayout.requiredSize.width + reserved.extraWidth,
@@ -233,15 +218,6 @@ export function applySceneLayout(params: {
           y: position.y + shiftY,
         };
       }
-      const shiftedComputedPositions: Record<string, { x: number; y: number }> = {};
-      for (const [childId, position] of Object.entries(layout.computedPositions)) {
-        shiftedComputedPositions[childId] = {
-          x: position.x + shiftX,
-          y: position.y + shiftY,
-        };
-      }
-      node.computedChildPositions =
-        Object.keys(shiftedComputedPositions).length > 0 ? shiftedComputedPositions : undefined;
       node.size = size;
       node.summaryLabel = summaryLabel;
       node.layoutMode = 'graph';
@@ -251,8 +227,6 @@ export function applySceneLayout(params: {
 
     node.size = size;
     node.summaryLabel = summaryLabel;
-    node.computedChildPositions =
-      Object.keys(layout.computedPositions).length > 0 ? layout.computedPositions : undefined;
     node.layoutMode = listMode ? 'list' : 'graph';
     node.listShowType = listShowType;
     return node;

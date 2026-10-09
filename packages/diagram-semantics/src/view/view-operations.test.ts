@@ -30,7 +30,7 @@ const initial: DiagramView = {
   kind: 'semantic-diagram-view',
   version: 2,
   layout: { viewport: { x: 1, y: 2, zoom: 0.5 } },
-  nodesById: { leaf: { highlighted: true }, remote: { hidden: true } },
+  nodesById: { leaf: { highlighted: true } },
 };
 const apply = (operation: DiagramViewOperation, view: DiagramView | undefined = initial) =>
   applyDiagramViewOperation(tree, view, operation);
@@ -60,7 +60,7 @@ describe('pure view operations', () => {
     ).toEqual(['runtime']);
     expect(apply({ kind: 'set-expansion', entityId: 'shell', expanded: true }, next)).toBe(next);
   });
-  it('expands and collapses all structural parents without losing hidden/highlighted state', () => {
+  it('expands and collapses all structural parents without losing highlighted state', () => {
     const next = apply({ kind: 'expand-all' });
     expect(expanded(next)).toEqual(['platform', 'remote', 'runtime', 'shell', 'worker']);
     expect(apply({ kind: 'expand-all' }, next)).toBe(next);
@@ -113,7 +113,6 @@ describe('pure view operations', () => {
     );
     expect(next?.scopeRootId).toBeUndefined();
     expect(expanded(next)).toEqual(['platform', 'remote', 'runtime', 'shell']);
-    expect(next?.nodesById?.remote?.hidden).toBe(false);
     expect(next?.nodesById?.leaf?.highlighted).toBe(true);
     expect(
       expanded(

@@ -1,5 +1,5 @@
 import type { CompiledDiagramEdge, ViewportState } from '@tarskia/diagram-semantics';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import type {
   NavigationIntent,
   NavigationRequestResult,
@@ -8,7 +8,6 @@ import type {
   StructuralTransitionIntent,
 } from '../diagram/motion-types';
 import type { DeclarativeDiagramViewState } from '../semantic/view/declarative-view-state';
-import type { CompileResult } from './compiler/compile';
 import type { LayoutResult } from './rendering/layout/layout-pipeline';
 import type { CanvasRenderSnapshot } from './rendering/presentation/presentation';
 import { FOCUS_SCOPE_CAMERA_PAUSE_MS } from './rendering/transition/animation-constants';
@@ -68,7 +67,7 @@ export interface UseCanvasTransitionControllerArgs {
 }
 
 export interface CanvasTransitionControllerResult {
-  compiled: CompileResult;
+  compiled: LayoutResult;
   isTransitionQueued: boolean;
   cancelTransitions: () => void;
 }
@@ -133,7 +132,6 @@ export const hasOnlyExpandedMapChanged = (params: {
   const { previousViewState, currentViewState } = params;
   return (
     previousViewState.view.scopeRootId === currentViewState.view.scopeRootId &&
-    previousViewState.hiddenKey === currentViewState.hiddenKey &&
     previousViewState.highlightedKey === currentViewState.highlightedKey &&
     previousViewState.layoutKey === currentViewState.layoutKey
   );
@@ -155,7 +153,6 @@ export const hasOnlyScopeRootChanged = (params: {
   return (
     previousViewState.view.scopeRootId !== currentViewState.view.scopeRootId &&
     previousViewState.expandedKey === currentViewState.expandedKey &&
-    previousViewState.hiddenKey === currentViewState.hiddenKey &&
     previousViewState.highlightedKey === currentViewState.highlightedKey &&
     previousViewState.layoutKey === currentViewState.layoutKey
   );
@@ -252,7 +249,7 @@ export function useCanvasTransitionController({
   const previousLayoutRef = useRef<LayoutResult | null>(null);
   const previousStableSnapshotRef = useRef<CanvasRenderSnapshot | null>(null);
 
-  const compiled = useMemo<CompileResult>(() => ({ scene: layout }), [layout]);
+  const compiled = layout;
   const pendingStructuralTransitionIntent = getPendingStructuralTransitionIntent();
   const viewChanged =
     previousDeclarativeViewStateRef.current?.key !== undefined &&

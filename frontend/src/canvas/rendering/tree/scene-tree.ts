@@ -3,7 +3,6 @@ import {
   type DiagramViewNodeControls,
   type Entity,
   indexTree,
-  type RevealMetadata,
   type TreeNodeLike,
 } from '@tarskia/diagram-semantics';
 
@@ -27,14 +26,12 @@ export interface SceneNode {
   isListContainer?: boolean;
   diagramChildCount?: number;
   diagramChildTypeCounts?: Record<string, number>;
-  reveal?: RevealMetadata;
   focusScaffoldDepth?: number;
   controls?: DiagramViewNodeControls;
   summaryLabel?: string;
   baseSize: { width: number; height: number };
   size: { width: number; height: number };
   position?: { x: number; y: number };
-  computedChildPositions?: Record<string, { x: number; y: number }>;
   layoutMode?: 'list' | 'graph';
   listShowType?: boolean;
   contentOccluders?: SceneNodeContentOccluder[];
@@ -51,11 +48,9 @@ interface SceneTreeSourceNode<TNode> extends TreeNodeLike<TNode> {
   isListContainer?: boolean;
   diagramChildCount?: number;
   diagramChildTypeCounts?: Record<string, number>;
-  reveal?: RevealMetadata;
   focusScaffoldDepth?: number;
   controls?: DiagramViewNodeControls;
   view?: {
-    reveal?: RevealMetadata;
     focusChainDepth?: number;
     controls?: DiagramViewNodeControls;
   };
@@ -68,7 +63,6 @@ export function buildSceneTree<TNode extends SceneTreeSourceNode<TNode>>(params:
   const byId = new Map<string, SceneNode>();
 
   const clone = (node: TNode, parentId?: string): SceneNode => {
-    const reveal = node.view?.reveal ?? node.reveal;
     const focusScaffoldDepth = node.view?.focusChainDepth ?? node.focusScaffoldDepth;
     const sceneNode: SceneNode = {
       id: node.id,
@@ -79,7 +73,6 @@ export function buildSceneTree<TNode extends SceneTreeSourceNode<TNode>>(params:
       isListContainer: node.isListContainer,
       diagramChildCount: node.diagramChildCount,
       diagramChildTypeCounts: node.diagramChildTypeCounts,
-      reveal,
       focusScaffoldDepth,
       controls: node.view?.controls ?? node.controls,
       baseSize: { width: 0, height: 0 },

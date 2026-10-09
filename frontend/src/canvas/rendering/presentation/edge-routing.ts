@@ -50,17 +50,23 @@ export const resolveEntityCards = (nodes: RoutingNode[]) => {
 export const rectanglesIntersect = (a: CanvasRect, b: CanvasRect) =>
   a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 
+export const countEdgeIncidents = (edges: { sourceId: string; targetId: string }[]) => {
+  const counts = new Map<string, number>();
+  for (const edge of edges) {
+    counts.set(edge.sourceId, (counts.get(edge.sourceId) ?? 0) + 1);
+    counts.set(edge.targetId, (counts.get(edge.targetId) ?? 0) + 1);
+  }
+  return counts;
+};
+
 /** One channel immediately outside each source column at the endpoints' common scope. */
 const buildEdgeChannels = <T extends Omit<RoutingEdge, 'geometry'>>(
   nodes: RoutingNode[],
   edges: T[],
+  providedIncidentCounts?: ReadonlyMap<string, number>,
 ) => {
   const byId = new Map(nodes.map((node) => [node.id, node]));
-  const incidentCounts = new Map<string, number>();
-  for (const edge of edges) {
-    incidentCounts.set(edge.sourceId, (incidentCounts.get(edge.sourceId) ?? 0) + 1);
-    incidentCounts.set(edge.targetId, (incidentCounts.get(edge.targetId) ?? 0) + 1);
-  }
+  const incidentCounts = providedIncidentCounts ?? countEdgeIncidents(edges);
   const ancestry = new Map<string, RoutingNode[]>();
   const ancestors = (id: string) => {
     const cached = ancestry.get(id);
@@ -181,7 +187,8 @@ const buildEdgeChannels = <T extends Omit<RoutingEdge, 'geometry'>>(
 export const getRoutingChannelReservations = (
   nodes: RoutingNode[],
   edges: Omit<RoutingEdge, 'geometry'>[],
-) => buildEdgeChannels(nodes, edges).reservations;
+  incidentCounts?: ReadonlyMap<string, number>,
+) => buildEdgeChannels(nodes, edges, incidentCounts).reservations;
 
 export const routeCanvasEdges = <T extends RoutingEdge>(nodes: RoutingNode[], edges: T[]): T[] => {
   const { anchors, reservations } = buildEdgeChannels(nodes, edges);

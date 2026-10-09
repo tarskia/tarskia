@@ -32,6 +32,6 @@ describe('renderComponentLayout', () => {
     );
 
     expect(result.positions.child).toBeDefined();
-    expect(Object.keys(result.computedPositions).length).toBeGreaterThan(0);
+    expect(Object.keys(result.positions).length).toBeGreaterThan(0);
   });
 });

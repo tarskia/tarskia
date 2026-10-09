@@ -88,7 +88,7 @@ it.each([
   };
   try {
     await act(async () =>
-      root.render(<Harness doc={initial.scene.doc} schema={first.graph.schema} diagramKey="n8n" />),
+      root.render(<Harness doc={initial.doc} schema={first.graph.schema} diagramKey="n8n" />),
     );
     await act(async () => {
       engine.onCanvasElementChange(canvas);
@@ -98,9 +98,7 @@ it.each([
       await advance(now + 50);
     await act(async () => {
       engine.setPendingStructuralTransitionIntent({ direction: 'in', focus: null });
-      root.render(
-        <Harness doc={expanded.scene.doc} schema={first.graph.schema} diagramKey="n8n" />,
-      );
+      root.render(<Harness doc={expanded.doc} schema={first.graph.schema} diagramKey="n8n" />);
     });
     for (let i = 0; i < 40 && !engine.transitionOverlay; i++) await advance(now + 50);
     const overlay = engine.transitionOverlay;
@@ -136,7 +134,7 @@ it.each([
     }
     await act(async () =>
       root.render(
-        <Harness doc={target.scene.doc} schema={second.graph.schema} diagramKey="prometheus" />,
+        <Harness doc={target.doc} schema={second.graph.schema} diagramKey="prometheus" />,
       ),
     );
     if (reset === 'canvas-unmount') await act(async () => engine.onCanvasInit(instance));

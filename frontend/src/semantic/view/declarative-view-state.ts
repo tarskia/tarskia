@@ -21,7 +21,6 @@ export interface DeclarativeDiagramViewState {
   layout: DocumentLayout;
   expanded: Record<string, boolean>;
   expandedKey: string;
-  hiddenKey: string;
   highlightedKey: string;
   layoutKey: string;
   key: string;
@@ -73,10 +72,8 @@ export const selectDeclarativeDiagramViewState = (
   const view = normalizedViewState.view as DiagramView;
   const layout = normalizedViewState.layout as DocumentLayout;
   const expanded = normalizedViewState.expanded;
-  const hiddenIds = collectNodeIdsByFlag(normalizedViewState.hiddenIds);
   const highlightedIds = collectNodeIdsByFlag(normalizedViewState.highlightedIds);
   const expandedKey = stableKey(expanded);
-  const hiddenKey = stableKey(hiddenIds);
   const highlightedKey = stableKey(highlightedIds);
   const layoutKey = stableKey(layout);
 
@@ -85,13 +82,11 @@ export const selectDeclarativeDiagramViewState = (
     layout,
     expanded,
     expandedKey,
-    hiddenKey,
     highlightedKey,
     layoutKey,
     key: stableKey({
       scopeRootId: view.scopeRootId,
       expanded,
-      hiddenIds,
       highlightedIds,
       layout,
     }),

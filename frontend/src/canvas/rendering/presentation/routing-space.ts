@@ -1,6 +1,10 @@
 import type { CompiledDiagramEdge } from '@tarskia/diagram-semantics';
 import type { SceneTree } from '../tree/scene-tree';
-import { getRoutingChannelReservations, type RoutingNode } from './edge-routing';
+import {
+  countEdgeIncidents,
+  getRoutingChannelReservations,
+  type RoutingNode,
+} from './edge-routing';
 
 /** Shift whole Dagre columns only where their actual lane/label occupancy needs extra space. */
 export const reserveScopeRoutingSpace = (
@@ -8,10 +12,13 @@ export const reserveScopeRoutingSpace = (
   tree: SceneTree,
   edges: CompiledDiagramEdge[],
   positions: Record<string, { x: number; y: number }>,
+  incidentCounts?: ReadonlyMap<string, number>,
 ) => {
   const parent = tree.byId.get(parentId)!;
   const nodes: RoutingNode[] = [];
-  const visit = (id: string, x: number, y: number) => {
+  const branchByNodeId = new Map<string, string>();
+  const visit = (id: string, x: number, y: number, branchId: string) => {
+    branchByNodeId.set(id, branchId);
     const node = tree.byId.get(id)!;
     nodes.push({
       id,
@@ -20,13 +27,23 @@ export const reserveScopeRoutingSpace = (
       rect: { x, y, ...node.size },
     });
     for (const child of node.children)
-      visit(child.id, x + (child.position?.x ?? 0), y + (child.position?.y ?? 0));
+      visit(child.id, x + (child.position?.x ?? 0), y + (child.position?.y ?? 0), branchId);
   };
   for (const child of parent.children)
-    visit(child.id, positions[child.id]?.x ?? 0, positions[child.id]?.y ?? 0);
-  const reservations = getRoutingChannelReservations(nodes, edges).filter(
-    (channel) => channel.parentId === parentId,
-  );
+    visit(child.id, positions[child.id]?.x ?? 0, positions[child.id]?.y ?? 0, child.id);
+  // Descendant scopes already reserve their own channels during the bottom-up walk.
+  const scopeEdges = edges.filter((edge) => {
+    const source = branchByNodeId.get(edge.sourceId);
+    const target = branchByNodeId.get(edge.targetId);
+    return (
+      source &&
+      target &&
+      (source !== target || edge.sourceId === source || edge.targetId === target)
+    );
+  });
+  if (!scopeEdges.length) return { positions, extraWidth: 0 };
+  const counts = incidentCounts ?? countEdgeIncidents(edges);
+  const reservations = getRoutingChannelReservations(nodes, scopeEdges, counts);
   if (!reservations.length) return { positions, extraWidth: 0 };
   const children = nodes
     .filter((node) => node.parentId === parentId)

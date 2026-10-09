@@ -148,7 +148,7 @@ const buildVisualMap = (doc: SemanticDocument) => {
 };
 
 describe('buildNodeVisualMap', () => {
-  it('projects property badges, identity, and base size from the schema display config', () => {
+  it('projects identity and base size from the schema display config', () => {
     const doc: SemanticDocument = {
       version: '1',
       schemaRefs: [],
@@ -170,10 +170,6 @@ describe('buildNodeVisualMap', () => {
     };
 
     const visual = buildVisualMap(doc).get('svc');
-    expect(visual?.projection.badges).toContain('Replicas: 2');
-    expect(visual?.projection.badges).toContain('Region eu-west-2');
-    expect(visual?.projection.badges).toContain('healthy');
-    expect(visual?.projection.badges).toContain('Max Retries: 5');
     expect(visual?.identity.primaryTagId).toBe(INTERACTION_TAG_ID);
     expect(visual?.identity.fallbackHue).toBe(280);
     expect(visual?.layout.baseSize).toEqual({ width: 220, height: 140 });
