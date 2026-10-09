@@ -526,6 +526,10 @@ const resolveCurrentGeometry = (params: {
     freezeOutsideActiveMotionWindow = false,
     staticOverlay,
   } = params;
+  // Endpoint frames must agree with the host presentation, including its
+  // assigned edge anchors rather than the overlay's temporary locked sides.
+  if (progress <= 0) return fallbackFrom;
+  if (progress >= 1) return fallbackTo;
   const settledGeometry = motionEndGeometry ?? fallbackTo;
   if (!staticOverlay && freezeOutsideActiveMotionWindow) {
     if (!activeMotionWindow) {
