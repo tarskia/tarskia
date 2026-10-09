@@ -433,7 +433,7 @@ describe('transition overlay', () => {
     });
   });
 
-  it('freezes stable routed edges outside endpoint movement windows', () => {
+  it('keeps routed edges attached to the currently rendered node during resizing', () => {
     const edgeGeometry = {
       sourcePoint: { x: 120, y: 32 },
       control1: { x: 200, y: 32 },
@@ -551,9 +551,9 @@ describe('transition overlay', () => {
     expect(duringMove.edges).toHaveLength(1);
     expect(duringMove.edges[0]?.geometry.sourcePoint.x).toBeCloseTo(170, 4);
     expect(duringResize.edges).toHaveLength(1);
-    expect(duringResize.edges[0]?.geometry.sourcePoint.x).toBeCloseTo(220, 4);
+    expect(duringResize.edges[0]?.geometry.sourcePoint.x).toBeCloseTo(270, 4);
     expect(afterMove.edges).toHaveLength(1);
-    expect(afterMove.edges[0]?.geometry.sourcePoint.x).toBeCloseTo(220, 4);
+    expect(afterMove.edges[0]?.geometry.sourcePoint.x).toBeCloseTo(320, 4);
     expect(staticFrame.edges).toHaveLength(1);
     expect(staticFrame.edges[0]?.geometry.sourcePoint.x).toBeCloseTo(320, 4);
   });

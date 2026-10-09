@@ -262,7 +262,7 @@ describe('buildStaticCanvasPresentation', () => {
     );
   });
 
-  it('keeps projected collapsed endpoints on the canonical node handle instead of slotting them', () => {
+  it('spreads projected collapsed endpoints along their visible node side', () => {
     const collapsedProjectionDoc: SemanticDocument = {
       version: '1',
       schemaRefs: [],
@@ -292,10 +292,10 @@ describe('buildStaticCanvasPresentation', () => {
     expect(firstEdge?.sourceId).toBe('services-a');
     expect(secondEdge?.sourceId).toBe('services-a');
     expect(firstEdge?.geometry.sourcePoint.y).toBe(
-      servicesNode!.rect.y + servicesNode!.rect.height / 2,
+      servicesNode!.rect.y + servicesNode!.rect.height / 3,
     );
     expect(secondEdge?.geometry.sourcePoint.y).toBe(
-      servicesNode!.rect.y + servicesNode!.rect.height / 2,
+      servicesNode!.rect.y + (servicesNode!.rect.height * 2) / 3,
     );
   });
 
@@ -341,9 +341,10 @@ describe('buildStaticCanvasPresentation', () => {
       targetId: 'api-right',
       solidOverNodeIds: ['group-a'],
     });
-    expect(overlayLocalEdge?.geometry).toEqual(expectedOverlayGeometry);
+    expect(overlayLocalEdge?.geometry.sourcePoint).toEqual(expectedOverlayGeometry.sourcePoint);
+    expect(overlayLocalEdge?.geometry.targetPoint).toEqual(expectedOverlayGeometry.targetPoint);
     expect(overlayLocalEdge?.path).toBe(expectedOverlayGeometry.path);
-    expect(overlayLocalEdge?.labelAnchor).toEqual(expectedOverlayGeometry.labelAnchor);
+    expect(overlayLocalEdge?.labelAnchor.y).toBe(expectedOverlayGeometry.sourcePoint.y);
   });
 
   it('keeps descendant cross-group edges routed from their visible endpoints', () => {
@@ -381,12 +382,13 @@ describe('buildStaticCanvasPresentation', () => {
       targetRect: jobNode?.rect ?? { x: 0, y: 0, width: 0, height: 0 },
     });
 
-    expect(routedEdge?.geometry).toEqual(expectedGeometry);
+    expect(routedEdge?.geometry.sourcePoint).toEqual(expectedGeometry.sourcePoint);
+    expect(routedEdge?.geometry.targetPoint).toEqual(expectedGeometry.targetPoint);
     expect(routedEdge?.path).toBe(expectedGeometry.path);
-    expect(routedEdge?.labelAnchor).toEqual(expectedGeometry.labelAnchor);
+    expect(routedEdge?.labelAnchor.y).toBe(expectedGeometry.sourcePoint.y);
   });
 
-  it('keeps projected same-side routed edges on the shared source handle', () => {
+  it('spreads projected same-side routed edges along the source', () => {
     const sharedSourceDoc: SemanticDocument = {
       version: '1',
       schemaRefs: [],
@@ -414,12 +416,12 @@ describe('buildStaticCanvasPresentation', () => {
 
     expect(routedEdges).toHaveLength(2);
     expect(routedEdges[0]?.geometry.sourcePoint.x).toBe(routedEdges[1]?.geometry.sourcePoint.x);
-    expect(routedEdges[0]?.geometry.sourcePoint.y).toBe(routedEdges[1]?.geometry.sourcePoint.y);
+    expect(routedEdges[0]?.geometry.sourcePoint.y).not.toBe(routedEdges[1]?.geometry.sourcePoint.y);
     expect(routedEdges[0]?.path).not.toBe(routedEdges[1]?.path);
     expect(routedEdges[0]?.labelAnchor.y).not.toBe(routedEdges[1]?.labelAnchor.y);
   });
 
-  it('keeps multiple routed edges converged on the shared target handle', () => {
+  it('spreads multiple incoming edges along the target side', () => {
     const sharedTargetDoc: SemanticDocument = {
       version: '1',
       schemaRefs: [],
@@ -448,9 +450,9 @@ describe('buildStaticCanvasPresentation', () => {
     expect(targetNode).toBeDefined();
     expect(routedEdges).toHaveLength(2);
     expect(routedEdges[0]?.geometry.targetPoint.x).toBe(routedEdges[1]?.geometry.targetPoint.x);
-    expect(routedEdges[0]?.geometry.targetPoint.y).toBe(routedEdges[1]?.geometry.targetPoint.y);
+    expect(routedEdges[0]?.geometry.targetPoint.y).not.toBe(routedEdges[1]?.geometry.targetPoint.y);
     expect(routedEdges[0]?.geometry.targetPoint.y).toBe(
-      targetNode!.rect.y + targetNode!.rect.height / 2,
+      targetNode!.rect.y + targetNode!.rect.height / 3,
     );
     expect(routedEdges[0]?.path).not.toBe(routedEdges[1]?.path);
   });

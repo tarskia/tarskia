@@ -1,13 +1,12 @@
 import { type DiagramViewNodeControls, getSchemaObjectLocalId } from '@tarskia/diagram-semantics';
 import type { CanvasScene } from '../scene/scene';
 import type { ResolvedNodeRichContent, ResolvedNodeVisual } from '../visual/node-visuals';
+import { routeCanvasEdges } from './edge-routing';
 import {
   buildBezierEdgeGeometry,
   type CanvasEdgeGeometry,
-  type CanvasHandleSide,
   type CanvasPoint,
   type CanvasRect,
-  resolveHorizontalHandleSides,
 } from './geometry';
 
 const UNTAGGED_FALLBACK_HUE = 210;
@@ -212,13 +211,6 @@ interface RawOverlayEdgeSpec
   semanticTargetId?: string;
 }
 
-interface AssignedOverlayEdgeAnchors {
-  sourceSide: CanvasHandleSide;
-  targetSide: CanvasHandleSide;
-  sourcePoint: CanvasPoint;
-  targetPoint: CanvasPoint;
-}
-
 const snapshotSignatureCache = new WeakMap<CanvasRenderSnapshot, string>();
 
 const getCanvasRenderSnapshotSignature = (snapshot: CanvasRenderSnapshot): string => {
@@ -240,44 +232,6 @@ export const areCanvasRenderSnapshotsEqual = (
   }
   return getCanvasRenderSnapshotSignature(left) === getCanvasRenderSnapshotSignature(right);
 };
-
-const resolveAnchoredHandlePoint = (rect: CanvasRect, side: CanvasHandleSide): CanvasPoint => {
-  switch (side) {
-    case 'left':
-      return { x: rect.x, y: rect.y + rect.height / 2 };
-    case 'right':
-      return {
-        x: rect.x + rect.width,
-        y: rect.y + rect.height / 2,
-      };
-    case 'top':
-      return { x: rect.x + rect.width / 2, y: rect.y };
-    case 'bottom':
-      return {
-        x: rect.x + rect.width / 2,
-        y: rect.y + rect.height,
-      };
-  }
-};
-
-const assignOverlayEdgeAnchors = (edges: RawOverlayEdgeSpec[]) =>
-  new Map<string, AssignedOverlayEdgeAnchors>(
-    edges.map((edge) => {
-      const { sourceSide, targetSide } = resolveHorizontalHandleSides(
-        edge.sourceRect,
-        edge.targetRect,
-      );
-      return [
-        edge.id,
-        {
-          sourceSide,
-          targetSide,
-          sourcePoint: resolveAnchoredHandlePoint(edge.sourceRect, sourceSide),
-          targetPoint: resolveAnchoredHandlePoint(edge.targetRect, targetSide),
-        } satisfies AssignedOverlayEdgeAnchors,
-      ] as const;
-    }),
-  );
 
 export const buildStaticCanvasPresentation = ({
   scene,
@@ -475,16 +429,10 @@ export const buildStaticCanvasPresentation = ({
     ];
   });
 
-  const anchorAssignments = assignOverlayEdgeAnchors(rawOverlayEdges);
   const overlayEdges: CanvasOverlayEdgeView[] = rawOverlayEdges.map((edge) => {
-    const anchors = anchorAssignments.get(edge.id);
     const geometry = buildBezierEdgeGeometry({
       sourceRect: edge.sourceRect,
       targetRect: edge.targetRect,
-      sourceSide: anchors?.sourceSide,
-      targetSide: anchors?.targetSide,
-      sourcePointOverride: anchors?.sourcePoint,
-      targetPointOverride: anchors?.targetPoint,
     });
 
     return {
@@ -510,6 +458,6 @@ export const buildStaticCanvasPresentation = ({
 
   return {
     nodes,
-    overlayEdges,
+    overlayEdges: routeCanvasEdges(nodes, overlayEdges),
   };
 };

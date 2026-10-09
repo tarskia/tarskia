@@ -13,6 +13,7 @@ export interface CanvasRect {
 }
 
 export interface CanvasEdgeGeometry {
+  firstLegLabel?: boolean;
   sourcePoint: CanvasPoint;
   control1: CanvasPoint;
   control2: CanvasPoint;
@@ -93,17 +94,19 @@ const buildOrthogonalPath = (
   target: CanvasPoint,
   sourceSide: CanvasHandleSide,
   targetSide: CanvasHandleSide,
+  trunkX?: number,
 ): { path: string; labelAnchor: CanvasPoint } => {
   // Horizontal flow (left/right handles): step edge with vertical segment
   if (
-    (sourceSide === 'right' && targetSide === 'left') ||
-    (sourceSide === 'left' && targetSide === 'right')
+    (sourceSide === 'right' || sourceSide === 'left') &&
+    (targetSide === 'left' || targetSide === 'right')
   ) {
     const dir = sourceSide === 'right' ? 1 : -1;
     const gap = (target.x - source.x) * dir;
     // If target is behind source, route around with extra stubs
     const midX =
-      gap > MIN_STUB * 2 ? source.x + (target.x - source.x) / 2 : source.x + dir * MIN_STUB;
+      trunkX ??
+      (gap > MIN_STUB * 2 ? source.x + (target.x - source.x) / 2 : source.x + dir * MIN_STUB);
 
     if (Math.abs(source.y - target.y) < 1) {
       // Straight horizontal line
@@ -121,7 +124,10 @@ const buildOrthogonalPath = (
 
     return {
       path: `M ${source.x},${source.y} ${seg1} ${seg2} L ${target.x},${target.y}`,
-      labelAnchor: { x: midX, y: (source.y + target.y) / 2 },
+      labelAnchor:
+        trunkX === undefined
+          ? { x: midX, y: (source.y + target.y) / 2 }
+          : { x: (source.x + midX) / 2, y: source.y },
     };
   }
 
@@ -173,6 +179,7 @@ export const buildBezierEdgeGeometry = (params: {
   targetSide?: CanvasHandleSide;
   sourcePointOverride?: CanvasPoint;
   targetPointOverride?: CanvasPoint;
+  trunkX?: number;
 }): CanvasEdgeGeometry => {
   const { sourceRect, targetRect } = params;
   const { sourceSide, targetSide } =
@@ -186,12 +193,14 @@ export const buildBezierEdgeGeometry = (params: {
     targetPoint,
     sourceSide,
     targetSide,
+    params.trunkX,
   );
 
   // control1/control2 kept for interface compatibility (used by transition overlay)
-  const midX = (sourcePoint.x + targetPoint.x) / 2;
+  const midX = params.trunkX ?? (sourcePoint.x + targetPoint.x) / 2;
 
   return {
+    firstLegLabel: params.trunkX !== undefined || undefined,
     sourcePoint,
     control1: { x: midX, y: sourcePoint.y },
     control2: { x: midX, y: targetPoint.y },
@@ -217,6 +226,7 @@ export const buildBezierPath = ({
     targetPoint,
     sourceSide as CanvasHandleSide,
     targetSide as CanvasHandleSide,
+    control1.x === control2.x ? control1.x : undefined,
   );
   return path;
 };

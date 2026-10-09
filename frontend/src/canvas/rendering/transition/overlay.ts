@@ -1,4 +1,5 @@
 import type { DiagramViewNodeControls } from '@tarskia/diagram-semantics';
+import { routeCanvasEdges } from '../presentation/edge-routing';
 import type { CanvasEdgeGeometry, CanvasPoint, CanvasRect } from '../presentation/geometry';
 import { buildBezierEdgeGeometry, buildBezierPath } from '../presentation/geometry';
 import type {
@@ -777,7 +778,10 @@ export const resolveTransitionOverlayFrame = (
   return {
     progress,
     nodes,
-    edges,
+    edges: routeCanvasEdges(
+      nodes.map((node) => ({ ...node.view, rect: node.rect })),
+      edges,
+    ),
   };
 };
 
