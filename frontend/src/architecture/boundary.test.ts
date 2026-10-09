@@ -56,12 +56,23 @@ describe('architecture boundaries', () => {
   it('keeps bundled built-in starter/schema loading inside semantic bootstrap boundaries', () => {
     const builtInRawImportPattern =
       /data\/starters\/starter\.yaml\?raw|schemas\/[^'"]+\.yaml\?raw|import\.meta\.glob\(\s*['"][^'"]*schemas\/\*\.yaml['"][\s\S]*?query:\s*['"]\?raw['"]/;
-    const galleryGlobPattern = /galleryassets\/curated\/\*\.yaml['"][\s\S]*?query:\s*['"]\?raw['"]/;
+    const galleryGlobPattern = /gallery\/curated\/\*\.yaml['"][\s\S]*?query:\s*['"]\?raw['"]/;
+
+    expect(
+      galleryGlobPattern.test(`import.meta.glob('../../../gallery/curated/*.yaml', {
+      eager: true, import: 'default', query: '?raw',
+    })`),
+    ).toBe(true);
+    expect(
+      galleryGlobPattern.test(readFileSync(path.join(srcRoot, 'gallery/local-gallery.ts'), 'utf8')),
+    ).toBe(true);
 
     const offenders = collectFiles(srcRoot).flatMap((file) => {
       const source = readFileSync(file, 'utf8');
-      if (galleryGlobPattern.test(source)) {
-        return [`${normalizePath(path.relative(projectRoot, file))}: imports all gallery YAML`];
+      if (galleryGlobPattern.test(source) && /eager:\s*true/.test(source)) {
+        return [
+          `${normalizePath(path.relative(projectRoot, file))}: eagerly imports all gallery YAML`,
+        ];
       }
       if (!builtInRawImportPattern.test(source)) {
         return [];

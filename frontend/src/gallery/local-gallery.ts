@@ -32,12 +32,11 @@ type LocalDiagramDocument = {
 };
 
 const localDiagramRawModules = import.meta.glob<string>('../../../gallery/curated/*.yaml', {
-  eager: true,
   import: 'default',
   query: '?raw',
 });
 
-const localDiagramRawByFile = new Map(
+const localDiagramLoadersByFile = new Map(
   Object.entries(localDiagramRawModules).map(([filePath, raw]) => [
     filePath.split('/').pop() ?? filePath,
     raw,
@@ -144,17 +143,18 @@ const toDetail = (
 
 const localManifest = manifest as LocalGalleryManifestEntry[];
 
-export const listLocalGalleryDiagrams = async (): Promise<listGalleryDiagramsResponse> => ({
-  status: 200,
-  headers,
-  data: localManifest.flatMap((entry) => {
-    if (entry.visibility !== 'listed') {
-      return [];
-    }
-    const raw = localDiagramRawByFile.get(entry.file);
-    return raw ? [toSummary(entry, raw)] : [];
-  }),
-});
+export const listLocalGalleryDiagrams = async (): Promise<listGalleryDiagramsResponse> => {
+  const summaries = await Promise.all(
+    localManifest.map(async (entry) => {
+      if (entry.visibility !== 'listed') {
+        return [];
+      }
+      const raw = await localDiagramLoadersByFile.get(entry.file)?.();
+      return raw ? [toSummary(entry, raw)] : [];
+    }),
+  );
+  return { status: 200, headers, data: summaries.flat() };
+};
 
 export const getLocalGalleryDiagram = async (
   namespace: string,
@@ -166,7 +166,7 @@ export const getLocalGalleryDiagram = async (
       candidate.slug === slug &&
       candidate.visibility === 'listed',
   );
-  const raw = entry ? localDiagramRawByFile.get(entry.file) : undefined;
+  const raw = entry ? await localDiagramLoadersByFile.get(entry.file)?.() : undefined;
   if (!entry || !raw) {
     return {
       status: 404,
@@ -180,16 +180,3 @@ export const getLocalGalleryDiagram = async (
     data: toDetail(entry, raw),
   };
 };
-
-const hasConfiguredGalleryApi = () => Boolean(import.meta.env.VITE_API_BASE_URL?.trim());
-
-export const shouldUseLocalGallerySource = () =>
-  import.meta.env.VITE_GALLERY_SOURCE === 'local' ||
-  (import.meta.env.VITE_GALLERY_SOURCE !== 'api' &&
-    !hasConfiguredGalleryApi() &&
-    import.meta.env.DEV);
-
-export const shouldUseLocalGalleryFallback = () =>
-  import.meta.env.VITE_GALLERY_SOURCE !== 'api' &&
-  !hasConfiguredGalleryApi() &&
-  import.meta.env.DEV;

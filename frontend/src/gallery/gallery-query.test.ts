@@ -103,6 +103,40 @@ describe('gallery query helpers', () => {
     expect(mockedGetGalleryDiagram).not.toHaveBeenCalled();
   });
 
+  it('loads the n8n gallery locally when explicitly requested in development', async () => {
+    vi.stubEnv('DEV', true);
+    vi.stubEnv('VITE_GALLERY_SOURCE', 'local');
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
+
+    await expect(getGalleryDiagramWithLocalFallback('tarskia', 'n8n')).resolves.toMatchObject({
+      status: 200,
+      data: { slug: 'n8n', raw: expect.stringContaining('name: N8n') },
+    });
+    expect(mockedGetGalleryDiagram).not.toHaveBeenCalled();
+  });
+
+  it('uses the API in production even when the local source is requested', async () => {
+    vi.stubEnv('DEV', false);
+    vi.stubEnv('VITE_GALLERY_SOURCE', 'local');
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    mockedListGalleryDiagrams.mockResolvedValue({ status: 200, data: [], headers: new Headers() });
+    mockedGetGalleryDiagram.mockResolvedValue({
+      status: 404,
+      data: { message: 'missing' },
+      headers: new Headers(),
+    });
+
+    await expect(listGalleryDiagramsWithLocalFallback()).resolves.toMatchObject({
+      status: 200,
+      data: [],
+    });
+    await expect(getGalleryDiagramWithLocalFallback('tarskia', 'n8n')).resolves.toMatchObject({
+      status: 404,
+    });
+    expect(mockedListGalleryDiagrams).toHaveBeenCalledTimes(1);
+    expect(mockedGetGalleryDiagram).toHaveBeenCalledTimes(1);
+  });
+
   it('uses API gallery data when explicitly requested', async () => {
     vi.stubEnv('VITE_GALLERY_SOURCE', 'api');
     vi.stubEnv('VITE_API_BASE_URL', '');
