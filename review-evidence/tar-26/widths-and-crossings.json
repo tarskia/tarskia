@@ -1,0 +1,881 @@
+[
+  {
+    "file": "outline.yaml",
+    "expanded": false,
+    "beforeWidth": 1610,
+    "afterWidth": 1954,
+    "crossings": [
+      {
+        "edge": "rel-async-worker-plane-publishes-to-websocket-queue:async-worker-plane->websocket-queue",
+        "card": "object-storage-plane"
+      },
+      {
+        "edge": "rel-koa-web-host-writes-relational-cache-persistence:koa-web-host->relational-cache-persistence",
+        "card": "collaboration-service"
+      },
+      {
+        "edge": "rel-koa-web-host-reads-object-storage-plane:koa-web-host->object-storage-plane",
+        "card": "plugin-and-integration-surface"
+      }
+    ]
+  },
+  {
+    "file": "outline.yaml",
+    "expanded": true,
+    "beforeWidth": 5644,
+    "afterWidth": 7270,
+    "crossings": [
+      {
+        "edge": "rel-browser-product-app-calls-koa-web-host:browser-product-app/app-bootstrap/app-shell->koa-web-host/http-surface",
+        "card": "koa-web-host/service-startup"
+      },
+      {
+        "edge": "rel-koa-web-host-calls-collaboration-service:koa-web-host/service-startup->collaboration-service/collaboration-runtime/hocuspocus-runtime/collaboration-websocket-upgrade",
+        "card": "koa-web-host/http-surface/auth-surface"
+      },
+      {
+        "edge": "rel-koa-web-host-calls-websocket-event-plane:koa-web-host/service-startup->websocket-event-plane/socket-runtime/realtime-socket-server/realtime-socket-entry",
+        "card": "koa-web-host/http-surface/auth-surface"
+      },
+      {
+        "edge": "rel-koa-web-host-calls-websocket-event-plane:koa-web-host/service-startup->websocket-event-plane/socket-runtime/realtime-socket-server/realtime-socket-entry",
+        "card": "collaboration-service/persistence-extension"
+      },
+      {
+        "edge": "rel-koa-web-host-calls-websocket-event-plane:koa-web-host/service-startup->websocket-event-plane/socket-runtime/realtime-socket-server/realtime-socket-entry",
+        "card": "relational-cache-persistence/primary-database"
+      },
+      {
+        "edge": "rel-koa-web-host-calls-async-worker-plane:koa-web-host/service-startup->async-worker-plane/worker-runtime/queue-router/queue-dispatcher",
+        "card": "koa-web-host/http-surface/auth-surface"
+      },
+      {
+        "edge": "rel-koa-web-host-calls-async-worker-plane:koa-web-host/service-startup->async-worker-plane/worker-runtime/queue-router/queue-dispatcher",
+        "card": "async-worker-plane/worker-runtime/queue-router/global-events"
+      },
+      {
+        "edge": "rel-koa-web-host-calls-plugin-and-integration-surface:koa-web-host/service-startup->plugin-and-integration-surface/plugin-manager",
+        "card": "koa-web-host/http-surface/auth-surface"
+      },
+      {
+        "edge": "rel-async-worker-plane-consumes-from-global-event-queue:async-worker-plane/worker-runtime/queue-router/queue-dispatcher->global-event-queue/global-events",
+        "card": "async-worker-plane/worker-runtime/queue-router/processor-events"
+      },
+      {
+        "edge": "rel-async-worker-plane-consumes-from-global-event-queue:async-worker-plane/worker-runtime/queue-router/queue-dispatcher->global-event-queue/global-events",
+        "card": "async-worker-plane/worker-runtime/task-execution"
+      },
+      {
+        "edge": "rel-async-worker-plane-consumes-from-global-event-queue:async-worker-plane/worker-runtime/queue-router/queue-dispatcher->global-event-queue/global-events",
+        "card": "async-worker-plane/health-monitor"
+      },
+      {
+        "edge": "rel-async-worker-plane-consumes-from-global-event-queue:async-worker-plane/worker-runtime/queue-router/queue-dispatcher->global-event-queue/global-events",
+        "card": "global-event-queue/queue-manager"
+      },
+      {
+        "edge": "rel-async-worker-plane-publishes-to-global-event-queue:async-worker-plane/worker-runtime/queue-router->global-event-queue/global-events",
+        "card": "async-worker-plane/worker-runtime/processor-execution"
+      },
+      {
+        "edge": "rel-async-worker-plane-publishes-to-global-event-queue:async-worker-plane/worker-runtime/queue-router->global-event-queue/global-events",
+        "card": "global-event-queue/queue-manager"
+      },
+      {
+        "edge": "rel-async-worker-plane-publishes-to-websocket-queue:async-worker-plane/worker-runtime/queue-router/queue-dispatcher->websocket-queue/websocket-delivery",
+        "card": "async-worker-plane/worker-runtime/queue-router/websocket-delivery"
+      },
+      {
+        "edge": "rel-async-worker-plane-publishes-to-websocket-queue:async-worker-plane/worker-runtime/queue-router/queue-dispatcher->websocket-queue/websocket-delivery",
+        "card": "async-worker-plane/worker-runtime/health-monitoring"
+      },
+      {
+        "edge": "rel-async-worker-plane-publishes-to-websocket-queue:async-worker-plane/worker-runtime/queue-router/queue-dispatcher->websocket-queue/websocket-delivery",
+        "card": "websocket-queue/queue-manager"
+      },
+      {
+        "edge": "rel-websocket-event-plane-consumes-from-websocket-queue:websocket-event-plane/delivery-processor->websocket-queue/websocket-delivery",
+        "card": "websocket-queue/queue-manager"
+      },
+      {
+        "edge": "rel-websocket-event-plane-publishes-to-websocket-queue:websocket-event-plane->websocket-queue/websocket-delivery",
+        "card": "websocket-queue/queue-manager"
+      },
+      {
+        "edge": "rel-koa-web-host-writes-relational-cache-persistence:koa-web-host->relational-cache-persistence/primary-database",
+        "card": "collaboration-service/persistence-extension"
+      },
+      {
+        "edge": "rel-websocket-event-plane-reads-relational-cache-persistence:websocket-event-plane/socket-runtime/realtime-socket-server/socket-room-access->relational-cache-persistence/primary-database",
+        "card": "websocket-event-plane/socket-runtime/realtime-socket-server/realtime-socket-entry"
+      },
+      {
+        "edge": "rel-koa-web-host-reads-object-storage-plane:koa-web-host->object-storage-plane",
+        "card": "plugin-and-integration-surface/plugin-manager"
+      },
+      {
+        "edge": "rel-koa-web-host-reads-object-storage-plane:koa-web-host->object-storage-plane",
+        "card": "plugin-and-integration-surface/integration-families/github-integration"
+      },
+      {
+        "edge": "websocket-event-plane--rel-socket-runtime-calls-delivery-processor:websocket-event-plane/socket-runtime/realtime-socket-server/websocket-queue-processing->websocket-event-plane/delivery-processor",
+        "card": "websocket-event-plane/socket-runtime/authenticated-room-access/socket-authentication"
+      },
+      {
+        "edge": "websocket-event-plane--rel-socket-runtime-calls-delivery-processor:websocket-event-plane/socket-runtime/realtime-socket-server/websocket-queue-processing->websocket-event-plane/delivery-processor",
+        "card": "websocket-event-plane/socket-runtime/authenticated-room-access/room-membership-session/user-room"
+      },
+      {
+        "edge": "collaboration-service--collaboration-runtime--runtime-auth-extension:collaboration-service/collaboration-runtime/hocuspocus-runtime/hocuspocus-extension-stack/authentication-extension->collaboration-service/collaboration-runtime/authentication-extension",
+        "card": "collaboration-service/collaboration-runtime/hocuspocus-runtime/hocuspocus-extension-stack/persistence-extension"
+      },
+      {
+        "edge": "websocket-event-plane--socket-runtime--realtime-to-authenticated-room-access:websocket-event-plane/socket-runtime/realtime-socket-server/socket-room-access->websocket-event-plane/socket-runtime/authenticated-room-access/socket-authentication",
+        "card": "websocket-event-plane/socket-runtime/realtime-socket-server/websocket-queue-processing"
+      }
+    ]
+  },
+  {
+    "file": "harbor.yaml",
+    "expanded": false,
+    "beforeWidth": 988,
+    "afterWidth": 1063,
+    "crossings": []
+  },
+  {
+    "file": "harbor.yaml",
+    "expanded": true,
+    "beforeWidth": 6190,
+    "afterWidth": 7625,
+    "crossings": [
+      {
+        "edge": "portal-calls-control-plane:harbor-browser-portal/portal-entry-router/portal-app-shell/browser-entrypoint->harbor-core-control-plane/core-service-shell/core-route-surface",
+        "card": "harbor-browser-portal/portal-shared-services/shared-support-shell/shared-module"
+      },
+      {
+        "edge": "portal-calls-control-plane:harbor-browser-portal/portal-entry-router/portal-app-shell/browser-entrypoint->harbor-core-control-plane/core-service-shell/core-route-surface",
+        "card": "harbor-browser-portal/portal-shared-services/shared-support-impl/app-config-service"
+      },
+      {
+        "edge": "portal-calls-control-plane:harbor-browser-portal/portal-entry-router/portal-app-shell/browser-entrypoint->harbor-core-control-plane/core-service-shell/core-route-surface",
+        "card": "harbor-browser-portal/portal-shared-services/shared-support-impl/http-interceptor-service"
+      },
+      {
+        "edge": "portal-calls-control-plane:harbor-browser-portal/portal-entry-router/portal-app-shell/browser-entrypoint->harbor-core-control-plane/core-service-shell/core-route-surface",
+        "card": "harbor-browser-portal/portal-shared-services/shared-support-impl/route-reuse-strategy"
+      },
+      {
+        "edge": "control-plane-calls-jobservice:harbor-core-control-plane/core-service-shell/core-route-surface->harbor-jobservice-async-plane/job-runtime-shell/job-runtime-surface",
+        "card": "harbor-core-control-plane/core-registry-surface/registry-route-surface"
+      },
+      {
+        "edge": "jobservice-calls-control-plane:harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/notification->harbor-core-control-plane/core-service-shell/core-route-surface",
+        "card": "harbor-core-control-plane/core-registry-surface/registry-route-surface"
+      },
+      {
+        "edge": "jobservice-calls-control-plane:harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/notification->harbor-core-control-plane/core-service-shell/core-route-surface",
+        "card": "harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gc"
+      },
+      {
+        "edge": "jobservice-calls-control-plane:harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/notification->harbor-core-control-plane/core-service-shell/core-route-surface",
+        "card": "harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/replication"
+      },
+      {
+        "edge": "harbor-jobservice-async-plane--job-impl-suite--job-impl-packages-calls-job-common-context:harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gc->harbor-jobservice-async-plane/job-impl-suite/job-common-context/shared-job-context",
+        "card": "harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/replication"
+      },
+      {
+        "edge": "harbor-jobservice-async-plane--job-impl-suite--job-impl-packages-calls-job-common-context:harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gc->harbor-jobservice-async-plane/job-impl-suite/job-common-context/shared-job-context",
+        "card": "harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/notification"
+      },
+      {
+        "edge": "harbor-jobservice-async-plane--job-impl-suite--job-impl-packages-calls-job-common-context:harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gc->harbor-jobservice-async-plane/job-impl-suite/job-common-context/shared-job-context",
+        "card": "harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/purge"
+      },
+      {
+        "edge": "harbor-jobservice-async-plane--job-impl-suite--job-impl-packages-calls-job-common-context:harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gc->harbor-jobservice-async-plane/job-impl-suite/job-common-context/shared-job-context",
+        "card": "harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/scandataexport"
+      },
+      {
+        "edge": "harbor-jobservice-async-plane--job-impl-suite--job-impl-packages-calls-job-common-context:harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gc->harbor-jobservice-async-plane/job-impl-suite/job-common-context/shared-job-context",
+        "card": "harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gdpr"
+      },
+      {
+        "edge": "harbor-jobservice-async-plane--job-impl-suite--job-impl-packages-calls-job-common-context:harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/gc->harbor-jobservice-async-plane/job-impl-suite/job-common-context/shared-job-context",
+        "card": "harbor-jobservice-async-plane/job-impl-suite/job-impl-packages/systemartifact"
+      },
+      {
+        "edge": "harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--harbor-native-calls-cloud-vendors:harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/native->harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/awsecr",
+        "card": "harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/googlegcr"
+      },
+      {
+        "edge": "harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--harbor-native-calls-cloud-vendors:harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/native->harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/awsecr",
+        "card": "harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/harbor-native/harbor-base"
+      },
+      {
+        "edge": "harbor-registry-protocol-surface--registry-provider-adapters--provider-adapter-pack--cloud-vendors--googlegcr-calls-awsecr:harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/googlegcr->harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/awsecr",
+        "card": "harbor-registry-protocol-surface/registry-provider-adapters/provider-adapter-pack/cloud-vendors/azurecr"
+      }
+    ]
+  },
+  {
+    "file": "coolify.yaml",
+    "expanded": false,
+    "beforeWidth": 1364,
+    "afterWidth": 1578,
+    "crossings": [
+      {
+        "edge": "rel-control-plane-core-reads-persistence-plane:control-plane-core->persistence-plane",
+        "card": "external-integrations"
+      },
+      {
+        "edge": "rel-control-plane-core-writes-persistence-plane:control-plane-core->persistence-plane",
+        "card": "scheduler-queue-plane"
+      }
+    ]
+  },
+  {
+    "file": "coolify.yaml",
+    "expanded": true,
+    "beforeWidth": 4170,
+    "afterWidth": 4950,
+    "crossings": [
+      {
+        "edge": "rel-control-plane-core-reads-persistence-plane:control-plane-core/deploy-controller/deployment-lifecycle/state-access->persistence-plane/primary-database",
+        "card": "control-plane-core/deploy-controller/provider-adapter"
+      },
+      {
+        "edge": "rel-control-plane-core-writes-persistence-plane:control-plane-core/deploy-controller/deployment-lifecycle/state-access->persistence-plane/primary-database",
+        "card": "control-plane-core/deploy-controller/provider-adapter"
+      },
+      {
+        "edge": "rel-external-integrations-calls-control-plane-core:external-integrations->control-plane-core/api-surface/route-dispatch",
+        "card": "control-plane-core/api-surface/api-contract"
+      }
+    ]
+  },
+  {
+    "file": "chatwoot.yaml",
+    "expanded": false,
+    "beforeWidth": 1364,
+    "afterWidth": 1504,
+    "crossings": [
+      {
+        "edge": "rel-rails-control-plane-read-writes-persistence-state-plane--core--software-relations-read-writes--rails-control-plane--api-surface--to--persistence-state-plane--object-storage:rails-control-plane->persistence-state-plane",
+        "card": "sidekiq-job-queue"
+      },
+      {
+        "edge": "rel-rails-control-plane-read-writes-persistence-state-plane--core--software-relations-read-writes--rails-control-plane--api-surface--to--persistence-state-plane--object-storage:rails-control-plane->persistence-state-plane",
+        "card": "sidekiq-worker-plane"
+      },
+      {
+        "edge": "rel-channel-providers-calls-rails-control-plane--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--callback-controllers--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--callback-controllers--google-callbacks-controller:channel-providers->rails-control-plane",
+        "card": "sidekiq-job-queue"
+      },
+      {
+        "edge": "rel-channel-providers-calls-rails-control-plane--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--callback-controllers--core--software-relations-calls--channel-providers--to--rails-control-plane--integration-gateway--provider-ingress--callback-controllers--google-callbacks-controller:channel-providers->rails-control-plane",
+        "card": "sidekiq-worker-plane"
+      }
+    ]
+  },
+  {
+    "file": "chatwoot.yaml",
+    "expanded": true,
+    "beforeWidth": 5348,
+    "afterWidth": 6886,
+    "crossings": [
+      {
+        "edge": "rel-rails-control-plane-publishes-to-sidekiq-job-queue--core--software-relations-publishes-to--rails-control-plane--api-surface--to--sidekiq-job-queue--scheduled-jobs:rails-control-plane/api-surface/accounts-lifecycle-api->sidekiq-job-queue/scheduled-jobs",
+        "card": "rails-control-plane/enterprise-overlay"
+      },
+      {
+        "edge": "rel-rails-control-plane-read-writes-persistence-state-plane--core--software-relations-read-writes--rails-control-plane--api-surface--to--persistence-state-plane--object-storage:rails-control-plane/api-surface/conversation-messages-api->persistence-state-plane/object-storage",
+        "card": "sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/send-on-slack-job"
+      },
+      {
+        "edge": "rel-sidekiq-worker-plane-calls-channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--to--channel-providers--core--software-relations-calls--sidekiq-worker-plane--delivery-jobs--delivery-callback-jobs--provider-callback-jobs--callback-job-set--facebook-delivery-job--to--channel-providers:sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/callback-job-set/facebook-delivery-job->channel-providers",
+        "card": "sidekiq-worker-plane/delivery-jobs/delivery-callback-jobs/provider-callback-jobs/channel-providers"
+      },
+      {
+        "edge": "portal-app--public-help-center-portal--portal-runtime-calls-portal-articles-api:portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/portal-search-shell/public-article-search->portal-app/public-help-center-portal/portal-articles-api",
+        "card": "portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/search-suggestions/search-suggestions-module"
+      },
+      {
+        "edge": "portal-app--public-help-center-portal--portal-runtime-calls-portal-articles-api:portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/portal-search-shell/public-article-search->portal-app/public-help-center-portal/portal-articles-api",
+        "card": "portal-app/public-help-center-portal/portal-runtime/portal-browser-runtime/search-suggestions/suggestion-item"
+      },
+      {
+        "edge": "portal-app--csat-survey-frontend--survey-api-calls-survey-runtime:portal-app/csat-survey-frontend/survey-api->portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-shell/survey-shell-module",
+        "card": "portal-app/csat-survey-frontend/survey-runtime/survey-browser-runtime/survey-shell/survey-api-client"
+      },
+      {
+        "edge": "sidekiq-worker-plane--delivery-jobs--delivery-send-jobs--sidekiq-runtime-calls-send-on-slack-job:sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/sidekiq-runtime/sidekiq-worker->sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/send-on-slack-job",
+        "card": "sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/sidekiq-runtime/send-on-slack-job"
+      },
+      {
+        "edge": "sidekiq-worker-plane--delivery-jobs--delivery-send-jobs--sidekiq-runtime-calls-send-on-slack-job:sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/sidekiq-runtime/sidekiq-worker->sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/send-on-slack-job",
+        "card": "sidekiq-worker-plane/delivery-jobs/delivery-send-jobs/sidekiq-runtime/slack-api"
+      }
+    ]
+  },
+  {
+    "file": "n8n.yaml",
+    "expanded": false,
+    "beforeWidth": 1398,
+    "afterWidth": 1648,
+    "crossings": [
+      {
+        "edge": "calls-worker-service-to-control-plane-runtime:worker-service->control-plane-runtime",
+        "card": "relational-state-store"
+      },
+      {
+        "edge": "calls-task-runner-plane-to-control-plane-runtime:task-runner-plane->control-plane-runtime",
+        "card": "binary-data-storage"
+      }
+    ]
+  },
+  {
+    "file": "n8n.yaml",
+    "expanded": true,
+    "beforeWidth": 7440,
+    "afterWidth": 9631,
+    "crossings": [
+      {
+        "edge": "calls-desktop-local-gateway-to-control-plane-runtime:desktop-local-gateway/gateway-host/gateway-runtime/electron-host/connection-manager->control-plane-runtime/runtime-host/runtime-server/http-host/http-host-core",
+        "card": "desktop-local-gateway/gateway-host/gateway-runtime/electron-host/daemon-manager"
+      },
+      {
+        "edge": "calls-desktop-local-gateway-to-control-plane-runtime:desktop-local-gateway/gateway-host/gateway-runtime/electron-host/connection-manager->control-plane-runtime/runtime-host/runtime-server/http-host/http-host-core",
+        "card": "desktop-local-gateway/gateway-host/gateway-runtime/daemon-lifecycle/lifecycle-controller"
+      },
+      {
+        "edge": "publishes-to-control-plane-runtime-to-workflow-queue:control-plane-runtime/runtime-host->workflow-queue/workflow-execution-queue",
+        "card": "workflow-queue/queue-runtime/worker-command"
+      },
+      {
+        "edge": "publishes-to-control-plane-runtime-to-workflow-queue:control-plane-runtime/runtime-host->workflow-queue/workflow-execution-queue",
+        "card": "workflow-queue/queue-runtime/publisher-service"
+      },
+      {
+        "edge": "consumes-from-worker-service-to-workflow-queue:worker-service/queue-pubsub->workflow-queue/workflow-execution-queue",
+        "card": "worker-service/worker-scheduler"
+      },
+      {
+        "edge": "publishes-to-worker-service-to-workflow-queue:worker-service/queue-pubsub->workflow-queue/workflow-execution-queue",
+        "card": "worker-service/worker-scheduler"
+      },
+      {
+        "edge": "calls-worker-service-to-control-plane-runtime:worker-service/execution-runner/execution-core/execution-lifecycle/lifecycle-publisher->control-plane-runtime/runtime-host/runtime-server/http-host/http-host-core",
+        "card": "worker-service/execution-runner/execution-core/queue-executor/queue-consumer"
+      },
+      {
+        "edge": "calls-worker-service-to-control-plane-runtime:worker-service/execution-runner/execution-core/execution-lifecycle/lifecycle-publisher->control-plane-runtime/runtime-host/runtime-server/http-host/http-host-core",
+        "card": "worker-service/execution-runner/execution-core/queue-executor/lifecycle-bridge"
+      },
+      {
+        "edge": "calls-worker-service-to-control-plane-runtime:worker-service/execution-runner/execution-core/execution-lifecycle/lifecycle-publisher->control-plane-runtime/runtime-host/runtime-server/http-host/http-host-core",
+        "card": "worker-service/execution-runner/execution-core/execution-lifecycle/lifecycle-hooks"
+      },
+      {
+        "edge": "calls-worker-service-to-control-plane-runtime:worker-service/execution-runner/execution-core/execution-lifecycle/lifecycle-publisher->control-plane-runtime/runtime-host/runtime-server/http-host/http-host-core",
+        "card": "binary-data-storage/filesystem-store"
+      },
+      {
+        "edge": "calls-task-runner-plane-to-control-plane-runtime:task-runner-plane/task-runner-host/host-core/execution-bridge/control-plane-client->control-plane-runtime/runtime-host/runtime-server/http-host/http-host-core",
+        "card": "task-runner-plane/task-runner-host/host-core/broker-adapter/broker-consumer"
+      },
+      {
+        "edge": "calls-task-runner-plane-to-control-plane-runtime:task-runner-plane/task-runner-host/host-core/execution-bridge/control-plane-client->control-plane-runtime/runtime-host/runtime-server/http-host/http-host-core",
+        "card": "task-runner-plane/task-runner-host/host-core/broker-adapter/execution-dispatcher"
+      },
+      {
+        "edge": "calls-task-runner-plane-to-control-plane-runtime:task-runner-plane/task-runner-host/host-core/execution-bridge/control-plane-client->control-plane-runtime/runtime-host/runtime-server/http-host/http-host-core",
+        "card": "task-runner-plane/task-runner-host/host-core/execution-bridge/js-runner-adapter"
+      },
+      {
+        "edge": "calls-task-runner-plane-to-control-plane-runtime:task-runner-plane/task-runner-host/host-core/execution-bridge/control-plane-client->control-plane-runtime/runtime-host/runtime-server/http-host/http-host-core",
+        "card": "binary-data-storage/filesystem-store"
+      },
+      {
+        "edge": "browser-editor-shell--calls-shell-runtime-to-bootstrap:browser-editor-shell/shell-runtime/bootstrap->browser-editor-shell/bootstrap",
+        "card": "browser-editor-shell/shell-runtime/app-shell"
+      },
+      {
+        "edge": "api-and-push-surface--calls-api-host-to-push-transport--core--software-relations-calls--api-and-push-surface--api-host--server-runtime--server-host--to--api-and-push-surface--push-transport--push-server--websocket-server:api-and-push-surface/api-host/server-runtime/server-host->api-and-push-surface/push-transport/push-server/websocket-server/websocket-handler",
+        "card": "api-and-push-surface/push-transport/websocket-client"
+      },
+      {
+        "edge": "workflow-queue--consumes-queue-runtime-from-workflow-execution-queue:workflow-queue/queue-runtime/workflow-runner/queue-executor/queue-consumer->workflow-queue/workflow-execution-queue",
+        "card": "workflow-queue/queue-runtime/workflow-runner/queue-executor/lifecycle-bridge"
+      },
+      {
+        "edge": "workflow-queue--consumes-queue-runtime-from-workflow-execution-queue:workflow-queue/queue-runtime/workflow-runner/queue-executor/queue-consumer->workflow-queue/workflow-execution-queue",
+        "card": "workflow-queue/queue-runtime/workflow-runner/execution-lifecycle/lifecycle-hooks"
+      },
+      {
+        "edge": "workflow-queue--consumes-queue-runtime-from-workflow-execution-queue:workflow-queue/queue-runtime/workflow-runner/queue-executor/queue-consumer->workflow-queue/workflow-execution-queue",
+        "card": "workflow-queue/queue-runtime/workflow-runner/execution-lifecycle/coordination-publisher"
+      },
+      {
+        "edge": "task-runner-plane--calls-task-runner-host-to-js-task-runner:task-runner-plane/task-runner-host/host-core/execution-bridge/js-runner-adapter->task-runner-plane/js-task-runner",
+        "card": "task-runner-plane/task-runner-host/host-core/execution-bridge/control-plane-client"
+      },
+      {
+        "edge": "desktop-local-gateway--calls-computer-use-cli-to-gateway-host:desktop-local-gateway/computer-use-cli->desktop-local-gateway/gateway-host/gateway-runtime/electron-host/daemon-manager",
+        "card": "desktop-local-gateway/gateway-host/gateway-runtime/daemon-lifecycle/lifecycle-controller"
+      },
+      {
+        "edge": "api-and-push-surface--push-transport--calls-push-server-to-client-facade--core--software-relations-calls--api-and-push-surface--push-transport--push-server--websocket-server--to--api-and-push-surface--push-transport--client-facade:api-and-push-surface/push-transport/push-server/websocket-server/connection-lifecycle/lifecycle-manager->api-and-push-surface/push-transport/client-facade",
+        "card": "api-and-push-surface/push-transport/eventsource-client"
+      },
+      {
+        "edge": "api-and-push-surface--push-transport--calls-push-server-to-client-facade--core--software-relations-calls--api-and-push-surface--push-transport--push-server--eventsource-server--to--api-and-push-surface--push-transport--client-facade:api-and-push-surface/push-transport/push-server/eventsource-server/stream-lifecycle/lifecycle-manager->api-and-push-surface/push-transport/client-facade",
+        "card": "api-and-push-surface/push-transport/eventsource-client"
+      },
+      {
+        "edge": "binary-data-storage--binary-data-service--routes-to-storage-backends:binary-data-storage/binary-data-service/routing-service/backend-router->binary-data-storage/binary-data-service/storage-backends",
+        "card": "binary-data-storage/binary-data-service/routing-service/object-store-access"
+      }
+    ]
+  },
+  {
+    "file": "tarskia.yaml",
+    "expanded": false,
+    "beforeWidth": 506,
+    "afterWidth": 582,
+    "crossings": []
+  },
+  {
+    "file": "tarskia.yaml",
+    "expanded": true,
+    "beforeWidth": 5470,
+    "afterWidth": 6802,
+    "crossings": [
+      {
+        "edge": "browser-portal-app-calls-backend-api--core--software-relations-calls--browser-portal-app--browser-runtime--route-dispatch--gallery-query--to--backend-api-contract:browser-portal-app/browser-runtime/route-dispatch/gallery-query/remote-gallery-client->backend-api-contract",
+        "card": "browser-portal-app/browser-runtime/route-dispatch/local-gallery"
+      },
+      {
+        "edge": "browser-portal-app--browser-runtime-calls-public-gallery-shell:browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-index->browser-portal-app/public-gallery-shell/public-gallery-index",
+        "card": "browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-viewer"
+      },
+      {
+        "edge": "browser-portal-app--browser-runtime-calls-public-gallery-shell:browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-index->browser-portal-app/public-gallery-shell/public-gallery-index",
+        "card": "browser-portal-app/browser-runtime/route-dispatch/gallery-query/remote-gallery-client"
+      },
+      {
+        "edge": "browser-portal-app--browser-runtime-calls-public-gallery-shell:browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-index->browser-portal-app/public-gallery-shell/public-gallery-index",
+        "card": "browser-portal-app/browser-runtime/route-dispatch/local-gallery"
+      },
+      {
+        "edge": "browser-portal-app-reads-gallery-source-corpus--core--software-relations-reads--browser-portal-app--browser-runtime--to--gallery-source-corpus:browser-portal-app/browser-runtime/route-dispatch/local-gallery->gallery-source-corpus/curated-diagram-files",
+        "card": "gallery-source-corpus/gallery-local-loader/local-gallery"
+      },
+      {
+        "edge": "browser-portal-app-reads-gallery-source-corpus--core--software-relations-read-writes--browser-portal-app--browser-runtime--to--gallery-source-corpus:browser-portal-app/browser-runtime/route-dispatch/local-gallery->gallery-source-corpus/curated-diagram-files",
+        "card": "gallery-source-corpus/gallery-local-loader/local-gallery"
+      },
+      {
+        "edge": "browser-portal-app--browser-runtime--route-dispatch-calls-semantic-bootstrap:browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-viewer->browser-portal-app/browser-runtime/semantic-bootstrap/bootstrap/bootstrap-runtime",
+        "card": "browser-portal-app/browser-runtime/route-dispatch/gallery-query/remote-gallery-client"
+      },
+      {
+        "edge": "gallery-source-corpus--gallery-local-loader--fallback-corpus-calls-gallery-query:gallery-source-corpus/gallery-local-loader/fallback-corpus/query-handoff->gallery-source-corpus/gallery-local-loader/gallery-query/query-router/gallery-query-policy",
+        "card": "gallery-source-corpus/gallery-local-loader/gallery-query/query-router/gallery-api-fetcher"
+      },
+      {
+        "edge": "gallery-source-corpus--gallery-local-loader--fallback-corpus-calls-gallery-query:gallery-source-corpus/gallery-local-loader/fallback-corpus/query-handoff->gallery-source-corpus/gallery-local-loader/gallery-query/query-router/gallery-query-policy",
+        "card": "gallery-source-corpus/gallery-local-loader/gallery-query/query-router/local-fallback-router"
+      },
+      {
+        "edge": "browser-portal-app--browser-runtime--route-dispatch--public-gallery-shell-calls-gallery-query:browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-index->browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router/gallery-query-policy",
+        "card": "browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-viewer"
+      },
+      {
+        "edge": "browser-portal-app--browser-runtime--route-dispatch--gallery-query--query-router-calls-remote-gallery-client:browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router/remote-query-route->browser-portal-app/browser-runtime/route-dispatch/gallery-query/remote-gallery-client",
+        "card": "browser-portal-app/browser-runtime/route-dispatch/gallery-query/query-router/local-fallback-route"
+      },
+      {
+        "edge": "browser-portal-app--public-gallery-viewer-calls-viewer-core:browser-portal-app/browser-runtime/route-dispatch/public-gallery-shell/public-gallery-viewer->browser-portal-app/browser-runtime/viewer-core",
+        "card": "browser-portal-app/browser-runtime/route-dispatch/gallery-query/local-fallback-client"
+      }
+    ]
+  },
+  {
+    "file": "airflow.yaml",
+    "expanded": false,
+    "beforeWidth": 1078,
+    "afterWidth": 1123,
+    "crossings": []
+  },
+  {
+    "file": "airflow.yaml",
+    "expanded": true,
+    "beforeWidth": 1930,
+    "afterWidth": 2284,
+    "crossings": []
+  },
+  {
+    "file": "clickhouse.yaml",
+    "expanded": false,
+    "beforeWidth": 1118,
+    "afterWidth": 1144,
+    "crossings": []
+  },
+  {
+    "file": "clickhouse.yaml",
+    "expanded": true,
+    "beforeWidth": 5776,
+    "afterWidth": 6921,
+    "crossings": [
+      {
+        "edge": "tool-suite-calls-protocol-surface--core--software-relations-calls--client-tool-suite--client-command-suite--client-command-entrypoints--clickhouse-client-entrypoint--to--protocol-surface-multiplex--server-protocol-surface--server-handler-surface:client-tool-suite/client-command-suite/client-command-entrypoints/clickhouse-client-entrypoint->protocol-surface-multiplex/server-protocol-surface/server-handler-surface",
+        "card": "client-tool-suite/client-connection-core/client-session-core/client-session-control"
+      },
+      {
+        "edge": "tool-suite-calls-protocol-surface--core--software-relations-calls--client-tool-suite--client-command-suite--client-command-entrypoints--clickhouse-client-entrypoint--to--protocol-surface-multiplex--server-protocol-surface--server-handler-surface:client-tool-suite/client-command-suite/client-command-entrypoints/clickhouse-client-entrypoint->protocol-surface-multiplex/server-protocol-surface/server-handler-surface",
+        "card": "client-tool-suite/client-connection-core/client-session-core/connection-pool-management"
+      },
+      {
+        "edge": "tool-suite-calls-protocol-surface--core--software-relations-calls--client-tool-suite--client-command-suite--client-command-entrypoints--clickhouse-local-entrypoint--to--protocol-surface-multiplex--server-protocol-surface--server-handler-surface:client-tool-suite/client-command-suite/client-command-entrypoints/clickhouse-local-entrypoint->protocol-surface-multiplex/server-protocol-surface/server-handler-surface",
+        "card": "client-tool-suite/client-connection-core/client-session-core/client-session-control"
+      },
+      {
+        "edge": "tool-suite-calls-protocol-surface--core--software-relations-calls--client-tool-suite--client-command-suite--client-command-entrypoints--clickhouse-local-entrypoint--to--protocol-surface-multiplex--server-protocol-surface--server-handler-surface:client-tool-suite/client-command-suite/client-command-entrypoints/clickhouse-local-entrypoint->protocol-surface-multiplex/server-protocol-surface/server-handler-surface",
+        "card": "client-tool-suite/client-connection-core/client-session-core/connection-pool-management"
+      },
+      {
+        "edge": "clickhouse-server-runtime--server-protocol-surface-calls-query-runtime--core--software-relations-calls--clickhouse-server-runtime--server-protocol-surface--server-handler-surface--http-handler-surface--to--clickhouse-server-runtime--query-runtime-module--query-planning-and-entrypoints:clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/http-request-handler-surface->clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints",
+        "card": "clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/prometheus-metrics-http-surface"
+      },
+      {
+        "edge": "clickhouse-server-runtime--server-protocol-surface-calls-query-runtime--core--software-relations-calls--clickhouse-server-runtime--server-protocol-surface--server-handler-surface--native-handler-surface--to--clickhouse-server-runtime--query-runtime-module--query-planning-and-entrypoints:clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/tcp-handler-surface->clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints",
+        "card": "clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/mysql-handler-surface"
+      },
+      {
+        "edge": "clickhouse-server-runtime--server-protocol-surface-calls-query-runtime--core--software-relations-calls--clickhouse-server-runtime--server-protocol-surface--server-handler-surface--native-handler-surface--to--clickhouse-server-runtime--query-runtime-module--query-planning-and-entrypoints:clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/tcp-handler-surface->clickhouse-server-runtime/query-runtime-module/query-planning-and-entrypoints",
+        "card": "clickhouse-server-runtime/server-protocol-surface/server-handler-surface/native-handler-surface/postgresql-handler-surface"
+      },
+      {
+        "edge": "keeper-coordination-runtime--keeper-tcp-surface-calls-keeper-runtime:keeper-coordination-runtime/keeper-tcp-surface/keeper-tcp-handler-core/keeper-runtime-dispatch->keeper-coordination-runtime/keeper-runtime/keeper-server-core/keeper-coordination-engine",
+        "card": "keeper-coordination-runtime/keeper-runtime/keeper-server-core/keeper-process-entrypoint"
+      },
+      {
+        "edge": "storage-and-database-plane--database-replicated-runtime-calls-database-replicated-runtime:storage-and-database-plane/database-replicated-runtime/replicated-database-control-plane/replicated-database-engine->storage-and-database-plane/database-replicated-runtime/object-storage-backend/object-storage-ingress",
+        "card": "storage-and-database-plane/database-replicated-runtime/replicated-database-control-plane/backup-restore-worker"
+      },
+      {
+        "edge": "protocol-surface-multiplex--server-protocol-surface--server-handler-surface--client-command-suite-calls-handler-runtime-stack:protocol-surface-multiplex/server-protocol-surface/server-handler-surface/client-command-suite->protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/native-handler-surface",
+        "card": "protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/http-handler-surface"
+      },
+      {
+        "edge": "protocol-surface-multiplex--server-protocol-surface--server-handler-surface--client-command-suite-calls-handler-runtime-stack:protocol-surface-multiplex/server-protocol-surface/server-handler-surface/client-command-suite->protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/native-handler-surface",
+        "card": "protocol-surface-multiplex/server-protocol-surface/server-handler-surface/handler-runtime-stack/grpc-handler-surface"
+      },
+      {
+        "edge": "clickhouse-server-runtime--server-protocol-surface--server-handler-surface--http-handler-surface--prometheus-metrics-http-surface-calls-http-request-handler-surface:clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/prometheus-metrics-http-surface->clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/http-request-handler-surface",
+        "card": "clickhouse-server-runtime/server-protocol-surface/server-handler-surface/http-handler-surface/interserver-io-http-surface"
+      }
+    ]
+  },
+  {
+    "file": "grafana.yaml",
+    "expanded": false,
+    "beforeWidth": 1286,
+    "afterWidth": 1375,
+    "crossings": [
+      {
+        "edge": "rel-control-plane-read-writes-storage:go-control-plane-and-http-services->storage-root-service",
+        "card": "app-platform-modular-services"
+      }
+    ]
+  },
+  {
+    "file": "grafana.yaml",
+    "expanded": true,
+    "beforeWidth": 3374,
+    "afterWidth": 4005,
+    "crossings": [
+      {
+        "edge": "rel-browser-shell-calls-runtime-kernel:browser-shell-and-dashboard-ui/browser-shell-runtime/bootstrap/bootstrap-entry->shared-browser-runtime-kernel/runtime-entry/package-exports",
+        "card": "browser-shell-and-dashboard-ui/browser-shell-runtime/app-chrome/chrome-composition"
+      },
+      {
+        "edge": "rel-control-plane-calls-app-platform:go-control-plane-and-http-services/service-routes/correlations-api->app-platform-modular-services/plugin-metadata-app/app-runtime/app-bootstrap",
+        "card": "go-control-plane-and-http-services/update-manager"
+      },
+      {
+        "edge": "rel-control-plane-calls-provisioning:go-control-plane-and-http-services/service-routes/correlations-api->provisioning-repository-sync-plane/repository-sync-service/job-controller/reconciliation-loop",
+        "card": "go-control-plane-and-http-services/update-manager"
+      },
+      {
+        "edge": "browser-shell-and-dashboard-ui--browser-shell-runtime-calls:browser-shell-and-dashboard-ui->browser-shell-and-dashboard-ui/browser-shell-runtime/bootstrap/bootstrap-entry",
+        "card": "browser-shell-and-dashboard-ui/browser-shell-runtime/app-chrome/chrome-composition"
+      },
+      {
+        "edge": "browser-shell-and-dashboard-ui--browser-shell-runtime-calls:browser-shell-and-dashboard-ui->browser-shell-and-dashboard-ui/browser-shell-runtime/bootstrap/bootstrap-entry",
+        "card": "browser-shell-and-dashboard-ui/browser-shell-runtime/main-page-container"
+      }
+    ]
+  },
+  {
+    "file": "temporal.yaml",
+    "expanded": false,
+    "beforeWidth": 948,
+    "afterWidth": 1061,
+    "crossings": []
+  },
+  {
+    "file": "temporal.yaml",
+    "expanded": true,
+    "beforeWidth": 2242,
+    "afterWidth": 2747,
+    "crossings": [
+      {
+        "edge": "frontend-calls-history:frontend-service-api-gateway/http-api-server/http-gateway-runtime->history-workflow-state-plane/queue-processing/queue-execution-runtime",
+        "card": "frontend-service-api-gateway/public-rpc-surface/admin-service-rpc"
+      },
+      {
+        "edge": "matching-calls-sdk-clients:matching-task-queue-plane/task-queue-poll-api->sdk-clients-and-workers",
+        "card": "matching-task-queue-plane/matching-service-runtime/matching-server"
+      },
+      {
+        "edge": "matching-calls-sdk-clients:matching-task-queue-plane/task-queue-poll-api->sdk-clients-and-workers",
+        "card": "matching-task-queue-plane/matching-service-runtime/matching-engine"
+      },
+      {
+        "edge": "matching-calls-sdk-clients:matching-task-queue-plane/task-queue-poll-api->sdk-clients-and-workers",
+        "card": "matching-task-queue-plane/task-queue-partition-manager"
+      }
+    ]
+  },
+  {
+    "file": "supabase.yaml",
+    "expanded": false,
+    "beforeWidth": 1437,
+    "afterWidth": 1612,
+    "crossings": [
+      {
+        "edge": "rel-self-hosted-runtime-stack-read-writes-postgres-datastore:self-hosted-runtime-stack->supabase-postgres-datastore",
+        "card": "pg-meta-shared-kernel"
+      }
+    ]
+  },
+  {
+    "file": "supabase.yaml",
+    "expanded": true,
+    "beforeWidth": 5866,
+    "afterWidth": 7247,
+    "crossings": [
+      {
+        "edge": "rel-self-hosted-runtime-stack-calls-studio-control-plane:self-hosted-runtime-stack/kong-gateway-service/mcp-api-dispatch-group/mcp-local-access->studio-control-plane/mcp-api",
+        "card": "self-hosted-runtime-stack/postgres-datastore"
+      },
+      {
+        "edge": "rel-self-hosted-runtime-stack-calls-edge-function-plane:self-hosted-runtime-stack/functions-runtime/functions-bootstrap-module->edge-function-plane/shared-edge-functions-module/search-embeddings-module",
+        "card": "edge-function-plane/website-edge-functions-group/launch-week-functions-group/lwx-ticket-function"
+      },
+      {
+        "edge": "rel-ai-commands-shared-kernel-calls-outbound-integrations-plane:ai-commands-shared-kernel/ai-command-runtime-module/edge-runtime-module->outbound-integrations-plane",
+        "card": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/docs-module/docs-runtime-module"
+      },
+      {
+        "edge": "rel-ai-commands-shared-kernel-calls-outbound-integrations-plane:ai-commands-shared-kernel/ai-command-runtime-module/edge-runtime-module->outbound-integrations-plane",
+        "card": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/docs-module/openai-api"
+      },
+      {
+        "edge": "rel-ai-commands-shared-kernel-calls-outbound-integrations-plane:ai-commands-shared-kernel/ai-command-runtime-module/edge-runtime-module->outbound-integrations-plane",
+        "card": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/docs-module/supabase-database"
+      },
+      {
+        "edge": "rel-ai-commands-shared-kernel-calls-outbound-integrations-plane:ai-commands-shared-kernel/ai-command-runtime-module/edge-runtime-module->outbound-integrations-plane",
+        "card": "ai-commands-shared-kernel/command-support-group/docs-module"
+      },
+      {
+        "edge": "rel-ai-commands-shared-kernel-calls-outbound-integrations-plane:ai-commands-shared-kernel/ai-command-runtime-module/edge-runtime-module->outbound-integrations-plane",
+        "card": "ai-commands-shared-kernel/command-support-group/sql-functions-module"
+      },
+      {
+        "edge": "rel-ai-commands-shared-kernel-calls-outbound-integrations-plane:ai-commands-shared-kernel/ai-command-runtime-module/edge-runtime-module->outbound-integrations-plane",
+        "card": "ai-commands-shared-kernel/command-support-group/errors-module"
+      },
+      {
+        "edge": "rel-studio-control-plane-calls-outbound-integrations-plane--core--software-relations-calls--studio-control-plane--platform-integrations-surface--stripe-sync-group--to--outbound-integrations-plane:studio-control-plane/platform-integrations-surface/stripe-sync-group/stripe-sync-endpoint->outbound-integrations-plane",
+        "card": "studio-control-plane/platform-integrations-surface/stripe-sync-group/stripe-api"
+      },
+      {
+        "edge": "rel-public-website-frontend-calls-edge-function-plane--core--software-relations-calls--public-website-frontend--website-edge-functions-group--notification-functions-group--to--edge-function-plane--website-edge-functions-group--core--software-relations-calls--public-website-frontend--website-edge-functions-group--notification-functions-group--contact-notification-group--to--edge-function-plane--website-edge-functions-group:public-website-frontend/website-edge-functions-group/notification-functions-group/contact-notification-group->edge-function-plane/website-edge-functions-group",
+        "card": "public-website-frontend/website-edge-functions-group/notification-functions-group/smtp-api"
+      },
+      {
+        "edge": "rel-public-website-frontend-calls-edge-function-plane--core--software-relations-calls--public-website-frontend--website-edge-functions-group--notification-functions-group--to--edge-function-plane--website-edge-functions-group--core--software-relations-calls--public-website-frontend--website-edge-functions-group--notification-functions-group--hubspot-notification-group--to--edge-function-plane--website-edge-functions-group:public-website-frontend/website-edge-functions-group/notification-functions-group/hubspot-notification-group/hubspot-notification-handler->edge-function-plane/website-edge-functions-group",
+        "card": "public-website-frontend/website-edge-functions-group/notification-functions-group/hubspot-notification-group/hubspot-form-submission"
+      },
+      {
+        "edge": "rel-public-website-frontend-calls-edge-function-plane--core--software-relations-calls--public-website-frontend--website-edge-functions-group--launch-week-functions-group--to--edge-function-plane--website-edge-functions-group--core--software-relations-calls--public-website-frontend--website-edge-functions-group--launch-week-functions-group--lwx-og-function--to--edge-function-plane--website-edge-functions-group:public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-og-function/lwx-og-handler->edge-function-plane/website-edge-functions-group",
+        "card": "public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-og-function/lwx-og-images-store"
+      },
+      {
+        "edge": "rel-public-website-frontend-calls-edge-function-plane--core--software-relations-calls--public-website-frontend--website-edge-functions-group--launch-week-functions-group--to--edge-function-plane--website-edge-functions-group--core--software-relations-calls--public-website-frontend--website-edge-functions-group--launch-week-functions-group--lwx-ticket-og-function--to--edge-function-plane--website-edge-functions-group:public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-ticket-og-function/lwx-ticket-og-handler->edge-function-plane/website-edge-functions-group",
+        "card": "public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-ticket-og-function/lwx-ticket-og-images-store"
+      },
+      {
+        "edge": "rel-public-website-frontend-calls-edge-function-plane--core--software-relations-calls--public-website-frontend--website-edge-functions-group--launch-week-functions-group--to--edge-function-plane--website-edge-functions-group--core--software-relations-calls--public-website-frontend--website-edge-functions-group--launch-week-functions-group--lwx-ticket-function--to--edge-function-plane--website-edge-functions-group:public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-ticket-function/lwx-ticket-handler->edge-function-plane/website-edge-functions-group",
+        "card": "public-website-frontend/website-edge-functions-group/launch-week-functions-group/lwx-ticket-function/lwx-ticket-images-store"
+      },
+      {
+        "edge": "rel-public-website-frontend-calls-outbound-integrations-plane--core--software-relations-calls--public-website-frontend--website-integrations-group--notion-integration-group--to--outbound-integrations-plane:public-website-frontend/website-integrations-group/notion-integration-group/notion-workflows-group->outbound-integrations-plane",
+        "card": "public-website-frontend/website-integrations-group/notion-integration-group/notion-api"
+      },
+      {
+        "edge": "rel-public-website-frontend-calls-outbound-integrations-plane--core--software-relations-calls--public-website-frontend--website-integrations-group--customerio-integration-group--to--outbound-integrations-plane--core--software-relations-calls--public-website-frontend--website-integrations-group--customerio-integration-group--customerio-track-group--to--outbound-integrations-plane:public-website-frontend/website-integrations-group/customerio-integration-group/customerio-track-group->outbound-integrations-plane",
+        "card": "public-website-frontend/website-integrations-group/customerio-integration-group/customerio-track-api"
+      },
+      {
+        "edge": "rel-public-website-frontend-calls-outbound-integrations-plane--core--software-relations-calls--public-website-frontend--website-integrations-group--customerio-integration-group--to--outbound-integrations-plane--core--software-relations-calls--public-website-frontend--website-integrations-group--customerio-integration-group--customerio-app-group--to--outbound-integrations-plane:public-website-frontend/website-integrations-group/customerio-integration-group/customerio-app-group->outbound-integrations-plane",
+        "card": "public-website-frontend/website-integrations-group/customerio-integration-group/customerio-app-api"
+      },
+      {
+        "edge": "rel-edge-function-plane-calls-outbound-integrations-plane--core--software-relations-calls--edge-function-plane--shared-edge-functions-module--og-images-function-group--to--outbound-integrations-plane:edge-function-plane/shared-edge-functions-module/og-images-function-group/og-image-entry/og-image-template-renderer->outbound-integrations-plane",
+        "card": "edge-function-plane/shared-edge-functions-module/og-images-function-group/customer-story-image-template"
+      },
+      {
+        "edge": "edge-function-plane--rel-website-edge-functions-group-calls-shared-edge-functions-module--core--software-relations-calls--edge-function-plane--website-edge-functions-group--launch-week-functions-group--to--edge-function-plane--shared-edge-functions-module--og-images-function-group:edge-function-plane/website-edge-functions-group/launch-week-functions-group/lwx-og-function->edge-function-plane/shared-edge-functions-module/og-images-function-group",
+        "card": "edge-function-plane/website-edge-functions-group/launch-week-functions-group/launch-week-db"
+      },
+      {
+        "edge": "ai-commands-shared-kernel--rel-ai-command-runtime-module-calls-command-support-group:ai-commands-shared-kernel/ai-command-runtime-module/edge-runtime-module->ai-commands-shared-kernel/command-support-group/docs-module",
+        "card": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/docs-module/docs-runtime-module"
+      },
+      {
+        "edge": "ai-commands-shared-kernel--rel-ai-command-runtime-module-calls-command-support-group:ai-commands-shared-kernel/ai-command-runtime-module/edge-runtime-module->ai-commands-shared-kernel/command-support-group/docs-module",
+        "card": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/docs-module/openai-api"
+      },
+      {
+        "edge": "ai-commands-shared-kernel--rel-ai-command-runtime-module-calls-command-support-group:ai-commands-shared-kernel/ai-command-runtime-module/edge-runtime-module->ai-commands-shared-kernel/command-support-group/docs-module",
+        "card": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/docs-module/supabase-database"
+      },
+      {
+        "edge": "ai-commands-shared-kernel--ai-command-runtime-module--rel-edge-runtime-uses-command-support--core--software-relations-calls--ai-commands-shared-kernel--ai-command-runtime-module--edge-runtime-module--to--ai-commands-shared-kernel--ai-command-runtime-module--command-support-group--docs-module:ai-commands-shared-kernel/ai-command-runtime-module/edge-runtime-module->ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/docs-module/docs-runtime-module",
+        "card": "ai-commands-shared-kernel/ai-command-runtime-module/command-support-group/docs-module/supabase-database"
+      },
+      {
+        "edge": "studio-control-plane--ai-tools-group--studio-tools-module--rel-tool-registry-calls-interaction-tools-group--core--software-relations-calls--studio-control-plane--ai-tools-group--studio-tools-module--tool-registry-module--interaction-tools-group--to--studio-control-plane--ai-tools-group--studio-tools-module--interaction-tools-group--rename-chat-tool-group:studio-control-plane/ai-tools-group/studio-tools-module/tool-registry-module/interaction-tools-group->studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/rename-chat-tool-group/rename-chat-tool",
+        "card": "studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/rename-chat-tool-group/assistant-chat-ui"
+      },
+      {
+        "edge": "studio-control-plane--ai-tools-group--studio-tools-module--rel-tool-registry-calls-interaction-tools-group--core--software-relations-calls--studio-control-plane--ai-tools-group--studio-tools-module--tool-registry-module--interaction-tools-group--to--studio-control-plane--ai-tools-group--studio-tools-module--interaction-tools-group--rename-chat-tool-group:studio-control-plane/ai-tools-group/studio-tools-module/tool-registry-module/interaction-tools-group->studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/rename-chat-tool-group/rename-chat-tool",
+        "card": "studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/rename-chat-tool-group/assistant-response-endpoint"
+      },
+      {
+        "edge": "studio-control-plane--ai-tools-group--studio-tools-module--rel-tool-registry-calls-interaction-tools-group--core--software-relations-calls--studio-control-plane--ai-tools-group--studio-tools-module--tool-registry-module--interaction-tools-group--to--studio-control-plane--ai-tools-group--studio-tools-module--interaction-tools-group--rename-chat-tool-group:studio-control-plane/ai-tools-group/studio-tools-module/tool-registry-module/interaction-tools-group->studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/rename-chat-tool-group/rename-chat-tool",
+        "card": "studio-control-plane/ai-tools-group/studio-tools-module/interaction-tools-group/rename-chat-tool-group/assistant-response-generation"
+      },
+      {
+        "edge": "docs-learn-content-frontend--docs-learn-content-group--learn-app-group--rel-learn-site-reads-content:docs-learn-content-frontend/docs-learn-content-group/learn-app-group/learn-site-frontend/learn-site-frontend-surface/learn-chapter-page->docs-learn-content-frontend/docs-learn-content-group/learn-app-group/learn-content-corpus",
+        "card": "docs-learn-content-frontend/docs-learn-content-group/learn-app-group/learn-site-frontend/learn-site-frontend-surface/learn-home-page"
+      },
+      {
+        "edge": "pg-meta-shared-kernel--studio-database-module--studio-database-helpers-group--auth-helpers--auth-user-query-calls-support:pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-user-query-surface/get-users-paginated->pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/shared-auth-query-primitives/get-users-common/string-range/upper-bound-case",
+        "card": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-user-query-surface/get-user"
+      },
+      {
+        "edge": "pg-meta-shared-kernel--studio-database-module--studio-database-helpers-group--auth-helpers--auth-user-query-calls-support:pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-user-query-surface/get-users-paginated->pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/shared-auth-query-primitives/get-users-common/string-range/upper-bound-case",
+        "card": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-support-surface/index-status-helpers/get-index-worker-status"
+      },
+      {
+        "edge": "pg-meta-shared-kernel--studio-database-module--studio-database-helpers-group--auth-helpers--auth-user-query-surface--get-user-calls-get-users-paginated:pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-user-query-surface/get-user->pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-user-query-surface/get-users-paginated",
+        "card": "pg-meta-shared-kernel/studio-database-module/studio-database-helpers-group/auth-helpers/auth-user-query-surface/get-users-count"
+      }
+    ]
+  },
+  {
+    "file": "prometheus.yaml",
+    "expanded": false,
+    "beforeWidth": 842,
+    "afterWidth": 911,
+    "crossings": []
+  },
+  {
+    "file": "prometheus.yaml",
+    "expanded": true,
+    "beforeWidth": 1364,
+    "afterWidth": 1641,
+    "crossings": [
+      {
+        "edge": "rel-server-runtime-reads-tsdb-storage-plane--core--software-relations-reads--prometheus-server-runtime--runtime-core--to--tsdb-storage-plane--db-core:prometheus-server-runtime/runtime-core/runtime-service->tsdb-storage-plane/db-core",
+        "card": "prometheus-server-runtime/local-tsdb"
+      },
+      {
+        "edge": "rel-server-runtime-reads-tsdb-storage-plane--core--software-relations-reads--prometheus-server-runtime--runtime-core--to--tsdb-storage-plane--agent-db:prometheus-server-runtime/runtime-core->tsdb-storage-plane/agent-db",
+        "card": "prometheus-server-runtime/local-tsdb"
+      }
+    ]
+  },
+  {
+    "file": "immich.yaml",
+    "expanded": false,
+    "beforeWidth": 1513,
+    "afterWidth": 1850,
+    "crossings": [
+      {
+        "edge": "server-control-plane-read-writes-persistence-queue-substrate--core--software-relations-reads--server-control-plane--control-service--to--persistence-queue-substrate--relational-db:server-control-plane->persistence-queue-substrate",
+        "card": "background-worker-plane"
+      },
+      {
+        "edge": "server-control-plane-read-writes-persistence-queue-substrate--core--software-relations-writes--server-control-plane--control-service--to--persistence-queue-substrate--relational-db:server-control-plane->persistence-queue-substrate",
+        "card": "background-worker-plane"
+      },
+      {
+        "edge": "server-control-plane-read-writes-persistence-queue-substrate--core--software-relations-writes--server-control-plane--control-service--to--persistence-queue-substrate--relational-db:server-control-plane->persistence-queue-substrate",
+        "card": "job-queue"
+      }
+    ]
+  },
+  {
+    "file": "immich.yaml",
+    "expanded": true,
+    "beforeWidth": 4214,
+    "afterWidth": 5223,
+    "crossings": [
+      {
+        "edge": "server-control-plane-publishes-to-job-queue:server-control-plane/control-service/app-module->job-queue/job-topic",
+        "card": "job-queue/queue-service"
+      },
+      {
+        "edge": "server-control-plane-read-writes-persistence-queue-substrate--core--software-relations-writes--server-control-plane--control-service--to--persistence-queue-substrate--relational-db:server-control-plane/control-service/app-module->persistence-queue-substrate/relational-db",
+        "card": "background-worker-plane/worker-suite/microservices-runtime"
+      },
+      {
+        "edge": "server-control-plane-read-writes-persistence-queue-substrate--core--software-relations-writes--server-control-plane--control-service--to--persistence-queue-substrate--relational-db:server-control-plane/control-service/app-module->persistence-queue-substrate/relational-db",
+        "card": "background-worker-plane/queue-service/queue-orchestrator"
+      },
+      {
+        "edge": "server-control-plane-read-writes-persistence-queue-substrate--core--software-relations-writes--server-control-plane--control-service--to--persistence-queue-substrate--relational-db:server-control-plane/control-service/app-module->persistence-queue-substrate/relational-db",
+        "card": "background-worker-plane/persistence-adapters/database-service"
+      },
+      {
+        "edge": "server-control-plane-read-writes-persistence-queue-substrate--core--software-relations-writes--server-control-plane--control-service--to--persistence-queue-substrate--relational-db:server-control-plane/control-service/app-module->persistence-queue-substrate/relational-db",
+        "card": "background-worker-plane/persistence-adapters/storage-service"
+      },
+      {
+        "edge": "mobile-client-runtime--mobile-shell-calls-background-upload-service:mobile-client-runtime/mobile-shell/shell-runtime->mobile-client-runtime/background-upload-service/background-coordinator",
+        "card": "mobile-client-runtime/mobile-shell/route-entry"
+      }
+    ]
+  },
+  {
+    "file": "keycloak.yaml",
+    "expanded": false,
+    "beforeWidth": 1278,
+    "afterWidth": 1320,
+    "crossings": []
+  },
+  {
+    "file": "keycloak.yaml",
+    "expanded": true,
+    "beforeWidth": 1872,
+    "afterWidth": 2151,
+    "crossings": []
+  }
+]
