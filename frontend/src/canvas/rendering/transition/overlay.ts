@@ -1,7 +1,7 @@
 import type { DiagramViewNodeControls } from '@tarskia/diagram-semantics';
 import { routeCanvasEdges } from '../presentation/edge-routing';
 import type { CanvasEdgeGeometry, CanvasPoint, CanvasRect } from '../presentation/geometry';
-import { buildBezierEdgeGeometry, buildBezierPath } from '../presentation/geometry';
+import { buildBezierEdgeGeometry } from '../presentation/geometry';
 import type {
   CanvasNodeView,
   CanvasOverlayEdgeView,
@@ -91,16 +91,11 @@ export interface TransitionOverlayEdgeTrack {
   scopeId?: string;
   solidOverNodeIds: string[];
   matched: boolean;
-  fromGeometry: CanvasEdgeGeometry;
-  toGeometry: CanvasEdgeGeometry;
-  motionEndGeometry?: CanvasEdgeGeometry;
   lockedSides: Pick<CanvasEdgeGeometry, 'sourceSide' | 'targetSide'>;
   fromOpacity: number;
   toOpacity: number;
   fade?: PhaseWindow;
   fadeMode?: 'in' | 'out';
-  activeMotionWindow?: PhaseWindow;
-  freezeOutsideActiveMotionWindow?: boolean;
   labelTrack?: TransitionOverlayLabelTrack;
 }
 
@@ -217,38 +212,6 @@ const resolveAttachmentChangeFadeWindows = (
       ? edgePlan.fade
       : EDGE_ATTACHMENT_CHANGE_ENTER_WINDOW,
 });
-
-const collectNodeMotionWindows = (timing: NodeTiming | undefined): PhaseWindow[] =>
-  [timing?.moveX, timing?.moveY].filter((window): window is PhaseWindow => Boolean(window));
-
-const mergePhaseWindows = (windows: PhaseWindow[]): PhaseWindow | undefined => {
-  if (windows.length === 0) {
-    return undefined;
-  }
-  let start = windows[0].start;
-  let end = windows[0].end;
-  for (const window of windows.slice(1)) {
-    start = Math.min(start, window.start);
-    end = Math.max(end, window.end);
-  }
-  return { start, end };
-};
-
-const resolveEdgeActiveMotionWindow = (params: {
-  kind: 'local' | 'routed';
-  sourceId: string;
-  targetId: string;
-  nodeTimings: Map<string, NodeTiming>;
-}) => {
-  const { kind, sourceId, targetId, nodeTimings } = params;
-  if (kind !== 'routed') {
-    return undefined;
-  }
-  return mergePhaseWindows([
-    ...collectNodeMotionWindows(nodeTimings.get(sourceId)),
-    ...collectNodeMotionWindows(nodeTimings.get(targetId)),
-  ]);
-};
 
 const normalizeNodeView = (view: CanvasNodeView): CanvasNodeView => ({
   ...view,
@@ -443,96 +406,6 @@ const resolveFadeOpacity = (params: {
   return lerp(fromOpacity, toOpacity, fadeProgress);
 };
 
-const interpolatePoint = (from: CanvasPoint, to: CanvasPoint, amount: number): CanvasPoint => ({
-  x: lerp(from.x, to.x, amount),
-  y: lerp(from.y, to.y, amount),
-});
-
-const interpolateGeometry = (
-  fromGeometry: CanvasEdgeGeometry,
-  toGeometry: CanvasEdgeGeometry,
-  amount: number,
-): CanvasEdgeGeometry => {
-  const sourcePoint = interpolatePoint(fromGeometry.sourcePoint, toGeometry.sourcePoint, amount);
-  const control1 = interpolatePoint(fromGeometry.control1, toGeometry.control1, amount);
-  const control2 = interpolatePoint(fromGeometry.control2, toGeometry.control2, amount);
-  const targetPoint = interpolatePoint(fromGeometry.targetPoint, toGeometry.targetPoint, amount);
-  const labelAnchor = interpolatePoint(fromGeometry.labelAnchor, toGeometry.labelAnchor, amount);
-  return {
-    sourcePoint,
-    control1,
-    control2,
-    targetPoint,
-    labelAnchor,
-    sourceSide: amount < 0.5 ? fromGeometry.sourceSide : toGeometry.sourceSide,
-    targetSide: amount < 0.5 ? fromGeometry.targetSide : toGeometry.targetSide,
-    path: buildBezierPath({
-      sourcePoint,
-      control1,
-      control2,
-      targetPoint,
-    }),
-  };
-};
-
-const resolveCurrentGeometry = (params: {
-  sourceId: string;
-  targetId: string;
-  rectByNodeId: Map<string, CanvasRect>;
-  lockedSides: Pick<CanvasEdgeGeometry, 'sourceSide' | 'targetSide'>;
-  fallbackFrom: CanvasEdgeGeometry;
-  fallbackTo: CanvasEdgeGeometry;
-  motionEndGeometry?: CanvasEdgeGeometry;
-  progress: number;
-  activeMotionWindow?: PhaseWindow;
-  freezeOutsideActiveMotionWindow?: boolean;
-  staticOverlay: boolean;
-}) => {
-  const {
-    sourceId,
-    targetId,
-    rectByNodeId,
-    lockedSides,
-    fallbackFrom,
-    fallbackTo,
-    motionEndGeometry,
-    progress,
-    activeMotionWindow,
-    freezeOutsideActiveMotionWindow = false,
-    staticOverlay,
-  } = params;
-  // Endpoint frames must agree with the host presentation, including its
-  // assigned edge anchors rather than the overlay's temporary locked sides.
-  if (progress <= 0) return fallbackFrom;
-  if (progress >= 1) return fallbackTo;
-  const settledGeometry = motionEndGeometry ?? fallbackTo;
-  if (!staticOverlay && freezeOutsideActiveMotionWindow) {
-    if (!activeMotionWindow) {
-      return progress < 1 ? fallbackFrom : settledGeometry;
-    }
-    if (progress < activeMotionWindow.start) {
-      return fallbackFrom;
-    }
-    if (progress > activeMotionWindow.end) {
-      return settledGeometry;
-    }
-    const span = Math.max(activeMotionWindow.end - activeMotionWindow.start, Number.EPSILON);
-    const localProgress = clamp((progress - activeMotionWindow.start) / span, 0, 1);
-    return interpolateGeometry(fallbackFrom, settledGeometry, localProgress);
-  }
-  const sourceRect = rectByNodeId.get(sourceId);
-  const targetRect = rectByNodeId.get(targetId);
-  if (!sourceRect || !targetRect) {
-    return interpolateGeometry(fallbackFrom, fallbackTo, progress);
-  }
-  return buildBezierEdgeGeometry({
-    sourceRect,
-    targetRect,
-    sourceSide: lockedSides.sourceSide,
-    targetSide: lockedSides.targetSide,
-  });
-};
-
 const resolveTrackGeometry = (
   edge: VisibleTransitionEdgeSource | undefined,
   fallback: CanvasEdgeGeometry | undefined,
@@ -696,20 +569,14 @@ const resolveEdgeFrame = (
   track: TransitionOverlayEdgeTrack,
   progress: number,
   rectByNodeId: Map<string, CanvasRect>,
-  staticOverlay: boolean,
 ) => {
-  const geometry = resolveCurrentGeometry({
-    sourceId: track.sourceId,
-    targetId: track.targetId,
-    rectByNodeId,
-    lockedSides: track.lockedSides,
-    fallbackFrom: track.fromGeometry,
-    fallbackTo: track.toGeometry,
-    motionEndGeometry: track.motionEndGeometry,
-    progress,
-    activeMotionWindow: track.activeMotionWindow,
-    freezeOutsideActiveMotionWindow: track.freezeOutsideActiveMotionWindow,
-    staticOverlay,
+  // The caller includes only edges whose two node rects are visible this frame.
+  // Seed geometry from those same rects; the shared router then assigns lanes and anchors.
+  const geometry = buildBezierEdgeGeometry({
+    sourceRect: rectByNodeId.get(track.sourceId)!,
+    targetRect: rectByNodeId.get(track.targetId)!,
+    sourceSide: track.lockedSides.sourceSide,
+    targetSide: track.lockedSides.targetSide,
   });
   const opacity = resolveFadeOpacity({
     progress,
@@ -740,7 +607,6 @@ export const resolveTransitionOverlayFrame = (
   now: number,
 ): TransitionOverlayFrame => {
   const progress = resolveSequenceProgress(state, now);
-  const staticOverlay = state.duration <= 1;
   const rawNodeById = new Map<string, TransitionOverlayNodeFrame>();
   for (const track of state.nodes) {
     rawNodeById.set(track.id, resolveNodeFrame(track, progress));
@@ -768,7 +634,7 @@ export const resolveTransitionOverlayFrame = (
     if (!rectByNodeId.has(track.sourceId) || !rectByNodeId.has(track.targetId)) {
       continue;
     }
-    const edge = resolveEdgeFrame(track, progress, rectByNodeId, staticOverlay);
+    const edge = resolveEdgeFrame(track, progress, rectByNodeId);
     if (edge.opacity <= VISIBILITY_EPSILON) {
       continue;
     }
@@ -884,7 +750,6 @@ export const buildTransitionOverlayState = (params: {
       } satisfies TransitionOverlayNodeTrack,
     ];
   });
-  const nodeTrackById = new Map(nodes.map((node) => [node.id, node]));
 
   const fromVisibleEdgeById = buildVisibleEdgeMap(fromPresentation.overlayEdges);
   const toVisibleEdgeById = buildVisibleEdgeMap(toPresentation.overlayEdges);
@@ -937,16 +802,11 @@ export const buildTransitionOverlayState = (params: {
       targetId: string;
       scopeId?: string;
       solidOverNodeIds: string[];
-      fromGeometry: CanvasEdgeGeometry;
-      toGeometry: CanvasEdgeGeometry;
-      motionEndGeometry?: CanvasEdgeGeometry;
       lockedSides: Pick<CanvasEdgeGeometry, 'sourceSide' | 'targetSide'>;
       fromOpacity: number;
       toOpacity: number;
       fade?: PhaseWindow;
       fadeMode?: 'in' | 'out';
-      activeMotionWindow?: PhaseWindow;
-      freezeOutsideActiveMotionWindow?: boolean;
     }) =>
       ({
         id: params.trackId,
@@ -957,16 +817,11 @@ export const buildTransitionOverlayState = (params: {
         scopeId: params.scopeId,
         solidOverNodeIds: params.solidOverNodeIds,
         matched,
-        fromGeometry: params.fromGeometry,
-        toGeometry: params.toGeometry,
-        motionEndGeometry: params.motionEndGeometry,
         lockedSides: params.lockedSides,
         fromOpacity: params.fromOpacity,
         toOpacity: params.toOpacity,
         fade: params.fade,
         fadeMode: params.fadeMode,
-        activeMotionWindow: params.activeMotionWindow,
-        freezeOutsideActiveMotionWindow: params.freezeOutsideActiveMotionWindow,
         labelTrack:
           label !== undefined || edgeState !== undefined ? { label, state: edgeState } : undefined,
       }) satisfies TransitionOverlayEdgeTrack;
@@ -981,8 +836,6 @@ export const buildTransitionOverlayState = (params: {
           targetId: fromEdge.targetId,
           scopeId: fromEdge.scopeId,
           solidOverNodeIds: fromEdge.solidOverNodeIds,
-          fromGeometry: normalizedFromGeometry,
-          toGeometry: normalizedFromGeometry,
           lockedSides: {
             sourceSide: normalizedFromGeometry.sourceSide,
             targetSide: normalizedFromGeometry.targetSide,
@@ -991,7 +844,6 @@ export const buildTransitionOverlayState = (params: {
           toOpacity: 0,
           fade: fadeWindows.outgoing,
           fadeMode: 'out',
-          freezeOutsideActiveMotionWindow: false,
         }),
         buildTrack({
           trackId: `${id}::in`,
@@ -1000,8 +852,6 @@ export const buildTransitionOverlayState = (params: {
           targetId: toEdge.targetId,
           scopeId: toEdge.scopeId,
           solidOverNodeIds: toEdge.solidOverNodeIds,
-          fromGeometry: normalizedToGeometry,
-          toGeometry: normalizedToGeometry,
           lockedSides: {
             sourceSide: normalizedToGeometry.sourceSide,
             targetSide: normalizedToGeometry.targetSide,
@@ -1010,32 +860,9 @@ export const buildTransitionOverlayState = (params: {
           toOpacity: toEdge.opacity,
           fade: fadeWindows.incoming,
           fadeMode: 'in',
-          freezeOutsideActiveMotionWindow: false,
         }),
       ];
     }
-
-    const activeMotionWindow = resolveEdgeActiveMotionWindow({
-      kind,
-      sourceId,
-      targetId,
-      nodeTimings: timedPlan.nodeTimings,
-    });
-    const sourceTrack = nodeTrackById.get(sourceId);
-    const targetTrack = nodeTrackById.get(targetId);
-    const motionEndGeometry =
-      kind === 'routed' && activeMotionWindow && sourceTrack && targetTrack && !edgePlan?.fade
-        ? buildBezierEdgeGeometry({
-            sourceRect: resolveNodeRect(sourceTrack, activeMotionWindow.end),
-            targetRect: resolveNodeRect(targetTrack, activeMotionWindow.end),
-            sourceSide: toEdge
-              ? normalizedToGeometry.sourceSide
-              : normalizedFromGeometry.sourceSide,
-            targetSide: toEdge
-              ? normalizedToGeometry.targetSide
-              : normalizedFromGeometry.targetSide,
-          })
-        : undefined;
 
     return [
       buildTrack({
@@ -1045,8 +872,6 @@ export const buildTransitionOverlayState = (params: {
         targetId,
         scopeId,
         solidOverNodeIds,
-        fromGeometry: normalizedFromGeometry,
-        toGeometry: normalizedToGeometry,
         lockedSides: toEdge
           ? {
               sourceSide: normalizedToGeometry.sourceSide,
@@ -1060,9 +885,6 @@ export const buildTransitionOverlayState = (params: {
         toOpacity: toEdge?.opacity ?? 0,
         fade: edgePlan?.fade,
         fadeMode: edgePlan?.fadeMode,
-        activeMotionWindow,
-        motionEndGeometry,
-        freezeOutsideActiveMotionWindow: kind === 'routed' && !edgePlan?.fade,
       }),
     ];
   };
