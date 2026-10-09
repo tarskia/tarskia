@@ -6,12 +6,13 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SceneTree } from '../canvas/rendering/tree/scene-tree';
 import type { GetCurrentCanvasSize } from '../diagram/canvas-size';
+import type { MotionCallbacks } from '../diagram/motion-types';
 import type { CommitDoc } from './types';
 
 type FocusTransitionTrigger = (
   entityId: string,
   direction: 'in' | 'out',
-  options?: { onComplete?: () => void; expandSingleChildChain?: boolean },
+  options?: MotionCallbacks & { expandSingleChildChain?: boolean },
 ) => boolean;
 
 const scheduleFocusFrame = (callback: FrameRequestCallback) => {
@@ -115,6 +116,8 @@ export function useFocusViewController({
   setSelectedEdge: (id: string | undefined) => void;
   onClearTransientFocusChrome?: () => void;
 }) {
+  const latestSceneTreeRef = useRef(sceneTree);
+  latestSceneTreeRef.current = sceneTree;
   const [pendingFocusWaitTick, setPendingFocusWaitTick] = useState(0);
   const pendingFocusRequestRef = useRef<PendingFocusRequest | null>(null);
   const pendingFocusFrameRef = useRef<number | null>(null);
@@ -155,9 +158,15 @@ export function useFocusViewController({
         enterFocusScope(entityId, true);
         return;
       }
+      const sourceEntity = sceneTree.byId.get(entityId)?.entity;
       const queued = triggerEntityZoom(entityId, 'in', {
         expandSingleChildChain: true,
-        onComplete: () => enterFocusScope(entityId),
+        onSettled: () => {
+          // A cancelled plan from a replaced document must not focus its old entity.
+          if (latestSceneTreeRef.current.byId.get(entityId)?.entity === sourceEntity) {
+            enterFocusScope(entityId);
+          }
+        },
       });
       if (queued) {
         onClearTransientFocusChrome?.();
@@ -170,6 +179,7 @@ export function useFocusViewController({
       flushUserGesture,
       onClearTransientFocusChrome,
       skipTransitions,
+      sceneTree,
       triggerEntityZoom,
     ],
   );

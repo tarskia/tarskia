@@ -39,9 +39,11 @@ import {
 import type { CanvasSize, GetCurrentCanvasSize } from './canvas-size';
 import type {
   DiagramCameraRect,
+  MotionCallbacks,
   MotionPhase,
   MotionPlan,
   MotionSegment,
+  MotionSettlementReason,
   NavigationIntent,
   NavigationRequestResult,
   StructuralChoreographyRequest,
@@ -59,12 +61,12 @@ interface ActiveMotion {
   segmentSourceViewport: ViewportState | null;
   waitingForHostGeneration: number | null;
   persistFinalViewport: boolean;
-  onComplete?: () => void;
+  settle: (reason: MotionSettlementReason) => void;
 }
 
 interface PendingManagedMotion {
   plan: MotionPlan;
-  options?: { onComplete?: () => void };
+  settle: (reason: MotionSettlementReason) => void;
 }
 
 interface DiagramMotionRenderState {
@@ -91,6 +93,19 @@ interface UseDiagramMotionManagerArgs {
   getNodeSetBounds: (nodeIds: string[]) => DiagramCameraRect | null;
   setViewport: (viewport: ViewportState) => void;
 }
+
+const createMotionSettlement = (callbacks?: MotionCallbacks) => {
+  let settled = false;
+  return (reason: MotionSettlementReason) => {
+    if (settled) return;
+    settled = true;
+    try {
+      if (reason === 'completed') callbacks?.onComplete?.();
+    } finally {
+      callbacks?.onSettled?.(reason);
+    }
+  };
+};
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const easeStructuralCamera = (value: number) => -(Math.cos(Math.PI * value) - 1) / 2;
@@ -702,7 +717,11 @@ export function useDiagramMotionManager({
   const rafRef = useRef<number | null>(null);
   const motionPhaseRef = useRef<MotionPhase>('idle');
   const userGestureActiveRef = useRef(false);
+  const motionRequestVersionRef = useRef(0);
   const deferredNavigationFrameRef = useRef<number | null>(null);
+  const deferredNavigationSettlementRef = useRef<((reason: MotionSettlementReason) => void) | null>(
+    null,
+  );
   const currentViewportRef = useRef<ViewportState>(getCurrentViewport());
   const previousCanvasSizeRef = useRef<CanvasSize | null>(null);
   const automaticFramingRef = useRef<NavigationIntent | null>(null);
@@ -716,12 +735,19 @@ export function useDiagramMotionManager({
     }
   }, []);
 
-  const cancelDeferredNavigationFrame = useCallback(() => {
-    if (deferredNavigationFrameRef.current !== null) {
-      cancelAnimationFrame(deferredNavigationFrameRef.current);
-      deferredNavigationFrameRef.current = null;
-    }
-  }, []);
+  const cancelDeferredNavigationFrame = useCallback(
+    (reason: MotionSettlementReason = 'cancelled', notify = true) => {
+      if (deferredNavigationFrameRef.current !== null) {
+        cancelAnimationFrame(deferredNavigationFrameRef.current);
+        deferredNavigationFrameRef.current = null;
+      }
+      const settle = deferredNavigationSettlementRef.current;
+      deferredNavigationSettlementRef.current = null;
+      if (notify) settle?.(reason);
+      return settle;
+    },
+    [],
+  );
 
   const persistNow = useCallback(
     (viewport: ViewportState) => {
@@ -800,12 +826,12 @@ export function useDiagramMotionManager({
         );
       }
       motionPhaseRef.current = overlayStateRef.current.transitionOverlay ? 'settling' : 'idle';
-      const callback = activeMotion?.onComplete;
+
       if (activeMotion?.persistFinalViewport) {
         persistNow(getObservedViewport());
       }
       publish(now);
-      callback?.();
+      activeMotion?.settle('completed');
     },
     [getObservedViewport, persistNow, publish],
   );
@@ -996,7 +1022,11 @@ export function useDiagramMotionManager({
   };
 
   const applyImmediatePlan = useCallback(
-    (plan: MotionPlan, options?: { onComplete?: () => void }) => {
+    (
+      plan: MotionPlan,
+      settle: (reason: MotionSettlementReason) => void,
+      reason: MotionSettlementReason = 'completed',
+    ) => {
       cancelScheduledFrame();
       pendingManagedMotionRef.current = null;
       activeMotionRef.current = null;
@@ -1009,22 +1039,37 @@ export function useDiagramMotionManager({
       motionPhaseRef.current = 'idle';
       if (plan.persistFinalViewport) persistNow(getObservedViewport());
       publish(performance.now());
-      options?.onComplete?.();
+      settle(reason);
     },
     [applyViewport, cancelScheduledFrame, getObservedViewport, persistNow, publish],
   );
 
   const startPlan = useCallback(
-    (plan: MotionPlan, options?: { onComplete?: () => void }): NavigationRequestResult => {
+    (
+      plan: MotionPlan,
+      options?: MotionCallbacks,
+      settle = createMotionSettlement(options),
+    ): NavigationRequestResult => {
+      const requestVersion = ++motionRequestVersionRef.current;
+      cancelDeferredNavigationFrame('superseded');
+      if (motionRequestVersionRef.current !== requestVersion) {
+        settle('superseded');
+        return { status: 'queued', reason: 'pending-motion' };
+      }
+      const previousPending = pendingManagedMotionRef.current;
       if (userGestureActiveRef.current || !canvasReadyRef.current) {
         pendingManagedMotionRef.current = {
           plan,
-          options,
+          settle,
         };
+        previousPending?.settle('superseded');
         return { status: 'queued', reason: 'pending-motion' };
       }
+      const previousActive = activeMotionRef.current;
       if (skipTransitionsRef.current) {
-        applyImmediatePlan(plan, options);
+        applyImmediatePlan(plan, settle);
+        previousActive?.settle('superseded');
+        previousPending?.settle('superseded');
         return { status: 'applied', reason: 'synchronous' };
       }
       pendingManagedMotionRef.current = null;
@@ -1056,8 +1101,14 @@ export function useDiagramMotionManager({
         segmentSourceViewport: null,
         waitingForHostGeneration: null,
         persistFinalViewport: plan.persistFinalViewport ?? false,
-        onComplete: options?.onComplete,
+        settle,
       };
+
+      // Install the replacement before callbacks can request another motion.
+      previousActive?.settle('superseded');
+      previousPending?.settle('superseded');
+      if (activeMotionRef.current?.settle !== settle)
+        return { status: 'queued', reason: 'motion-plan' };
 
       if (!firstSegment) {
         finishMotion(now);
@@ -1067,7 +1118,7 @@ export function useDiagramMotionManager({
       enterSegmentRef.current(0, now);
       return { status: 'queued', reason: 'motion-plan' };
     },
-    [applyImmediatePlan, cancelScheduledFrame, finishMotion],
+    [applyImmediatePlan, cancelDeferredNavigationFrame, cancelScheduledFrame, finishMotion],
   );
 
   const computeNavigationViewport = useCallback(
@@ -1100,17 +1151,29 @@ export function useDiagramMotionManager({
   );
 
   const navigate = useCallback(
-    (intent: NavigationIntent, options?: { onComplete?: () => void }): NavigationRequestResult => {
+    (
+      intent: NavigationIntent,
+      options?: MotionCallbacks,
+      settle = createMotionSettlement(options),
+    ): NavigationRequestResult => {
+      const requestVersion = ++motionRequestVersionRef.current;
+      cancelDeferredNavigationFrame('superseded');
+      if (motionRequestVersionRef.current !== requestVersion) {
+        settle('superseded');
+        return { status: 'queued', reason: 'pending-motion' };
+      }
       if (intent.deferUntilNextFrame) {
-        cancelDeferredNavigationFrame();
+        deferredNavigationSettlementRef.current = settle;
         deferredNavigationFrameRef.current = requestAnimationFrame(() => {
           deferredNavigationFrameRef.current = null;
+          deferredNavigationSettlementRef.current = null;
           navigate(
             {
               ...intent,
               deferUntilNextFrame: undefined,
             },
-            options,
+            undefined,
+            settle,
           );
         });
         return { status: 'queued', reason: 'deferred-frame' };
@@ -1119,6 +1182,7 @@ export function useDiagramMotionManager({
       const canvasSize = getCurrentCanvasSize();
       const targetViewport = computeNavigationViewport(intent, policy, canvasSize);
       if (!targetViewport) {
+        settle('cancelled');
         return canvasSize
           ? { status: 'noop', reason: 'no-target' }
           : { status: 'unavailable', reason: 'missing-canvas' };
@@ -1134,7 +1198,7 @@ export function useDiagramMotionManager({
         if (policy.persist) {
           persistNow(targetViewport);
         }
-        options?.onComplete?.();
+        settle('completed');
         return { status: 'noop', reason: 'same-viewport' };
       }
       return startPlan(
@@ -1151,7 +1215,8 @@ export function useDiagramMotionManager({
           ],
           persistFinalViewport: policy.persist,
         },
-        options,
+        undefined,
+        settle,
       );
     },
     [
@@ -1166,12 +1231,13 @@ export function useDiagramMotionManager({
   );
 
   const requestNavigation = useCallback(
-    (intent: NavigationIntent): NavigationRequestResult => navigate(intent),
+    (intent: NavigationIntent, options?: MotionCallbacks): NavigationRequestResult =>
+      navigate(intent, options),
     [navigate],
   );
 
   const startChoreography = useCallback(
-    (request: StructuralChoreographyRequest, options?: { onComplete?: () => void }) => {
+    (request: StructuralChoreographyRequest, options?: MotionCallbacks) => {
       automaticFramingRef.current = request.endPointOfInterestNodeIds.length
         ? { kind: 'fit-node-set', nodeIds: request.endPointOfInterestNodeIds, preset: 'focus' }
         : { kind: 'fit-scene' };
@@ -1260,9 +1326,11 @@ export function useDiagramMotionManager({
         now,
       });
     }
+    const interrupted = activeMotionRef.current;
     activeMotionRef.current = null;
     motionPhaseRef.current = 'userGesture';
     publish(now);
+    interrupted?.settle('gesture');
   }, [cancelScheduledFrame, getCurrentViewport, publish]);
 
   const reportUserGestureMove = useCallback((viewport: ViewportState) => {
@@ -1281,7 +1349,7 @@ export function useDiagramMotionManager({
       const pendingManagedMotion = pendingManagedMotionRef.current;
       if (pendingManagedMotion && canvasReadyRef.current) {
         pendingManagedMotionRef.current = null;
-        startPlan(pendingManagedMotion.plan, pendingManagedMotion.options);
+        startPlan(pendingManagedMotion.plan, undefined, pendingManagedMotion.settle);
         return;
       }
       motionPhaseRef.current = overlayStateRef.current.transitionOverlay ? 'settling' : 'idle';
@@ -1299,9 +1367,10 @@ export function useDiagramMotionManager({
   }, [getObservedViewport, reportUserGestureEnd]);
 
   const cancelMotion = useCallback(() => {
+    if (!skipTransitions) cancelDeferredNavigationFrame();
     if (skipTransitions && activeMotionRef.current) {
       const active = activeMotionRef.current;
-      applyImmediatePlan(active.plan, { onComplete: active.onComplete });
+      applyImmediatePlan(active.plan, active.settle, 'cancelled');
       return;
     }
     cancelScheduledFrame();
@@ -1309,6 +1378,8 @@ export function useDiagramMotionManager({
       // Keep the target until the gesture ends or the canvas becomes ready.
       return;
     }
+    const pending = pendingManagedMotionRef.current;
+    const active = activeMotionRef.current;
     pendingManagedMotionRef.current = null;
     activeMotionRef.current = null;
     const now = performance.now();
@@ -1321,6 +1392,8 @@ export function useDiagramMotionManager({
       });
       motionPhaseRef.current = 'settling';
       publish(now);
+      active?.settle('cancelled');
+      pending?.settle('cancelled');
       return;
     }
     overlayStateRef.current = syncTransitionOverlayManagerStableSnapshot(
@@ -1329,7 +1402,15 @@ export function useDiagramMotionManager({
     );
     motionPhaseRef.current = userGestureActiveRef.current ? 'userGesture' : 'idle';
     publish(now);
-  }, [applyImmediatePlan, cancelScheduledFrame, publish, skipTransitions]);
+    active?.settle('cancelled');
+    pending?.settle('cancelled');
+  }, [
+    applyImmediatePlan,
+    cancelDeferredNavigationFrame,
+    cancelScheduledFrame,
+    publish,
+    skipTransitions,
+  ]);
 
   const getCurrentDisplaySnapshot = useCallback(
     () => captureDisplayedSnapshot(overlayStateRef.current, performance.now()),
@@ -1400,7 +1481,7 @@ export function useDiagramMotionManager({
       const pendingManagedMotion = pendingManagedMotionRef.current;
       if (pendingManagedMotion && !userGestureActiveRef.current) {
         pendingManagedMotionRef.current = null;
-        startPlan(pendingManagedMotion.plan, pendingManagedMotion.options);
+        startPlan(pendingManagedMotion.plan, undefined, pendingManagedMotion.settle);
       }
     },
     [getCurrentViewport, onCanvasInitRaw, startPlan],
@@ -1408,7 +1489,9 @@ export function useDiagramMotionManager({
 
   const resetMotionState = useCallback(() => {
     cancelScheduledFrame();
-    cancelDeferredNavigationFrame();
+    const deferred = cancelDeferredNavigationFrame('cancelled', false);
+    const active = activeMotionRef.current;
+    const pending = pendingManagedMotionRef.current;
     activeMotionRef.current = null;
     pendingManagedMotionRef.current = null;
     userGestureActiveRef.current = false;
@@ -1420,6 +1503,9 @@ export function useDiagramMotionManager({
     );
     motionPhaseRef.current = 'idle';
     publish(performance.now());
+    active?.settle('cancelled');
+    pending?.settle('cancelled');
+    deferred?.('cancelled');
   }, [cancelDeferredNavigationFrame, cancelScheduledFrame, publish]);
 
   const onCanvasUnmount = useCallback(() => {
