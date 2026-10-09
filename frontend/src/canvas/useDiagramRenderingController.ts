@@ -10,7 +10,7 @@ import {
   buildSemanticStateDocument,
   combineDiagramSemanticAndDeclarativeViewState,
   selectDeclarativeDiagramViewState,
-  selectDiagramSemanticState,
+  useDiagramSemanticState,
 } from '../semantic/view/declarative-view-state';
 import { buildGraphModel } from './rendering/graph/graph-model';
 import { buildLayoutResult, type LayoutResult } from './rendering/layout/layout-pipeline';
@@ -49,8 +49,11 @@ export function useDiagramRenderingController({
   doc: SemanticDocument;
   schema: SchemaModule;
 }) {
-  const semanticState = useMemo(() => selectDiagramSemanticState(doc), [doc]);
-  const declarativeViewState = useMemo(() => selectDeclarativeDiagramViewState(doc), [doc]);
+  const semanticState = useDiagramSemanticState(doc);
+  const declarativeViewState = useMemo(
+    () => selectDeclarativeDiagramViewState({ view: doc.view }),
+    [doc.view],
+  );
   const semanticDocument = useMemo(
     () => buildSemanticStateDocument(semanticState),
     [semanticState],

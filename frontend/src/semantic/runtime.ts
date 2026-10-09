@@ -13,6 +13,7 @@ import {
   buildSchemaRuntimeFromCatalog,
   type SchemaVersionCatalog,
 } from '../model/validation/schema-closure';
+import { buildSemanticStateDocument, useDiagramSemanticState } from './view/declarative-view-state';
 
 type SchemaRuntimeResult = ReturnType<typeof buildSchemaRuntimeFromCatalog>;
 
@@ -65,19 +66,54 @@ export const buildDiagramSemanticRuntime = (params: {
 
 export const useDiagramSemanticRuntime = (params: {
   doc: SemanticDocument;
+  /** The loaded snapshot, including its initial view, remains fixed during viewer navigation. */
+  validationDocument?: SemanticDocument;
   schemaVersionCatalog: SchemaVersionCatalog;
   fallbackSchema?: SchemaModule;
   sourceDiagnostics?: ValidationDiagnostic[];
 }): DiagramSemanticRuntime => {
   const { doc, fallbackSchema, schemaVersionCatalog, sourceDiagnostics } = params;
-  return useMemo(
+  const semanticState = useDiagramSemanticState(doc);
+  const semanticDocument = useMemo(
+    () => buildSemanticStateDocument(semanticState),
+    [semanticState],
+  );
+  const schemaRuntimeResult = useMemo(
     () =>
-      buildDiagramSemanticRuntime({
-        doc,
-        fallbackSchema,
-        schemaVersionCatalog,
-        sourceDiagnostics,
+      buildSchemaRuntimeFromCatalog({
+        catalog: schemaVersionCatalog,
+        activations: doc.schemaRefs,
       }),
-    [doc, fallbackSchema, schemaVersionCatalog, sourceDiagnostics],
+    [schemaVersionCatalog, doc.schemaRefs],
+  );
+  const schema = schemaRuntimeResult.runtime.resolved.effectiveSchema ?? fallbackSchema;
+  if (!schema) throw new Error('Unable to resolve a schema for the active semantic runtime.');
+  const entityIndex = useMemo(() => buildEntityIndex(doc.entities), [doc.entities]);
+  const validationDocument = params.validationDocument ?? semanticDocument;
+  const validationDiagnostics = useMemo(
+    () => validateDiagramDoc(validationDocument, schema).diagnostics,
+    [validationDocument, schema],
+  );
+  const diagnostics = useMemo(
+    () => [
+      ...(sourceDiagnostics ?? []),
+      ...schemaRuntimeResult.diagnostics,
+      ...validationDiagnostics,
+    ],
+    [sourceDiagnostics, schemaRuntimeResult, validationDiagnostics],
+  );
+  return useMemo(
+    () => ({
+      doc,
+      schemaRuntimeResult,
+      schemaRuntime: schemaRuntimeResult.runtime,
+      schema,
+      schemaSemantics: schemaRuntimeResult.runtime.semantics,
+      entityIndex,
+      diagnostics,
+      validationDiagnostics,
+      valid: diagnostics.every((diagnostic) => diagnostic.severity !== 'error'),
+    }),
+    [doc, schemaRuntimeResult, schema, entityIndex, diagnostics, validationDiagnostics],
   );
 };
