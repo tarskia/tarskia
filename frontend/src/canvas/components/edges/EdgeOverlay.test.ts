@@ -939,11 +939,7 @@ describe('EdgeOverlay', () => {
                 },
                 contentOccluders: [],
               },
-              controls: {
-                showConnectionHandles: true,
-                highlightSourceHandle: false,
-                highlightTargetHandle: false,
-              },
+              controls: {},
             },
           },
           {
@@ -991,11 +987,7 @@ describe('EdgeOverlay', () => {
                 },
                 contentOccluders: [],
               },
-              controls: {
-                showConnectionHandles: true,
-                highlightSourceHandle: false,
-                highlightTargetHandle: false,
-              },
+              controls: {},
             },
           },
           {
@@ -1043,11 +1035,7 @@ describe('EdgeOverlay', () => {
                 },
                 contentOccluders: [{ x: 30, y: 20, width: 40, height: 16 }],
               },
-              controls: {
-                showConnectionHandles: true,
-                highlightSourceHandle: false,
-                highlightTargetHandle: false,
-              },
+              controls: {},
             },
           },
         ] as never,
