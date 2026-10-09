@@ -61,15 +61,6 @@ describe('commerce occlusion', () => {
     expect(ordersSchema).toBeDefined();
     expect(orders).toBeDefined();
 
-    const rectContainsPoint = (
-      rect: { x: number; y: number; width: number; height: number },
-      point: { x: number; y: number },
-    ) =>
-      point.x >= rect.x &&
-      point.y >= rect.y &&
-      point.x <= rect.x + rect.width &&
-      point.y <= rect.y + rect.height;
-
     const segmentIntersectsRect = (
       segment:
         | { kind: 'vertical'; x: number; y1: number; y2: number }
@@ -90,20 +81,6 @@ describe('commerce occlusion', () => {
         Math.max(Math.min(segment.x1, segment.x2), rect.x) <=
           Math.min(Math.max(segment.x1, segment.x2), rect.x + rect.width)
       );
-    };
-
-    const samplePointWithinRect = (
-      segment:
-        | { kind: 'vertical'; x: number; y1: number; y2: number }
-        | { kind: 'horizontal'; y: number; x1: number; x2: number },
-      rect: { x: number; y: number; width: number; height: number },
-    ) => {
-      if (segment.kind === 'vertical') {
-        const y = Math.max(rect.y, Math.min(rect.y + rect.height, (segment.y1 + segment.y2) / 2));
-        return { x: segment.x, y };
-      }
-      const x = Math.max(rect.x, Math.min(rect.x + rect.width, (segment.x1 + segment.x2) / 2));
-      return { x, y: segment.y };
     };
 
     const segments = edge
@@ -128,15 +105,9 @@ describe('commerce occlusion', () => {
           },
         ]
       : [];
-    const cacheEdgeBlockedByOrders =
+    const cacheEdgeCrossesOrders =
       orders !== undefined &&
-      segments.some((segment) => {
-        if (!segmentIntersectsRect(segment, orders.rect)) {
-          return false;
-        }
-        const samplePoint = samplePointWithinRect(segment, orders.rect);
-        return edge?.blockerOccluders.some((rect) => rectContainsPoint(rect, samplePoint));
-      });
+      segments.some((segment) => segmentIntersectsRect(segment, orders.rect));
 
     expect(edge).toBeDefined();
     expect(ordersSchema).toBeDefined();
@@ -147,6 +118,6 @@ describe('commerce occlusion', () => {
       targetId: 'app-checkout',
       solidOverNodeIds: ['app-checkout', 'cache-session', 'data-platform'],
     });
-    expect(cacheEdgeBlockedByOrders).toBe(true);
+    expect(cacheEdgeCrossesOrders).toBe(false);
   });
 });

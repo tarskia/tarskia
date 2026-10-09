@@ -4,6 +4,7 @@ import {
   resolveTypeDef,
   type SchemaModule,
 } from '@tarskia/diagram-semantics';
+import { reserveScopeRoutingSpace } from '../presentation/routing-space';
 import type { SceneNode, SceneTree } from '../tree/scene-tree';
 import type { ResolvedNodeVisual } from '../visual/node-visuals';
 import {
@@ -179,15 +180,29 @@ export function applySceneLayout(params: {
     const cachedLayout = params.uncached
       ? undefined
       : renderComponentLayout(childSizes, layoutEdges, spec);
-    const layout =
+    const baseLayout =
       cachedLayout ?? renderComponentLayoutUncached(childSizes, layoutEdges, spec, true);
+    const reserved = listMode
+      ? { positions: baseLayout.positions, extraWidth: 0 }
+      : reserveScopeRoutingSpace(nodeId, tree, edges, baseLayout.positions);
+    // Never mutate cached layout products; relation labels affect only this presentation spacing.
+    const layout = {
+      ...baseLayout,
+      positions: reserved.positions,
+      computedPositions: reserved.positions,
+      requiredSize: {
+        ...baseLayout.requiredSize,
+        width: baseLayout.requiredSize.width + reserved.extraWidth,
+      },
+    };
+
     let size = {
       width: Math.max(adjustedBase.width, layout.requiredSize.width),
       height: Math.max(adjustedBase.height, layout.requiredSize.height),
     };
 
     for (const child of childLayouts) {
-      const box = cachedLayout?.boxes.get(child.id) ?? layout.positions[child.id];
+      const box = layout.positions[child.id];
       child.position = box ? { x: box.x, y: box.y } : { x: 0, y: 0 };
     }
 
