@@ -128,7 +128,7 @@ export const schemaReferenceSections: SchemaReferenceSection[] = [
         key: 'types[].containment',
         summary: 'Controls which child types or traits this type can contain.',
         details:
-          'Use allowedChildTypes for precise control or allowedChildTraits for broader categories.',
+          'Use allowedChildTypes for precise control or allowedChildTraits for broader categories. When both are set, a child is allowed if it matches either list.',
         example:
           'containment:\n  allowedChildTypes: [web.types.api-endpoint]\n  allowedChildTraits: [group-like]',
       },

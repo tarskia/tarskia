@@ -4,7 +4,7 @@ import {
   type RelationAnalysisDiagnosticDetails,
 } from './diagnostics';
 import { buildEntityIndex } from './entity-tree';
-import { resolveTypeDef, traitMatches, typeMatches } from './schema';
+import { matchesExplicitContainment, resolveTypeDef, traitMatches } from './schema';
 import {
   CORE_CONTAINS_RELATION_ID,
   CORE_GROUP_TYPE_ID,
@@ -746,14 +746,7 @@ export function validateDocument(
         ? activationMap.get(buildSchemaId(parseSchemaRef(typeDef.originSchemaId)))?.layer
         : undefined;
 
-      const explicitContainmentOk = containment
-        ? (containment.allowedChildTypes
-            ? typeMatches(schema, entity.type, containment.allowedChildTypes)
-            : true) &&
-          (containment.allowedChildTraits
-            ? traitMatches(schema, entity.type, containment.allowedChildTraits)
-            : true)
-        : false;
+      const explicitContainmentOk = matchesExplicitContainment(schema, containment, entity.type);
       const structuralGroupContainmentOk =
         explicitContainmentOk && traitMatches(schema, entity.type, [GROUP_LIKE_TRAIT_ID]);
 

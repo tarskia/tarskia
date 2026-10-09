@@ -32,4 +32,4 @@ repos:
         language: system
         args: ["run", "test", "-w", "@tarskia/frontend"]
         pass_filenames: false
-        files: '^(frontend/|packages/diagram-semantics/|scripts/build-semantics\.mjs$|package\.json$|package-lock\.json$|\.node-version$)'
+        files: '^(frontend/|gallery/curated/|packages/diagram-semantics/|scripts/build-semantics\.mjs$|package\.json$|package-lock\.json$|\.node-version$)'

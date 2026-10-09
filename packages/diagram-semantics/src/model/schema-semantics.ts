@@ -1,4 +1,9 @@
-import { getTraitAncestors, resolveTypeDef, traitMatches, typeMatches } from './schema';
+import {
+  getTraitAncestors,
+  matchesExplicitContainment,
+  resolveTypeDef,
+  traitMatches,
+} from './schema';
 import { buildSchemaActivationMap, buildSchemaId, parseSchemaRef } from './schema-ref';
 import type {
   RelationFulfillment,
@@ -238,14 +243,7 @@ export const getAllowedChildTypeIds = ({
           ? activationMap.get(buildSchemaId(parseSchemaRef(candidateType.originSchemaId)))?.layer
           : undefined;
 
-      const explicitContainmentOk = containment
-        ? (containment.allowedChildTypes
-            ? typeMatches(schema, candidate.id, containment.allowedChildTypes)
-            : true) &&
-          (containment.allowedChildTraits
-            ? traitMatches(schema, candidate.id, containment.allowedChildTraits)
-            : true)
-        : false;
+      const explicitContainmentOk = matchesExplicitContainment(schema, containment, candidate.id);
       const structuralGroupContainmentOk =
         explicitContainmentOk && traitMatches(schema, candidate.id, [GROUP_LIKE_TRAIT_ID]);
 

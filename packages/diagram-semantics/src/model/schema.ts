@@ -188,3 +188,19 @@ export function traitMatches(schema: SchemaModule, typeId: string, allowed?: str
   const traitClosure = getTypeTraitClosure(schema, typeId);
   return allowed.some((allowedTrait) => traitClosure.has(allowedTrait));
 }
+
+// Explicit containment lists are alternatives; empty lists impose no restriction.
+export function matchesExplicitContainment(
+  schema: SchemaModule,
+  containment: EntityTypeDef['containment'],
+  childTypeId: string,
+): boolean {
+  if (!containment) return false;
+  const hasTypes = (containment.allowedChildTypes?.length ?? 0) > 0;
+  const hasTraits = (containment.allowedChildTraits?.length ?? 0) > 0;
+  return (
+    (!hasTypes && !hasTraits) ||
+    (hasTypes && typeMatches(schema, childTypeId, containment.allowedChildTypes)) ||
+    (hasTraits && traitMatches(schema, childTypeId, containment.allowedChildTraits))
+  );
+}
