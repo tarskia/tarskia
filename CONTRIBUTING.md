@@ -7,7 +7,7 @@ Thanks for helping improve Tarskia.
 ```sh
 npm ci
 pre-commit install
-npm run build:semantics
+npm run build -w @tarskia/diagram-semantics
 npm run test -w @tarskia/diagram-semantics
 npm run test -w @tarskia/frontend
 npm run build -w @tarskia/frontend
