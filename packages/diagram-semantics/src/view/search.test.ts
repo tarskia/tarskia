@@ -90,7 +90,7 @@ describe('buildDiagramViewForSearchReveal', () => {
         ...doc,
         view: {
           kind: 'semantic-diagram-view',
-          version: 2,
+          version: 3,
           scopeRootId: 'orders',
           nodesById: {
             orders: { expanded: true },

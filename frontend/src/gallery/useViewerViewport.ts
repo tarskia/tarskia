@@ -5,13 +5,13 @@ import { useCallback, useRef } from 'react';
 export function useViewerViewport(loadedDocument: SemanticDocument | undefined) {
   const camera = useRef({
     document: loadedDocument,
-    viewport: loadedDocument?.view?.layout?.viewport,
+    viewport: undefined as ViewportState | undefined,
   });
   if (camera.current.document !== loadedDocument) {
-    camera.current = { document: loadedDocument, viewport: loadedDocument?.view?.layout?.viewport };
+    camera.current = { document: loadedDocument, viewport: undefined as ViewportState | undefined };
   }
   const persistViewport = useCallback((viewport: ViewportState) => {
     camera.current.viewport = viewport;
   }, []);
-  return { savedViewport: camera.current.viewport, persistViewport };
+  return { savedCamera: loadedDocument?.view?.camera, persistViewport };
 }

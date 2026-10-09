@@ -28,8 +28,8 @@ const doc: SemanticDocument = {
 const tree = buildEntityTree(doc);
 const initial: DiagramView = {
   kind: 'semantic-diagram-view',
-  version: 2,
-  layout: { viewport: { x: 1, y: 2, zoom: 0.5 } },
+  version: 3,
+  camera: { rect: { x: 1, y: 2, width: 1440 / 0.5, height: 900 / 0.5 } },
   nodesById: { leaf: { highlighted: true } },
 };
 const apply = (operation: DiagramViewOperation, view: DiagramView | undefined = initial) =>
@@ -44,7 +44,7 @@ describe('pure view operations', () => {
     const closed = apply({ kind: 'toggle', entityId: 'shell' }, opened);
     expect(expanded(closed)).toEqual([]);
     expect(closed?.nodesById).toEqual(initial.nodesById);
-    expect(closed?.layout).toEqual(initial.layout);
+    expect(closed?.camera).toEqual(initial.camera);
     expect(initial.nodesById?.shell).toBeUndefined();
   });
   it('expands single-child chains without writing leaf expansion', () => {
@@ -94,7 +94,7 @@ describe('pure view operations', () => {
     const focused = apply({ kind: 'enter-focus', entityId: 'platform', expandTarget: true });
     expect(focused?.scopeRootId).toBe('platform');
     expect(expanded(focused)).toEqual(['platform']);
-    expect(focused?.layout).toEqual(initial.layout);
+    expect(focused?.camera).toEqual(initial.camera);
     const cleared = apply({ kind: 'clear-focus' }, focused);
     expect(cleared?.scopeRootId).toBeUndefined();
     expect(expanded(cleared)).toEqual(['platform']);

@@ -1,13 +1,11 @@
 import {
   type DiagramView,
-  type DocumentLayout,
   normalizeDiagramViewState,
   type SemanticDocument,
 } from '@tarskia/diagram-semantics';
 
 export interface DeclarativeDiagramViewState {
   view: DiagramView;
-  layout: DocumentLayout;
   expanded: Record<string, boolean>;
   expandedKey: string;
   highlightedKey: string;
@@ -45,7 +43,6 @@ export const selectDeclarativeDiagramViewState = (
   const highlightedKey = revisionFor([...normalized.highlightedIds]);
   const result = {
     view: normalized.view,
-    layout: normalized.layout,
     expanded: normalized.expanded,
     expandedKey,
     highlightedKey,

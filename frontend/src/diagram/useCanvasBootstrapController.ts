@@ -1,4 +1,4 @@
-import type { ViewportState } from '@tarskia/diagram-semantics';
+import type { DiagramCamera, ViewportState } from '@tarskia/diagram-semantics';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { resolveNavigationPolicy, resolveNavigationViewport } from './camera-navigation';
 import type { CanvasSize, GetCurrentCanvasSize } from './canvas-size';
@@ -15,10 +15,12 @@ export const isBootstrapCanvasSizeUsable = (canvasSize: CanvasSize | null) =>
 
 interface UseCanvasBootstrapControllerArgs {
   initialViewportKey?: string;
-  savedViewport?: ViewportState;
+  savedCamera?: DiagramCamera;
+  scopeRootId?: string;
   getCurrentCanvasSize: GetCurrentCanvasSize;
   canvasLayoutVersion: number;
   sceneBounds: DiagramCameraRect | null;
+  getNodeSetBounds: (ids: string[]) => DiagramCameraRect | null;
   minZoom: number;
   maxZoom: number;
   canvasReady: boolean;
@@ -51,7 +53,9 @@ export const resolvePendingBootstrapAction = (params: {
 
 export function useCanvasBootstrapController({
   initialViewportKey,
-  savedViewport,
+  savedCamera,
+  scopeRootId,
+  getNodeSetBounds,
   getCurrentCanvasSize,
   canvasLayoutVersion,
   sceneBounds,
@@ -88,13 +92,14 @@ export function useCanvasBootstrapController({
         policy: {
           ...initializePolicy,
         },
-        savedViewport,
+        savedCamera,
+        scopeRootId,
+        getNodeSetBounds,
         canvasSize: usableCanvasSize,
         sceneBounds,
-        currentViewport: savedViewport ?? { x: 0, y: 0, zoom: 1 },
+        currentViewport: { x: 0, y: 0, zoom: 1 },
         minZoom,
         maxZoom,
-        getNodeSetBounds: () => null,
       }) ?? undefined;
     lastDefaultViewportRef.current = viewport;
     return viewport;
@@ -108,7 +113,9 @@ export function useCanvasBootstrapController({
     initializePolicy,
     maxZoom,
     minZoom,
-    savedViewport,
+    savedCamera,
+    scopeRootId,
+    getNodeSetBounds,
     sceneBounds,
   ]);
 

@@ -111,7 +111,7 @@ export default function PublicGalleryViewer() {
     [],
   );
 
-  const { persistViewport, savedViewport } = useViewerViewport(loadedDiagram?.doc);
+  const { persistViewport, savedCamera } = useViewerViewport(loadedDiagram?.doc);
 
   const semanticRuntime = useDiagramSemanticRuntime({
     doc: content,
@@ -134,7 +134,7 @@ export default function PublicGalleryViewer() {
     skipTransitions: reducedMotion,
     showDebug: false,
     persistViewport,
-    savedViewport,
+    savedCamera,
     initialViewportKey: `${namespace}/${slug}`,
     minZoom: MIN_VIEW_ZOOM,
     maxZoom: MAX_VIEW_ZOOM,

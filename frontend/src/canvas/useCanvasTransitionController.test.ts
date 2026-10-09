@@ -34,7 +34,7 @@ const buildViewDoc = (params: {
     params.expanded || params.scopeRootId || params.highlighted?.length
       ? {
           kind: 'semantic-diagram-view',
-          version: 2,
+          version: 3,
           scopeRootId: params.scopeRootId,
           nodesById: Object.fromEntries([
             ...Object.keys(params.expanded ?? {}).map((nodeId) => [

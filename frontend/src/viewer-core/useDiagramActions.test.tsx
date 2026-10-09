@@ -38,7 +38,7 @@ describe('useDiagramActions', () => {
           relations: [],
           view: {
             kind: 'semantic-diagram-view',
-            version: 2,
+            version: 3,
           },
         }),
         document: {
@@ -88,7 +88,7 @@ describe('useDiagramActions', () => {
           relations: [],
           view: {
             kind: 'semantic-diagram-view',
-            version: 2,
+            version: 3,
           },
         }),
         document: {
@@ -131,7 +131,7 @@ describe('useDiagramActions', () => {
       relations: [],
       view: {
         kind: 'semantic-diagram-view',
-        version: 2,
+        version: 3,
       },
     });
     expect(updated.view?.nodesById?.['service-a']?.expanded).toBe(true);
@@ -158,7 +158,7 @@ describe('useDiagramActions', () => {
           relations: [],
           view: {
             kind: 'semantic-diagram-view',
-            version: 2,
+            version: 3,
             nodesById: {
               'service-a': {
                 expanded: true,
@@ -213,7 +213,7 @@ describe('useDiagramActions', () => {
           relations: [],
           view: {
             kind: 'semantic-diagram-view',
-            version: 2,
+            version: 3,
             nodesById: {
               'service-a': {
                 expanded: true,
@@ -279,7 +279,7 @@ describe('useDiagramActions', () => {
           relations: [],
           view: {
             kind: 'semantic-diagram-view',
-            version: 2,
+            version: 3,
           },
         }),
         document: {
@@ -316,7 +316,7 @@ describe('useDiagramActions', () => {
       relations: [],
       view: {
         kind: 'semantic-diagram-view',
-        version: 2,
+        version: 3,
       },
     });
     expect(updated.view?.nodesById?.['service-a']?.expanded).toBe(true);
@@ -345,7 +345,7 @@ describe('useDiagramActions', () => {
           relations: [],
           view: {
             kind: 'semantic-diagram-view',
-            version: 2,
+            version: 3,
           },
         }),
         document: {

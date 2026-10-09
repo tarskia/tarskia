@@ -1,4 +1,5 @@
 import type {
+  DiagramCamera,
   DiagramView,
   SchemaModule,
   SemanticDocument,
@@ -10,6 +11,7 @@ import { buildStaticCanvasPresentation } from '../canvas/rendering/presentation/
 import { useCanvasTransitionController } from '../canvas/useCanvasTransitionController';
 import { useCanvasViewportAdapter } from '../canvas/useCanvasViewportAdapter';
 import { useDiagramRenderingController } from '../canvas/useDiagramRenderingController';
+import { captureDiagramCamera } from './camera-framing';
 import { type CanvasSize, measureCanvasElement } from './canvas-size';
 import type { DiagramCameraRect, StructuralTransitionIntent } from './motion-types';
 import { useCanvasBootstrapController } from './useCanvasBootstrapController';
@@ -23,7 +25,7 @@ export interface UseDiagramEngineArgs {
   skipTransitions: boolean;
   showDebug: boolean;
   persistViewport: (viewport: { x: number; y: number; zoom: number }) => void;
-  savedViewport?: { x: number; y: number; zoom: number };
+  savedCamera?: DiagramCamera;
   initialViewportKey?: string;
   minZoom: number;
   maxZoom: number;
@@ -39,7 +41,7 @@ export function useDiagramEngine({
   skipTransitions,
   showDebug,
   persistViewport,
-  savedViewport,
+  savedCamera,
   initialViewportKey,
   minZoom,
   maxZoom,
@@ -100,11 +102,17 @@ export function useDiagramEngine({
     [rendering.layout, showDebug],
   );
 
+  const getAnchorBounds = useCallback(
+    (id: string) => stableSnapshot.nodes.find((node) => node.id === id)?.rect ?? null,
+    [stableSnapshot],
+  );
   const motion = useDiagramMotionManager({
     initialViewportKey,
     stableSnapshot,
+    getAnchorBounds,
     skipTransitions,
-    savedViewport,
+    savedCamera,
+    scopeRootId: view?.scopeRootId ?? doc?.view?.scopeRootId,
     getCurrentCanvasSize,
     minZoom,
     maxZoom,
@@ -176,9 +184,15 @@ export function useDiagramEngine({
   sceneBoundsRef.current = sceneBounds;
   nodeRectsByIdRef.current = nodeRectsById;
 
+  const getSavedAnchorBounds = useCallback(
+    (ids: string[]) => getAnchorBounds(ids[0]),
+    [getAnchorBounds],
+  );
   const bootstrap = useCanvasBootstrapController({
+    getNodeSetBounds: getSavedAnchorBounds,
     initialViewportKey,
-    savedViewport,
+    savedCamera,
+    scopeRootId: view?.scopeRootId ?? doc?.view?.scopeRootId,
     getCurrentCanvasSize,
     canvasLayoutVersion,
     sceneBounds: sceneBoundsRef.current,
@@ -189,6 +203,25 @@ export function useDiagramEngine({
   });
 
   return {
+    captureSavedCamera: () => {
+      const canvasSize = getCurrentCanvasSize();
+      return canvasSize
+        ? captureDiagramCamera({
+            viewport: motion.getCurrentViewport(),
+            canvasSize,
+            nodes: motion
+              .getCurrentDisplaySnapshot()
+              .nodes.filter((node) => node.opacity > 0.01)
+              .map((node) => ({
+                id: node.id,
+                parentId: node.parentId,
+                rect: node.rect,
+              })),
+            scopeRootId: view?.scopeRootId ?? doc?.view?.scopeRootId,
+            scopeRootBounds: sceneBoundsRef.current,
+          })
+        : undefined;
+    },
     canvasRef,
     onCanvasElementChange,
     getCurrentCanvasSize,

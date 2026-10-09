@@ -38,7 +38,7 @@ export const loadGallery = (file: string) => {
           ...loaded.doc,
           view: {
             kind: 'semantic-diagram-view',
-            version: 2,
+            version: 3,
             scopeRootId,
             nodesById: Object.fromEntries(
               graph.entities.map((entity) => [

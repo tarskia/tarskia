@@ -30,7 +30,7 @@ test.each(manifest)('$file preserves compact-list container dimensions', ({ file
     ...runtime.doc,
     view: {
       kind: 'semantic-diagram-view' as const,
-      version: 2 as const,
+      version: 3 as const,
       nodesById: Object.fromEntries(
         [...runtime.entityIndex.byId.keys()].map((id) => [id, { expanded: true }]),
       ),

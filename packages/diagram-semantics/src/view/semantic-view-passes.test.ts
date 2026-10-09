@@ -28,23 +28,19 @@ describe('semantic-view working tree passes', () => {
   it('normalizes view state once and strips empty node entries', () => {
     const normalized = normalizeDiagramViewState({
       kind: 'semantic-diagram-view',
-      version: 2,
+      version: 3,
       scopeRootId: 'platform',
       nodesById: {
         platform: { expanded: true },
         empty: {},
       },
-      layout: {
-        viewport: { x: 1, y: 2, zoom: 3 },
-      },
+      camera: { rect: { x: 1, y: 2, width: 1440 / 3, height: 900 / 3 } },
     });
 
     expect(normalized.view.nodesById).toEqual({
       platform: { expanded: true },
     });
-    expect(normalized.layout).toEqual({
-      viewport: { x: 1, y: 2, zoom: 3 },
-    });
+    expect(normalized.view.camera).toEqual({ rect: { x: 1, y: 2, width: 480, height: 300 } });
   });
 
   it('forces expansion down the scoped single-child chain', () => {
@@ -60,7 +56,7 @@ describe('semantic-view working tree passes', () => {
       relations: [],
       view: {
         kind: 'semantic-diagram-view',
-        version: 2,
+        version: 3,
         scopeRootId: 'platform',
       },
     });
@@ -70,7 +66,7 @@ describe('semantic-view working tree passes', () => {
       tree: workingTree,
       normalizedViewState: normalizeDiagramViewState({
         kind: 'semantic-diagram-view',
-        version: 2,
+        version: 3,
         scopeRootId: 'platform',
       }),
     });
@@ -87,7 +83,7 @@ describe('semantic-view working tree passes', () => {
       ...buildDoc(),
       view: {
         kind: 'semantic-diagram-view',
-        version: 2,
+        version: 3,
         nodesById: {
           platform: { expanded: true },
           database: { expanded: true },
@@ -118,7 +114,7 @@ describe('semantic-view working tree passes', () => {
       ...buildDoc(),
       view: {
         kind: 'semantic-diagram-view',
-        version: 2,
+        version: 3,
         nodesById: {
           platform: { expanded: true },
         },

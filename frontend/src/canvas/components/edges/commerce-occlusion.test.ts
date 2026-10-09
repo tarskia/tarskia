@@ -27,7 +27,7 @@ const withExpandedNodes = (doc: SemanticDocument, expandedIds: string[]): Semant
   ...doc,
   view: {
     kind: 'semantic-diagram-view',
-    version: 2,
+    version: 3,
     nodesById: Object.fromEntries(expandedIds.map((id) => [id, { expanded: true }])),
   },
 });

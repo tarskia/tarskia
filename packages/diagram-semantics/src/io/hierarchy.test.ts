@@ -88,7 +88,7 @@ describe.each(ingestPaths)('$name hierarchy', ({ ingest }) => {
     for (const expanded of [false, true]) {
       const view = {
         kind: 'semantic-diagram-view' as const,
-        version: 2 as const,
+        version: 3 as const,
         nodesById: { platform: { expanded } },
       };
       expect(compileDiagramViewState({ doc: { ...parent, view }, schema })).toEqual(

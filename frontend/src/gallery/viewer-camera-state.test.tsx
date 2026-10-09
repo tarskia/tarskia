@@ -27,11 +27,11 @@ afterEach(() => {
 it('keeps camera persistence and view changes off semantic validation, restoring each loaded camera', async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   const gallery = loadGallery('n8n.yaml');
-  const initialCamera = { x: 44, y: 55, zoom: 0.7 };
+  const initialCamera = { rect: { x: 44, y: 55, width: 1440, height: 900 } };
   const initialDocument = gallery.render([]).doc;
   const loaded = {
     ...initialDocument,
-    view: { ...initialDocument.view!, layout: { viewport: initialCamera } },
+    view: { ...initialDocument.view!, camera: initialCamera },
   } as SemanticDocument;
   const catalog = schemaClosure.buildSchemaVersionCatalog(
     semanticBootstrap.builtInSchemaCatalogEntries,
@@ -68,7 +68,7 @@ it('keeps camera persistence and view changes off semantic validation, restoring
   const root = createRoot(host);
   try {
     await act(async () => root.render(<Harness source={loaded} />));
-    expect(camera.savedViewport).toEqual(initialCamera);
+    expect(camera.savedCamera).toEqual(initialCamera);
     expect(validate).toHaveBeenCalledTimes(1);
     expect(buildSchema).toHaveBeenCalledTimes(1);
     const initialLayout = rendered.layout,
@@ -83,7 +83,7 @@ it('keeps camera persistence and view changes off semantic validation, restoring
     expect(validate).toHaveBeenCalledTimes(1);
     expect(buildLayout).toHaveBeenCalledTimes(initialCalls);
     await act(async () => root.render(<Harness source={loaded} />));
-    expect(camera.savedViewport).toEqual({ x: 100, y: 200, zoom: 1.2 });
+    expect(camera.savedCamera).toEqual(initialCamera);
     expect(rendered.layout).toBe(initialLayout);
     const expanded = {
       ...loaded,
@@ -123,13 +123,16 @@ it('keeps camera persistence and view changes off semantic validation, restoring
     const next = {
       ...loaded,
       entities: [...loaded.entities],
-      view: { ...loaded.view!, layout: { viewport: { x: 8, y: 9, zoom: 0.4 } } },
+      view: {
+        ...loaded.view!,
+        camera: { rect: { x: 8, y: 9, width: 1440 / 0.4, height: 900 / 0.4 } },
+      },
     };
     await act(async () => {
       setView(next.view);
       root.render(<Harness source={next} />);
     });
-    expect(camera.savedViewport).toEqual(next.view.layout.viewport);
+    expect(camera.savedCamera).toEqual(next.view.camera);
     expect(validate).toHaveBeenCalledTimes(2);
   } finally {
     await act(async () => root.unmount());

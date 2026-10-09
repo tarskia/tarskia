@@ -174,7 +174,7 @@ function renderManager(params?: {
     captured = useDiagramMotionManager({
       stableSnapshot: buildSnapshot(),
       skipTransitions: params?.skipTransitions,
-      savedViewport: undefined,
+      savedCamera: undefined,
       getCurrentCanvasSize: params?.getCurrentCanvasSize ?? (() => ({ width: 960, height: 640 })),
       minZoom: 0.5,
       maxZoom: 2,

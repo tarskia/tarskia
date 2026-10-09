@@ -1,7 +1,9 @@
 import { dump, JSON_SCHEMA, load } from 'js-yaml';
 import { diagnosticsToMessages } from '../model/diagnostics';
 import type {
+  DiagramView,
   DocumentInput,
+  LegacyDiagramView,
   Provenance,
   ProvenanceLocation,
   SchemaActivation,
@@ -11,7 +13,7 @@ import type {
   SemanticSourceImport,
 } from '../model/types';
 import schemaModuleSchema from '../schemas/schema-module.schema.json';
-import { sanitizeDiagramViewNodesById } from '../view/normalize-diagram-view';
+import { migrateDiagramView, sanitizeDiagramViewNodesById } from '../view/normalize-diagram-view';
 import { validateWithSchema } from './schema-validator';
 
 type RawEntity = {
@@ -427,7 +429,7 @@ export function serializeSourceDocument(doc: SemanticSourceDocument): string {
     out.imports = doc.imports;
   }
   if (doc.view) {
-    out.view = { ...doc.view, nodesById: sanitizeDiagramViewNodesById(doc.view.nodesById) };
+    out.view = migrateDiagramView(doc.view);
   }
   if (doc.metadata) {
     out.metadata = doc.metadata;
@@ -459,19 +461,16 @@ export function parseSourceDocument(raw: string): SemanticSourceDocument {
   const inputs = normalizeDocumentInputs(record.inputs);
   const imports = normalizeImports(record.imports);
   const metadata = asRecord(record.metadata) as SemanticDocument['metadata'] | undefined;
-  const legacyLayout = asRecord(record.layout) as
-    | NonNullable<SemanticDocument['view']>['layout']
-    | undefined;
-  const rawView = asRecord(record.view) as unknown as SemanticDocument['view'] | undefined;
+  const legacyLayout = asRecord(record.layout) as LegacyDiagramView['layout'] | undefined;
+  const rawView = asRecord(record.view);
   const view =
     rawView || legacyLayout
-      ? {
-          kind: 'semantic-diagram-view' as const,
-          version: 2 as const,
-          scopeRootId: rawView?.scopeRootId,
-          nodesById: sanitizeDiagramViewNodesById(rawView?.nodesById),
-          layout: rawView?.layout ?? legacyLayout,
-        }
+      ? migrateDiagramView({
+          ...rawView,
+          kind: 'semantic-diagram-view',
+          version: rawView?.version ?? 2,
+          ...(rawView?.version === 3 ? {} : { layout: rawView?.layout ?? legacyLayout }),
+        } as unknown as DiagramView | LegacyDiagramView)
       : undefined;
   return {
     version: typeof record.version === 'string' ? record.version : '0.1.0',

@@ -26,7 +26,7 @@ const withExpandedNodes = (doc: SemanticDocument, expandedIds: string[]): Semant
   ...doc,
   view: {
     kind: 'semantic-diagram-view',
-    version: 2,
+    version: 3,
     scopeRootId: doc.view?.scopeRootId,
     nodesById: {
       ...(doc.view?.nodesById ?? {}),

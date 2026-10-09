@@ -40,10 +40,10 @@ export interface DocumentInput {
 
 export interface DiagramView {
   kind: 'semantic-diagram-view';
-  version: 2;
+  version: 3;
   scopeRootId?: string;
   nodesById?: Record<string, DiagramViewNodeState>;
-  layout?: DocumentLayout;
+  camera?: DiagramCamera;
 }
 
 export interface DiagramViewNodeState {
@@ -51,8 +51,18 @@ export interface DiagramViewNodeState {
   highlighted?: boolean;
 }
 
-export interface DocumentLayout {
-  viewport?: ViewportState;
+export interface DiagramCamera {
+  anchorId?: string;
+  rect: { x: number; y: number; width: number; height: number };
+}
+
+/** Read-only migration input; new documents use DiagramView v3. */
+export interface LegacyDiagramView {
+  kind: 'semantic-diagram-view';
+  version: 2;
+  scopeRootId?: string;
+  nodesById?: Record<string, DiagramViewNodeState>;
+  layout?: { viewport?: ViewportState };
 }
 
 export interface ViewportState {

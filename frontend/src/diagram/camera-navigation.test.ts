@@ -51,16 +51,13 @@ describe('camera navigation helpers', () => {
     );
   });
 
-  it('restores and corrects a saved viewport through initialize-diagram', () => {
-    const savedViewport = { x: 720, y: 520, zoom: 1 };
+  it('restores a framing with no scene-fit padding', () => {
     const intent: NavigationIntent = { kind: 'initialize-diagram' };
-    const policy = resolveNavigationPolicy(intent);
-
     expect(
       resolveNavigationViewport({
         intent,
-        policy,
-        savedViewport,
+        policy: resolveNavigationPolicy(intent),
+        savedCamera: { rect: sceneBounds },
         canvasSize,
         sceneBounds,
         currentViewport,
@@ -68,34 +65,7 @@ describe('camera navigation helpers', () => {
         maxZoom,
         getNodeSetBounds: () => null,
       }),
-    ).toEqual(
-      computeViewportToKeepRectVisible({
-        viewport: savedViewport,
-        canvas: canvasSize,
-        rect: sceneBounds,
-        padding: 40,
-      }) ?? savedViewport,
-    );
-  });
-
-  it('repairs a degenerate min-zoom saved viewport while initializing', () => {
-    const savedViewport = { x: 417, y: -3.15, zoom: 0.05 };
-    const intent: NavigationIntent = { kind: 'initialize-diagram' };
-    const policy = resolveNavigationPolicy(intent);
-
-    const viewport = resolveNavigationViewport({
-      intent,
-      policy,
-      savedViewport,
-      canvasSize,
-      sceneBounds,
-      currentViewport,
-      minZoom: 0.05,
-      maxZoom,
-      getNodeSetBounds: () => null,
-    });
-
-    expect(viewport?.zoom).toBeGreaterThan(1);
+    ).toEqual({ x: 0, y: 0, zoom: 2 });
   });
 
   it('uses the same fit target for immediate initialization and animated layout fitting', () => {
@@ -109,7 +79,7 @@ describe('camera navigation helpers', () => {
     expect(fitted.viewport).toEqual(initialized.viewport);
   });
 
-  it('retains persistence and host-settle options on live intents', () => {
+  it('retains host-settle options on live intents', () => {
     expect(
       resolveNavigationPolicy({
         kind: 'fit-node-set',
@@ -129,14 +99,31 @@ describe('camera navigation helpers', () => {
     });
   });
 
-  it('retains a saved viewport when initialization has no measured canvas', () => {
-    const savedViewport = { x: 24, y: 56, zoom: 1.25 };
+  it('restores against a saved anchor even when ordinary node-fit bounds exclude it', () => {
     const intent: NavigationIntent = { kind: 'initialize-diagram' };
     expect(
       resolveNavigationViewport({
         intent,
         policy: resolveNavigationPolicy(intent),
-        savedViewport,
+        savedCamera: { anchorId: 'shell', rect: { x: 0, y: 0, width: 480, height: 320 } },
+        canvasSize,
+        sceneBounds,
+        currentViewport,
+        minZoom,
+        maxZoom,
+        getNodeSetBounds: () => null,
+        getAnchorBounds: () => ({ x: 100, y: 200, width: 480, height: 320 }),
+      }),
+    ).toEqual({ x: -200, y: -400, zoom: 2 });
+  });
+
+  it('waits for measured canvas dimensions before restoring saved framing', () => {
+    const intent: NavigationIntent = { kind: 'initialize-diagram' };
+    expect(
+      resolveNavigationViewport({
+        intent,
+        policy: resolveNavigationPolicy(intent),
+        savedCamera: { rect: sceneBounds },
         canvasSize: null,
         sceneBounds,
         currentViewport,
@@ -144,6 +131,6 @@ describe('camera navigation helpers', () => {
         maxZoom,
         getNodeSetBounds: () => null,
       }),
-    ).toBe(savedViewport);
+    ).toBeNull();
   });
 });

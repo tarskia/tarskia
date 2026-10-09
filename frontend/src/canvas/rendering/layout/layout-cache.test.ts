@@ -129,7 +129,7 @@ for (const { file } of galleryFiles) {
         ...graph.content,
         view: {
           kind: 'semantic-diagram-view' as const,
-          version: 2 as const,
+          version: 3 as const,
           nodesById: Object.fromEntries(
             graph.entities.map((entity) => [entity.id, { expanded: expanded.has(entity.id) }]),
           ),
@@ -162,7 +162,7 @@ for (const name of ['n8n', 'supabase', 'chatwoot'])
         ...graph.content,
         view: {
           kind: 'semantic-diagram-view' as const,
-          version: 2 as const,
+          version: 3 as const,
           nodesById: Object.fromEntries(
             graph.entities.map((entity) => [entity.id, { expanded: entity.id !== collapsed }]),
           ),
@@ -217,7 +217,7 @@ it('every small curated container and focus projection retain Dagre geometry', (
         ...graph.content,
         view: {
           kind: 'semantic-diagram-view' as const,
-          version: 2 as const,
+          version: 3 as const,
           scopeRootId,
           nodesById: Object.fromEntries(groups.map((id) => [id, { expanded: true }])),
         },
