@@ -1,5 +1,5 @@
+import { indexTree } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { indexTree } from '../../../semantic';
 import type { LayoutNode, LayoutTree } from '../layout/tree-traverser';
 import { buildStaticCanvasPresentation } from '../presentation/presentation';
 import { buildAbsolutePositions } from '../scene/scene';

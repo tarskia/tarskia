@@ -1,4 +1,4 @@
-import type { CompiledDiagramEdge } from '../../../../semantic';
+import type { CompiledDiagramEdge } from '@tarskia/diagram-semantics';
 import type {
   SequencedTransitionAdvisory,
   StructuralEdgeDiff,

@@ -1,5 +1,5 @@
+import { groupDiagnostics, schemaDiagnostic, sortDiagnostics } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { groupDiagnostics, schemaDiagnostic, sortDiagnostics } from './diagnostics';
 
 describe('diagnostics helpers', () => {
   it('sorts by phase and severity first', () => {

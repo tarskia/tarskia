@@ -1,4 +1,4 @@
-import { collectDescendantIds } from '../../../semantic';
+import { collectDescendantIds } from '@tarskia/diagram-semantics';
 import type { LayoutNode, LayoutTree } from '../layout/tree-traverser';
 
 export type ViewportBounds = {

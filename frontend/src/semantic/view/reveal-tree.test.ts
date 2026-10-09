@@ -1,5 +1,5 @@
+import { buildEntityTree } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { buildEntityTree } from '../tree/entity-tree';
 import { buildRevealedEntityTree } from './reveal-tree';
 
 const buildTree = () =>

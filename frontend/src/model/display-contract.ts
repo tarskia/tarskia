@@ -1,10 +1,15 @@
+import type {
+  DisplayContentConfig,
+  DisplayCount,
+  EntityTypeDef,
+  PropertySchema,
+} from '@tarskia/diagram-semantics';
 import { resolveTypeLayoutDefaults } from './layout-defaults';
 import {
   resolvePropertyProjectionOptions,
   resolveTypeProjectionOptions,
   shouldProjectPropertyOnCard,
 } from './projection-contract';
-import type { DisplayContentConfig, DisplayCount, EntityTypeDef, PropertySchema } from './types';
 import { resolveTypeVisualDefaults } from './visual-defaults';
 
 export type DisplayCapabilityScope = 'type' | 'property';

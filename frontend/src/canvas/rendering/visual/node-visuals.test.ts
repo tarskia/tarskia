@@ -1,7 +1,12 @@
+import {
+  buildEntityTree,
+  buildQualifiedSchemaObjectId,
+  CORE_GROUP_TYPE_ID,
+  indexTree,
+  type SchemaModule,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { buildQualifiedSchemaObjectId, CORE_GROUP_TYPE_ID } from '../../../model/schema-ids';
-import type { SchemaModule, SemanticDocument } from '../../../model/types';
-import { buildEntityTree, indexTree } from '../../../semantic';
 import { buildSceneTree } from '../tree/scene-tree';
 import { buildNodeVisualMap } from './node-visuals';
 

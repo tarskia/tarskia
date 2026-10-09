@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import baseRaw from '../schemas/base.yaml?raw';
-import codeRaw from '../schemas/code.yaml?raw';
-import frontendRaw from '../schemas/frontend.yaml?raw';
-import softwareRaw from '../schemas/software.yaml?raw';
-import webAppRaw from '../schemas/web-app.yaml?raw';
-import { parseSchema } from '../util/serialization';
-import { diagnosticsToMessages } from './diagnostics';
-import { buildQualifiedSchemaObjectId } from './schema-ids';
-import { buildSchemaActivation } from './schema-ref';
-import { buildRawSchemaSet, buildSchemaRuntime, buildSchemaSelection } from './schema-runtime';
-import type { SchemaModule } from './types';
+import baseRaw from '../../__tests__/fixtures/viewer/base.yaml?raw';
+import codeRaw from '../../__tests__/fixtures/viewer/code.yaml?raw';
+import frontendRaw from '../../__tests__/fixtures/viewer/frontend.yaml?raw';
+import softwareRaw from '../../__tests__/fixtures/viewer/software.yaml?raw';
+import webAppRaw from '../../__tests__/fixtures/viewer/web-app.yaml?raw';
+import {
+  buildQualifiedSchemaObjectId,
+  buildRawSchemaSet,
+  buildSchemaActivation,
+  buildSchemaRuntime,
+  buildSchemaSelection,
+  diagnosticsToMessages,
+  parseSchema,
+  type SchemaModule,
+} from '../../index';
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
 

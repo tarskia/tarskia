@@ -1,4 +1,4 @@
-import type { CompiledDiagramEdge } from '../../../semantic';
+import type { CompiledDiagramEdge } from '@tarskia/diagram-semantics';
 import { resolveEndpointChildWithinParent } from '../tree/endpoint-projection';
 import type { SceneTree } from '../tree/scene-tree';
 

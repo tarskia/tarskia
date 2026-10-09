@@ -1,7 +1,11 @@
+import {
+  buildQualifiedSchemaObjectId,
+  CORE_GROUP_TYPE_ID,
+  compileDiagramViewState,
+  type SchemaModule,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { buildQualifiedSchemaObjectId, CORE_GROUP_TYPE_ID } from '../../../model/schema-ids';
-import type { SchemaModule, SemanticDocument } from '../../../model/types';
-import { compileDiagramViewState } from '../../../semantic';
 import { buildGraphModel } from '../graph/graph-model';
 import { buildLayoutResult } from '../layout/layout-pipeline';
 import { buildBezierEdgeGeometry } from './geometry';

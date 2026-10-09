@@ -1,14 +1,15 @@
-import { describe, expect, it } from 'vitest';
-import { diagnosticsToMessages } from './diagnostics';
-import { removeEntitiesFromDocument } from './document-mutations';
-import { mergeSchemas } from './schema';
-import { buildSchemaActivation } from './schema-ref';
 import {
   buildNextSchemaActivations,
+  buildSchemaActivation,
   collectIntroducedValidationErrors,
+  diagnosticsToMessages,
+  mergeSchemas,
   type SchemaCatalogEntry,
-} from './schema-selection';
-import type { SchemaModule, SemanticDocument } from './types';
+  type SchemaModule,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
+import { describe, expect, it } from 'vitest';
+import { removeEntitiesFromDocument } from './document-mutations';
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
 

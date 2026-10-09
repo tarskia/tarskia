@@ -1,7 +1,6 @@
+import type { SemanticDocument } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-
-import type { SemanticDocument } from '../semantic';
-import { selectDeclarativeDiagramViewState } from '../semantic';
+import { selectDeclarativeDiagramViewState } from '../semantic/view/declarative-view-state';
 import type { LayoutResult } from './rendering/layout/layout-pipeline';
 import {
   buildObservedScopeTransition,

@@ -1,6 +1,6 @@
+import { indexTree } from '@tarskia/diagram-semantics';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import type { LayoutResult } from '../canvas/rendering/layout/layout-pipeline';
 import type { CanvasOverlayEdgeView } from '../canvas/rendering/presentation/presentation';
 import {
@@ -17,7 +17,6 @@ import {
   computeViewportForBoundsInVisibleCanvas,
   computeViewportToKeepRectVisible,
 } from '../canvas/viewport-visibility';
-import { indexTree } from '../semantic';
 import {
   buildMotionPlanFromChoreographyRequest,
   buildRetainedOnlySnapshot,
@@ -157,6 +156,7 @@ const buildEmptyPlanningAdvisory = (direction: 'in' | 'out') => ({
 });
 
 function renderManager(params?: {
+  skipTransitions?: boolean;
   getCurrentCanvasSize?: () => { width: number; height: number } | null;
   initialViewport?: { x: number; y: number; zoom: number };
 }) {
@@ -176,6 +176,7 @@ function renderManager(params?: {
   function Harness() {
     captured = useDiagramMotionManager({
       stableSnapshot: buildSnapshot(),
+      skipTransitions: params?.skipTransitions,
       animationSettings: DEFAULT_ANIMATION_SETTINGS,
       savedViewport: undefined,
       getCurrentCanvasSize: params?.getCurrentCanvasSize ?? (() => ({ width: 960, height: 640 })),
@@ -231,6 +232,26 @@ describe('useDiagramMotionManager', () => {
     if (originalCancelAnimationFrame) {
       globalThis.cancelAnimationFrame = originalCancelAnimationFrame;
     }
+  });
+
+  it('applies reduced-motion camera navigation synchronously at the normal target', () => {
+    const frame = vi.fn(() => 1);
+    vi.stubGlobal('requestAnimationFrame', frame);
+    const { manager, setViewport } = renderManager({ skipTransitions: true });
+    manager.onCanvasInit({} as never);
+    const result = manager.requestNavigation({ kind: 'fit-scene' });
+    expect(result).toEqual({ status: 'applied', reason: 'synchronous' });
+    expect(setViewport).toHaveBeenLastCalledWith(
+      computeViewportForBoundsInVisibleCanvas({
+        bounds: { x: 0, y: 0, width: 480, height: 320 },
+        canvas: { width: 960, height: 640 },
+        minZoom: 0.5,
+        maxZoom: 2,
+        padding: DEFAULT_VIEWPORT_FIT_PADDING,
+        leftOcclusion: 0,
+      }),
+    );
+    expect(frame).not.toHaveBeenCalled();
   });
 
   it('scales structural camera duration with viewport travel', () => {

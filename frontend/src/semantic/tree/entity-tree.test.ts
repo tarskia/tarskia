@@ -1,6 +1,5 @@
+import { buildEntityTree, collectDescendantIds, ROOT_ID } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { collectDescendantIds } from './canonical-tree';
-import { buildEntityTree, ROOT_ID } from './entity-tree';
 
 describe('buildEntityTree', () => {
   it('builds nested parent references from child arrays and parent ids', () => {

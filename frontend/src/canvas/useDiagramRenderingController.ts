@@ -1,14 +1,17 @@
+import {
+  type CompiledDiagramEdge,
+  compileDiagramViewState,
+  getSingleChildChainTop,
+  type SchemaModule,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 import { useCallback, useMemo } from 'react';
-import type { SchemaModule, SemanticDocument } from '../model/types';
-import type { CompiledDiagramEdge } from '../semantic';
 import {
   buildSemanticStateDocument,
   combineDiagramSemanticAndDeclarativeViewState,
-  compileDiagramViewState,
-  getSingleChildChainTop,
   selectDeclarativeDiagramViewState,
   selectDiagramSemanticState,
-} from '../semantic';
+} from '../semantic/view/declarative-view-state';
 import { buildGraphModel } from './rendering/graph/graph-model';
 import { buildLayoutResult, type LayoutResult } from './rendering/layout/layout-pipeline';
 import { buildRenderedDiagramViewQueries } from './rendering/scene/queries';

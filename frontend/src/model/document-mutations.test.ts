@@ -1,7 +1,6 @@
+import { buildEntityIndex, type SemanticDocument } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
 import { removeEntitiesFromDocument } from './document-mutations';
-import { buildEntityIndex } from './entity-tree';
-import type { SemanticDocument } from './types';
 
 describe('removeEntitiesFromDocument', () => {
   it('removes descendants and prunes relations that reference removed or missing nodes', () => {

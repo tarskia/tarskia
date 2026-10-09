@@ -1,5 +1,5 @@
+import { buildCompiledDiagramEdgeId, indexTree } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { buildCompiledDiagramEdgeId, indexTree } from '../../../../semantic';
 import type { LayoutNode, LayoutTree } from '../../layout/tree-traverser';
 import type { ResolvedVisualEdge } from '../../visual/edge-visuals';
 import { buildTransitionPlanningAdvisory } from '../sequencer';

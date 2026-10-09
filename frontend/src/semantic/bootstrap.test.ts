@@ -1,6 +1,6 @@
+import { getSchemaModuleRef } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
 import { semanticBootstrap } from './bootstrap';
-import { getSchemaModuleRef } from './index';
 import { parseTrustedBundledSchemaModule } from './trusted-bundled-assets';
 
 const bundledSchemaRaws = Object.values(

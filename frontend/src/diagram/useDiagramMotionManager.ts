@@ -1,3 +1,4 @@
+import type { ViewportState } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactFlowInstance } from 'reactflow';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
@@ -28,7 +29,6 @@ import {
   type TransitionOverlayManagerState,
 } from '../canvas/useTransitionOverlayManager';
 import { computeViewportForBoundsInVisibleCanvas } from '../canvas/viewport-visibility';
-import type { ViewportState } from '../model/types';
 import {
   type ResolvedNavigationPolicy,
   resolveNavigationPolicy,
@@ -80,6 +80,7 @@ interface DiagramMotionRenderState {
 
 interface UseDiagramMotionManagerArgs {
   stableSnapshot: CanvasRenderSnapshot;
+  skipTransitions?: boolean;
   animationSettings: AnimationSettings;
   savedViewport?: ViewportState;
   cameraPolicy?: DiagramCameraPolicy;
@@ -713,6 +714,7 @@ export const buildMotionPlanFromChoreographyRequest = (params: {
 
 export function useDiagramMotionManager({
   stableSnapshot,
+  skipTransitions = false,
   animationSettings,
   savedViewport,
   cameraPolicy,
@@ -738,6 +740,8 @@ export function useDiagramMotionManager({
   }));
   const overlayStateRef = useRef(createTransitionOverlayManagerState(stableSnapshot));
   const stableSnapshotRef = useRef(stableSnapshot);
+  const skipTransitionsRef = useRef(skipTransitions);
+  skipTransitionsRef.current = skipTransitions;
   const activeMotionRef = useRef<ActiveMotion | null>(null);
   const pendingManagedMotionRef = useRef<PendingManagedMotion | null>(null);
   const [canvasReady, setCanvasReady] = useState(false);
@@ -1058,6 +1062,25 @@ export function useDiagramMotionManager({
     enterSegmentRef.current(activeMotion.activeSegmentIndex + 1, now);
   };
 
+  const applyImmediatePlan = useCallback(
+    (plan: MotionPlan, options?: { onComplete?: () => void }) => {
+      cancelScheduledFrame();
+      pendingManagedMotionRef.current = null;
+      activeMotionRef.current = null;
+      const finalCamera = [...plan.segments].reverse().find((segment) => segment.camera)?.camera;
+      if (finalCamera) applyViewport(finalCamera.to);
+      overlayStateRef.current = preserveOverlayCounters(
+        createTransitionOverlayManagerState(plan.targetSnapshot ?? stableSnapshotRef.current),
+        overlayStateRef.current,
+      );
+      motionPhaseRef.current = 'idle';
+      if (plan.persistFinalViewport) persistNow(getObservedViewport());
+      publish(performance.now());
+      options?.onComplete?.();
+    },
+    [applyViewport, cancelScheduledFrame, getObservedViewport, persistNow, publish],
+  );
+
   const startPlan = useCallback(
     (plan: MotionPlan, options?: { onComplete?: () => void }): NavigationRequestResult => {
       if (userGestureActiveRef.current || !canvasReadyRef.current) {
@@ -1066,6 +1089,10 @@ export function useDiagramMotionManager({
           options,
         };
         return { status: 'queued', reason: 'pending-motion' };
+      }
+      if (skipTransitionsRef.current) {
+        applyImmediatePlan(plan, options);
+        return { status: 'applied', reason: 'synchronous' };
       }
       pendingManagedMotionRef.current = null;
       cancelScheduledFrame();
@@ -1107,7 +1134,7 @@ export function useDiagramMotionManager({
       enterSegmentRef.current(0, now);
       return { status: 'queued', reason: 'motion-plan' };
     },
-    [cancelScheduledFrame, finishMotion],
+    [applyImmediatePlan, cancelScheduledFrame, finishMotion],
   );
 
   const computeNavigationViewport = useCallback(
@@ -1281,7 +1308,16 @@ export function useDiagramMotionManager({
   }, [getObservedViewport, reportUserGestureEnd]);
 
   const cancelMotion = useCallback(() => {
+    if (skipTransitions && activeMotionRef.current) {
+      const active = activeMotionRef.current;
+      applyImmediatePlan(active.plan, { onComplete: active.onComplete });
+      return;
+    }
     cancelScheduledFrame();
+    if (skipTransitions && pendingManagedMotionRef.current) {
+      // Keep the target until the gesture ends or the canvas becomes ready.
+      return;
+    }
     pendingManagedMotionRef.current = null;
     activeMotionRef.current = null;
     const now = performance.now();
@@ -1302,7 +1338,7 @@ export function useDiagramMotionManager({
     );
     motionPhaseRef.current = userGestureActiveRef.current ? 'userGesture' : 'idle';
     publish(now);
-  }, [cancelScheduledFrame, publish]);
+  }, [applyImmediatePlan, cancelScheduledFrame, publish, skipTransitions]);
 
   const getCurrentDisplaySnapshot = useCallback(
     () => captureDisplayedSnapshot(overlayStateRef.current, performance.now()),

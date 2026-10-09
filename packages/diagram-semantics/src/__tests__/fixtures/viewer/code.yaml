@@ -1,0 +1,69 @@
+owner: core
+name: code
+version: "0.1"
+description: Internal implementation primitives used for code structure rather than deployable runtime boundaries. Include this schema for most code repositories that have meaningful internal modules, packages, or implementation layers.
+use:
+  - schema: core/software@0.1
+    alias: sw
+
+traits:
+  - id: code-like
+    label: Code Unit
+    extends: core/base.traits.containable
+    description: Internal implementation boundary used for semantic zoom inside services and APIs.
+    analysis:
+      flowType: through
+    relationParticipation:
+      - relation: core/software.relations.calls
+        endpoint: both
+      - relation: core/software.relations.reads
+        endpoint: from
+      - relation: core/software.relations.writes
+        endpoint: from
+      - relation: core/software.relations.read-writes
+        endpoint: from
+      - relation: core/software.relations.publishes-to
+        endpoint: from
+      - relation: core/software.relations.consumes-from
+        endpoint: from
+
+types:
+  - id: module
+    label: Module
+    description: Internal code boundary inside a deployable system, such as a package, namespace, folder, or bounded implementation area. Modules are not deployable services and should not be used for storage sinks such as databases, caches, or file/object stores.
+    traits: [core/code.traits.code-like, core/base.traits.container]
+    containment:
+      allowedChildTraits: [core/code.traits.code-like, core/base.traits.group-like]
+    display:
+      primaryTag: core/software.tags.service
+      defaultSize:
+        width: 170
+        height: 72
+      style:
+        hue: 316
+      count:
+        childTypes: [module]
+        label: modules
+        singularLabel: module
+    properties:
+      - id: runtime
+        type: enum
+        description: Primary execution environment for this node or subtree. Populate it when one runtime is uniformly true for the boundary. If major children would have different runtimes, prefer separate boundaries instead of mixing them under one node.
+        values: [browser, server, worker, edge, cli, external]
+        allowOther: true
+        display:
+          priority: 1
+      - id: framework
+        type: enum
+        description: Dominant framework or runtime stack for this node or subtree when one choice is uniformly true. Prefer it on the highest boundary where it stays accurate instead of repeating it across every descendant.
+        values: [react, nextjs, vue, svelte, express, fastify, koa, nestjs, socketio]
+        allowOther: true
+        display:
+          priority: 2
+      - id: language
+        type: enum
+        description: Primary implementation language for this module or subtree when known.
+        values: [typescript, javascript, python, go, rust, java, csharp]
+        allowOther: true
+
+relations: []

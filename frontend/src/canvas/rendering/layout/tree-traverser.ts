@@ -1,5 +1,8 @@
-import { resolveTypeDef } from '../../../model/schema';
-import type { CompiledDiagramEdge, SchemaModule } from '../../../semantic';
+import {
+  type CompiledDiagramEdge,
+  resolveTypeDef,
+  type SchemaModule,
+} from '@tarskia/diagram-semantics';
 import type { SceneNode, SceneTree } from '../tree/scene-tree';
 import type { ResolvedNodeVisual } from '../visual/node-visuals';
 import {

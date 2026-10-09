@@ -1,13 +1,14 @@
-import { load } from 'js-yaml';
-import { describe, expect, it } from 'vitest';
-import { buildSchemaActivation } from '../model/schema-ref';
-import type { SemanticDocument, SemanticSourceDocument } from '../model/types';
 import {
+  buildSchemaActivation,
   parseDocument,
   parseSourceDocument,
+  type SemanticDocument,
+  type SemanticSourceDocument,
   serializeDocument,
   serializeSourceDocument,
-} from './serialization';
+} from '@tarskia/diagram-semantics';
+import { load } from 'js-yaml';
+import { describe, expect, it } from 'vitest';
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
 

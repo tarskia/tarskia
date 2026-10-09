@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   duplicateEntityById,
+  type Entity,
   moveEntityById,
   normalizeEntityNameInput,
   removeEntityPropById,
   setEntityPropById,
   updateEntityNameById,
-} from './entity-tree';
-import type { Entity } from './types';
+} from '../../index';
 
 describe('entity-tree naming updates', () => {
   it('normalizes blank name input to undefined', () => {

@@ -1,12 +1,11 @@
+import type { SchemaModule, SemanticDocument } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
 import { collectRectBounds } from '../canvas/focus-viewport';
 import { buildStaticCanvasPresentation } from '../canvas/rendering/presentation/presentation';
 import type { AnimationSettings } from '../canvas/rendering/transition/animation-constants';
 import { useCanvasTransitionController } from '../canvas/useCanvasTransitionController';
 import { useCanvasViewportAdapter } from '../canvas/useCanvasViewportAdapter';
 import { useDiagramRenderingController } from '../canvas/useDiagramRenderingController';
-import type { SchemaModule, SemanticDocument } from '../semantic';
 import { measureCanvasElement } from './canvas-size';
 import type {
   DiagramCameraPolicy,
@@ -108,6 +107,7 @@ export function useDiagramEngine({
 
   const motion = useDiagramMotionManager({
     stableSnapshot,
+    skipTransitions,
     animationSettings,
     savedViewport,
     cameraPolicy,

@@ -1,9 +1,16 @@
-import { normalizeDiagramView, normalizeDiagramViewNodesById } from '@tarskia/diagram-semantics';
-import { resolveTypeDef } from '../../model/schema';
-import { FREEFORM_RELATION_TYPE, getSchemaObjectLocalId } from '../../model/schema-ids';
-import type { DiagramView, Relation, SchemaModule, SemanticDocument } from '../../model/types';
-import { getAncestors } from '../tree/canonical-tree';
-import { buildEntityTree } from '../tree/entity-tree';
+import {
+  buildEntityTree,
+  type DiagramView,
+  FREEFORM_RELATION_TYPE,
+  getAncestors,
+  getSchemaObjectLocalId,
+  normalizeDiagramView,
+  normalizeDiagramViewNodesById,
+  type Relation,
+  resolveTypeDef,
+  type SchemaModule,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 
 export interface DiagramSearchMatches {
   query: string;

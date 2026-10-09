@@ -1,4 +1,4 @@
-import type { ViewportState } from '../../../model/types';
+import type { ViewportState } from '@tarskia/diagram-semantics';
 import { computeViewportForBoundsInVisibleCanvas } from '../../viewport-visibility';
 import type { LayoutResult } from '../layout/layout-pipeline';
 import { DEFAULT_VIEWPORT_FIT_PADDING } from './animation-constants';

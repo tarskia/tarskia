@@ -1,9 +1,12 @@
+import {
+  buildSchemaActivation,
+  compileSourceGraph,
+  type SemanticSourceDocument,
+  serializeSourceDocument,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { serializeSourceDocument } from '../util/serialization';
 import type { DiagramStoreSnapshot, DiagramStream } from './diagram-store';
-import { buildSchemaActivation } from './schema-ref';
-import { compileSourceGraph, createSnapshotSourceGraphResolver } from './source-graph';
-import type { SemanticSourceDocument } from './types';
+import { createSnapshotSourceGraphResolver } from './source-graph';
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
 

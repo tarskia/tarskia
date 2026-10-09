@@ -1,11 +1,15 @@
+import {
+  buildQualifiedSchemaObjectId,
+  CORE_GROUP_TYPE_ID,
+  type Entity,
+  type SchemaModule,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { buildQualifiedSchemaObjectId, CORE_GROUP_TYPE_ID } from './schema-ids';
 import {
   resolveDerivedGroupTags,
   resolveEntityEffectiveAndDerivedTags,
   resolveEntityEffectiveTags,
 } from './tags';
-import type { Entity, SchemaModule } from './types';
 
 const APP_TYPE_ID = buildQualifiedSchemaObjectId('user/test', 'types', 'application');
 const TABLE_TYPE_ID = buildQualifiedSchemaObjectId('user/test', 'types', 'table');

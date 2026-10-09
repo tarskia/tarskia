@@ -1,4 +1,4 @@
-import type { CompiledDiagramEdge } from '../../../semantic';
+import type { CompiledDiagramEdge } from '@tarskia/diagram-semantics';
 import type { LayoutTree } from '../layout/tree-traverser';
 import type { AnimationSettings } from './animation-constants';
 import { buildSequencedTransitionAdvisory } from './sequencer/entities';

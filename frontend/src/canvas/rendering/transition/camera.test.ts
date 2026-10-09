@@ -1,6 +1,5 @@
+import { indexTree, type SemanticDocument } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import type { SemanticDocument } from '../../../model/types';
-import { indexTree } from '../../../semantic';
 import { computeViewportForBoundsInVisibleCanvas } from '../../viewport-visibility';
 import type { LayoutResult } from '../layout/layout-pipeline';
 import type { LayoutNode, LayoutTree } from '../layout/tree-traverser';

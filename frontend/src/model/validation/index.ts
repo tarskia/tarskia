@@ -1,9 +1,10 @@
+export type { DiagramValidationOptions, ValidationResult } from '@tarskia/diagram-semantics';
 export {
   collectSchemaSwitchValidation,
   parseAndValidateDiagramDoc,
   sanitizeDiagramDoc,
   validateDiagramDoc,
-} from './diagram';
+} from '@tarskia/diagram-semantics';
 export {
   parseAndValidateSchemaModule,
   parseSchemaModuleYaml,
@@ -17,4 +18,3 @@ export {
   resolveSchemaClosureFromCatalog,
   resolveSchemaClosureFromRawSet,
 } from './schema-closure';
-export type { DiagramValidationOptions, ValidationResult } from './types';

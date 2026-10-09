@@ -1,5 +1,5 @@
+import { parseSourceDocument } from '@tarskia/diagram-semantics';
 import { createId } from '../util/id';
-import { parseSourceDocument } from '../util/serialization';
 
 export const DIAGRAM_STORE_STORAGE_KEY = 'semantic-diagram-store-v0.1';
 export const ACTIVE_DIAGRAM_ID_STORAGE_KEY = 'semantic-diagram-active-id-v0.1';
