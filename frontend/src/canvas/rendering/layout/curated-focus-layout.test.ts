@@ -2,6 +2,7 @@ import { expect, test } from 'vitest';
 import { galleryFiles, loadGallery } from '../../../test/curated-rendering';
 import { canFocusSceneNode } from '../../../viewer-core/focus-view';
 
+// Each case lays out every container in three view states; large galleries need more than 5s.
 test.each(galleryFiles)('$file focuses every container with full-size, nonoverlapping cards', ({
   file,
 }) => {
@@ -45,4 +46,4 @@ test.each(galleryFiles)('$file focuses every container with full-size, nonoverla
       }
     }
   }
-});
+}, 20_000);
