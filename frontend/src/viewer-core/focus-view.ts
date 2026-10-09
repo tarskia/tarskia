@@ -105,7 +105,6 @@ export function useFocusViewController({
   onClearTransientFocusChrome,
 }: {
   sceneTree: SceneTree;
-  expanded: Record<string, boolean>;
   getCurrentCanvasSize?: GetCurrentCanvasSize;
   canvasLayoutVersion?: number;
   skipTransitions?: boolean;

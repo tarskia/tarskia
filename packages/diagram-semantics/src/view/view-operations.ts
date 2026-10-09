@@ -113,10 +113,6 @@ export function applyDiagramViewOperation(
         )
           continue;
         setExpanded(id, true);
-        if (nodes[id]?.hidden) {
-          nodes[id] = { ...nodes[id], hidden: false };
-          changed = true;
-        }
       }
       break;
     }

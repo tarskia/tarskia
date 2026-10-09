@@ -195,7 +195,6 @@ export function useDiagramEngine({
     initialViewport: bootstrap.defaultViewport,
     setPendingStructuralTransitionIntent,
     graph: rendering.graph,
-    sceneQueries: rendering.sceneQueries,
     compiled,
     presentation,
     transitionOverlay: motion.transitionOverlay,

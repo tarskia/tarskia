@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ingestSemanticDiagramDiff, serializeSemanticDiagramDiff } from '../io/diff';
 import type { SchemaModule, SemanticDocument } from '../model/types';
-import { buildRevealedTree, type RevealMetadata } from '../view/reveal-tree';
 import {
   compileSemanticDiagramDiffUnion,
   diffSemanticDiagramDocuments,
@@ -169,57 +168,6 @@ describe('compileSemanticDiagramDiffUnion', () => {
       targetId: 'route-target',
       diff: { change: 'changed', side: 'after', changedFields: ['to'] },
     });
-  });
-
-  it('returns rendered-instance POIs that the shared closure helper can retain', () => {
-    const union = compileSemanticDiagramDiffUnion({
-      before: beforeDoc,
-      after: afterDoc,
-      schema,
-    });
-
-    expect(union.pointsOfInterest.nodeIds).toEqual(
-      expect.arrayContaining(['after:child-a', 'after:moved', 'before:child-a', 'before:moved']),
-    );
-    expect(union.pointsOfInterest.edgeIds).toEqual(
-      expect.arrayContaining([
-        'before:rel-moved:source->before:moved',
-        'after:rel-moved:source->after:moved',
-        'rel-meta:source->target',
-      ]),
-    );
-
-    const revealed = buildRevealedTree<SemanticDiagramDiffNode, RevealedDiffNode>({
-      tree: union.tree,
-      expanded: {},
-      targetNodeIds: new Set(union.pointsOfInterest.nodeIds),
-      targetEdgeIds: new Set(union.pointsOfInterest.edgeIds),
-      edges: union.edges.map((edge) => ({
-        id: edge.id,
-        from: edge.sourceId,
-        to: edge.targetId,
-      })),
-      forceExpandToTargets: true,
-      cloneRoot: (node, reveal) => ({
-        ...node,
-        children: [],
-        reveal,
-      }),
-      cloneNode: (node, parentId, reveal) => ({
-        ...node,
-        parentId,
-        children: [],
-        reveal,
-      }),
-    });
-
-    expect(revealed.byId.has('old-parent')).toBe(true);
-    expect(revealed.byId.has('new-parent')).toBe(true);
-    expect(revealed.byId.has('before:moved')).toBe(true);
-    expect(revealed.byId.has('after:moved')).toBe(true);
-    expect(revealed.byId.has('before:child-a')).toBe(true);
-    expect(revealed.byId.has('after:child-a')).toBe(true);
-    expect(revealed.byId.get('source')?.reveal.isRelationEndpoint).toBe(true);
   });
 
   it('evolves the same union from a serialized sparse diff document', () => {

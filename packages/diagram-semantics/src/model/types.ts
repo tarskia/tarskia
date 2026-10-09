@@ -48,7 +48,6 @@ export interface DiagramView {
 
 export interface DiagramViewNodeState {
   expanded?: boolean;
-  hidden?: boolean;
   highlighted?: boolean;
 }
 

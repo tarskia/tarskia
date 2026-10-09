@@ -499,14 +499,12 @@ export function renderComponentLayoutUncached(
 ): {
   requiredSize: { width: number; height: number };
   positions: Record<string, { x: number; y: number }>;
-  computedPositions: Record<string, { x: number; y: number }>;
 } {
   const childIds = Object.keys(children);
   if (childIds.length === 0) {
     return {
       requiredSize: { width: 0, height: 0 },
       positions: {},
-      computedPositions: {},
     };
   }
 
@@ -531,7 +529,6 @@ export function renderComponentLayoutUncached(
         height: cursorY + spec.padding,
       },
       positions,
-      computedPositions: positions,
     };
   }
 
@@ -546,33 +543,20 @@ export function renderComponentLayoutUncached(
   );
   const bounds = computeBounds(layout, children);
   const normalized = normalizePositions(layout, bounds);
-  const computedPositions: Record<string, { x: number; y: number }> = {};
+  const positions: Record<string, { x: number; y: number }> = {};
   for (const [id, pos] of Object.entries(normalized)) {
-    computedPositions[id] = {
+    positions[id] = {
       x: spec.padding + pos.x,
       y: spec.headerHeight + spec.padding + pos.y,
     };
   }
 
-  const positions: Record<string, { x: number; y: number }> = {
-    ...computedPositions,
-  };
-
-  const normalizedPositions: Record<string, { x: number; y: number }> = {};
-  for (const [id, pos] of Object.entries(positions)) {
-    normalizedPositions[id] = {
-      x: pos.x - spec.padding,
-      y: pos.y - spec.headerHeight - spec.padding,
-    };
-  }
-  const finalBounds = computeBounds(normalizedPositions, children);
   return {
     requiredSize: {
-      width: finalBounds.width + spec.padding * 2,
-      height: finalBounds.height + spec.padding * 2 + spec.headerHeight,
+      width: bounds.width + spec.padding * 2,
+      height: bounds.height + spec.padding * 2 + spec.headerHeight,
     },
     positions,
-    computedPositions,
   };
 }
 
@@ -643,9 +627,7 @@ export function renderComponentLayout(
   }
   const result = renderComponentLayoutUncached(children, edges, spec);
   for (const position of Object.values(result.positions)) Object.freeze(position);
-  for (const position of Object.values(result.computedPositions)) Object.freeze(position);
   Object.freeze(result.positions);
-  Object.freeze(result.computedPositions);
   Object.freeze(result.requiredSize);
   const boxes = new LayoutBoxes(
     Object.entries(result.positions).map(

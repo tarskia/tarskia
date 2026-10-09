@@ -21,7 +21,7 @@ it('keeps camera persistence and view changes off semantic validation, restoring
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   const gallery = loadGallery('n8n.yaml');
   const initialCamera = { x: 44, y: 55, zoom: 0.7 };
-  const initialDocument = gallery.render([]).scene.doc;
+  const initialDocument = gallery.render([]).doc;
   const loaded = {
     ...initialDocument,
     view: { ...initialDocument.view!, layout: { viewport: initialCamera } },

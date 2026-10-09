@@ -11,6 +11,7 @@ import type {
   SemanticSourceImport,
 } from '../model/types';
 import schemaModuleSchema from '../schemas/schema-module.schema.json';
+import { sanitizeDiagramViewNodesById } from '../view/normalize-diagram-view';
 import { validateWithSchema } from './schema-validator';
 
 type RawEntity = {
@@ -426,7 +427,7 @@ export function serializeSourceDocument(doc: SemanticSourceDocument): string {
     out.imports = doc.imports;
   }
   if (doc.view) {
-    out.view = doc.view;
+    out.view = { ...doc.view, nodesById: sanitizeDiagramViewNodesById(doc.view.nodesById) };
   }
   if (doc.metadata) {
     out.metadata = doc.metadata;
@@ -468,7 +469,7 @@ export function parseSourceDocument(raw: string): SemanticSourceDocument {
           kind: 'semantic-diagram-view' as const,
           version: 2 as const,
           scopeRootId: rawView?.scopeRootId,
-          nodesById: rawView?.nodesById,
+          nodesById: sanitizeDiagramViewNodesById(rawView?.nodesById),
           layout: rawView?.layout ?? legacyLayout,
         }
       : undefined;
