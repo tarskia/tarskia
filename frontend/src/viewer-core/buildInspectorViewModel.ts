@@ -1,5 +1,4 @@
 import {
-  buildDisambiguatedSchemaObjectLabels,
   CORE_GROUP_TYPE_ID,
   createEntityDisplayTypeResolver,
   type Entity,
@@ -14,8 +13,6 @@ import {
   resolveTypeDisplayOptions,
   type SchemaModule,
   type SemanticDocument,
-  traitMatches,
-  typeMatches,
 } from '../semantic';
 import type {
   DiagramProvenanceSourceView,
@@ -60,9 +57,6 @@ const getTagLabel = (schema: SchemaModule, tagId: string) =>
 
 const getTagColor = (schema: SchemaModule, tagId: string) =>
   schema.tags?.find((tag) => tag.id === tagId)?.color;
-
-const normalizeTagIds = (tags?: string[]) =>
-  Array.from(new Set((tags ?? []).map((tag) => tag.trim()).filter((tag) => tag.length > 0)));
 
 const flattenSchemaFields = (
   properties: PropertySchema[] | undefined,
@@ -214,11 +208,6 @@ const buildInspectorProvenance = (
   };
 };
 
-const collectDescendantIds = (entity: Entity, ids: Set<string>) => {
-  ids.add(entity.id);
-  for (const child of entity.children ?? []) collectDescendantIds(child, ids);
-};
-
 export const buildInspectorViewModel = (params: {
   selectedEntity?: Entity;
   selectedEdge?: Relation;
@@ -286,79 +275,6 @@ export const buildInspectorViewModel = (params: {
     };
   }
 
-  const canContain = (parentType: string, childType: string) => {
-    const parentDef = resolveTypeDef(schema, parentType);
-    const containment = parentDef?.containment;
-    if (!containment) return false;
-    const typeOk = containment.allowedChildTypes
-      ? typeMatches(schema, childType, containment.allowedChildTypes)
-      : true;
-    const traitOk = containment.allowedChildTraits
-      ? traitMatches(schema, childType, containment.allowedChildTraits)
-      : true;
-    return typeOk && traitOk;
-  };
-
-  const canContainEntity = (parent: Entity, childType: string) => {
-    if (!canContain(parent.type, childType)) return false;
-    if (parent.type !== CORE_GROUP_TYPE_ID) return true;
-    const props = parent.props as Record<string, unknown> | undefined;
-    if (props?.mode !== 'typed') return true;
-    const groupType = typeof props.groupType === 'string' ? props.groupType.trim() : '';
-    if (!groupType) return true;
-    return childType === groupType;
-  };
-
-  const selectedParentId = entityIndex.parentById.get(selectedEntity.id);
-  const selectedParent = selectedParentId ? entityIndex.byId.get(selectedParentId) : undefined;
-  const currentParentLabel = selectedParent
-    ? formatEntityLabel(schema, selectedParent)
-    : 'Top level';
-
-  const childTypeOptions = buildDisambiguatedSchemaObjectLabels(
-    schema.types
-      .filter((type) => canContainEntity(selectedEntity, type.id))
-      .map((type) => ({
-        id: type.id,
-        label: type.label,
-        localId: type.localId,
-        originSchemaId: type.originSchemaId,
-      })),
-  ).map((type) => ({ id: type.id, label: type.displayLabel }));
-
-  const siblingTypeOptions = (
-    !selectedParent
-      ? buildDisambiguatedSchemaObjectLabels(
-          schema.types.map((type) => ({
-            id: type.id,
-            label: type.label,
-            localId: type.localId,
-            originSchemaId: type.originSchemaId,
-          })),
-        )
-      : buildDisambiguatedSchemaObjectLabels(
-          schema.types
-            .filter((type) => canContainEntity(selectedParent, type.id))
-            .map((type) => ({
-              id: type.id,
-              label: type.label,
-              localId: type.localId,
-              originSchemaId: type.originSchemaId,
-            })),
-        )
-  ).map((type) => ({ id: type.id, label: type.displayLabel }));
-
-  const moveParentOptions = (() => {
-    const excluded = new Set<string>();
-    collectDescendantIds(selectedEntity, excluded);
-    const options = Array.from(entityIndex.byId.values())
-      .filter((candidate) => !excluded.has(candidate.id))
-      .filter((candidate) => canContainEntity(candidate, selectedEntity.type))
-      .map((candidate) => ({ id: candidate.id, label: formatEntityLabel(schema, candidate) }))
-      .sort((left, right) => left.label.localeCompare(right.label));
-    return [{ id: '', label: 'Top level' }, ...options];
-  })();
-
   const typeDef = resolveTypeDef(schema, selectedEntity.type);
   const resolveEntityDisplayTypeId = createEntityDisplayTypeResolver({
     byId: entityIndex.byId,
@@ -368,10 +284,6 @@ export const buildInspectorViewModel = (params: {
   const selectedEntityTags = resolveEntityEffectiveAndDerivedTags(schema, selectedEntity, {
     childrenByParent: entityIndex.childrenByParent,
   });
-  const explicitTagIds = normalizeTagIds(selectedEntity.tags);
-  const derivedTagLabels = selectedEntityTags
-    .filter((tagId) => !explicitTagIds.includes(tagId))
-    .map((tagId) => getTagLabel(schema, tagId));
   const schemaFields = flattenSchemaFields(typeDef?.properties);
   const propertyEntries = flattenProps(selectedEntity.props).sort((left, right) =>
     left.path.localeCompare(right.path),
@@ -391,16 +303,6 @@ export const buildInspectorViewModel = (params: {
       label: getTagLabel(schema, tagId),
       color: getTagColor(schema, tagId),
     })),
-    explicitTagIds,
-    derivedTagLabels,
-    availableTagOptions: Array.from(
-      new Map(
-        (schema.tags ?? []).map((tag) => [
-          tag.id,
-          { id: tag.id, label: tag.label ?? getSchemaObjectLocalId(tag.id) },
-        ]),
-      ).values(),
-    ),
     propertyEntries: propertyEntries.map((entry) => {
       const field = schemaFields.find((candidate) => candidate.path === entry.path);
       return {
@@ -410,15 +312,9 @@ export const buildInspectorViewModel = (params: {
         href: resolveExternalHref(entry.value),
       };
     }),
-    propertyFields: schemaFields,
     provenance: buildInspectorProvenance(selectedEntity.provenance, diagramProvenanceSource),
     selectedChildCount: entityIndex.childrenByParent.get(selectedEntity.id)?.length ?? 0,
     canFocusView: canFocusView !== false,
     isFocusedEntity: selectedEntity.id === scopeRootId,
-    childTypeOptions,
-    siblingTypeOptions,
-    currentParentId: selectedParentId,
-    currentParentLabel,
-    moveParentOptions,
   };
 };

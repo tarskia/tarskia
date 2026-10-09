@@ -70,7 +70,7 @@ export interface UseCanvasTransitionControllerArgs {
   cancelMotion: () => void;
   getPendingStructuralTransitionIntent: () => StructuralTransitionIntent | null;
   clearPendingStructuralTransitionIntent: () => void;
-  traceSelection: (event: string, payload?: Record<string, unknown>) => void;
+  traceSelection?: (event: string, payload?: Record<string, unknown>) => void;
 }
 
 export interface CanvasTransitionControllerResult {
@@ -360,7 +360,7 @@ export function useCanvasTransitionController({
     }
 
     if (observedScopeTransition) {
-      traceSelection('layoutEffect:startingScopeTransition', {
+      traceSelection?.('layoutEffect:startingScopeTransition', {
         direction: observedScopeTransition.direction,
         fromNodes: observedScopeTransition.fromLayout.tree.byId.size,
         toNodes: observedScopeTransition.toLayout.tree.byId.size,
@@ -375,7 +375,7 @@ export function useCanvasTransitionController({
         animationSettings,
       });
 
-      traceSelection('layoutEffect:scopeAdvisoryBuilt', {
+      traceSelection?.('layoutEffect:scopeAdvisoryBuilt', {
         direction: observedScopeTransition.direction,
         steps: planningAdvisory.sequence.steps.length,
         nodeAdvisories: planningAdvisory.sequence.nodeAdvisories.size,
@@ -414,7 +414,7 @@ export function useCanvasTransitionController({
         },
         {
           onComplete: () => {
-            traceSelection('layoutEffect:scopeTransitionComplete', {
+            traceSelection?.('layoutEffect:scopeTransitionComplete', {
               direction: observedScopeTransition.direction,
             });
             if (!exitingScope && observedScopeTransition.navigationIntent) {
@@ -427,7 +427,7 @@ export function useCanvasTransitionController({
       return;
     }
 
-    traceSelection('layoutEffect:startingTransition', {
+    traceSelection?.('layoutEffect:startingTransition', {
       direction: observedTransition.direction,
       fromNodes: observedTransition.fromLayout.tree.byId.size,
       toNodes: observedTransition.toLayout.tree.byId.size,
@@ -450,7 +450,7 @@ export function useCanvasTransitionController({
       collectSubtreeIds: viewportOps.collectSubtreeIds,
     });
 
-    traceSelection('layoutEffect:advisoryBuilt', {
+    traceSelection?.('layoutEffect:advisoryBuilt', {
       direction: observedTransition.direction,
       steps: planningAdvisory.sequence.steps.length,
       nodeAdvisories: planningAdvisory.sequence.nodeAdvisories.size,
@@ -480,7 +480,7 @@ export function useCanvasTransitionController({
       },
       {
         onComplete: () => {
-          traceSelection('layoutEffect:transitionComplete', {
+          traceSelection?.('layoutEffect:transitionComplete', {
             direction: observedTransition.direction,
             focusKind: observedTransition.focus?.kind,
             focusRootId:

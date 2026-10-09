@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildSchemaVersionCatalog, type SemanticDocument } from '../../../semantic';
+import {
+  buildSchemaRuntimeFromCatalog,
+  buildSchemaVersionCatalog,
+  type SemanticDocument,
+} from '../../../semantic';
 import { semanticBootstrap } from '../../../semantic/bootstrap';
 import { compileDiagramViewState } from '../../../semantic/view/compile-diagram-view-tree';
 import occlusionFixtureRaw from '../../../test-fixtures/commerce-occlusion.yaml?raw';
@@ -12,10 +16,10 @@ import { resolveEdgeOverlayRenderState } from './edge-overlay-state';
 const sampleSchemaCatalog = buildSchemaVersionCatalog(
   semanticBootstrap.builtInSchemaCatalogEntries,
 );
-const sampleSchema = semanticBootstrap.resolveActivatedSchema(
-  sampleSchemaCatalog,
-  parseDocument(occlusionFixtureRaw).schemaRefs,
-);
+const sampleSchema = buildSchemaRuntimeFromCatalog({
+  catalog: sampleSchemaCatalog,
+  activations: parseDocument(occlusionFixtureRaw).schemaRefs,
+}).runtime.resolved.effectiveSchema;
 
 const withExpandedNodes = (doc: SemanticDocument, expandedIds: string[]): SemanticDocument => ({
   ...doc,

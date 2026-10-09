@@ -146,14 +146,12 @@ export function useFocusViewController({
 
   const enterFocusScope = useCallback(
     (entityId: string, expandTarget = false) => {
-      commitDoc(
-        (previous) =>
-          buildFocusScopeDocument({
-            previous,
-            entityId,
-            expandTarget,
-          }),
-        { undoable: false },
+      commitDoc((previous) =>
+        buildFocusScopeDocument({
+          previous,
+          entityId,
+          expandTarget,
+        }),
       );
       onClearTransientFocusChrome?.();
     },
@@ -270,7 +268,7 @@ export function useFocusViewController({
   const clearFocus = useCallback(() => {
     clearPendingFocusRequest();
     flushUserGesture();
-    commitDoc(buildClearFocusScopeDocument, { undoable: false });
+    commitDoc(buildClearFocusScopeDocument);
     onClearTransientFocusChrome?.();
   }, [clearPendingFocusRequest, commitDoc, flushUserGesture, onClearTransientFocusChrome]);
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { semanticBootstrap } from './bootstrap';
+import starterRaw from '../data/starters/starter.yaml?raw';
 import {
   buildSchemaRuntimeFromCatalog,
   buildSchemaVersionCatalog,
@@ -52,8 +52,8 @@ describe('bundled semantic assets', () => {
   });
 
   it('keeps bundled starter diagrams valid against the bundled schema runtime', () => {
-    for (const starter of semanticBootstrap.bundledStarters) {
-      const doc = parseDocument(starter.raw);
+    for (const raw of [starterRaw]) {
+      const doc = parseDocument(raw);
       const runtime = buildSchemaRuntimeFromCatalog({
         catalog: buildSchemaVersionCatalog(bundledSchemaEntries),
         activations: doc.schemaRefs,
