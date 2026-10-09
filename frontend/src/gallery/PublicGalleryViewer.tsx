@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
-import { useGetGalleryDiagram } from '../api/generated/gallery/gallery';
 import type { DtoGalleryDiagramDetailResponse } from '../api/generated/model';
 import Diagram from '../canvas/Diagram';
 import { LoadingState } from '../components/ui/loading-state';
@@ -35,13 +34,9 @@ import {
   loadDiagramDocFromRaw,
 } from '../viewer-core/loadDiagramDocFromRaw';
 import { useDiagramActions } from '../viewer-core/useDiagramActions';
-import {
-  GALLERY_QUERY_STALE_TIME_MS,
-  galleryRetryDelay,
-  getGalleryDiagramWithLocalFallback,
-  retryGalleryQuery,
-} from './gallery-query';
 import { coerceSuccessfulResponseBody } from './gallery-response';
+
+import { useGalleryDiagramQuery } from './useGalleryDiagramQuery';
 
 const MIN_VIEW_ZOOM = 0.05;
 const MAX_VIEW_ZOOM = 2;
@@ -66,14 +61,7 @@ export default function PublicGalleryViewer() {
   const { namespace = '', slug = '' } = useParams();
   const [searchParams] = useSearchParams();
   const { setViewerSearchChrome } = useOutletContext<PublicGalleryShellContext>();
-  const detailQuery = useGetGalleryDiagram(namespace, slug, {
-    query: {
-      staleTime: GALLERY_QUERY_STALE_TIME_MS,
-      retry: retryGalleryQuery,
-      retryDelay: galleryRetryDelay,
-      queryFn: ({ signal }) => getGalleryDiagramWithLocalFallback(namespace, slug, { signal }),
-    },
-  });
+  const detailQuery = useGalleryDiagramQuery(namespace, slug);
 
   const schemaVersionCatalog = useMemo(
     () => buildSchemaVersionCatalog(semanticBootstrap.builtInSchemaCatalogEntries),

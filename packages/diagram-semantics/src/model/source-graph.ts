@@ -192,13 +192,18 @@ const parseSourceOrDiagnostic = (
   }
 };
 
-export const compileSourceGraph = (params: {
-  raw: string;
-  sourceLabel: string;
-  resolver?: SourceGraphResolver;
-}): { result?: SourceGraphCompileResult; diagnostics: Diagnostic[] } => {
+export const compileSourceGraph = (
+  params: {
+    sourceLabel: string;
+    resolver?: SourceGraphResolver;
+  } & ({ raw: string; source?: never } | { source: SemanticSourceDocument; raw?: never }),
+): {
+  result?: SourceGraphCompileResult;
+  diagnostics: Diagnostic[];
+} => {
   const diagnostics: Diagnostic[] = [];
-  const rootSource = parseSourceOrDiagnostic(params.raw, params.sourceLabel, diagnostics);
+  const rootSource =
+    params.source ?? parseSourceOrDiagnostic(params.raw, params.sourceLabel, diagnostics);
   if (!rootSource) {
     return { diagnostics };
   }
