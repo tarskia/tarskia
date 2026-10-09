@@ -89,7 +89,7 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
       await act(async () => engine.notifyDisplayHostSettled(requiredGeneration));
   };
   try {
-    await act(async () => root.render(<Harness doc={initial.scene.doc} />));
+    await act(async () => root.render(<Harness doc={initial.doc} />));
     await act(async () => {
       engine.onCanvasElementChange(canvas);
       engine.onCanvasInit({
@@ -104,7 +104,7 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
       await advance(now + 100);
     await act(async () => {
       engine.setPendingStructuralTransitionIntent({ direction: 'in', focus: null });
-      root.render(<Harness doc={expanded.scene.doc} />);
+      root.render(<Harness doc={expanded.doc} />);
     });
     for (let i = 0; i < 30 && !engine.transitionOverlay; i++) await advance(now + 50);
     expect(engine.transitionOverlay).not.toBeNull();
@@ -117,7 +117,7 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
     expect(before).not.toEqual(appearance(expanded.presentation));
     await act(async () => {
       engine.setPendingStructuralTransitionIntent({ direction: 'out', focus: null });
-      root.render(<Harness doc={target.scene.doc} />);
+      root.render(<Harness doc={target.doc} />);
     });
     expect(appearance(snapshot())).toEqual(before);
     expect(engine.getCurrentViewport()).toEqual(viewportBeforeInterrupt);

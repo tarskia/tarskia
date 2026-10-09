@@ -82,7 +82,7 @@ describe('semantic-view working tree passes', () => {
     expect(workingTree.byId.get('table-group')?.view.focusChainDepth).toBe(1);
   });
 
-  it('annotates reveal and visibility without materializing a revealed tree', () => {
+  it('marks expanded descendants for projection without copying metadata', () => {
     const doc = {
       ...buildDoc(),
       view: {
@@ -106,17 +106,10 @@ describe('semantic-view working tree passes', () => {
       tree: workingTree,
       scopeRootId: effectiveExpansion.scopeRootId,
       effectiveExpanded: effectiveExpansion.effectiveExpanded,
-      targetEntityIds: new Set(['orders']),
-      targetRelationIds: new Set(),
-      relations: doc.relations,
-      forceRevealTargets: true,
-      preserveExpandedBranches: true,
     });
 
     expect(workingTree.byId.get('orders')?.view.includedInProjection).toBe(true);
-    expect(workingTree.byId.get('orders')?.view.reveal.isTarget).toBe(true);
     expect(workingTree.byId.get('customers')?.view.includedInProjection).toBe(true);
-    expect(workingTree.byId.get('customers')?.view.reveal.isPreservedByExpansion).toBe(true);
     expect(workingTree.byId.get('job')?.view.includedInProjection).toBe(false);
   });
 
@@ -141,7 +134,6 @@ describe('semantic-view working tree passes', () => {
       tree: workingTree,
       scopeRootId: effectiveExpansion.scopeRootId,
       effectiveExpanded: effectiveExpansion.effectiveExpanded,
-      relations: doc.relations,
     });
     applySemanticVisualAugmentation({
       tree: workingTree,

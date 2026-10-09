@@ -2,7 +2,6 @@ import type { CanonicalTree } from '../tree/canonical-tree';
 import { indexTree } from '../tree/canonical-tree';
 import type { SemanticEntityTree } from '../tree/entity-tree';
 import type { DiagramViewNodeControls } from './node-controls';
-import type { RevealMetadata } from './reveal-tree';
 
 export interface SemanticViewWorkingNode {
   id: string;
@@ -12,11 +11,8 @@ export interface SemanticViewWorkingNode {
   hasChildren: boolean;
   view: {
     expanded: boolean;
-    hidden: boolean;
     highlighted: boolean;
-    isOnlyChild: boolean;
     focusChainDepth?: number;
-    reveal: RevealMetadata;
     includedInProjection: boolean;
   };
   visual: {
@@ -29,14 +25,6 @@ export interface SemanticViewWorkingNode {
 }
 
 export type SemanticViewWorkingTree = CanonicalTree<SemanticViewWorkingNode>;
-
-export const EMPTY_REVEAL: RevealMetadata = {
-  isTarget: false,
-  isAncestorContext: false,
-  isRelationEndpoint: false,
-  isPreservedByExpansion: false,
-  hasTargetInSubtree: false,
-};
 
 export const EMPTY_CONTROLS: DiagramViewNodeControls = {
   targetId: '',
@@ -59,7 +47,6 @@ export const buildSemanticViewWorkingTree = (
   const cloneNode = (
     node: SemanticEntityTree['root'],
     parentId: string | undefined,
-    siblingCount: number,
   ): SemanticViewWorkingNode => {
     const clone: SemanticViewWorkingNode = {
       id: node.id,
@@ -69,10 +56,7 @@ export const buildSemanticViewWorkingTree = (
       hasChildren: node.hasChildren,
       view: {
         expanded: false,
-        hidden: false,
         highlighted: false,
-        isOnlyChild: siblingCount === 1,
-        reveal: EMPTY_REVEAL,
         includedInProjection: false,
       },
       visual: {
@@ -84,14 +68,13 @@ export const buildSemanticViewWorkingTree = (
       },
     };
     byId.set(clone.id, clone);
-    const childCount = node.children.length;
     for (const child of node.children) {
-      clone.children.push(cloneNode(child, clone.id, childCount));
+      clone.children.push(cloneNode(child, clone.id));
     }
     return clone;
   };
 
-  cloneNode(entityTree.root, undefined, 0);
+  cloneNode(entityTree.root, undefined);
   return indexTree({
     rootId: entityTree.rootId,
     byId,

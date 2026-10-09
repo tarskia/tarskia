@@ -54,7 +54,7 @@ export const loadGallery = (file: string) => {
       graph: buildGraphModel(doc, runtime.schema),
       viewState: compileDiagramViewState({ doc, schema: runtime.schema }),
     });
-    return { scene, presentation: buildStaticCanvasPresentation({ scene }) };
+    return { doc, scene, presentation: buildStaticCanvasPresentation({ scene }) };
   };
   return { graph, render };
 };

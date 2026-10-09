@@ -27,12 +27,11 @@ const baseDoc: SemanticDocument = {
 const buildViewDoc = (params: {
   expanded?: Record<string, boolean>;
   scopeRootId?: string;
-  hidden?: string[];
   highlighted?: string[];
 }): SemanticDocument => ({
   ...baseDoc,
   view:
-    params.expanded || params.scopeRootId || params.hidden?.length || params.highlighted?.length
+    params.expanded || params.scopeRootId || params.highlighted?.length
       ? {
           kind: 'semantic-diagram-view',
           version: 2,
@@ -42,7 +41,6 @@ const buildViewDoc = (params: {
               nodeId,
               { expanded: params.expanded?.[nodeId] },
             ]),
-            ...(params.hidden ?? []).map((nodeId) => [nodeId, { hidden: true }]),
             ...(params.highlighted ?? []).map((nodeId) => [nodeId, { highlighted: true }]),
           ]),
         }
@@ -128,10 +126,10 @@ describe('useCanvasTransitionController helpers', () => {
         scopeRootId: 'svc',
       }),
     );
-    const hiddenViewState = selectDeclarativeDiagramViewState(
+    const highlightedViewState = selectDeclarativeDiagramViewState(
       buildViewDoc({
         expanded: { svc: true },
-        hidden: ['api-group'],
+        highlighted: ['api-group'],
       }),
     );
 
@@ -150,7 +148,7 @@ describe('useCanvasTransitionController helpers', () => {
     expect(
       hasOnlyExpandedMapChanged({
         previousViewState,
-        currentViewState: hiddenViewState,
+        currentViewState: highlightedViewState,
       }),
     ).toBe(false);
   });
@@ -160,7 +158,6 @@ describe('useCanvasTransitionController helpers', () => {
       buildViewDoc({
         expanded: { svc: true },
         scopeRootId: 'svc',
-        hidden: ['workers-group'],
       }),
     );
     const revealedViewState = selectDeclarativeDiagramViewState(

@@ -88,7 +88,7 @@ it.each([
       await act(async () => engine.notifyDisplayHostSettled(requiredGeneration));
   };
   try {
-    await act(async () => root.render(<Harness doc={initial.scene.doc} />));
+    await act(async () => root.render(<Harness doc={initial.doc} />));
     await act(async () => {
       engine.onCanvasElementChange(canvas);
       engine.onCanvasInit({
@@ -105,7 +105,7 @@ it.each([
     phases.clear();
     await act(async () => {
       engine.setPendingStructuralTransitionIntent({ direction: 'in', focus: null });
-      root.render(<Harness doc={expanded.scene.doc} />);
+      root.render(<Harness doc={expanded.doc} />);
     });
     for (let i = 0; i < 30 && !engine.transitionOverlay; i++) await advance(now + 50);
     expect(engine.transitionOverlay).not.toBeNull();

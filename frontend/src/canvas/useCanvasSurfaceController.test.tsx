@@ -211,10 +211,7 @@ async function renderController(params?: {
           overlayEdges: [],
         },
         compiled: {
-          scene: {
-            visibleIds: new Set<string>((params?.presentation?.nodes ?? []).map((node) => node.id)),
-            layoutMeta: { level: 0 },
-          },
+          visibleIds: new Set<string>((params?.presentation?.nodes ?? []).map((node) => node.id)),
         } as never,
         transitionOverlay: null,
         overlayFrameStore: null,

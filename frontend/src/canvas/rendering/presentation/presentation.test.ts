@@ -165,13 +165,12 @@ const withView = (
       : undefined,
 });
 
-const buildScene = (doc: SemanticDocument, canvasSize?: { width: number; height: number }) => {
+const buildScene = (doc: SemanticDocument) => {
   const graph = buildGraphModel(doc, schema);
   const viewState = compileDiagramViewState({ doc, schema });
   return buildLayoutResult({
     graph,
     viewState,
-    canvasSize,
   });
 };
 
@@ -782,7 +781,7 @@ describe('buildStaticCanvasPresentation', () => {
       relations: [],
     };
     const viewDoc = withView(focusDoc, { scopeRootId: 'ordersdb' });
-    const scene = buildScene(viewDoc, { width: 1600, height: 900 });
+    const scene = buildScene(viewDoc);
     const presentation = buildStaticCanvasPresentation({
       scene,
     });

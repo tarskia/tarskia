@@ -14,7 +14,6 @@ import {
 } from '../semantic/view/declarative-view-state';
 import { buildGraphModel } from './rendering/graph/graph-model';
 import { buildLayoutResult, type LayoutResult } from './rendering/layout/layout-pipeline';
-import { buildRenderedDiagramViewQueries } from './rendering/scene/queries';
 import {
   buildTransitionPlanningAdvisory,
   type TransitionPlanningAdvisory,
@@ -98,13 +97,6 @@ export function useDiagramRenderingController({
       getSingleChildChainTop(tree, requestedRootId),
     [],
   );
-  const sceneQueries = useMemo(
-    () => ({
-      view: buildRenderedDiagramViewQueries(layout),
-    }),
-    [layout],
-  );
-
   return useMemo(
     () => ({
       graph,
@@ -112,16 +104,8 @@ export function useDiagramRenderingController({
       declarativeViewState,
       buildTransitionAdvisory,
       resolveViewportFocusRoot,
-      sceneQueries,
       viewport: viewportHelpers,
     }),
-    [
-      buildTransitionAdvisory,
-      declarativeViewState,
-      graph,
-      layout,
-      resolveViewportFocusRoot,
-      sceneQueries,
-    ],
+    [buildTransitionAdvisory, declarativeViewState, graph, layout, resolveViewportFocusRoot],
   );
 }

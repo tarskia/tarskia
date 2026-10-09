@@ -114,8 +114,6 @@ describe('compileDiagramViewTree', () => {
     });
 
     expect(tree.byId.get('database')?.hasDiagramChildren).toBe(true);
-    expect(tree.byId.get('database')?.view.isOnlyChild).toBe(false);
-    expect(tree.byId.get('workers')?.view.isOnlyChild).toBe(false);
   });
 
   it('computes semantic node controls from expanded state and visible child-parent structure', () => {
@@ -165,33 +163,6 @@ describe('compileDiagramViewTree', () => {
     expect(workersControls?.canZoomIn).toBe(true);
     expect(workersControls?.canZoomOut).toBe(false);
     expect(workersControls?.showChildGroupControls).toBe(false);
-  });
-
-  it('supports minimal-closure reveal targets via optional compiler inputs', () => {
-    const tree = compileDiagramViewTree({
-      doc: {
-        ...buildDoc(),
-        view: {
-          kind: 'semantic-diagram-view',
-          version: 2,
-          nodesById: {
-            platform: { expanded: true },
-            database: { expanded: true },
-            'table-group': { expanded: true },
-          },
-        },
-      },
-      schema,
-      targetEntityIds: new Set(['orders']),
-      forceRevealTargets: true,
-      preserveExpandedBranches: true,
-    });
-
-    expect(tree.byId.has('orders')).toBe(true);
-    expect(tree.byId.get('orders')?.view.reveal.isTarget).toBe(true);
-    expect(tree.byId.has('customers')).toBe(true);
-    expect(tree.byId.get('customers')?.view.reveal.isPreservedByExpansion).toBe(true);
-    expect(tree.byId.has('job')).toBe(false);
   });
 
   it('emits compiled edges keyed to rendered node ids', () => {

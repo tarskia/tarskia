@@ -128,7 +128,6 @@ const buildLayout = (): LayoutResult => {
     visibleIds: new Set(),
     absolutePositions: {},
     zIndexById: new Map(),
-    layoutMeta: { level: 0 },
   } as unknown as LayoutResult;
 };
 

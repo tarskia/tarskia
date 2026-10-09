@@ -8,11 +8,7 @@ import {
 } from '@tarskia/diagram-semantics';
 import { createEntityDisplayTypeResolver } from '../../../model/entity-display';
 import { resolveTypeLayoutDefaults } from '../../../model/layout-defaults';
-import {
-  resolvePropertyProjectionOptions,
-  resolveTypeProjectionOptions,
-  shouldProjectPropertyOnCard,
-} from '../../../model/projection-contract';
+import { resolveTypeProjectionOptions } from '../../../model/projection-contract';
 import { resolveTypeVisualDefaults } from '../../../model/visual-defaults';
 import { DEFAULT_NODE_SIZE } from '../layout/defaults';
 import type { SceneNode, SceneTree } from '../tree/scene-tree';
@@ -37,7 +33,6 @@ export interface ResolvedNodeVisual {
   projection: {
     typeLabel: string;
     explicitLabel?: string;
-    badges: string[];
     summaryLabel?: string;
     richContent?: ResolvedNodeRichContent;
   };
@@ -61,21 +56,6 @@ const getStringPropValue = (props: Record<string, unknown> | undefined, path: st
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
-};
-
-const stringifyDisplayValue = (value: unknown) => {
-  if (value === undefined || value === null) return undefined;
-  return String(value);
-};
-
-const applyTemplate = (template: string, context: Record<string, unknown>) => {
-  return template
-    .replace(/\{([^}]+)\}/g, (_, key: string) => {
-      const value = context[key];
-      return value === undefined || value === null ? '' : String(value);
-    })
-    .replace(/\s{2,}/g, ' ')
-    .trim();
 };
 
 const formatLabel = (value: string | undefined) => {
@@ -132,57 +112,6 @@ const buildShallowStructuralSummaryLabel = (node: SceneNode, schema: SchemaModul
   }
 
   return `${count} ${count === 1 ? 'component' : 'components'}`;
-};
-
-const collectBadges = (
-  properties: SchemaModule['types'][number]['properties'] | undefined,
-  value: Record<string, unknown> | undefined,
-  rootProps: Record<string, unknown> | undefined,
-): string[] => {
-  if (!properties) return [];
-  const badges: string[] = [];
-  const ordered = [...properties]
-    .map((property, index) => ({
-      property,
-      index,
-      priority: resolvePropertyProjectionOptions(property)?.priority ?? Number.POSITIVE_INFINITY,
-    }))
-    .sort((left, right) =>
-      left.priority !== right.priority ? left.priority - right.priority : left.index - right.index,
-    )
-    .map((entry) => entry.property);
-
-  for (const property of ordered) {
-    const projection = resolvePropertyProjectionOptions(property);
-    const propertyValue = value ? (value[property.id] as unknown) : undefined;
-    if (projection && shouldProjectPropertyOnCard(property)) {
-      if (projection.template && propertyValue && typeof propertyValue === 'object') {
-        const text = applyTemplate(projection.template, propertyValue as Record<string, unknown>);
-        if (text) badges.push(text);
-      } else {
-        const raw = projection.valuePath
-          ? getPropValue(rootProps, projection.valuePath)
-          : propertyValue;
-        const formatted = stringifyDisplayValue(raw);
-        if (formatted) {
-          if (property.label !== undefined) {
-            badges.push(property.label ? `${property.label} ${formatted}` : formatted);
-          } else {
-            const fallbackLabel = formatLabel(property.id);
-            badges.push(fallbackLabel ? `${fallbackLabel}: ${formatted}` : formatted);
-          }
-        }
-      }
-    }
-
-    if (property.type === 'object' && property.properties) {
-      const nestedValue =
-        typeof propertyValue === 'object' ? (propertyValue as Record<string, unknown>) : undefined;
-      badges.push(...collectBadges(property.properties, nestedValue, rootProps));
-    }
-  }
-
-  return badges;
 };
 
 const visualCache = new WeakMap<SchemaModule, WeakMap<Entity, Map<string, ResolvedNodeVisual>>>();
@@ -255,7 +184,6 @@ export function buildNodeVisualMap(params: {
     const typeProjection = resolveTypeProjectionOptions(typeDef);
     const typeLayout = resolveTypeLayoutDefaults(typeDef);
     const rootProps = entity.props as Record<string, unknown> | undefined;
-    const badges = collectBadges(typeDef?.properties, rootProps, rootProps);
     const richContent = (() => {
       const config = typeProjection.richContent;
       if (!config) return undefined;
@@ -322,7 +250,6 @@ export function buildNodeVisualMap(params: {
       projection: {
         typeLabel: getEntityTypeLabel(entity),
         explicitLabel,
-        badges,
         summaryLabel,
         richContent,
       },
@@ -331,7 +258,6 @@ export function buildNodeVisualMap(params: {
       },
     };
     Object.freeze(visual.identity);
-    Object.freeze(visual.projection.badges);
     if (visual.projection.richContent) Object.freeze(visual.projection.richContent);
     Object.freeze(visual.projection);
     Object.freeze(visual.layout);
