@@ -1,13 +1,10 @@
 import {
   buildEntityIndex,
   getDiagramViewExpandedMap,
-  normalizeDiagramView,
   type SemanticDocument,
 } from '@tarskia/diagram-semantics';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, it, vi } from 'vitest';
-import { buildGraphModel } from '../canvas/rendering/graph/graph-model';
-import { buildCanonicalDiagramStructureQueries } from '../canvas/structure/queries';
 import { loadDiagramDocFromRaw } from './loadDiagramDocFromRaw';
 import { useDiagramActions } from './useDiagramActions';
 
@@ -28,16 +25,6 @@ it('Expand all uses parent-referenced children through the real viewer action', 
   });
   expect(loaded.readable).toBe(true);
   let doc = loaded.doc;
-  const schema = {
-    owner: 'test',
-    name: 'fixture',
-    version: '1',
-    types: [{ id: 'group', containment: {} }, { id: 'leaf' }],
-    relations: [],
-  };
-  const structure = buildCanonicalDiagramStructureQueries(buildGraphModel(doc, schema));
-  expect(structure.getChildren('platform').map((child) => child.id)).toEqual(['api', 'worker']);
-  expect(structure.getDescendantParentIds('platform', true)).toEqual(['platform']);
   let actions!: ReturnType<typeof useDiagramActions>;
   const commitDoc = vi.fn(
     (updater: SemanticDocument | ((previous: SemanticDocument) => SemanticDocument)) => {
@@ -46,14 +33,13 @@ it('Expand all uses parent-referenced children through the real viewer action', 
   );
   function Harness() {
     actions = useDiagramActions({
-      state: { doc, expanded: getDiagramViewExpandedMap(doc.view) },
-      document: { commitDoc, ensureDiagramView: normalizeDiagramView },
+      state: { doc },
+      document: { commitDoc },
       transition: {
         requestNavigation: () => ({ status: 'applied', reason: 'synchronous' }),
         flushUserGesture: () => false,
         setPendingStructuralTransitionIntent: vi.fn(),
       },
-      sceneQueries: { structure },
     });
     return null;
   }

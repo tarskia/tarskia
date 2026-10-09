@@ -22,27 +22,14 @@ describe('useDiagramActions', () => {
               version: 2,
             },
           },
-          expanded: {},
         },
         document: {
           commitDoc,
-          ensureDiagramView: (view) =>
-            view ?? {
-              kind: 'semantic-diagram-view',
-              version: 2,
-            },
         },
         transition: {
           requestNavigation,
           setPendingStructuralTransitionIntent: vi.fn(),
           flushUserGesture: vi.fn(() => false),
-        },
-        sceneQueries: {
-          structure: {
-            descendantsOf: () => [],
-            siblingsOf: () => [],
-            ancestorPathOf: () => [],
-          } as never,
         },
       });
       return null;
@@ -87,27 +74,14 @@ describe('useDiagramActions', () => {
               version: 2,
             },
           },
-          expanded: {},
         },
         document: {
           commitDoc,
-          ensureDiagramView: (view) =>
-            view ?? {
-              kind: 'semantic-diagram-view',
-              version: 2,
-            },
         },
         transition: {
           requestNavigation: vi.fn(),
           setPendingStructuralTransitionIntent,
           flushUserGesture,
-        },
-        sceneQueries: {
-          structure: {
-            descendantsOf: () => [],
-            siblingsOf: () => [],
-            ancestorPathOf: () => [],
-          } as never,
         },
       });
       return null;
@@ -177,29 +151,14 @@ describe('useDiagramActions', () => {
               },
             },
           },
-          expanded: {
-            'service-a': true,
-          },
         },
         document: {
           commitDoc,
-          ensureDiagramView: (view) =>
-            view ?? {
-              kind: 'semantic-diagram-view',
-              version: 2,
-            },
         },
         transition: {
           requestNavigation: vi.fn(),
           setPendingStructuralTransitionIntent,
           flushUserGesture,
-        },
-        sceneQueries: {
-          structure: {
-            descendantsOf: () => [],
-            siblingsOf: () => [],
-            ancestorPathOf: () => [],
-          } as never,
         },
       });
       return null;
@@ -249,29 +208,14 @@ describe('useDiagramActions', () => {
               },
             },
           },
-          expanded: {
-            'service-a': true,
-          },
         },
         document: {
           commitDoc,
-          ensureDiagramView: (view) =>
-            view ?? {
-              kind: 'semantic-diagram-view',
-              version: 2,
-            },
         },
         transition: {
           requestNavigation: vi.fn(),
           setPendingStructuralTransitionIntent,
           flushUserGesture: vi.fn(() => false),
-        },
-        sceneQueries: {
-          structure: {
-            descendantsOf: () => [],
-            siblingsOf: () => [],
-            ancestorPathOf: () => [],
-          } as never,
         },
       });
       return null;
@@ -292,11 +236,6 @@ describe('useDiagramActions', () => {
     const commitDoc = vi.fn();
     const setPendingStructuralTransitionIntent = vi.fn();
     let captured: ReturnType<typeof useDiagramActions> | null = null;
-    const childrenByParent = new Map<string, Array<{ id: string }>>([
-      ['service-a', [{ id: 'wrapper-a' }]],
-      ['wrapper-a', [{ id: 'group-a' }]],
-      ['group-a', [{ id: 'endpoint-a' }, { id: 'endpoint-b' }]],
-    ]);
 
     function Harness() {
       captured = useDiagramActions({
@@ -332,26 +271,14 @@ describe('useDiagramActions', () => {
               version: 2,
             },
           },
-          expanded: {},
         },
         document: {
           commitDoc,
-          ensureDiagramView: (view) =>
-            view ?? {
-              kind: 'semantic-diagram-view',
-              version: 2,
-            },
         },
         transition: {
           requestNavigation: vi.fn(),
           setPendingStructuralTransitionIntent,
           flushUserGesture: vi.fn(() => false),
-        },
-        sceneQueries: {
-          structure: {
-            getChildren: (id) => childrenByParent.get(id) ?? [],
-            getDescendantParentIds: () => [],
-          },
         },
       });
       return null;
@@ -412,27 +339,14 @@ describe('useDiagramActions', () => {
               version: 2,
             },
           },
-          expanded: {},
         },
         document: {
           commitDoc: vi.fn(),
-          ensureDiagramView: (view) =>
-            view ?? {
-              kind: 'semantic-diagram-view',
-              version: 2,
-            },
         },
         transition: {
           requestNavigation: vi.fn(),
           setPendingStructuralTransitionIntent,
           flushUserGesture: vi.fn(() => false),
-        },
-        sceneQueries: {
-          structure: {
-            descendantsOf: () => [],
-            siblingsOf: () => [],
-            ancestorPathOf: () => [],
-          } as never,
         },
       });
       return null;

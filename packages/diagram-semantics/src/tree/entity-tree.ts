@@ -23,7 +23,9 @@ const ROOT_ENTITY: Entity = {
   name: 'Semantic Root',
 };
 
-export function buildEntityTree(doc: SemanticDocument): SemanticEntityTree {
+export function buildEntityTree<T extends Pick<SemanticDocument, 'entities'>>(
+  doc: T,
+): SemanticEntityTree {
   const byId = new Map<string, SemanticEntityNode>();
   const nestedParentById = new Map<string, string>();
   const rootNode: SemanticEntityNode = {
