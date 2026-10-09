@@ -492,11 +492,23 @@ export default function PublicGalleryViewer() {
     );
   }
 
-  if (!detail || !loadedDiagram) {
+  if (detailQuery.isError || !detail || !loadedDiagram) {
     return (
       <div className="mx-auto flex w-full max-w-[1600px] flex-1 items-center px-5 py-10">
         <div className="rounded-xl border border-destructive/25 bg-destructive/5 px-6 py-6 text-sm text-destructive">
-          Failed to load the gallery diagram.
+          <p>Couldn't load this diagram.</p>
+          <div className="mt-4 flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => void detailQuery.refetch()}
+              className="border border-current px-3 py-1 font-medium hover:bg-destructive/10"
+            >
+              Retry
+            </button>
+            <Link to="/gallery" className="font-medium text-accent hover:underline">
+              Back to gallery
+            </Link>
+          </div>
         </div>
       </div>
     );

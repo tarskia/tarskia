@@ -4,13 +4,6 @@ import {
   listGalleryDiagrams,
   type listGalleryDiagramsResponse,
 } from '../api/generated/gallery/gallery';
-import {
-  getLocalGalleryDiagram,
-  listLocalGalleryDiagrams,
-  shouldUseLocalGalleryFallback,
-  shouldUseLocalGallerySource,
-} from './local-gallery';
-
 export const GALLERY_QUERY_STALE_TIME_MS = 30_000;
 
 const MAX_GALLERY_QUERY_RETRIES = 2;
@@ -92,13 +85,15 @@ export const getGalleryDiagramWithRetryableFailures = async (
 export const listGalleryDiagramsWithLocalFallback = async (
   options?: RequestInit,
 ): Promise<listGalleryDiagramsResponse> => {
-  if (shouldUseLocalGallerySource()) {
+  if (import.meta.env.DEV && shouldUseLocalGallerySource()) {
+    const { listLocalGalleryDiagrams } = await import('./local-gallery');
     return listLocalGalleryDiagrams();
   }
   try {
     return await listGalleryDiagramsWithRetryableFailures(options);
   } catch (error) {
-    if (shouldUseLocalGalleryFallback()) {
+    if (import.meta.env.DEV && shouldUseLocalGalleryFallback()) {
+      const { listLocalGalleryDiagrams } = await import('./local-gallery');
       return listLocalGalleryDiagrams();
     }
     throw error;
@@ -110,19 +105,35 @@ export const getGalleryDiagramWithLocalFallback = async (
   slug: string,
   options?: RequestInit,
 ): Promise<getGalleryDiagramResponse> => {
-  if (shouldUseLocalGallerySource()) {
+  if (import.meta.env.DEV && shouldUseLocalGallerySource()) {
+    const { getLocalGalleryDiagram } = await import('./local-gallery');
     return getLocalGalleryDiagram(namespace, slug);
   }
   try {
     const response = await getGalleryDiagramWithRetryableFailures(namespace, slug, options);
-    if (response.status === 404 && shouldUseLocalGalleryFallback()) {
+    if (import.meta.env.DEV && response.status === 404 && shouldUseLocalGalleryFallback()) {
+      const { getLocalGalleryDiagram } = await import('./local-gallery');
       return getLocalGalleryDiagram(namespace, slug);
     }
     return response;
   } catch (error) {
-    if (shouldUseLocalGalleryFallback()) {
+    if (import.meta.env.DEV && shouldUseLocalGalleryFallback()) {
+      const { getLocalGalleryDiagram } = await import('./local-gallery');
       return getLocalGalleryDiagram(namespace, slug);
     }
     throw error;
   }
 };
+
+const hasConfiguredGalleryApi = () => Boolean(import.meta.env.VITE_API_BASE_URL?.trim());
+
+const shouldUseLocalGallerySource = () =>
+  import.meta.env.VITE_GALLERY_SOURCE === 'local' ||
+  (import.meta.env.VITE_GALLERY_SOURCE !== 'api' &&
+    !hasConfiguredGalleryApi() &&
+    import.meta.env.DEV);
+
+const shouldUseLocalGalleryFallback = () =>
+  import.meta.env.VITE_GALLERY_SOURCE !== 'api' &&
+  !hasConfiguredGalleryApi() &&
+  import.meta.env.DEV;
