@@ -1,8 +1,45 @@
-import { describe, expect, it } from 'vitest';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter, Outlet, Route, Routes } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 
-import { shouldDelayGalleryCanvasMount } from './PublicGalleryViewer';
+vi.mock('../api/generated/gallery/gallery', () => ({
+  useGetGalleryDiagram: vi.fn(),
+}));
+
+import { useGetGalleryDiagram } from '../api/generated/gallery/gallery';
+import { GalleryQueryError } from './gallery-query';
+
+import PublicGalleryViewer, { shouldDelayGalleryCanvasMount } from './PublicGalleryViewer';
 
 describe('PublicGalleryViewer', () => {
+  it.each([
+    new GalleryQueryError('Service unavailable', 503),
+    new TypeError('Failed to fetch'),
+  ])('shows a retryable error for a rejected query: %s', (error) => {
+    vi.mocked(useGetGalleryDiagram).mockReturnValue({
+      isPending: false,
+      isFetching: false,
+      isError: true,
+      error,
+      data: undefined,
+      refetch: vi.fn(),
+    } as never);
+    const html = renderToStaticMarkup(
+      <MemoryRouter initialEntries={['/gallery/tarskia/n8n']}>
+        <Routes>
+          <Route element={<Outlet context={{ setViewerSearchChrome: vi.fn() }} />}>
+            <Route path="/gallery/:namespace/:slug" element={<PublicGalleryViewer />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(html).toContain('Couldn&#x27;t load this diagram.');
+    expect(html).toMatch(/<button[^>]*>Retry<\/button>/);
+    expect(html).toContain('href="/gallery"');
+    expect(html).toContain('Back to gallery');
+    expect(html).not.toContain(error.message);
+  });
+
   it('keeps the canvas loader active until the parsed gallery document is committed', () => {
     expect(
       shouldDelayGalleryCanvasMount({

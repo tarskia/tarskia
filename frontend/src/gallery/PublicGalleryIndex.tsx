@@ -207,13 +207,18 @@ export default function PublicGalleryIndex() {
         </div>
       </div>
 
-      {galleryQuery.data?.status && galleryQuery.data.status !== 200 ? (
+      {galleryQuery.isError || galleryQuery.data?.status !== 200 ? (
         <div className="mt-6 rounded-lg border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          Failed to load the gallery ({galleryQuery.data.status}).
+          <p>Couldn't load the gallery.</p>
+          <button
+            type="button"
+            onClick={() => void galleryQuery.refetch()}
+            className="mt-3 border border-current px-3 py-1 font-medium hover:bg-destructive/10"
+          >
+            Retry
+          </button>
         </div>
-      ) : null}
-
-      {rows.length === 0 ? (
+      ) : rows.length === 0 ? (
         <div className="mt-6 rounded-lg border border-border bg-surface px-5 py-8 text-sm text-muted-foreground">
           No gallery diagrams are available.
         </div>
