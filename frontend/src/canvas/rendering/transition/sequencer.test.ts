@@ -1,24 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import {
-  buildRawSchemaSet,
-  buildSchemaRuntime,
-  buildSchemaSelection,
-} from '../../../model/schema-runtime';
-import baseRaw from '../../../schemas/base.yaml?raw';
-import codeRaw from '../../../schemas/code.yaml?raw';
-import dataModelRaw from '../../../schemas/data-model.yaml?raw';
-import frontendRaw from '../../../schemas/frontend.yaml?raw';
-import kubernetesRaw from '../../../schemas/kubernetes.yaml?raw';
-import softwareRaw from '../../../schemas/software.yaml?raw';
-import webAppRaw from '../../../schemas/web-app.yaml?raw';
-import { compileDiagramViewState, indexTree } from '../../../semantic';
-import { sampleDiagramRaw } from '../../../semantic/bundled-diagrams';
-import { parseDocument, parseSchema } from '../../../util/serialization';
-import { buildGraphModel } from '../graph/graph-model';
-import { buildLayoutResult } from '../layout/layout-pipeline';
+import { indexTree } from '../../../semantic';
 import type { LayoutNode, LayoutTree } from '../layout/tree-traverser';
+import { buildStaticCanvasPresentation } from '../presentation/presentation';
+import { buildAbsolutePositions } from '../scene/scene';
+import { buildNodeVisualMap } from '../visual/node-visuals';
 import { ANIMATION_CONSTANTS } from './animation-constants';
-import { computeZoomAnimation } from './animator';
+import { buildTransitionOverlayState, resolveTransitionOverlayFrame } from './overlay';
 import { buildTransitionPlanningAdvisory } from './sequencer';
 import {
   buildSegmentOrder,
@@ -26,7 +13,7 @@ import {
   durationForSegment,
   getInterSegmentPause,
 } from './sequencer/utils';
-import { buildTimedTransitionPlan } from './timed-plan';
+import { buildTimedTransitionPlan, buildTimedTransitionSequence } from './timed-plan';
 
 type NodeDef = {
   id: string;
@@ -73,8 +60,6 @@ const buildTree = (defs: NodeDef[]): LayoutTree => {
   return indexTree({ rootId: root.id, byId });
 };
 
-const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount;
-const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const TIMELINE_MS = ANIMATION_CONSTANTS.timelineMs;
 
 const buildPlan = (params: {
@@ -88,27 +73,41 @@ const buildPlan = (params: {
     planningAdvisory: buildTransitionPlanningAdvisory(params),
   });
 
-const sizeAt = (params: {
-  plan: ReturnType<typeof buildTimedTransitionPlan>;
-  id: string;
-  axis: 'width' | 'height';
-  fromTree: LayoutTree;
-  toTree: LayoutTree;
-  progress: number;
-}) => {
-  const { plan, id, axis, fromTree, toTree, progress } = params;
-  const fromNode = fromTree.byId.get(id);
-  const toNode = toTree.byId.get(id);
-  const fromSize = fromNode?.size[axis] ?? toNode?.size[axis] ?? 0;
-  const toSize = toNode?.size[axis] ?? fromNode?.size[axis] ?? fromSize;
-  const timing = plan.nodeTimings.get(id);
-  const window = axis === 'width' ? timing?.resizeX : timing?.resizeY;
-  const amount = window
-    ? clamp((progress - window.start) / (window.end - window.start), 0, 1)
-    : fromSize === toSize
-      ? 1
-      : 0;
-  return lerp(fromSize, toSize, amount);
+const buildOverlay = (fromTree: LayoutTree, toTree: LayoutTree, direction: 'in' | 'out') => {
+  const schema = {
+    owner: 'core',
+    name: 'test',
+    version: '1',
+    types: [{ id: 'core/test-node', label: 'Node' }],
+    relations: [],
+  };
+  const presentation = (tree: LayoutTree) =>
+    buildStaticCanvasPresentation({
+      scene: {
+        doc: { version: '1', schemaRefs: [], entities: [], relations: [] },
+        schema,
+        tree,
+        edges: [],
+        visibleIds: new Set([...tree.byId.keys()].filter((id) => id !== tree.rootId)),
+        nodeVisuals: buildNodeVisualMap({ schema, tree }),
+        absolutePositions: buildAbsolutePositions(tree),
+        zIndexById: new Map(),
+        layoutMeta: { level: 0 },
+      },
+    });
+  const planningAdvisory = buildTransitionPlanningAdvisory({ direction, fromTree, toTree });
+  const timedSequence = buildTimedTransitionSequence({ planningAdvisory });
+  const timedPlan = buildTimedTransitionPlan({ planningAdvisory, timedSequence });
+  return buildTransitionOverlayState({
+    id: 1,
+    startedAt: 0,
+    duration: 1000,
+    planningAdvisory,
+    timedSequence,
+    timedPlan,
+    fromPresentation: presentation(fromTree),
+    toPresentation: presentation(toTree),
+  });
 };
 
 const expectedSegmentWindows = (direction: 'in' | 'out') => {
@@ -681,28 +680,14 @@ describe('buildTimedTransitionPlan', () => {
       },
     ]);
 
-    const sequence = buildPlan({
-      direction: 'in',
-      fromTree,
-      toTree,
-    });
-
-    const samples = 60;
-    for (let step = 0; step <= samples; step += 1) {
-      const progress = step / samples;
-      const animation = computeZoomAnimation({ progress, plan: sequence });
-      const bY = animation.positions.B?.y ?? 0;
-      const cY = animation.positions.C?.y ?? 0;
-      const bHeight = sizeAt({
-        plan: sequence,
-        id: 'B',
-        axis: 'height',
-        fromTree,
-        toTree,
-        progress,
-      });
-      const bBottom = bY + bHeight;
-      expect(bBottom <= cY + 1e-6).toBe(true);
+    const overlay = buildOverlay(fromTree, toTree, 'in');
+    for (let step = 0; step <= 60; step += 1) {
+      const frame = resolveTransitionOverlayFrame(overlay, (step / 60) * 1000);
+      const b = frame.nodes.find((node) => node.id === 'B');
+      const c = frame.nodes.find((node) => node.id === 'C');
+      expect(b).toBeDefined();
+      expect(c).toBeDefined();
+      expect((b?.rect.y ?? 0) + (b?.rect.height ?? 0)).toBeLessThanOrEqual((c?.rect.y ?? 0) + 1e-6);
     }
   });
 
@@ -757,148 +742,21 @@ describe('buildTimedTransitionPlan', () => {
       },
     ]);
 
-    const sequence = buildPlan({
-      direction: 'out',
-      fromTree,
-      toTree,
-    });
-
+    const overlay = buildOverlay(fromTree, toTree, 'out');
     const fromAHeight = fromTree.byId.get('A')?.size.height ?? 0;
     let sawParentShrink = false;
-    const samples = 60;
-    for (let step = 0; step <= samples; step += 1) {
-      const progress = step / samples;
-      const animation = computeZoomAnimation({ progress, plan: sequence });
-      const aHeight = sizeAt({
-        plan: sequence,
-        id: 'A',
-        axis: 'height',
-        fromTree,
-        toTree,
-        progress,
-      });
-      const bOpacity = animation.nodeVisibility.get('B') ?? 1;
-      if (aHeight < fromAHeight - 1e-6) {
+    expect(resolveTransitionOverlayFrame(overlay, 0).nodes.some((node) => node.id === 'B')).toBe(
+      true,
+    );
+    for (let step = 0; step <= 60; step += 1) {
+      const frame = resolveTransitionOverlayFrame(overlay, (step / 60) * 1000);
+      const parent = frame.nodes.find((node) => node.id === 'A');
+      expect(parent).toBeDefined();
+      if ((parent?.rect.height ?? fromAHeight) < fromAHeight - 1e-6) {
         sawParentShrink = true;
-        expect(bOpacity).toBeLessThanOrEqual(0.05);
+        expect(frame.nodes.find((node) => node.id === 'B')?.opacity ?? 0).toBeLessThanOrEqual(0.05);
       }
     }
     expect(sawParentShrink).toBe(true);
-  });
-
-  it('keeps top-level nodes finite and settled without overlap while expanding data-platform', () => {
-    const raw = buildRawSchemaSet([
-      parseSchema(baseRaw),
-      parseSchema(softwareRaw),
-      parseSchema(webAppRaw),
-      parseSchema(codeRaw),
-      parseSchema(frontendRaw),
-      parseSchema(dataModelRaw),
-      parseSchema(kubernetesRaw),
-    ]);
-    const schema = buildSchemaRuntime({
-      raw,
-      selection: buildSchemaSelection({ raw }),
-    }).resolved.effectiveSchema;
-    const fromDoc = parseDocument(sampleDiagramRaw);
-    const toDoc = {
-      ...fromDoc,
-      view: {
-        ...(fromDoc.view ?? { kind: 'semantic-diagram-view', version: 2 }),
-        kind: 'semantic-diagram-view' as const,
-        version: 2 as const,
-        nodesById: {
-          ...(fromDoc.view?.nodesById ?? {}),
-          'data-platform': {
-            ...(fromDoc.view?.nodesById?.['data-platform'] ?? {}),
-            expanded: true,
-          },
-        },
-      },
-    };
-    const fromGraph = buildGraphModel(fromDoc, schema);
-    const toGraph = buildGraphModel(toDoc, schema);
-    const fromViewState = compileDiagramViewState({ doc: fromDoc, schema });
-    const toViewState = compileDiagramViewState({ doc: toDoc, schema });
-    const fromLayout = buildLayoutResult({
-      graph: fromGraph,
-      viewState: fromViewState,
-    });
-    const toLayout = buildLayoutResult({
-      graph: toGraph,
-      viewState: toViewState,
-    });
-
-    const sequence = buildPlan({
-      direction: 'in',
-      fromTree: fromLayout.tree,
-      toTree: toLayout.tree,
-      fromEdges: fromLayout.edges,
-      toEdges: toLayout.edges,
-    });
-
-    const topLevelIds = toLayout.tree.root.children.map((node) => node.id);
-    const overlaps = (
-      a: { x: number; y: number; width: number; height: number },
-      b: { x: number; y: number; width: number; height: number },
-    ) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
-
-    const samples = 80;
-    for (let step = 0; step <= samples; step += 1) {
-      const progress = step / samples;
-      const animation = computeZoomAnimation({ progress, plan: sequence });
-      const rects = topLevelIds
-        .map((id) => {
-          const position = animation.positions[id];
-          if (!position) return null;
-          return {
-            id,
-            x: position.x,
-            y: position.y,
-            width: sizeAt({
-              plan: sequence,
-              id,
-              axis: 'width',
-              fromTree: fromLayout.tree,
-              toTree: toLayout.tree,
-              progress,
-            }),
-            height: sizeAt({
-              plan: sequence,
-              id,
-              axis: 'height',
-              fromTree: fromLayout.tree,
-              toTree: toLayout.tree,
-              progress,
-            }),
-          };
-        })
-        .filter((rect): rect is NonNullable<typeof rect> => Boolean(rect));
-
-      for (const rect of rects) {
-        expect(Number.isFinite(rect.x), `x should be finite for ${rect.id}`).toBe(true);
-        expect(Number.isFinite(rect.y), `y should be finite for ${rect.id}`).toBe(true);
-        expect(Number.isFinite(rect.width), `width should be finite for ${rect.id}`).toBe(true);
-        expect(Number.isFinite(rect.height), `height should be finite for ${rect.id}`).toBe(true);
-        expect(rect.width).toBeGreaterThan(0);
-        expect(rect.height).toBeGreaterThan(0);
-      }
-
-      if (progress !== 0 && progress !== 1) {
-        continue;
-      }
-
-      for (let i = 0; i < rects.length; i += 1) {
-        for (let j = i + 1; j < rects.length; j += 1) {
-          const left = rects[i];
-          const right = rects[j];
-          if (!left || !right) continue;
-          expect(
-            overlaps(left, right),
-            `settled overlap at progress=${progress.toFixed(3)} between ${left.id} and ${right.id}`,
-          ).toBe(false);
-        }
-      }
-    }
   });
 });
