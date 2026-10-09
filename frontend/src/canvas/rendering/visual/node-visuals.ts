@@ -2,6 +2,7 @@ import {
   CORE_GROUP_TYPE_ID,
   type Entity,
   getSchemaObjectLocalId,
+  pluralize,
   resolveTypeDef,
   type SchemaModule,
 } from '@tarskia/diagram-semantics';
@@ -80,13 +81,6 @@ const applyTemplate = (template: string, context: Record<string, unknown>) => {
 const formatLabel = (value: string | undefined) => {
   if (!value) return undefined;
   return value.replace(/[-_]/g, ' ').replace(/\b\w/g, (match) => match.toUpperCase());
-};
-
-const pluralize = (label: string, count: number) => {
-  const base = label.toLowerCase();
-  if (count === 1) return base;
-  if (base.endsWith('s')) return base;
-  return `${base}s`;
 };
 
 const isGenericComponentCountLabel = (label: string, singularLabel?: string) => {

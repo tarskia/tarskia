@@ -1,5 +1,5 @@
-import type { SchemaModule, SemanticDocument } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
+import type { SchemaModule, SemanticDocument } from '../model/types';
 import { buildDiagramViewForSearchReveal, searchDiagramText } from './search';
 
 const schema: SchemaModule = {

@@ -3,11 +3,3 @@ import type { SemanticDocument } from '@tarskia/diagram-semantics';
 export type CommitDoc = (
   updater: SemanticDocument | ((prev: SemanticDocument) => SemanticDocument),
 ) => void;
-
-export type EnsureDiagramView = (
-  view: SemanticDocument['view'],
-) => NonNullable<SemanticDocument['view']>;
-
-export type EnsureDiagramViewLayout = (
-  view: SemanticDocument['view'],
-) => NonNullable<NonNullable<SemanticDocument['view']>['layout']>;

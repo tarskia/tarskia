@@ -30,7 +30,6 @@ import {
   computeViewportForBounds,
   computeViewRect,
 } from './rendering/transition/viewport';
-import { buildCanonicalDiagramStructureQueries } from './structure/queries';
 
 export type { AnimationSettings, LayoutResult, TimedTransitionPlan, TransitionPlanningAdvisory };
 export { cloneAnimationSettings };
@@ -117,10 +116,9 @@ export function useDiagramRenderingController({
   );
   const sceneQueries = useMemo(
     () => ({
-      structure: buildCanonicalDiagramStructureQueries(graph),
       view: buildRenderedDiagramViewQueries(layout),
     }),
-    [graph, layout],
+    [layout],
   );
 
   return useMemo(

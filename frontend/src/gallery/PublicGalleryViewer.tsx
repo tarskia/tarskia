@@ -1,4 +1,8 @@
-import { getDiagramViewExpandedMap } from '@tarskia/diagram-semantics';
+import {
+  buildDiagramViewForSearchReveal,
+  getDiagramViewExpandedMap,
+  searchDiagramText,
+} from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import type { DtoGalleryDiagramDetailResponse } from '../api/generated/model';
@@ -12,7 +16,6 @@ import { buildSchemaVersionCatalog } from '../model/validation/schema-closure';
 import type { PublicGalleryShellContext } from '../PublicGalleryShell';
 import { semanticBootstrap } from '../semantic/bootstrap';
 import { useDiagramSemanticRuntime } from '../semantic/runtime';
-import { buildDiagramViewForSearchReveal, searchDiagramText } from '../semantic/view/search';
 import { CanvasToolbar } from '../ui/CanvasToolbar';
 import { GalleryInspector } from '../ui/GalleryInspector';
 import { buildCanvasSemanticBindings } from '../viewer-core/buildCanvasSemanticBindings';
@@ -20,7 +23,6 @@ import {
   buildDiagramProvenanceSource,
   buildInspectorViewModel,
 } from '../viewer-core/buildInspectorViewModel';
-import { ensureDiagramView } from '../viewer-core/diagram-view';
 import { canFocusSceneNode, useFocusViewController } from '../viewer-core/focus-view';
 import {
   createBlankDiagramDocument,
@@ -151,7 +153,6 @@ export default function PublicGalleryViewer() {
   });
   const {
     graph,
-    sceneQueries,
     compiled,
     requestNavigation,
     flushUserGesture,
@@ -178,19 +179,14 @@ export default function PublicGalleryViewer() {
   } = useDiagramActions({
     state: {
       doc,
-      expanded,
     },
     document: {
       commitDoc,
-      ensureDiagramView,
     },
     transition: {
       requestNavigation,
       flushUserGesture: diagramEngine.flushUserGesture,
       setPendingStructuralTransitionIntent: diagramEngine.setPendingStructuralTransitionIntent,
-    },
-    sceneQueries: {
-      structure: sceneQueries.structure,
     },
   });
 

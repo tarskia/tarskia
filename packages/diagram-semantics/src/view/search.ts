@@ -1,16 +1,10 @@
-import {
-  buildEntityTree,
-  type DiagramView,
-  FREEFORM_RELATION_TYPE,
-  getAncestors,
-  getSchemaObjectLocalId,
-  normalizeDiagramView,
-  normalizeDiagramViewNodesById,
-  type Relation,
-  resolveTypeDef,
-  type SchemaModule,
-  type SemanticDocument,
-} from '@tarskia/diagram-semantics';
+import { resolveTypeDef } from '../model/schema';
+import { getSchemaObjectLocalId } from '../model/schema-ids';
+import type { DiagramView, SchemaModule, SemanticDocument } from '../model/types';
+import { buildEntityTree } from '../tree/entity-tree';
+import { resolveRelationDisplayLabel } from './display-labels';
+import { normalizeDiagramView } from './normalize-diagram-view';
+import { applyDiagramViewOperation } from './view-operations';
 
 export interface DiagramSearchMatches {
   query: string;
@@ -35,25 +29,6 @@ const buildEntitySearchText = (
     .filter((value): value is string => Boolean(value && value.trim().length > 0))
     .join(' ')
     .toLowerCase();
-
-const resolveRelationDisplayLabel = (
-  relation: Relation,
-  relationTypeById: Map<string, SchemaModule['relations'][number]>,
-) => {
-  if (!relation.type) {
-    return relation.label;
-  }
-  if (relation.type === FREEFORM_RELATION_TYPE) {
-    return relation.label ?? FREEFORM_RELATION_TYPE;
-  }
-  const relationType = relationTypeById.get(relation.type);
-  return (
-    relation.label ??
-    relationType?.shortLabel ??
-    relationType?.label ??
-    getSchemaObjectLocalId(relation.type)
-  );
-};
 
 export function searchDiagramText(params: {
   doc: SemanticDocument;
@@ -136,51 +111,17 @@ export function searchDiagramText(params: {
   };
 }
 
-/**
- * Search reveal is a view operation, not a document mutation.
- * We clear scoped focus here so a whole-diagram search can reveal hidden matches.
- */
 export function buildDiagramViewForSearchReveal(params: {
   doc: SemanticDocument;
   matchingEntityIds: Set<string>;
   matchingRelationIds: Set<string>;
 }): DiagramView {
-  const { doc, matchingEntityIds, matchingRelationIds } = params;
-  const entityTree = buildEntityTree(doc);
-  const view = normalizeDiagramView(doc.view);
-  const nextNodesById = { ...(view.nodesById ?? {}) };
-  const revealEntityIds = new Set<string>(matchingEntityIds);
-
-  if (matchingRelationIds.size > 0) {
-    for (const relation of doc.relations) {
-      if (!matchingRelationIds.has(relation.id)) continue;
-      if (entityTree.byId.has(relation.from)) {
-        revealEntityIds.add(relation.from);
-      }
-      if (entityTree.byId.has(relation.to)) {
-        revealEntityIds.add(relation.to);
-      }
-    }
-  }
-
-  for (const entityId of revealEntityIds) {
-    if (!entityTree.byId.has(entityId)) continue;
-    const ancestorIds = getAncestors(entityTree, entityId);
-    for (const ancestorId of ancestorIds) {
-      if (ancestorId === entityTree.rootId) continue;
-      const ancestor = entityTree.byId.get(ancestorId);
-      if (!ancestor || ancestor.children.length === 0) continue;
-      nextNodesById[ancestorId] = {
-        ...(nextNodesById[ancestorId] ?? {}),
-        expanded: true,
-        hidden: false,
-      };
-    }
-  }
-
-  return {
-    ...view,
-    scopeRootId: undefined,
-    nodesById: normalizeDiagramViewNodesById(nextNodesById),
-  };
+  return (
+    applyDiagramViewOperation(buildEntityTree(params.doc), params.doc.view, {
+      kind: 'search-reveal',
+      entityIds: params.matchingEntityIds,
+      relationIds: params.matchingRelationIds,
+      relations: params.doc.relations,
+    }) ?? normalizeDiagramView(params.doc.view)
+  );
 }

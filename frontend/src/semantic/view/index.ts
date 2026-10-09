@@ -5,4 +5,3 @@
 export * from './compile-diagram-view-tree';
 export * from './declarative-view-state';
 export * from './reveal-tree';
-export * from './search';
