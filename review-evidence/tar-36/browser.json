@@ -1,0 +1,20 @@
+{
+  "n8n": {
+    "before": "translate(166.154px, 141.137px) scale(0.639915)",
+    "after": "translate(-19.3308px, 141.137px) scale(0.639915)",
+    "initialZoom": 0.639915,
+    "maxZoom": 0.639915,
+    "minZoom": 0.639915,
+    "frameCount": 304,
+    "errors": []
+  },
+  "supabase": {
+    "before": "translate(166.154px, 133.111px) scale(0.688435)",
+    "after": "translate(166.154px, 131.218px) scale(0.688435)",
+    "initialZoom": 0.688435,
+    "maxZoom": 0.688435,
+    "minZoom": 0.688435,
+    "frameCount": 304,
+    "errors": []
+  }
+}
