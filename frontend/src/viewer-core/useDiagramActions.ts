@@ -6,14 +6,14 @@ import {
 } from '@tarskia/diagram-semantics';
 import { useCallback, useMemo } from 'react';
 import type {
+  MotionCallbacks,
   NavigationIntent,
   NavigationRequestResult,
   StructuralTransitionIntent,
 } from '../diagram/motion-types';
 import type { CommitDoc } from './types';
 
-interface EntityZoomOptions {
-  onComplete?: () => void;
+interface EntityZoomOptions extends MotionCallbacks {
   expandSingleChildChain?: boolean;
 }
 interface UseDiagramActionsArgs {
@@ -70,6 +70,7 @@ export function useDiagramActions({
           direction,
           focus: { kind: 'single', rootId: entityId },
           ...(options?.onComplete ? { onComplete: options.onComplete } : {}),
+          ...(options?.onSettled ? { onSettled: options.onSettled } : {}),
         },
       ),
     [dispatch],

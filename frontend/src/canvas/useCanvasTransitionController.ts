@@ -1,6 +1,7 @@
 import type { CompiledDiagramEdge, ViewportState } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type {
+  MotionCallbacks,
   NavigationIntent,
   NavigationRequestResult,
   StructuralChoreographyRequest,
@@ -58,10 +59,7 @@ export interface UseCanvasTransitionControllerArgs {
   getCurrentDisplaySnapshot: () => CanvasRenderSnapshot;
   isMotionActive: boolean;
   requestNavigation: (intent: NavigationIntent) => NavigationRequestResult;
-  startChoreography: (
-    request: StructuralChoreographyRequest,
-    options?: { onComplete?: () => void },
-  ) => void;
+  startChoreography: (request: StructuralChoreographyRequest, options?: MotionCallbacks) => void;
   cancelMotion: () => void;
   getPendingStructuralTransitionIntent: () => StructuralTransitionIntent | null;
   clearPendingStructuralTransitionIntent: () => void;
@@ -79,7 +77,8 @@ interface ObservedExpandedTransition {
   changedExpandedNodeIds: string[];
   fromLayout: LayoutResult;
   toLayout: LayoutResult;
-  onComplete?: () => void;
+  onComplete?: MotionCallbacks['onComplete'];
+  onSettled?: MotionCallbacks['onSettled'];
 }
 
 interface ObservedScopeTransition {
@@ -289,6 +288,7 @@ export function useCanvasTransitionController({
             fromLayout: previousLayoutRef.current,
             toLayout: layout,
             onComplete: pendingStructuralTransitionIntent.onComplete,
+            onSettled: pendingStructuralTransitionIntent.onSettled,
           };
         })()
       : null;
@@ -430,9 +430,8 @@ export function useCanvasTransitionController({
         persistFinalViewport: true,
       },
       {
-        onComplete: () => {
-          observedTransition.onComplete?.();
-        },
+        onComplete: observedTransition.onComplete,
+        onSettled: observedTransition.onSettled,
       },
     );
     syncObservedState();

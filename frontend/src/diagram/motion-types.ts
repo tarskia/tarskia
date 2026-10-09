@@ -26,11 +26,17 @@ export type StructuralTransitionFocus =
   | { kind: 'local'; rootId: string }
   | { kind: 'global' };
 
-export interface StructuralTransitionIntent {
+export type MotionSettlementReason = 'completed' | 'superseded' | 'cancelled' | 'gesture';
+
+export interface MotionCallbacks {
+  onComplete?: () => void;
+  onSettled?: (reason: MotionSettlementReason) => void;
+}
+
+export interface StructuralTransitionIntent extends MotionCallbacks {
   direction: 'in' | 'out';
   focus: StructuralTransitionFocus | null;
   allowNonExpansionViewChanges?: boolean;
-  onComplete?: () => void;
 }
 
 interface NavigationIntentBase {
