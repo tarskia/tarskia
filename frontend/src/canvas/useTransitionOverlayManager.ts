@@ -15,8 +15,6 @@ import type {
   TimedTransitionSequence,
 } from './rendering/transition/timed-plan';
 
-const MAX_FRAME_DURATION_SAMPLES = 240;
-
 export type ManagerPhase = 'idle' | 'animating' | 'settling';
 
 export interface ManagedTransitionState {
@@ -29,7 +27,6 @@ export interface ManagedTransitionState {
   hostSettled: boolean;
   animationComplete: boolean;
   finalFrameSnapshot: CanvasRenderSnapshot;
-  lastFrameAt?: number;
 }
 
 export interface TransitionOverlayManagerState {
@@ -41,7 +38,6 @@ export interface TransitionOverlayManagerState {
   requiredHostGeneration: number | null;
   settledHostGeneration: number;
   nextHostGeneration: number;
-  frameDurations: number[];
 }
 
 export interface StartManagedTransitionArgs {
@@ -50,7 +46,6 @@ export interface StartManagedTransitionArgs {
   timedPlan: TimedTransitionPlan;
   timedSequence: TimedTransitionSequence;
   duration: number;
-  phaseWindow?: { start: number; end: number };
   sharedNodeGeometry?: 'freeze-from';
 }
 
@@ -78,21 +73,6 @@ const captureManagedTransitionSnapshot = (active: ManagedTransitionState, now: n
     frame: resolveTransitionOverlayFrame(active.overlay, now),
   });
 
-const recordFrameDuration = (samples: number[], lastFrameAt: number | undefined, now: number) => {
-  if (typeof lastFrameAt !== 'number') {
-    return samples;
-  }
-  const dt = now - lastFrameAt;
-  if (!Number.isFinite(dt) || dt < 0) {
-    return samples;
-  }
-  const next = [...samples, dt];
-  if (next.length > MAX_FRAME_DURATION_SAMPLES) {
-    next.shift();
-  }
-  return next;
-};
-
 export const createTransitionOverlayManagerState = (
   stableSnapshot: CanvasRenderSnapshot,
 ): TransitionOverlayManagerState => ({
@@ -104,7 +84,6 @@ export const createTransitionOverlayManagerState = (
   requiredHostGeneration: null,
   settledHostGeneration: 0,
   nextHostGeneration: 0,
-  frameDurations: [],
 });
 
 export const syncTransitionOverlayManagerStableSnapshot = (
@@ -143,7 +122,6 @@ export const startManagedTransitionState = (
     timedPlan,
     timedSequence,
     duration,
-    phaseWindow,
     sharedNodeGeometry,
     now,
   } = args;
@@ -155,7 +133,6 @@ export const startManagedTransitionState = (
     id: now,
     startedAt: now,
     duration,
-    phaseWindow,
     planningAdvisory,
     timedPlan,
     timedSequence,
@@ -181,7 +158,6 @@ export const startManagedTransitionState = (
     phase: 'animating',
     requiredHostGeneration,
     nextHostGeneration: requiredHostGeneration,
-    frameDurations: [],
   };
 };
 
@@ -196,10 +172,8 @@ export const advanceManagedTransitionState = (
       animationCompleted: false,
     };
   }
-  const frameDurations = recordFrameDuration(state.frameDurations, active.lastFrameAt, now);
   const progressing = {
     ...active,
-    lastFrameAt: now,
   };
   const progress = Math.min(1, (now - active.startedAt) / Math.max(active.duration, 1));
   if (progress < 1) {
@@ -207,7 +181,6 @@ export const advanceManagedTransitionState = (
       state: {
         ...state,
         active: progressing,
-        frameDurations,
       },
       animationCompleted: false,
     };
@@ -231,7 +204,6 @@ export const advanceManagedTransitionState = (
   const completedState = {
     ...state,
     active: completed,
-    frameDurations,
   };
   if (completed.hostSettled) {
     return {
@@ -257,39 +229,6 @@ export const advanceManagedTransitionState = (
     },
     animationCompleted: true,
   };
-};
-
-export const cancelManagedTransitionState = (
-  state: TransitionOverlayManagerState,
-  now: number,
-): TransitionOverlayManagerState => {
-  const active = state.active;
-  if (!active) {
-    return state;
-  }
-  const finalFrameSnapshot = captureManagedTransitionSnapshot(active, now);
-  const frozenOverlay = buildStaticTransitionOverlayState({
-    snapshot: finalFrameSnapshot,
-    id: now,
-    startedAt: now,
-  });
-  const cancelledState = {
-    ...state,
-    hostSnapshot: active.incomingSnapshot,
-    transitionOverlay: frozenOverlay,
-    active: {
-      ...active,
-      overlay: frozenOverlay,
-      animationComplete: true,
-      hostSettled: state.settledHostGeneration >= active.requiredHostGeneration,
-      finalFrameSnapshot,
-    },
-    phase: 'settling' as const,
-  };
-  if (cancelledState.active.hostSettled) {
-    return finalizeManagedTransitionState(cancelledState);
-  }
-  return cancelledState;
 };
 
 export const notifyManagedTransitionHostSettled = (

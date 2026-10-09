@@ -5,6 +5,8 @@ vi.mock('reactflow', () => ({
   useStore: () => [0, 0, 1],
 }));
 
+import { buildStaticTransitionOverlayState } from '../../rendering/transition/overlay';
+import { createOverlayFrameStore } from '../../rendering/transition/overlay-frame-store';
 import { TransitionOverlay } from './TransitionOverlay';
 
 const buildFrameView = (overrides?: {
@@ -57,6 +59,24 @@ const buildFrameView = (overrides?: {
 });
 
 describe('TransitionOverlay', () => {
+  it('renders the state snapshot while the frame store has no sample yet', () => {
+    const state = buildStaticTransitionOverlayState({
+      id: 1,
+      startedAt: 100,
+      snapshot: { nodes: [buildFrameView()], overlayEdges: [] },
+    });
+    const markup = renderToStaticMarkup(
+      <TransitionOverlay
+        state={state}
+        frameStore={createOverlayFrameStore()}
+        nodeVisualMode="default"
+      />,
+    );
+    expect(markup).toContain('transition-overlay-node-shell');
+    expect(markup).toContain('Group');
+    expect(markup).not.toContain('edge-overlay--transition');
+  });
+
   it('renders control rows from the sampled frame view controls', () => {
     const markup = renderToStaticMarkup(
       <TransitionOverlay
@@ -64,10 +84,8 @@ describe('TransitionOverlay', () => {
           id: 1,
           startedAt: 0,
           duration: 100,
-          phaseWindow: { start: 0, end: 1 },
           nodes: [],
           edges: [],
-          overlayEdges: [],
         }}
         frame={{
           progress: 0.5,
@@ -86,7 +104,6 @@ describe('TransitionOverlay', () => {
             },
           ],
           edges: [],
-          overlayEdges: [],
         }}
         nodeVisualMode="default"
       />,
@@ -102,10 +119,8 @@ describe('TransitionOverlay', () => {
           id: 1,
           startedAt: 0,
           duration: 100,
-          phaseWindow: { start: 0, end: 1 },
           nodes: [],
           edges: [],
-          overlayEdges: [],
         }}
         frame={{
           progress: 0.5,
@@ -124,7 +139,6 @@ describe('TransitionOverlay', () => {
             },
           ],
           edges: [],
-          overlayEdges: [],
         }}
         nodeVisualMode="default"
       />,
@@ -140,10 +154,8 @@ describe('TransitionOverlay', () => {
           id: 1,
           startedAt: 0,
           duration: 100,
-          phaseWindow: { start: 0, end: 1 },
           nodes: [],
           edges: [],
-          overlayEdges: [],
         }}
         frame={{
           progress: 0.25,
@@ -170,7 +182,6 @@ describe('TransitionOverlay', () => {
             },
           ],
           edges: [],
-          overlayEdges: [],
         }}
         nodeVisualMode="default"
       />,
@@ -180,107 +191,11 @@ describe('TransitionOverlay', () => {
     expect(markup).toContain('z-index:4');
   });
 
-  it('renders the settled overlay edge passes during transitions', () => {
-    const markup = renderToStaticMarkup(
-      <TransitionOverlay
-        state={{
-          id: 1,
-          startedAt: 0,
-          duration: 100,
-          phaseWindow: { start: 0, end: 1 },
-          nodes: [],
-          edges: [],
-          overlayEdges: [
-            {
-              id: 'rel-1:source->target',
-              relationId: 'rel-1',
-              sourceId: 'source',
-              targetId: 'target',
-              solidOverNodeIds: ['group-1'],
-              fromGeometry: {
-                sourcePoint: { x: 0, y: 0 },
-                control1: { x: 10, y: 0 },
-                control2: { x: 90, y: 100 },
-                targetPoint: { x: 100, y: 100 },
-                path: 'M 0,0 L 100,100',
-                labelAnchor: { x: 50, y: 50 },
-                sourceSide: 'right',
-                targetSide: 'left',
-              },
-              toGeometry: {
-                sourcePoint: { x: 0, y: 0 },
-                control1: { x: 10, y: 0 },
-                control2: { x: 90, y: 100 },
-                targetPoint: { x: 100, y: 100 },
-                path: 'M 0,0 L 100,100',
-                labelAnchor: { x: 50, y: 50 },
-                sourceSide: 'right',
-                targetSide: 'left',
-              },
-              lockedSides: {
-                sourceSide: 'right',
-                targetSide: 'left',
-              },
-              fromOpacity: 1,
-              toOpacity: 1,
-            },
-          ],
-        }}
-        frame={{
-          progress: 0.5,
-          nodes: [
-            {
-              id: 'group-1',
-              kind: 'group',
-              view: buildFrameView(),
-              rect: { x: 0, y: 0, width: 240, height: 160 },
-              opacity: 1,
-              contentScale: 1,
-              childOpacity: 1,
-            },
-          ],
-          edges: [],
-          overlayEdges: [
-            {
-              id: 'rel-1:source->target',
-              relationId: 'rel-1',
-              kind: 'routed',
-              sourceId: 'source',
-              targetId: 'target',
-              matched: false,
-              opacity: 1,
-              geometry: {
-                sourcePoint: { x: 0, y: 0 },
-                control1: { x: 10, y: 0 },
-                control2: { x: 90, y: 100 },
-                targetPoint: { x: 100, y: 100 },
-                path: 'M 0,0 L 100,100',
-                labelAnchor: { x: 50, y: 50 },
-                sourceSide: 'right',
-                targetSide: 'left',
-              },
-              path: 'M 0,0 L 100,100',
-              labelAnchor: { x: 50, y: 50 },
-              solidOverNodeIds: ['group-1'],
-            },
-          ],
-        }}
-        nodeVisualMode="default"
-      />,
-    );
-
-    expect(markup).toContain('<clipPath');
-    expect(markup).toContain('edge-underlay-path');
-    expect(markup).toContain('fill="none"');
-    expect(markup).not.toContain('edge-overlay-path-branch');
-  });
-
   it('keeps edge labels hidden for most of the transition and fades them in near the end', () => {
     const state = {
       id: 1,
       startedAt: 0,
       duration: 100,
-      phaseWindow: { start: 0, end: 1 },
       nodes: [],
       edges: [
         {
@@ -318,17 +233,10 @@ describe('TransitionOverlay', () => {
           fromOpacity: 1,
           toOpacity: 1,
           labelTrack: {
-            id: 'rel-1:label',
-            relationId: 'rel-1',
             label: 'reads',
-            fromAnchor: { x: 50, y: 50 },
-            toAnchor: { x: 50, y: 50 },
-            fromOpacity: 1,
-            toOpacity: 1,
           },
         },
       ],
-      overlayEdges: [],
     };
     const nodes = [
       {
@@ -382,7 +290,6 @@ describe('TransitionOverlay', () => {
           progress: 0.5,
           nodes,
           edges,
-          overlayEdges: [],
         }}
         nodeVisualMode="default"
       />,
@@ -394,7 +301,6 @@ describe('TransitionOverlay', () => {
           progress: 0.96,
           nodes,
           edges,
-          overlayEdges: [],
         }}
         nodeVisualMode="default"
       />,

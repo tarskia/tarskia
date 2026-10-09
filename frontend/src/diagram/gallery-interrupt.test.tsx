@@ -6,7 +6,6 @@ import { createRoot } from 'react-dom/client';
 import type { ReactFlowInstance } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
-import { DEFAULT_ANIMATION_SETTINGS } from '../canvas/rendering/transition/animation-constants';
 import { captureTransitionOverlaySnapshot } from '../canvas/rendering/transition/overlay';
 import { loadGallery } from '../test/curated-rendering';
 import { useDiagramEngine } from './useDiagramEngine';
@@ -33,17 +32,14 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
   expect(expanded.presentation.nodes.length).toBeGreaterThan(initial.presentation.nodes.length);
   const target = gallery.render([]);
   let engine!: ReturnType<typeof useDiagramEngine>;
-  const persistViewport = vi.fn(),
-    traceSelection = vi.fn();
+  const persistViewport = vi.fn();
   function Harness({ doc }: { doc: SemanticDocument }) {
     engine = useDiagramEngine({
       doc,
       schema: gallery.graph.schema,
-      animationSettings: DEFAULT_ANIMATION_SETTINGS,
       skipTransitions: false,
       showDebug: false,
       persistViewport,
-      traceSelection,
       minZoom: 0.01,
       maxZoom: 2,
     });

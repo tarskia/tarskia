@@ -15,7 +15,6 @@ interface CanvasFocusShellOverlayProps {
       bottom: number;
     };
   }>;
-  leftOcclusion?: number;
   onSelectShell?: (id: string) => void;
 }
 
@@ -24,22 +23,7 @@ const formatShellBoundaryLabel = (shell: CanvasFocusShellOverlayProps['shells'][
     ? shell.displayName
     : `${shell.displayName}: ${shell.typeLabel}`;
 
-const resolveBoundaryLeftInset = (
-  shell: CanvasFocusShellOverlayProps['shells'][number],
-  leftOcclusion: number,
-) => {
-  const defaultInset = 16;
-  if (leftOcclusion <= shell.frame.left + defaultInset) {
-    return defaultInset;
-  }
-  return leftOcclusion - shell.frame.left + defaultInset;
-};
-
-export function CanvasFocusShellOverlay({
-  shells,
-  leftOcclusion = 0,
-  onSelectShell,
-}: CanvasFocusShellOverlayProps) {
+export function CanvasFocusShellOverlay({ shells, onSelectShell }: CanvasFocusShellOverlayProps) {
   if (shells.length === 0) {
     return null;
   }
@@ -63,7 +47,7 @@ export function CanvasFocusShellOverlay({
           <button
             type="button"
             className={`canvas-focus-shell-boundary${shell.isRoot ? ' canvas-focus-shell-boundary--root' : ''}`}
-            style={{ left: resolveBoundaryLeftInset(shell, leftOcclusion) }}
+            style={{ left: 16 }}
             onClick={() => onSelectShell?.(shell.id)}
           >
             <span className="canvas-focus-shell-boundary-label">

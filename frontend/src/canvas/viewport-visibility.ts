@@ -13,19 +13,14 @@ type Rect = {
   height: number;
 };
 
-const clampLeftOcclusion = (canvasWidth: number, leftOcclusion = 0) =>
-  Math.min(Math.max(0, leftOcclusion), Math.max(0, canvasWidth - 1));
-
 export function computeViewportForBoundsInVisibleCanvas(params: {
   bounds: Rect;
   canvas: { width: number; height: number };
   minZoom: number;
   maxZoom: number;
   padding?: number;
-  leftOcclusion?: number;
 }): ViewportState {
-  const occlusion = clampLeftOcclusion(params.canvas.width, params.leftOcclusion);
-  const visibleWidth = Math.max(1, params.canvas.width - occlusion);
+  const visibleWidth = Math.max(1, params.canvas.width);
   const viewport = getViewportForBounds(
     params.bounds,
     visibleWidth,
@@ -36,7 +31,7 @@ export function computeViewportForBoundsInVisibleCanvas(params: {
   );
 
   return {
-    x: viewport.x + occlusion,
+    x: viewport.x,
     y: viewport.y,
     zoom: viewport.zoom,
   };
@@ -47,11 +42,10 @@ export function computeViewportToKeepRectVisible(params: {
   canvas: { width: number; height: number };
   rect: Rect;
   padding?: number;
-  leftOcclusion?: number;
 }): ViewportState | null {
   const { viewport, canvas, rect } = params;
   const padding = params.padding ?? 40;
-  const safeLeft = clampLeftOcclusion(canvas.width, params.leftOcclusion) + padding;
+  const safeLeft = padding;
   const safeTop = padding;
   const safeRight = Math.max(safeLeft, canvas.width - padding);
   const safeBottom = Math.max(safeTop, canvas.height - padding);

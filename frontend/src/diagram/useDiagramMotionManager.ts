@@ -4,7 +4,7 @@ import type { ReactFlowInstance } from 'reactflow';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
 import { areCanvasRenderSnapshotsEqual } from '../canvas/rendering/presentation/presentation';
 import {
-  type AnimationSettings,
+  ANIMATION_CONSTANTS,
   DEFAULT_VIEWPORT_FIT_PADDING,
 } from '../canvas/rendering/transition/animation-constants';
 import { buildStructuralCameraAdvisory } from '../canvas/rendering/transition/camera';
@@ -38,7 +38,6 @@ import {
 } from './camera-navigation';
 import type { CanvasSize, GetCurrentCanvasSize } from './canvas-size';
 import type {
-  DiagramCameraPolicy,
   DiagramCameraRect,
   MotionPhase,
   MotionPlan,
@@ -49,10 +48,8 @@ import type {
 } from './motion-types';
 
 const SNAPSHOT_VISUAL_EPSILON = 0.001;
-const MAX_FRAME_DURATION_SAMPLES = 240;
 const MIN_STRUCTURAL_OVERLAY_DURATION_MS = 320;
 const MAX_STRUCTURAL_CAMERA_DURATION_SCALE = 1.85;
-const MIN_OVERLAY_PHASE_TRIM = 0.01;
 const MIN_VISIBLE_OVERLAY_PROGRESS = 0.04;
 
 interface ActiveMotion {
@@ -82,9 +79,7 @@ interface UseDiagramMotionManagerArgs {
   stableSnapshot: CanvasRenderSnapshot;
   skipTransitions?: boolean;
   initialViewportKey?: string;
-  animationSettings: AnimationSettings;
   savedViewport?: ViewportState;
-  cameraPolicy?: DiagramCameraPolicy;
   getCurrentCanvasSize: GetCurrentCanvasSize;
   minZoom: number;
   maxZoom: number;
@@ -92,7 +87,6 @@ interface UseDiagramMotionManagerArgs {
   onCanvasInit: (instance: ReactFlowInstance) => void;
   onCanvasUnmount: () => void;
   getCurrentViewport: () => ViewportState;
-  getLeftOcclusion: () => number;
   getSceneBounds: () => DiagramCameraRect | null;
   getNodeSetBounds: (nodeIds: string[]) => DiagramCameraRect | null;
   setViewport: (viewport: ViewportState) => void;
@@ -225,11 +219,10 @@ export const computePostOverlayBridgeViewport = (params: {
 const computeSnapshotSceneFitViewport = (params: {
   snapshot: CanvasRenderSnapshot;
   canvasSize: CanvasSize | null;
-  leftOcclusion: number;
   minZoom: number;
   maxZoom: number;
 }): ViewportState | null => {
-  const { snapshot, canvasSize, leftOcclusion, minZoom, maxZoom } = params;
+  const { snapshot, canvasSize, minZoom, maxZoom } = params;
   if (!canvasSize) {
     return null;
   }
@@ -243,7 +236,6 @@ const computeSnapshotSceneFitViewport = (params: {
     minZoom,
     maxZoom,
     padding: DEFAULT_VIEWPORT_FIT_PADDING,
-    leftOcclusion,
   });
 };
 
@@ -490,53 +482,18 @@ export const computeStructuralOverlayDurationMs = (params: {
   );
 };
 
-export const computeStructuralOverlayPhaseWindow = (timedPlan: TimedTransitionPlan) => {
-  const startCandidates: number[] = [];
-  for (const timing of timedPlan.nodeTimings.values()) {
-    startCandidates.push(
-      timing.moveX?.start ?? Number.POSITIVE_INFINITY,
-      timing.moveY?.start ?? Number.POSITIVE_INFINITY,
-      timing.resizeX?.start ?? Number.POSITIVE_INFINITY,
-      timing.resizeY?.start ?? Number.POSITIVE_INFINITY,
-      timing.fade?.start ?? Number.POSITIVE_INFINITY,
-    );
-  }
-  for (const childFade of timedPlan.childFadeByParent.values()) {
-    startCandidates.push(childFade.window.start);
-  }
-  for (const edgePlan of timedPlan.edgePlans) {
-    if (edgePlan.fade) {
-      startCandidates.push(edgePlan.fade.start);
-    }
-  }
-  const earliestStart = Math.min(...startCandidates);
-  if (!Number.isFinite(earliestStart) || earliestStart < MIN_OVERLAY_PHASE_TRIM) {
-    return { start: 0, end: 1 };
-  }
-  return {
-    start: clamp(earliestStart, 0, 0.95),
-    end: 1,
-  };
-};
-
 export const buildMotionPlanFromChoreographyRequest = (params: {
   request: StructuralChoreographyRequest;
-  animationSettings: AnimationSettings;
-  cameraPolicy?: DiagramCameraPolicy;
   canvasSize: CanvasSize | null;
-  leftOcclusion: number;
   minZoom: number;
   maxZoom: number;
 }): MotionPlan => {
-  const { request, animationSettings, cameraPolicy, canvasSize, leftOcclusion, minZoom, maxZoom } =
-    params;
+  const { request, canvasSize, minZoom, maxZoom } = params;
   const timedSequence = buildTimedTransitionSequence({
     planningAdvisory: request.planningAdvisory,
-    animationSettings,
   });
   const timedPlan = buildTimedTransitionPlan({
     planningAdvisory: request.planningAdvisory,
-    animationSettings,
     timedSequence,
   });
   const cameraAdvisory = buildStructuralCameraAdvisory({
@@ -546,15 +503,14 @@ export const buildMotionPlanFromChoreographyRequest = (params: {
     endLayout: request.endLayout,
     currentViewport: request.currentViewport,
     canvasSize,
-    leftOcclusion,
     endPointOfInterestNodeIds: request.endPointOfInterestNodeIds,
     collectSubtreeIds: request.collectSubtreeIds,
-    padding: animationSettings.viewport.padding,
+    padding: ANIMATION_CONSTANTS.viewport.padding,
     minZoom,
     maxZoom,
   });
 
-  const cameraDurationMs = Math.max(0, animationSettings.viewport.cameraDuration);
+  const cameraDurationMs = Math.max(0, ANIMATION_CONSTANTS.viewport.cameraDuration);
   const segments: MotionSegment[] = [];
   let viewportCursor = request.currentViewport;
   let preludeCameraDurationMs = cameraDurationMs;
@@ -575,7 +531,6 @@ export const buildMotionPlanFromChoreographyRequest = (params: {
     const sceneFitViewport = computeSnapshotSceneFitViewport({
       snapshot: request.endSnapshot,
       canvasSize,
-      leftOcclusion,
       minZoom,
       maxZoom,
     });
@@ -596,7 +551,7 @@ export const buildMotionPlanFromChoreographyRequest = (params: {
 
       if (!viewportStatesEqual(viewportCursor, sceneFitViewport)) {
         segments.push({
-          durationMs: Math.max(0, animationSettings.viewport.fitDuration),
+          durationMs: Math.max(0, ANIMATION_CONSTANTS.viewport.fitDuration),
           camera: {
             from: viewportCursor,
             to: sceneFitViewport,
@@ -610,7 +565,7 @@ export const buildMotionPlanFromChoreographyRequest = (params: {
       segments.push({
         durationMs: computeStructuralOverlayDurationMs({
           baseOverlayDurationMs: timedPlan.totalDuration,
-          choreographyCameraDurationMs: Math.max(0, animationSettings.viewport.fitDuration),
+          choreographyCameraDurationMs: Math.max(0, ANIMATION_CONSTANTS.viewport.fitDuration),
           hasStructuredPhases: request.planningAdvisory.sequence.steps.length > 0,
         }),
         overlay: {
@@ -618,7 +573,6 @@ export const buildMotionPlanFromChoreographyRequest = (params: {
           planningAdvisory: request.planningAdvisory,
           timedPlan,
           timedSequence,
-          phaseWindow: computeStructuralOverlayPhaseWindow(timedPlan),
         },
       });
 
@@ -661,7 +615,6 @@ export const buildMotionPlanFromChoreographyRequest = (params: {
       planningAdvisory: request.planningAdvisory,
       timedPlan,
       timedSequence,
-      phaseWindow: computeStructuralOverlayPhaseWindow(timedPlan),
       sharedNodeGeometry: request.sharedNodeGeometry,
     },
   });
@@ -717,9 +670,7 @@ export function useDiagramMotionManager({
   stableSnapshot,
   skipTransitions = false,
   initialViewportKey,
-  animationSettings,
   savedViewport,
-  cameraPolicy,
   getCurrentCanvasSize,
   minZoom,
   maxZoom,
@@ -727,7 +678,6 @@ export function useDiagramMotionManager({
   onCanvasInit: onCanvasInitRaw,
   onCanvasUnmount: onCanvasUnmountRaw,
   getCurrentViewport,
-  getLeftOcclusion,
   getSceneBounds,
   getNodeSetBounds,
   setViewport,
@@ -750,8 +700,6 @@ export function useDiagramMotionManager({
   const [canvasReady, setCanvasReady] = useState(false);
   const canvasReadyRef = useRef(false);
   const rafRef = useRef<number | null>(null);
-  const lastFrameAtRef = useRef<number | null>(null);
-  const frameDurationsRef = useRef<number[]>([]);
   const motionPhaseRef = useRef<MotionPhase>('idle');
   const userGestureActiveRef = useRef(false);
   const deferredNavigationFrameRef = useRef<number | null>(null);
@@ -831,23 +779,6 @@ export function useDiagramMotionManager({
     [overlayFrameStore],
   );
 
-  const recordFrameDuration = useCallback((now: number) => {
-    if (lastFrameAtRef.current === null) {
-      lastFrameAtRef.current = now;
-      return;
-    }
-    const dt = now - lastFrameAtRef.current;
-    lastFrameAtRef.current = now;
-    if (!Number.isFinite(dt) || dt < 0) {
-      return;
-    }
-    const next = [...frameDurationsRef.current, dt];
-    if (next.length > MAX_FRAME_DURATION_SAMPLES) {
-      next.shift();
-    }
-    frameDurationsRef.current = next;
-  }, []);
-
   const scheduleNextFrame = useCallback(() => {
     if (rafRef.current !== null) {
       return;
@@ -862,8 +793,6 @@ export function useDiagramMotionManager({
     (now: number) => {
       const activeMotion = activeMotionRef.current;
       activeMotionRef.current = null;
-      lastFrameAtRef.current = null;
-      frameDurationsRef.current = [];
       if (!overlayStateRef.current.transitionOverlay) {
         overlayStateRef.current = syncTransitionOverlayManagerStableSnapshot(
           overlayStateRef.current,
@@ -923,7 +852,6 @@ export function useDiagramMotionManager({
         timedPlan: segment.overlay.timedPlan,
         timedSequence: segment.overlay.timedSequence,
         duration: Math.max(1, segment.durationMs),
-        phaseWindow: segment.overlay.phaseWindow,
         sharedNodeGeometry: segment.overlay.sharedNodeGeometry,
         now,
       });
@@ -1006,7 +934,6 @@ export function useDiagramMotionManager({
   };
 
   stepRef.current = (now: number) => {
-    recordFrameDuration(now);
     const activeMotion = activeMotionRef.current;
     if (!activeMotion) {
       publish(now);
@@ -1156,7 +1083,6 @@ export function useDiagramMotionManager({
         canvasSize,
         sceneBounds: getSceneBounds(),
         currentViewport: getObservedViewport(),
-        leftOcclusion: getLeftOcclusion(),
         minZoom,
         maxZoom,
         getNodeSetBounds,
@@ -1164,7 +1090,7 @@ export function useDiagramMotionManager({
     },
     [
       getObservedViewport,
-      getLeftOcclusion,
+
       getNodeSetBounds,
       getSceneBounds,
       maxZoom,
@@ -1189,7 +1115,7 @@ export function useDiagramMotionManager({
         });
         return { status: 'queued', reason: 'deferred-frame' };
       }
-      const policy = resolveNavigationPolicy(intent, animationSettings, cameraPolicy);
+      const policy = resolveNavigationPolicy(intent);
       const canvasSize = getCurrentCanvasSize();
       const targetViewport = computeNavigationViewport(intent, policy, canvasSize);
       if (!targetViewport) {
@@ -1200,14 +1126,8 @@ export function useDiagramMotionManager({
       previousCanvasSizeRef.current ??= canvasSize;
       if (intent.kind === 'initialize-diagram') {
         automaticFramingRef.current = savedViewport ? null : { kind: 'fit-scene' };
-      } else if (
-        intent.kind === 'fit-scene' ||
-        intent.kind === 'fit-rect' ||
-        intent.kind === 'fit-node-set'
-      ) {
+      } else if (intent.kind === 'fit-scene' || intent.kind === 'fit-node-set') {
         automaticFramingRef.current = intent;
-      } else if (intent.kind === 'restore-saved') {
-        automaticFramingRef.current = null;
       }
       const currentViewport = getObservedViewport();
       if (viewportStatesEqual(currentViewport, targetViewport)) {
@@ -1235,7 +1155,6 @@ export function useDiagramMotionManager({
       );
     },
     [
-      animationSettings,
       cancelDeferredNavigationFrame,
       computeNavigationViewport,
       savedViewport,
@@ -1243,7 +1162,6 @@ export function useDiagramMotionManager({
       getObservedViewport,
       persistNow,
       startPlan,
-      cameraPolicy,
     ],
   );
 
@@ -1260,10 +1178,7 @@ export function useDiagramMotionManager({
       startPlan(
         buildMotionPlanFromChoreographyRequest({
           request,
-          animationSettings,
-          cameraPolicy,
           canvasSize: getCurrentCanvasSize(),
-          leftOcclusion: getLeftOcclusion(),
           minZoom,
           maxZoom,
         }),
@@ -1271,10 +1186,8 @@ export function useDiagramMotionManager({
       );
     },
     [
-      animationSettings,
-      cameraPolicy,
       getCurrentCanvasSize,
-      getLeftOcclusion,
+
       maxZoom,
       minZoom,
       startPlan,
@@ -1322,24 +1235,13 @@ export function useDiagramMotionManager({
       const framing = automaticFramingRef.current;
       const fitted =
         !active && !pending && !userGestureActiveRef.current && framing
-          ? computeNavigationViewport(
-              framing,
-              resolveNavigationPolicy(framing, animationSettings, cameraPolicy),
-              canvasSize,
-            )
+          ? computeNavigationViewport(framing, resolveNavigationPolicy(framing), canvasSize)
           : null;
       const next = fitted ?? shift(getObservedViewport());
       applyViewport(next);
       if (!active && !pending) persistNow(next);
     },
-    [
-      animationSettings,
-      cameraPolicy,
-      computeNavigationViewport,
-      applyViewport,
-      getObservedViewport,
-      persistNow,
-    ],
+    [computeNavigationViewport, applyViewport, getObservedViewport, persistNow],
   );
 
   const reportUserGestureStart = useCallback(() => {
@@ -1516,8 +1418,6 @@ export function useDiagramMotionManager({
       createTransitionOverlayManagerState(stableSnapshotRef.current),
       overlayStateRef.current,
     );
-    lastFrameAtRef.current = null;
-    frameDurationsRef.current = [];
     motionPhaseRef.current = 'idle';
     publish(performance.now());
   }, [cancelDeferredNavigationFrame, cancelScheduledFrame, publish]);
@@ -1596,7 +1496,6 @@ export function useDiagramMotionManager({
       hideHostVisuals: renderState.hideHostVisuals,
       motionPhase: renderState.motionPhase,
       requiredHostGeneration: renderState.requiredHostGeneration,
-      frameDurations: frameDurationsRef.current,
       isMotionActive:
         renderState.motionPhase === 'animating' || renderState.motionPhase === 'settling',
     }),
