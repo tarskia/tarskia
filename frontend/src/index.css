@@ -38,7 +38,7 @@
    *
    * Diagram nodes/edges are rendered by Tarskia's own canvas (React Flow is
    * used for interaction only). Their shadows are defined directly in
-   * `styles.css` on `.canvas-visual-outline .react-flow__node` and
+   * `styles.css` on `.canvas-visual-outline .canvas-node` and
    * `.transition-overlay-visual-outline .transition-overlay-node-shell`.
    */
   --shadow-toolbar: 0 1px 2px rgb(0 0 0 / 0.08);

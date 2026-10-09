@@ -2,8 +2,8 @@ import { buildSemanticIndex } from '@tarskia/diagram-semantics';
 // @vitest-environment happy-dom
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { ReactFlowInstance } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
+import type { CanvasCamera } from '../canvas/camera';
 import { DEFAULT_VIEWPORT_FIT_PADDING } from '../canvas/rendering/transition/animation-constants';
 import { computeViewportForBoundsInVisibleCanvas } from '../canvas/viewport-visibility';
 import { loadGallery } from '../test/curated-rendering';
@@ -97,7 +97,7 @@ it.each([
           viewport = next;
           return Promise.resolve(true);
         },
-      } as unknown as ReactFlowInstance);
+      } as unknown as CanvasCamera);
     });
     await settle();
     const fittedBefore = { ...viewport };

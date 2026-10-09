@@ -2,10 +2,6 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('reactflow', () => ({
-  useStore: () => [0, 0, 1],
-}));
-
 import { EdgeOverlay, resolveEdgeSelectionId } from './EdgeOverlay';
 import { EdgeOverlayView } from './EdgeOverlayView';
 import { resolveEdgeLabelOffset, resolveEdgeLabelTransform } from './edge-label-placement';

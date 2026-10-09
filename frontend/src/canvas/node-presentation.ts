@@ -1,29 +1,15 @@
 import type { CSSProperties } from 'react';
-import type { CanvasPresentation } from '../../rendering/presentation/presentation';
-import type {
-  CanvasEdgeHostControls,
-  CanvasInteractionBindings,
-  CanvasNodeHostControls,
-  ReactFlowHostRenderState,
-} from './types';
+import type { CanvasInteractionBindings, CanvasRenderState } from './canvas-types';
+import type { CanvasPresentation } from './rendering/presentation/presentation';
 
-export interface AdaptPresentationToReactFlowParams {
+export interface BuildCanvasRenderStateParams {
   presentation: CanvasPresentation;
   bindings: CanvasInteractionBindings;
-  nodeControlsById: Map<string, CanvasNodeHostControls>;
-  edgeControlsById: Map<string, CanvasEdgeHostControls>;
+  selectedEntityId?: string;
+  selectedEdgeId?: string;
+  disableControlActions?: boolean;
+  hideEdgeLabels?: boolean;
 }
-
-const defaultNodeControls: CanvasNodeHostControls = {
-  selected: false,
-  disableControlActions: false,
-  hideLocalEdgeLabels: false,
-};
-
-const defaultEdgeControls: CanvasEdgeHostControls = {
-  selected: false,
-  hideLabel: false,
-};
 
 const orderSelectedEdgesLast = <T extends { selected?: boolean }>(edges: T[]) =>
   [...edges].sort((left, right) => {
@@ -32,23 +18,28 @@ const orderSelectedEdgesLast = <T extends { selected?: boolean }>(edges: T[]) =>
     return leftSelected - rightSelected;
   });
 
-export const adaptPresentationToReactFlow = ({
+export const buildCanvasRenderState = ({
   presentation,
   bindings,
-  nodeControlsById,
-  edgeControlsById,
-}: AdaptPresentationToReactFlowParams): ReactFlowHostRenderState => {
-  const overlayEdges = presentation.overlayEdges.map((edge) => {
-    const edgeControls = edgeControlsById.get(edge.id) ?? defaultEdgeControls;
-    return {
-      ...edge,
-      selected: edgeControls.selected,
-      hideLabel: edgeControls.hideLabel,
-    };
-  });
+  selectedEntityId,
+  selectedEdgeId,
+  disableControlActions = false,
+  hideEdgeLabels = false,
+}: BuildCanvasRenderStateParams): CanvasRenderState => {
+  const overlayEdges = presentation.overlayEdges.map((edge) => ({
+    ...edge,
+    selected:
+      selectedEdgeId !== undefined &&
+      (edge.relationIds ?? [edge.relationId]).includes(selectedEdgeId),
+    hideLabel: edge.kind === 'routed' && hideEdgeLabels,
+  }));
 
   const nodes = presentation.nodes.map((node) => {
-    const controls = nodeControlsById.get(node.id) ?? defaultNodeControls;
+    const controls = {
+      selected: node.id === selectedEntityId,
+      disableControlActions,
+      hideLocalEdgeLabels: hideEdgeLabels,
+    };
     const position = {
       x: node.rect.x,
       y: node.rect.y,
@@ -90,12 +81,9 @@ export const adaptPresentationToReactFlow = ({
       position,
       zIndex: node.zIndex,
       selected: node.style.focusShell ? false : controls.selected,
-      hidden: false,
       width: node.rect.width,
       height: node.rect.height,
       selectable: !node.style.focusShell,
-      draggable: false,
-      connectable: !node.style.focusShell,
       data: {
         view: node,
         bindings,

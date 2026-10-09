@@ -1,8 +1,7 @@
 import type { CSSProperties } from 'react';
 import { useMemo, useSyncExternalStore } from 'react';
-import { useStore } from 'reactflow';
 import type { NodeVisualMode } from '../../../node-visual-mode';
-import type { CanvasNodeHostControls } from '../../host/reactflow/types';
+import type { CanvasNodeHostControls } from '../../canvas-types';
 import type { CanvasNodeView } from '../../rendering/presentation/presentation';
 import {
   overlayNodeBindings,
@@ -97,8 +96,9 @@ export function TransitionOverlay({
     frameStore?.getSnapshot ?? getNoFrame,
   );
   const frameOverride = storedFrame ?? suppliedFrame;
-  const transform = useStore((store) => store.transform);
-  const [tx, ty, zoom] = transform;
+  const tx = 0,
+    ty = 0,
+    zoom = 1;
   const frame = useMemo(
     () => frameOverride ?? resolveTransitionOverlayFrame(state, state.startedAt),
     [frameOverride, state],

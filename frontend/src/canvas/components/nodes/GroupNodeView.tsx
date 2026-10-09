@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '../../../components/ui/popover';
-import type { CanvasInteractionBindings, CanvasNodeHostControls } from '../../host/reactflow/types';
+import type { CanvasInteractionBindings, CanvasNodeHostControls } from '../../canvas-types';
 import type { CanvasNodeView } from '../../rendering/presentation/presentation';
 
 interface GroupNodeViewProps {

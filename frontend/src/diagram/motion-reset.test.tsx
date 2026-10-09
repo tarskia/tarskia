@@ -3,8 +3,8 @@ import type { SchemaModule, SemanticDocument } from '@tarskia/diagram-semantics'
 import { buildSemanticIndex } from '@tarskia/diagram-semantics';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { ReactFlowInstance } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
+import type { CanvasCamera } from '../canvas/camera';
 import { loadGallery } from '../test/curated-rendering';
 import { useDiagramEngine } from './useDiagramEngine';
 
@@ -63,7 +63,7 @@ it.each([
     viewport = next;
     return Promise.resolve(true);
   });
-  const instance = { getViewport: () => viewport, setViewport } as unknown as ReactFlowInstance;
+  const instance = { getViewport: () => viewport, setViewport } as unknown as CanvasCamera;
   const canvas = document.createElement('div');
   Object.defineProperties(canvas, { clientWidth: { value: 1280 }, clientHeight: { value: 720 } });
   canvas.getBoundingClientRect = () => ({

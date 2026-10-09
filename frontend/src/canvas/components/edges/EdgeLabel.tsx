@@ -20,10 +20,12 @@ export function EdgeLabel({
   edge,
   onSelect,
   interactive = true,
+  delegateClicks = false,
 }: {
   edge: LabelEdge;
   onSelect?: (relationId: string) => void;
   interactive?: boolean;
+  delegateClicks?: boolean;
 }) {
   const directions = edge.directionalLabels;
   const merged = directions?.length === 2;
@@ -49,8 +51,10 @@ export function EdgeLabel({
         className={className}
         data-relation-id={edge.relationId}
         style={style}
+        disabled={!enabled}
         onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => {
+          if (delegateClicks) return;
           event.stopPropagation();
           if (enabled) onSelect?.(edge.relationId);
         }}
@@ -80,10 +84,12 @@ export function EdgeLabel({
             type="button"
             className="edge-label-direction"
             data-relation-id={direction.relationId}
+            disabled={!enabled}
             aria-label={`${direction.label || 'Relation'}: ${direction.sourceId} → ${direction.targetId}`}
             title={`${direction.label || 'Relation'}: ${direction.sourceId} → ${direction.targetId}`}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
+              if (delegateClicks) return;
               event.stopPropagation();
               if (enabled) onSelect?.(direction.relationId);
             }}

@@ -4,8 +4,8 @@ import { buildSemanticIndex } from '@tarskia/diagram-semantics';
 import type { SemanticDocument } from '@tarskia/diagram-semantics';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { ReactFlowInstance } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
+import type { CanvasCamera } from '../canvas/camera';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
 import { captureTransitionOverlaySnapshot } from '../canvas/rendering/transition/overlay';
 import { loadGallery } from '../test/curated-rendering';
@@ -99,7 +99,7 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
           viewport = next;
           return Promise.resolve(true);
         },
-      } as unknown as ReactFlowInstance);
+      } as unknown as CanvasCamera);
     });
     for (let i = 0; i < 30 && (callbacks.size || engine.requiredHostGeneration !== null); i++)
       await advance(now + 100);

@@ -41,7 +41,7 @@ it.each(galleryFiles)('$title keeps every single-node toggle edge attached and s
   file,
 }) => {
   const gallery = loadGallery(file);
-  const index = buildEntityIndex(gallery.graph.entities);
+  const index = buildEntityIndex([...gallery.graph.entities]);
   const expandable = [...index.childrenByParent]
     .filter(([, children]) => children.length)
     .map(([id]) => id);

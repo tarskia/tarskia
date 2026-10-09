@@ -1,20 +1,12 @@
 import type { MutableRefObject } from 'react';
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import ReactFlow, {
-  Background,
-  type Node,
-  type NodeTypes,
-  type OnMove,
-  type OnMoveStart,
-  type OnNodesChange,
-  type ReactFlowInstance,
-} from 'reactflow';
+import { lazy, memo, Suspense, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import type { NodeVisualMode } from '../node-visual-mode';
-import { type DebugSummary, FlowDebugPanel } from '../ui/FlowDebugPanel';
+import type { CanvasDebugInputs } from './CanvasDebugPanel';
 import { CanvasFocusShellOverlay } from './CanvasFocusShellOverlay';
+import { type CanvasCamera, mountCanvasCamera } from './camera';
+import type { CanvasMoveHandler, CanvasNode, CanvasNodeTypes } from './canvas-types';
 import { EdgeOverlay, type EdgeOverlayInteractionBindings } from './components/edges/EdgeOverlay';
 import { TransitionOverlay } from './components/transition/TransitionOverlay';
-import type { ReactFlowHostNodeData } from './host/reactflow/types';
 import { scheduleHotReloadSafeUnmount } from './hot-reload-unmount';
 import type {
   CanvasOverlayEdgeView,
@@ -23,7 +15,45 @@ import type {
 import type { TransitionOverlayState } from './rendering/transition/overlay';
 import type { OverlayFrameStore } from './rendering/transition/overlay-frame-store';
 
-const EMPTY_FLOW_EDGES: never[] = [];
+const CanvasDebugPanel = lazy(() => import('./CanvasDebugPanel'));
+
+const StaticNodeLayer = memo(function StaticNodeLayer({
+  nodes,
+  nodeTypes,
+}: {
+  nodes: CanvasNode[];
+  nodeTypes: CanvasNodeTypes;
+}) {
+  const first = nodes.find((node) => node.selectable !== false)?.id;
+  return (
+    <div className="canvas-nodes">
+      {nodes.map((node) => {
+        const Component = nodeTypes[node.type];
+        if (!Component) return null;
+        return (
+          <div
+            key={node.id}
+            className={`canvas-node${node.selectable !== false ? ' selectable' : ''}${node.selected ? ' selected' : ''}`}
+            data-entity-id={node.id}
+            role="treeitem"
+            aria-label={node.data.view.content.label || node.id}
+            aria-selected={Boolean(node.selected)}
+            tabIndex={node.selectable === false ? undefined : node.id === first ? 0 : -1}
+            style={{
+              ...node.style,
+              position: 'absolute',
+              transform: `translate(${node.position.x}px, ${node.position.y}px)`,
+              zIndex: node.zIndex,
+            }}
+          >
+            <Component id={node.id} data={node.data} selected={node.selected} />
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+const StaticEdgeLayer = memo(EdgeOverlay);
 
 export interface DiagramCanvasProps {
   canvasRef: MutableRefObject<HTMLDivElement | null>;
@@ -32,25 +62,24 @@ export interface DiagramCanvasProps {
   hidden?: boolean;
   nodeVisualMode: NodeVisualMode;
   hideHostVisuals: boolean;
-  nodes: Node[];
+  nodes: CanvasNode[];
   overlayEdges: CanvasOverlayEdgeView[];
   edgeGeometrySnapshot?: CanvasRenderSnapshot;
   overlayInteractionBindings?: EdgeOverlayInteractionBindings;
   transitionOverlay?: TransitionOverlayState;
   overlayFrameStore?: OverlayFrameStore;
-  nodeTypes: NodeTypes;
-  onNodesChange: OnNodesChange;
-  onNodeClick: (_event: unknown, node: Node) => void;
-  onNodeContextMenu?: (event: React.MouseEvent, node: Node) => void;
-  onInit: (instance: ReactFlowInstance) => void;
+  nodeTypes: CanvasNodeTypes;
+  onNodeClick: (_event: unknown, node: CanvasNode) => void;
+  onNodeContextMenu?: (event: React.MouseEvent, node: CanvasNode) => void;
+  onInit: (instance: CanvasCamera) => void;
   onUnmount?: () => void;
-  onPaneClick: () => void;
-  onMove: OnMove;
-  onMoveEnd: OnMove;
+  onPaneClick: (force?: boolean) => void;
+  onMove: CanvasMoveHandler;
+  onMoveEnd: CanvasMoveHandler;
   minZoom: number;
   maxZoom: number;
   showDebug: boolean;
-  debugSummary: DebugSummary | null;
+  debugInputs?: CanvasDebugInputs;
   onSelectFocusShell?: (id: string) => void;
   focusShells?: Array<{
     id: string;
@@ -82,7 +111,6 @@ export function DiagramCanvas({
   transitionOverlay,
   overlayFrameStore,
   nodeTypes,
-  onNodesChange,
   onNodeClick,
   onNodeContextMenu,
   onInit,
@@ -93,13 +121,16 @@ export function DiagramCanvas({
   minZoom,
   maxZoom,
   showDebug,
-  debugSummary,
+  debugInputs,
   onSelectFocusShell,
   focusShells,
 }: DiagramCanvasProps) {
-  const overlayNodes = nodes as Node<ReactFlowHostNodeData>[];
+  const worldRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const unmountEffectGenerationRef = useRef(0);
-
+  const callbacks = useRef({ onMove, onMoveEnd, onInit });
+  callbacks.current = { onMove, onMoveEnd, onInit };
+  const initialViewport = useRef(defaultViewport);
   const handleCanvasElementRef = useCallback(
     (element: HTMLDivElement | null) => {
       canvasRef.current = element;
@@ -107,63 +138,101 @@ export function DiagramCanvas({
     },
     [canvasRef, onCanvasElementChange],
   );
-
+  useLayoutEffect(() => {
+    const element = canvasRef.current,
+      world = worldRef.current,
+      grid = gridRef.current;
+    if (!element || !world || !grid) return;
+    const mounted = mountCanvasCamera({
+      element,
+      world,
+      grid,
+      defaultViewport: initialViewport.current,
+      minZoom,
+      maxZoom,
+      onMove: (event, viewport) => callbacks.current.onMove(event, viewport),
+      onMoveEnd: (event, viewport) => callbacks.current.onMoveEnd(event, viewport),
+    });
+    callbacks.current.onInit(mounted.camera);
+    return mounted.destroy;
+  }, [canvasRef, minZoom, maxZoom]);
   useEffect(() => {
-    const effectGeneration = unmountEffectGenerationRef.current + 1;
-    unmountEffectGenerationRef.current = effectGeneration;
-
-    return () => {
-      // Fast Refresh tears down effects before re-running them, but ReactFlow does not reliably
-      // re-fire onInit in that path. Defer the cleanup and cancel it if a replacement effect
-      // installs immediately so dev reloads do not strand the motion manager in "canvas unmounted".
+    const effectGeneration = ++unmountEffectGenerationRef.current;
+    return () =>
       scheduleHotReloadSafeUnmount({
         onUnmount,
         effectGeneration,
         getCurrentEffectGeneration: () => unmountEffectGenerationRef.current,
       });
-    };
   }, [onUnmount]);
-
+  const nodeAt = (target: EventTarget | null) => {
+    const element =
+      target instanceof Element ? target.closest<HTMLElement>('[data-entity-id]') : null;
+    return element ? nodes.find((node) => node.id === element.dataset.entityId) : undefined;
+  };
   return (
     <div
+      role="tree"
+      aria-label="Diagram"
       ref={handleCanvasElementRef}
-      className={`canvas h-full w-full canvas-visual-${nodeVisualMode}${hideHostVisuals ? ' canvas-host-hidden' : ''}${hidden ? ' invisible' : ''}`}
+      className={`canvas canvas-host h-full w-full canvas-visual-${nodeVisualMode}${hideHostVisuals ? ' canvas-host-hidden' : ''}${hidden ? ' invisible' : ''}`}
+      onClick={(event) => {
+        const target = event.target as Element;
+        const relation = target.closest<HTMLElement>('[data-relation-id]');
+        if (relation) {
+          if (relation.matches(':disabled')) return;
+          const select = relation.matches('button')
+            ? overlayInteractionBindings?.onEdgeLabelClick
+            : overlayInteractionBindings?.onSelectEdge;
+          if (relation.dataset.relationId) select?.(relation.dataset.relationId);
+          return;
+        }
+        const node = nodeAt(target);
+        if (node && node.selectable !== false) {
+          onNodeClick(event, node);
+          return;
+        }
+        if (!target.closest('button, a, input, .canvas-focus-shell-overlay')) onPaneClick();
+      }}
+      onContextMenu={(event) => {
+        const node = nodeAt(event.target);
+        if (node) onNodeContextMenu?.(event, node);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          onPaneClick(true);
+          return;
+        }
+        const target = event.target as HTMLElement;
+        if (!target.matches('.canvas-node')) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          const node = nodeAt(target);
+          if (node) onNodeClick(event, node);
+          return;
+        }
+        if (event.key === 'Tab') {
+          const elements = [
+            ...(worldRef.current?.querySelectorAll<HTMLElement>('.canvas-node.selectable') ?? []),
+          ];
+          const next = elements[elements.indexOf(target) + (event.shiftKey ? -1 : 1)];
+          if (next) {
+            event.preventDefault();
+            target.tabIndex = -1;
+            next.tabIndex = 0;
+            next.focus({ preventScroll: true });
+          }
+        }
+      }}
     >
-      {focusShells && focusShells.length > 0 ? (
-        <CanvasFocusShellOverlay shells={focusShells} onSelectShell={onSelectFocusShell} />
-      ) : null}
-      <ReactFlow
-        nodes={nodes}
-        edges={EMPTY_FLOW_EDGES}
-        nodeTypes={nodeTypes}
-        defaultViewport={defaultViewport}
-        onlyRenderVisibleElements={false}
-        onNodesChange={onNodesChange}
-        onNodeClick={onNodeClick}
-        onNodeContextMenu={onNodeContextMenu}
-        onInit={onInit}
-        onPaneClick={onPaneClick}
-        onMove={onMove}
-        onMoveEnd={onMoveEnd}
-        nodesDraggable={false}
-        nodesConnectable={false}
-        elevateNodesOnSelect={false}
-        elevateEdgesOnSelect={false}
-        deleteKeyCode={null}
-        minZoom={minZoom}
-        maxZoom={maxZoom}
-        preventScrolling
-        zoomOnPinch
-        zoomOnScroll
-        noWheelClassName="nowheel"
-      >
-        <FlowDebugPanel show={showDebug} summary={debugSummary} />
-        <Background gap={20} size={1.2} color="rgba(255,255,255,0.12)" />
-        <EdgeOverlay
+      <div ref={gridRef} className="canvas-grid" aria-hidden />
+      <div ref={worldRef} className="canvas-world">
+        <StaticNodeLayer nodes={nodes} nodeTypes={nodeTypes} />
+        <StaticEdgeLayer
           edges={overlayEdges}
           geometrySnapshot={edgeGeometrySnapshot}
-          nodes={overlayNodes}
-          bindings={overlayInteractionBindings}
+          nodes={nodes}
         />
         {transitionOverlay ? (
           <TransitionOverlay
@@ -172,7 +241,13 @@ export function DiagramCanvas({
             nodeVisualMode={nodeVisualMode}
           />
         ) : null}
-      </ReactFlow>
+      </div>
+      <Suspense fallback={null}>
+        {showDebug && debugInputs ? <CanvasDebugPanel {...debugInputs} /> : null}
+      </Suspense>
+      {focusShells && focusShells.length > 0 ? (
+        <CanvasFocusShellOverlay shells={focusShells} onSelectShell={onSelectFocusShell} />
+      ) : null}
     </div>
   );
 }

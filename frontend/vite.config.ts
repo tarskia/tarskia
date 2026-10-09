@@ -61,11 +61,7 @@ function resolveManualChunk(id: string) {
     return 'framework';
   }
 
-  if (
-    id.includes('/node_modules/reactflow/') ||
-    id.includes('/node_modules/@reactflow/') ||
-    id.includes('/node_modules/dagre/')
-  ) {
+  if (/\/node_modules\/d3-[^/]+\//.test(id) || id.includes('/node_modules/dagre/')) {
     return 'diagram-vendor';
   }
 
