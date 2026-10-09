@@ -13,6 +13,33 @@ import PublicGalleryViewer, { shouldDelayGalleryCanvasMount } from './PublicGall
 
 describe('PublicGalleryViewer', () => {
   it.each([
+    { raw: 'entities: [ { id: a, type: x\n  oops: : :' },
+    { raw: '' },
+    undefined,
+  ])('shows the unreadable fallback without canvas controls for %s', (detail) => {
+    vi.mocked(useGetGalleryDiagram).mockReturnValue({
+      isPending: false,
+      isFetching: false,
+      isError: false,
+      data: detail ? { status: 200, data: detail } : undefined,
+    } as never);
+    const html = renderToStaticMarkup(
+      <MemoryRouter initialEntries={['/gallery/tarskia/n8n']}>
+        <Routes>
+          <Route element={<Outlet context={{ setViewerSearchChrome: vi.fn() }} />}>
+            <Route path="/gallery/:namespace/:slug" element={<PublicGalleryViewer />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(html).toContain('This diagram couldn&#x27;t be loaded.');
+    expect(html).toContain('href="/gallery"');
+    expect(html).toContain('Back to gallery');
+    expect(html).not.toContain('Expand all');
+    expect(html).not.toContain('react-flow');
+  });
+
+  it.each([
     new GalleryQueryError('Service unavailable', 503),
     new TypeError('Failed to fetch'),
   ])('shows a retryable error for a rejected query: %s', (error) => {
