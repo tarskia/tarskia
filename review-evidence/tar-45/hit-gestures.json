@@ -1,0 +1,668 @@
+{
+  "baseline": {
+    "gestures": [
+      {
+        "kind": "node",
+        "action": "wheel",
+        "point": {
+          "x": 240.10411071777344,
+          "y": 359.9162139892578,
+          "hit": "SPAN.node-meta-cell node-meta-text"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "node",
+        "action": "left",
+        "point": {
+          "x": 240.10411071777344,
+          "y": 359.9162139892578,
+          "hit": "SPAN.node-meta-cell node-meta-text"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 117.692,
+          "y": 222.326,
+          "zoom": 0.453273
+        },
+        "delta": {
+          "x": -48.462,
+          "y": 81.189,
+          "zoom": 0.70833313799489
+        }
+      },
+      {
+        "kind": "node",
+        "action": "middle",
+        "point": {
+          "x": 240.10411071777344,
+          "y": 359.9162139892578,
+          "hit": "SPAN.node-meta-cell node-meta-text"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 211.154,
+          "y": 166.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 45,
+          "y": 25,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "edge",
+        "action": "wheel",
+        "point": {
+          "x": 366.854482167917,
+          "y": 230.44014312733293,
+          "hit": "path.edge-hit-path"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "edge",
+        "action": "left",
+        "point": {
+          "x": 366.854482167917,
+          "y": 230.44014312733293,
+          "hit": "path.edge-hit-path"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "edge",
+        "action": "middle",
+        "point": {
+          "x": 366.854482167917,
+          "y": 230.44014312733293,
+          "hit": "path.edge-hit-path"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "label",
+        "action": "wheel",
+        "point": {
+          "x": 1039.5325317382812,
+          "y": 351.5973358154297,
+          "hit": "BUTTON.edge-label-direction"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "label",
+        "action": "left",
+        "point": {
+          "x": 1039.5325317382812,
+          "y": 351.5973358154297,
+          "hit": "BUTTON.edge-label-direction"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "label",
+        "action": "middle",
+        "point": {
+          "x": 1039.5325317382812,
+          "y": 351.5973358154297,
+          "hit": "BUTTON.edge-label-direction"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        }
+      }
+    ],
+    "labels": [
+      {
+        "key": "click",
+        "label": "pub",
+        "selectedRelation": "publishes-to"
+      },
+      {
+        "key": "click",
+        "label": "sub",
+        "selectedRelation": "consumes-from"
+      },
+      {
+        "key": "Enter",
+        "label": "pub",
+        "selectedRelation": "publishes-to"
+      },
+      {
+        "key": "Enter",
+        "label": "sub",
+        "selectedRelation": "consumes-from"
+      },
+      {
+        "key": "Space",
+        "label": "pub",
+        "selectedRelation": "consumes-from"
+      },
+      {
+        "key": "Space",
+        "label": "sub",
+        "selectedRelation": "consumes-from"
+      }
+    ],
+    "selection": {
+      "selected": 1,
+      "focusButton": 1,
+      "afterContextSelected": 1,
+      "afterContextFocus": 1
+    },
+    "errors": [],
+    "nodeChromeGestures": [
+      {
+        "kind": "node",
+        "action": "wheel",
+        "point": {
+          "x": 181.7438934326172,
+          "y": 325.51439697265624,
+          "hit": "DIV.node-body"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 167.946,
+          "y": 156.912,
+          "zoom": 0.557078
+        },
+        "delta": {
+          "x": 1.7920000000000016,
+          "y": 15.775000000000006,
+          "zoom": 0.8705499949212004
+        }
+      },
+      {
+        "kind": "node",
+        "action": "left",
+        "point": {
+          "x": 181.7438934326172,
+          "y": 325.51439697265624,
+          "hit": "DIV.node-body"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 211.154,
+          "y": 166.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 45,
+          "y": 25,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "node",
+        "action": "middle",
+        "point": {
+          "x": 181.7438934326172,
+          "y": 325.51439697265624,
+          "hit": "DIV.node-body"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 211.154,
+          "y": 166.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 45,
+          "y": 25,
+          "zoom": 1
+        }
+      }
+    ]
+  },
+  "after": {
+    "gestures": [
+      {
+        "kind": "node",
+        "action": "wheel",
+        "point": {
+          "x": 240.10411071777344,
+          "y": 359.9162139892578,
+          "hit": "SPAN.node-meta-cell node-meta-text"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "node",
+        "action": "left",
+        "point": {
+          "x": 240.10411071777344,
+          "y": 359.9162139892578,
+          "hit": "SPAN.node-meta-cell node-meta-text"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 117.692,
+          "y": 222.326,
+          "zoom": 0.453273
+        },
+        "delta": {
+          "x": -48.462,
+          "y": 81.189,
+          "zoom": 0.70833313799489
+        }
+      },
+      {
+        "kind": "node",
+        "action": "middle",
+        "point": {
+          "x": 240.10411071777344,
+          "y": 359.9162139892578,
+          "hit": "SPAN.node-meta-cell node-meta-text"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 211.154,
+          "y": 166.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 45,
+          "y": 25,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "edge",
+        "action": "wheel",
+        "point": {
+          "x": 366.854482167917,
+          "y": 230.44014312733293,
+          "hit": "path.edge-hit-path"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 191.894,
+          "y": 144.615,
+          "zoom": 0.557078
+        },
+        "delta": {
+          "x": 25.74000000000001,
+          "y": 3.4780000000000086,
+          "zoom": 0.8705499949212004
+        }
+      },
+      {
+        "kind": "edge",
+        "action": "left",
+        "point": {
+          "x": 366.854482167917,
+          "y": 230.44014312733293,
+          "hit": "path.edge-hit-path"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 211.154,
+          "y": 166.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 45,
+          "y": 25,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "edge",
+        "action": "middle",
+        "point": {
+          "x": 366.854482167917,
+          "y": 230.44014312733293,
+          "hit": "path.edge-hit-path"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 211.154,
+          "y": 166.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 45,
+          "y": 25,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "label",
+        "action": "wheel",
+        "point": {
+          "x": 1039.5325317382812,
+          "y": 351.5973358154297,
+          "hit": "BUTTON.edge-label-direction"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 279.014,
+          "y": 160.278,
+          "zoom": 0.557078
+        },
+        "delta": {
+          "x": 112.86000000000001,
+          "y": 19.14099999999999,
+          "zoom": 0.8705499949212004
+        }
+      },
+      {
+        "kind": "label",
+        "action": "left",
+        "point": {
+          "x": 1039.5325317382812,
+          "y": 351.5973358154297,
+          "hit": "BUTTON.edge-label-direction"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 211.154,
+          "y": 166.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 45,
+          "y": 25,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "label",
+        "action": "middle",
+        "point": {
+          "x": 1039.5325317382812,
+          "y": 351.5973358154297,
+          "hit": "BUTTON.edge-label-direction"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 211.154,
+          "y": 166.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 45,
+          "y": 25,
+          "zoom": 1
+        }
+      }
+    ],
+    "labels": [
+      {
+        "key": "click",
+        "label": "pub",
+        "selectedRelation": "publishes-to"
+      },
+      {
+        "key": "click",
+        "label": "sub",
+        "selectedRelation": "consumes-from"
+      },
+      {
+        "key": "Enter",
+        "label": "pub",
+        "selectedRelation": "publishes-to"
+      },
+      {
+        "key": "Enter",
+        "label": "sub",
+        "selectedRelation": "consumes-from"
+      },
+      {
+        "key": "Space",
+        "label": "pub",
+        "selectedRelation": "publishes-to"
+      },
+      {
+        "key": "Space",
+        "label": "sub",
+        "selectedRelation": "consumes-from"
+      }
+    ],
+    "selection": {
+      "selected": 1,
+      "focusButton": 1,
+      "afterContextSelected": 1,
+      "afterContextFocus": 1
+    },
+    "errors": [],
+    "nodeChromeGestures": [
+      {
+        "kind": "node",
+        "action": "wheel",
+        "point": {
+          "x": 181.7438934326172,
+          "y": 325.51439697265624,
+          "hit": "DIV.node-body"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 167.946,
+          "y": 156.912,
+          "zoom": 0.557078
+        },
+        "delta": {
+          "x": 1.7920000000000016,
+          "y": 15.775000000000006,
+          "zoom": 0.8705499949212004
+        }
+      },
+      {
+        "kind": "node",
+        "action": "left",
+        "point": {
+          "x": 181.7438934326172,
+          "y": 325.51439697265624,
+          "hit": "DIV.node-body"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 211.154,
+          "y": 166.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 45,
+          "y": 25,
+          "zoom": 1
+        }
+      },
+      {
+        "kind": "node",
+        "action": "middle",
+        "point": {
+          "x": 181.7438934326172,
+          "y": 325.51439697265624,
+          "hit": "DIV.node-body"
+        },
+        "before": {
+          "x": 166.154,
+          "y": 141.137,
+          "zoom": 0.639915
+        },
+        "after": {
+          "x": 211.154,
+          "y": 166.137,
+          "zoom": 0.639915
+        },
+        "delta": {
+          "x": 45,
+          "y": 25,
+          "zoom": 1
+        }
+      }
+    ]
+  }
+}
