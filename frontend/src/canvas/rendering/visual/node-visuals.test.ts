@@ -609,3 +609,39 @@ describe('buildNodeVisualMap', () => {
     expect(visuals.get('parent')?.projection.summaryLabel).toBe('3 components');
   });
 });
+
+it('reuses visual work only for the same immutable entity, schema and projection inputs', () => {
+  const doc: SemanticDocument = {
+    version: '1',
+    schemaRefs: [],
+    relations: [],
+    entities: [{ id: 'service', type: SERVICE_TYPE_ID, name: 'Original' }],
+  };
+  const tree = buildSceneTree({ tree: buildEntityTree(doc) });
+  const first = buildNodeVisualMap({ schema, tree }).get('service')!;
+  expect(buildNodeVisualMap({ schema, tree }).get('service')).toBe(first);
+  expect(Object.isFrozen(first.layout.baseSize)).toBe(true);
+  const changedDoc = { ...doc, entities: [{ ...doc.entities[0], name: 'Updated' }] };
+  const updated = buildNodeVisualMap({
+    schema,
+    tree: buildSceneTree({ tree: buildEntityTree(changedDoc) }),
+  }).get('service')!;
+  expect(updated.projection.explicitLabel).toBe('Updated');
+  expect(updated).not.toBe(first);
+  const changedSchema = {
+    ...schema,
+    types: schema.types.map((type) =>
+      type.id === SERVICE_TYPE_ID ? { ...type, label: 'Renamed' } : type,
+    ),
+  };
+  expect(
+    buildNodeVisualMap({ schema: changedSchema, tree }).get('service')?.projection.typeLabel,
+  ).toBe('Renamed');
+  const node = tree.byId.get('service')!;
+  node.hasChildren = true;
+  node.diagramChildCount = 2;
+  node.diagramChildTypeCounts = { [COMPONENT_TYPE_ID]: 2 };
+  const projected = buildNodeVisualMap({ schema, tree }).get('service')!;
+  expect(projected).not.toBe(first);
+  expect(projected).toEqual(buildNodeVisualMap({ schema, tree, uncached: true }).get('service'));
+});

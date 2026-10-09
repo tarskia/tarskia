@@ -1,4 +1,4 @@
-import { layoutGraph } from '../../layout/layout';
+import { layoutGraph, layoutGraphWithDagre } from '../../layout/layout';
 import type { ResolvedNodeRichContent } from '../visual/node-visuals';
 import { DEFAULT_NODE_SIZE } from './defaults';
 
@@ -491,10 +491,11 @@ const normalizePositions = (
   return normalized;
 };
 
-export function renderComponentLayout(
+export function renderComponentLayoutUncached(
   children: Record<string, { width: number; height: number }>,
   edges: { source: string; target: string }[],
   spec: LayoutSpec,
+  useDagre = false,
 ): {
   requiredSize: { width: number; height: number };
   positions: Record<string, { x: number; y: number }>;
@@ -534,7 +535,7 @@ export function renderComponentLayout(
     };
   }
 
-  const layout = layoutGraph(
+  const layout = (useDagre ? layoutGraphWithDagre : layoutGraph)(
     childIds.map((id) => ({ id, ...children[id] })),
     edges,
     {
@@ -573,4 +574,86 @@ export function renderComponentLayout(
     positions,
     computedPositions,
   };
+}
+
+export type LayoutBox = Readonly<{ x: number; y: number; width: number; height: number }>;
+
+// The backing Map never escapes; Object.freeze(Map) alone would still allow set/delete.
+class LayoutBoxes implements ReadonlyMap<string, LayoutBox> {
+  readonly #values: Map<string, LayoutBox>;
+  constructor(entries: Iterable<readonly [string, LayoutBox]>) {
+    this.#values = new Map(entries);
+  }
+  get size() {
+    return this.#values.size;
+  }
+  get(key: string) {
+    return this.#values.get(key);
+  }
+  has(key: string) {
+    return this.#values.has(key);
+  }
+  entries() {
+    return this.#values.entries();
+  }
+  keys() {
+    return this.#values.keys();
+  }
+  values() {
+    return this.#values.values();
+  }
+  [Symbol.iterator]() {
+    return this.#values[Symbol.iterator]();
+  }
+  forEach(
+    callback: (value: LayoutBox, key: string, map: ReadonlyMap<string, LayoutBox>) => void,
+    thisArg?: unknown,
+  ) {
+    this.#values.forEach((value, key) => {
+      callback.call(thisArg, value, key, this);
+    });
+  }
+}
+
+type ComponentLayout = ReturnType<typeof renderComponentLayoutUncached> & {
+  boxes: ReadonlyMap<string, LayoutBox>;
+};
+const layoutCache = new Map<string, ComponentLayout>();
+const LAYOUT_CACHE_LIMIT = 2000;
+export const clearComponentLayoutCache = () => layoutCache.clear();
+
+export function renderComponentLayout(
+  children: Record<string, { width: number; height: number }>,
+  edges: { source: string; target: string }[],
+  spec: LayoutSpec,
+): ComponentLayout {
+  // Arrays preserve child and edge insertion order, including Dagre's tie-breaking inputs.
+  const key = JSON.stringify([
+    // Include all spec fields, including future gap/label reservations. Field insertion
+    // order is irrelevant; child and edge order below must never be sorted.
+    Object.entries(spec).sort(([left], [right]) => left.localeCompare(right)),
+    Object.entries(children).map(([id, size]) => [id, size.width, size.height]),
+    edges.map((edge) => [edge.source, edge.target]),
+  ]);
+  const cached = layoutCache.get(key);
+  if (cached) {
+    layoutCache.delete(key);
+    layoutCache.set(key, cached);
+    return cached;
+  }
+  const result = renderComponentLayoutUncached(children, edges, spec);
+  for (const position of Object.values(result.positions)) Object.freeze(position);
+  for (const position of Object.values(result.computedPositions)) Object.freeze(position);
+  Object.freeze(result.positions);
+  Object.freeze(result.computedPositions);
+  Object.freeze(result.requiredSize);
+  const boxes = new LayoutBoxes(
+    Object.entries(result.positions).map(
+      ([id, position]) => [id, Object.freeze({ ...position, ...children[id] })] as const,
+    ),
+  );
+  const frozen = Object.freeze({ ...result, boxes: Object.freeze(boxes) });
+  layoutCache.set(key, frozen);
+  if (layoutCache.size > LAYOUT_CACHE_LIMIT) layoutCache.delete(layoutCache.keys().next().value!);
+  return frozen;
 }
