@@ -2,14 +2,13 @@ import { ExternalLink, Search, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Outlet, useParams, useSearchParams } from 'react-router-dom';
 
-import { useGetGalleryDiagram, useListGalleryDiagrams } from './api/generated/gallery/gallery';
+import { useListGalleryDiagrams } from './api/generated/gallery/gallery';
 import type { DtoGalleryDiagramDetailResponse } from './api/generated/model';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import {
   GALLERY_QUERY_STALE_TIME_MS,
   galleryRetryDelay,
-  getGalleryDiagramWithLocalFallback,
   listGalleryDiagramsWithLocalFallback,
   retryGalleryQuery,
 } from './gallery/gallery-query';
@@ -22,6 +21,7 @@ import {
   formatPublicGalleryCommit,
   readPublicGallerySourceRepositoryFromRaw,
 } from './gallery/public-gallery-repository';
+import { useGalleryDiagramQuery } from './gallery/useGalleryDiagramQuery';
 import { formatCompactNumber } from './gallery/worker-build-summary';
 import { GalleryFeedbackMenu } from './ui/GalleryFeedbackMenu';
 import { GitHubLink } from './ui/GitHubLink';
@@ -53,15 +53,7 @@ export default function PublicGalleryShell() {
     { key: string; label: string } | undefined
   >();
   const revealSearchResultsRef = useRef<(() => void) | undefined>(undefined);
-  const detailQuery = useGetGalleryDiagram(namespace, slug, {
-    query: {
-      enabled: inViewer,
-      staleTime: GALLERY_QUERY_STALE_TIME_MS,
-      retry: retryGalleryQuery,
-      retryDelay: galleryRetryDelay,
-      queryFn: ({ signal }) => getGalleryDiagramWithLocalFallback(namespace, slug, { signal }),
-    },
-  });
+  const detailQuery = useGalleryDiagramQuery(namespace, slug);
   const galleryQuery = useListGalleryDiagrams({
     query: {
       enabled: inViewer,
@@ -72,10 +64,6 @@ export default function PublicGalleryShell() {
     },
   });
   const detail = coerceSuccessfulResponseBody<DtoGalleryDiagramDetailResponse>(detailQuery.data);
-  const detailSourceRepository = useMemo(
-    () => readPublicGallerySourceRepositoryFromRaw(detail?.raw),
-    [detail?.raw],
-  );
   const gallerySummaries = useMemo(
     () => coerceGallerySummaryArray(coerceSuccessfulResponseBody<unknown>(galleryQuery.data)),
     [galleryQuery.data],
@@ -84,6 +72,13 @@ export default function PublicGalleryShell() {
     () =>
       gallerySummaries.find((diagram) => diagram.namespace === namespace && diagram.slug === slug),
     [gallerySummaries, namespace, slug],
+  );
+  const detailSourceRepository = useMemo(
+    () =>
+      !currentSummary?.sourceRepository && !galleryQuery.isPending
+        ? readPublicGallerySourceRepositoryFromRaw(detail?.raw)
+        : undefined,
+    [currentSummary?.sourceRepository, galleryQuery.isPending, detail?.raw],
   );
   const viewerSourceRepository = currentSummary?.sourceRepository ?? detailSourceRepository;
   const viewerRepository = viewerSourceRepository
