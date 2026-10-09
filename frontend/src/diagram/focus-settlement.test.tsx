@@ -40,7 +40,7 @@ it.each([
   const selectEntity = vi.fn(),
     selectEdge = vi.fn();
   function Harness() {
-    const [current, commitDoc] = useState(initial.scene.doc);
+    const [current, commitDoc] = useState(initial.doc);
     const [documentKey, updateDocumentKey] = useState('n8n');
     replaceDocument = commitDoc;
     setDocumentKey = updateDocumentKey;
@@ -65,7 +65,7 @@ it.each([
       },
     });
     focus = useFocusViewController({
-      sceneTree: engine.compiled.scene.tree,
+      sceneTree: engine.compiled.tree,
       expanded: getDiagramViewExpandedMap(current.view),
       getCurrentCanvasSize: engine.getCurrentCanvasSize,
       canvasLayoutVersion: engine.canvasLayoutVersion,
@@ -119,7 +119,7 @@ it.each([
       } as unknown as ReactFlowInstance);
     });
     await settle();
-    const sourceEntity = engine.compiled.scene.tree.byId.get('browser-editor-shell')?.entity;
+    const sourceEntity = engine.compiled.tree.byId.get('browser-editor-shell')?.entity;
     expect(sourceEntity).toBeDefined();
     await act(async () => {
       expect(focus.focusViewOnEntity('browser-editor-shell')).toBe(true);
@@ -129,11 +129,11 @@ it.each([
     if (!overlay) throw new Error('Expected focus expansion animation');
     await advance(overlay.startedAt + overlay.duration * 0.4);
     expect(doc.view?.scopeRootId).toBeUndefined();
-    expect(engine.compiled.scene.tree.byId.get('browser-editor-shell')?.entity).toBe(sourceEntity);
+    expect(engine.compiled.tree.byId.get('browser-editor-shell')?.entity).toBe(sourceEntity);
     expect(engine.motionPhase).not.toBe('idle');
     await act(async () => {
       if (interruption === 'replaced-document') {
-        replaceDocument(structuredClone(initial.scene.doc));
+        replaceDocument(structuredClone(initial.doc));
         setDocumentKey('replacement');
       } else if (interruption === 'gesture') engine.reportUserGestureStart();
       else
@@ -143,10 +143,8 @@ it.each([
       interruption === 'replaced-document' ? undefined : 'browser-editor-shell',
     );
     if (interruption === 'replaced-document') {
-      expect(engine.compiled.scene.tree.byId.get('browser-editor-shell')?.entity).toBeDefined();
-      expect(engine.compiled.scene.tree.byId.get('browser-editor-shell')?.entity).not.toBe(
-        sourceEntity,
-      );
+      expect(engine.compiled.tree.byId.get('browser-editor-shell')?.entity).toBeDefined();
+      expect(engine.compiled.tree.byId.get('browser-editor-shell')?.entity).not.toBe(sourceEntity);
     }
     if (interruption === 'gesture') await act(async () => engine.reportUserGestureEnd(viewport));
     await settle();
