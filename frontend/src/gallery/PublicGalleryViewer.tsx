@@ -20,7 +20,7 @@ import {
   buildDiagramProvenanceSource,
   buildInspectorViewModel,
 } from '../viewer-core/buildInspectorViewModel';
-import { ensureDiagramView, ensureDiagramViewLayout } from '../viewer-core/diagram-view';
+import { ensureDiagramView } from '../viewer-core/diagram-view';
 import { useFocusViewController } from '../viewer-core/focus-view';
 import {
   createBlankDiagramDocument,
@@ -30,6 +30,7 @@ import { useDiagramActions } from '../viewer-core/useDiagramActions';
 import { coerceSuccessfulResponseBody } from './gallery-response';
 
 import { useGalleryDiagramQuery } from './useGalleryDiagramQuery';
+import { useViewerViewport } from './useViewerViewport';
 
 const MIN_VIEW_ZOOM = 0.05;
 const MAX_VIEW_ZOOM = 2;
@@ -61,6 +62,7 @@ export default function PublicGalleryViewer() {
   );
   const fallbackSchema = semanticBootstrap.schemaModules[0];
   const [doc, setDoc] = useState(() => createBlankDiagramDocument('0.1.0'));
+  const [validationDocument, setValidationDocument] = useState(doc);
   const [sourceDiagnostics, setSourceDiagnostics] = useState<
     ReturnType<typeof loadDiagramDocFromRaw>['sourceDiagnostics']
   >([]);
@@ -89,6 +91,7 @@ export default function PublicGalleryViewer() {
       return;
     }
     setDoc(loadedDiagram.doc);
+    setValidationDocument(loadedDiagram.doc);
     setSourceDiagnostics(loadedDiagram.sourceDiagnostics);
     setSelectedEntity(undefined);
     setSelectedEdge(undefined);
@@ -113,28 +116,11 @@ export default function PublicGalleryViewer() {
     );
   }, []);
 
-  const persistViewport = useCallback(
-    (viewport: { x: number; y: number; zoom: number }) => {
-      commitDoc((previous) => {
-        const view = ensureDiagramView(previous.view);
-        const layout = ensureDiagramViewLayout(previous.view);
-        return {
-          ...previous,
-          view: {
-            ...view,
-            layout: {
-              ...layout,
-              viewport,
-            },
-          },
-        };
-      });
-    },
-    [commitDoc],
-  );
+  const { persistViewport, savedViewport } = useViewerViewport(loadedDiagram?.doc);
 
   const semanticRuntime = useDiagramSemanticRuntime({
     doc,
+    validationDocument,
     schemaVersionCatalog,
     fallbackSchema,
     sourceDiagnostics,
@@ -155,7 +141,7 @@ export default function PublicGalleryViewer() {
     skipTransitions: reducedMotion,
     showDebug: false,
     persistViewport,
-    savedViewport: doc.view?.layout?.viewport,
+    savedViewport,
     initialViewportKey: `${namespace}/${slug}`,
     cameraPolicy: {
       openingMode: 'immediate',

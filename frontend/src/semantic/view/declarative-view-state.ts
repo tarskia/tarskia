@@ -5,6 +5,7 @@ import {
   type SemanticDocument,
   type ViewportState,
 } from '@tarskia/diagram-semantics';
+import { useMemo } from 'react';
 
 export interface DiagramSemanticState {
   version: SemanticDocument['version'];
@@ -45,14 +46,14 @@ const sortObjectKeys = (value: unknown): unknown => {
 
 const stableKey = (value: unknown) => JSON.stringify(sortObjectKeys(value));
 
-export const selectDiagramSemanticState = (doc: SemanticDocument): DiagramSemanticState => ({
-  version: doc.version,
-  schemaRefs: doc.schemaRefs,
-  entities: doc.entities,
-  relations: doc.relations,
-  inputs: doc.inputs,
-  metadata: doc.metadata,
-});
+/** Camera and declarative view changes do not change semantic identity. */
+export const useDiagramSemanticState = (doc: SemanticDocument): DiagramSemanticState => {
+  const { version, schemaRefs, entities, relations, inputs, metadata } = doc;
+  return useMemo(
+    () => ({ version, schemaRefs, entities, relations, inputs, metadata }),
+    [version, schemaRefs, entities, relations, inputs, metadata],
+  );
+};
 
 export const buildSemanticStateDocument = (
   semanticState: DiagramSemanticState,
@@ -66,7 +67,7 @@ export const buildSemanticStateDocument = (
 });
 
 export const selectDeclarativeDiagramViewState = (
-  doc: SemanticDocument,
+  doc: Pick<SemanticDocument, 'view'>,
 ): DeclarativeDiagramViewState => {
   const normalizedViewState = normalizeDiagramViewState(doc.view);
   const view = normalizedViewState.view as DiagramView;
