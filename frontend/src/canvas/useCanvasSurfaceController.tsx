@@ -23,7 +23,7 @@ import type {
 } from '../diagram/motion-types';
 import type { NodeVisualMode } from '../node-visual-mode';
 import type { Entity, SchemaModule, SemanticDocument } from '../semantic';
-import type { CanvasSemanticBindings } from '../shell/view-models';
+import type { CanvasSemanticBindings } from '../viewer-core/view-models';
 import type { CompileResult } from './compiler/compile';
 import type { EdgeOverlayInteractionBindings } from './components/edges/EdgeOverlay';
 import { resolveEdgeOverlayRenderState } from './components/edges/edge-overlay-state';

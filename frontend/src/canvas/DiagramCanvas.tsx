@@ -11,12 +11,12 @@ import ReactFlow, {
 } from 'reactflow';
 
 import type { NodeVisualMode } from '../node-visual-mode';
+import { type DebugSummary, FlowDebugPanel } from '../ui/FlowDebugPanel';
 import type {
   CanvasEntityOptionView,
   CanvasRelationOptionView,
   CanvasTypeOptionView,
-} from '../shell/view-models';
-import { type DebugSummary, FlowDebugPanel } from '../ui/FlowDebugPanel';
+} from '../viewer-core/view-models';
 import { CanvasFocusShellOverlay } from './CanvasFocusShellOverlay';
 import {
   EdgeOverlay,

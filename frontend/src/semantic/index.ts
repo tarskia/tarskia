@@ -57,7 +57,6 @@ export * from '../model/history';
 export * from '../model/personal-schema-registry';
 export * from '../model/schema';
 export * from '../model/schema-display';
-export * from '../model/schema-editor-session-store';
 export * from '../model/schema-ids';
 export * from '../model/schema-ref';
 export * from '../model/schema-reference';

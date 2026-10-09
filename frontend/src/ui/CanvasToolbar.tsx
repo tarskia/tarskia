@@ -1,6 +1,6 @@
 import { ChevronsDownUp, ChevronsUpDown, Copy, Focus, LayoutGrid, Undo2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import type { SchemaOptionView } from '../shell/view-models';
+import type { SchemaOptionView } from '../viewer-core/view-models';
 import { SchemasPopover } from './SchemasPopover';
 
 interface CanvasToolbarProps {

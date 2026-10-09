@@ -4,7 +4,7 @@
 
 This repository contains the public, open-source parts of Tarskia:
 
-- `frontend/`: Vite + React + TypeScript app for the studio and gallery.
+- `frontend/`: Vite + React + TypeScript app for the public gallery viewer.
 - `gallery/curated/`: source-of-truth curated gallery diagrams.
 - `packages/diagram-semantics/`: shared semantic diagram model and validation package.
 - `scripts/`: shared build support, currently semantic asset preparation.

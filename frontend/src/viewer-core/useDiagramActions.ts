@@ -90,7 +90,7 @@ interface EntityZoomOptions {
   expandSingleChildChain?: boolean;
 }
 
-interface UseShellDiagramActionsArgs {
+interface UseDiagramActionsArgs {
   state: {
     doc: SemanticDocument;
     expanded: Record<string, boolean>;
@@ -123,14 +123,14 @@ interface UseShellDiagramActionsArgs {
   };
 }
 
-export function useShellDiagramActions({
+export function useDiagramActions({
   state,
   document,
   transition,
   selection,
   rules,
   sceneQueries,
-}: UseShellDiagramActionsArgs) {
+}: UseDiagramActionsArgs) {
   const { doc, expanded, entityIndex } = state;
   const { commitDoc, ensureDiagramView } = document;
   const {

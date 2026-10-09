@@ -9,10 +9,6 @@ import {
 } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('./EditorShell', () => ({
-  default: () => <div>editor-shell</div>,
-}));
-
 vi.mock('./gallery/PublicGalleryIndex', () => ({
   default: () => <div>gallery-index</div>,
 }));
@@ -55,7 +51,6 @@ describe('AppShell routes', () => {
 
     expect(html).toContain('gallery-index');
     expect(html).not.toContain('gallery-viewer');
-    expect(html).not.toContain('editor-shell');
   });
 
   it('renders the public viewer at /gallery/:namespace/:slug', () => {
@@ -63,14 +58,17 @@ describe('AppShell routes', () => {
 
     expect(html).toContain('gallery-viewer');
     expect(html).not.toContain('gallery-index');
-    expect(html).not.toContain('editor-shell');
   });
 
-  it('renders the editor shell at /studio', () => {
-    const html = renderAt('/studio');
+  it('redirects unknown routes to the gallery', () => {
+    const wildcardRoute = appRoutes.find((route) => route.path === '*');
+    if (!isValidElement(wildcardRoute?.element)) {
+      throw new Error('Expected wildcard route to render a redirect element');
+    }
+    const props = wildcardRoute.element.props as { to: string; replace?: boolean };
 
-    expect(html).toContain('editor-shell');
-    expect(html).not.toContain('gallery-index');
-    expect(html).not.toContain('gallery-viewer');
+    expect(wildcardRoute.element.type).toBe(Navigate);
+    expect(props.to).toBe('/gallery');
+    expect(props.replace).toBe(true);
   });
 });

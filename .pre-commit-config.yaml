@@ -24,7 +24,7 @@ repos:
         language: system
         args: ["run", "validate:schemas"]
         pass_filenames: false
-        files: '^(frontend/src/(semantic/|model/validation/|shell/schema-cookbook(\.test)?\.ts)|packages/diagram-semantics/|scripts/build-semantics\.mjs$|package\.json$|package-lock\.json$|\.node-version$)'
+        files: '^(frontend/src/(semantic/|model/validation/)|packages/diagram-semantics/|scripts/build-semantics\.mjs$|package\.json$|package-lock\.json$|\.node-version$)'
 
       - id: frontend-tests
         name: frontend tests

@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import type { InspectorViewModel } from '../shell/view-models';
+import type { InspectorViewModel } from '../viewer-core/view-models';
 import { GalleryInspector } from './GalleryInspector';
 
 const entityViewModel: InspectorViewModel = {

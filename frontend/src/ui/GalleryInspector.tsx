@@ -3,7 +3,7 @@ import type {
   InspectorPropertyEntryView,
   InspectorProvenanceView,
   InspectorViewModel,
-} from '../shell/view-models';
+} from '../viewer-core/view-models';
 
 const formatTypeStyle = (typeHue?: number) =>
   typeHue === undefined ? undefined : { color: `hsla(${typeHue}, 48%, 58%, 0.96)` };

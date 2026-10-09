@@ -1,7 +1,6 @@
 import { Navigate, type RouteObject, useRoutes } from 'react-router-dom';
 
 import AboutPage from './AboutPage';
-import EditorShell from './EditorShell';
 import PublicGalleryIndex from './gallery/PublicGalleryIndex';
 import PublicGalleryViewer from './gallery/PublicGalleryViewer';
 import PublicGalleryShell from './PublicGalleryShell';
@@ -28,10 +27,6 @@ export const appRoutes: RouteObject[] = [
         element: <PublicGalleryViewer />,
       },
     ],
-  },
-  {
-    path: '/studio/*',
-    element: <EditorShell />,
   },
   {
     path: '*',
