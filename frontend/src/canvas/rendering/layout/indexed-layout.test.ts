@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { selectDeclarativeDiagramViewState } from '../../../semantic/view/declarative-view-state';
 import { galleryFiles, loadGallery } from '../../../test/curated-rendering';
 import { buildStaticCanvasPresentation } from '../presentation/presentation';
+import { LayoutGeometryNode } from './layout-geometry';
 import { buildLayoutResult } from './layout-pipeline';
 
 describe('immutable indexed rendering', () => {
@@ -26,7 +27,11 @@ describe('immutable indexed rendering', () => {
       selectDeclarativeDiagramViewState({ view }),
     );
     const node = scene.tree.root.children[0];
-    expect(Object.getPrototypeOf(node)).toBe(compiled.tree.byId.get(node.id));
+    expect(node).toBeInstanceOf(LayoutGeometryNode);
+    if (!(node instanceof LayoutGeometryNode)) throw new Error('Expected a geometry record');
+    expect(node.semanticNode).toBe(compiled.tree.byId.get(node.id));
+    expect(node.entity).toBe(compiled.tree.byId.get(node.id)?.entity);
+    expect(Object.getPrototypeOf(node)).toBe(Object.getPrototypeOf(scene.tree.root));
     expect(Object.hasOwn(node, 'entity')).toBe(false);
     expect(() => {
       node.size.width = 1;

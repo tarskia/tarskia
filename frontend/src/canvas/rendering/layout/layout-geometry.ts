@@ -7,7 +7,7 @@ import {
 } from '@tarskia/diagram-semantics';
 
 /**
- * Layout owns geometry only; immutable semantic nodes are shared through prototypes.
+ * Layout owns geometry only; immutable semantic nodes are shared by reference.
  * Semantic hierarchy and reveal decisions come from `src/semantic/tree`.
  */
 export interface LayoutNodeContentOccluder {
@@ -56,30 +56,64 @@ interface LayoutTreeSourceNode<TNode> extends TreeNodeLike<TNode> {
   };
 }
 
+/** One shared prototype keeps property access stable across every geometry record. */
+export class LayoutGeometryNode<TNode extends LayoutTreeSourceNode<TNode>> implements LayoutNode {
+  readonly semanticNode: TNode;
+  children: LayoutNode[] = [];
+  baseSize = { width: 0, height: 0 };
+  size = { width: 0, height: 0 };
+  position?: { x: number; y: number };
+  layoutMode?: 'list' | 'graph';
+  listShowType?: boolean;
+  contentOccluders?: LayoutNodeContentOccluder[];
+  summaryLabel?: string;
+
+  constructor(semanticNode: TNode) {
+    this.semanticNode = semanticNode;
+  }
+  get id() {
+    return this.semanticNode.id;
+  }
+  get entity() {
+    return this.semanticNode.entity;
+  }
+  get parentId() {
+    return this.semanticNode.parentId;
+  }
+  get hasChildren() {
+    return this.semanticNode.hasDiagramChildren ?? this.semanticNode.hasChildren ?? false;
+  }
+  get isListContainer() {
+    return this.semanticNode.isListContainer;
+  }
+  get diagramChildCount() {
+    return this.semanticNode.diagramChildCount;
+  }
+  get diagramChildTypeCounts() {
+    return this.semanticNode.diagramChildTypeCounts;
+  }
+  get focusScaffoldDepth() {
+    return this.semanticNode.view?.focusChainDepth ?? this.semanticNode.focusScaffoldDepth;
+  }
+  get controls() {
+    return this.semanticNode.view?.controls ?? this.semanticNode.controls;
+  }
+}
+
 export function createLayoutGeometry<TNode extends LayoutTreeSourceNode<TNode>>(params: {
   tree: CanonicalTree<TNode>;
 }): LayoutTree {
   const { tree } = params;
   const byId = new Map<string, LayoutNode>();
 
-  // Geometry records borrow semantic fields from the immutable compiled view node.
+  // Geometry records reference the immutable compiled view node without copying its fields.
   // There is no second entity/view tree: layout owns only sizing and placement.
   const geometryFor = (node: TNode): LayoutNode => {
     const existing = byId.get(node.id);
     if (existing) return existing;
-    const geometry = Object.create(node) as LayoutNode;
-    Object.defineProperties(geometry, {
-      hasChildren: { get: () => node.hasDiagramChildren ?? node.hasChildren ?? false },
-      focusScaffoldDepth: { get: () => node.view?.focusChainDepth ?? node.focusScaffoldDepth },
-      controls: { get: () => node.view?.controls ?? node.controls },
-      baseSize: { value: { width: 0, height: 0 }, writable: true, enumerable: true },
-      size: { value: { width: 0, height: 0 }, writable: true, enumerable: true },
-    });
+    const geometry = new LayoutGeometryNode(node);
     byId.set(node.id, geometry);
-    Object.defineProperty(geometry, 'children', {
-      value: node.children.map(geometryFor),
-      enumerable: true,
-    });
+    geometry.children = node.children.map(geometryFor);
     return geometry;
   };
 
