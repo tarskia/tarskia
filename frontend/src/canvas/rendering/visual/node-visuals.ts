@@ -185,11 +185,19 @@ const collectBadges = (
   return badges;
 };
 
+const visualCache = new WeakMap<SchemaModule, WeakMap<Entity, Map<string, ResolvedNodeVisual>>>();
+
 export function buildNodeVisualMap(params: {
   schema: SchemaModule;
   tree: SceneTree;
+  uncached?: boolean;
 }): Map<string, ResolvedNodeVisual> {
   const { schema, tree } = params;
+  let schemaCache = visualCache.get(schema);
+  if (!schemaCache) {
+    schemaCache = new WeakMap();
+    visualCache.set(schema, schemaCache);
+  }
   const entityById = new Map<string, Entity>();
   const parentById = new Map<string, string | undefined>();
   const childrenByParent = new Map<string, Entity[]>();
@@ -227,10 +235,23 @@ export function buildNodeVisualMap(params: {
   for (const [nodeId, sceneNode] of tree.byId.entries()) {
     if (nodeId === tree.rootId) continue;
     const entity = sceneNode.entity;
+    const displayTypeId = resolveEntityDisplayTypeId(entity);
+    // Mixed-group identity and fallback child summaries can change with projection.
+    // Entity/schema identity covers immutable semantic content; these cover the view inputs.
+    const cacheKey = JSON.stringify([
+      displayTypeId,
+      sceneNode.hasChildren,
+      getStructuralChildCount(sceneNode),
+      getStructuralChildTypeCounts(sceneNode),
+    ]);
+    const entityCache = schemaCache.get(entity) ?? new Map<string, ResolvedNodeVisual>();
+    const cached = params.uncached ? undefined : entityCache.get(cacheKey);
+    if (cached) {
+      nodeVisuals.set(nodeId, cached);
+      continue;
+    }
     const typeDef = resolveTypeDef(schema, entity.type);
-    const identityVisual = resolveTypeVisualDefaults(
-      resolveTypeDef(schema, resolveEntityDisplayTypeId(entity)),
-    );
+    const identityVisual = resolveTypeVisualDefaults(resolveTypeDef(schema, displayTypeId));
     const typeProjection = resolveTypeProjectionOptions(typeDef);
     const typeLayout = resolveTypeLayoutDefaults(typeDef);
     const rootProps = entity.props as Record<string, unknown> | undefined;
@@ -293,7 +314,7 @@ export function buildNodeVisualMap(params: {
     }
 
     const explicitLabel = entity.name?.trim() || undefined;
-    nodeVisuals.set(nodeId, {
+    const visual: ResolvedNodeVisual = {
       identity: {
         primaryTagId: identityVisual.primaryTag,
         fallbackHue: identityVisual.fallbackHue,
@@ -306,9 +327,21 @@ export function buildNodeVisualMap(params: {
         richContent,
       },
       layout: {
-        baseSize: typeLayout.baseSize ?? DEFAULT_NODE_SIZE,
+        baseSize: Object.freeze({ ...(typeLayout.baseSize ?? DEFAULT_NODE_SIZE) }),
       },
-    });
+    };
+    Object.freeze(visual.identity);
+    Object.freeze(visual.projection.badges);
+    if (visual.projection.richContent) Object.freeze(visual.projection.richContent);
+    Object.freeze(visual.projection);
+    Object.freeze(visual.layout);
+    Object.freeze(visual);
+    nodeVisuals.set(nodeId, visual);
+    if (!params.uncached) {
+      entityCache.set(cacheKey, visual);
+      if (entityCache.size > 8) entityCache.delete(entityCache.keys().next().value!);
+      schemaCache.set(entity, entityCache);
+    }
   }
 
   return nodeVisuals;
