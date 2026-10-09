@@ -6,7 +6,7 @@ import frontendRaw from '../schemas/frontend.yaml?raw';
 import kubernetesRaw from '../schemas/kubernetes.yaml?raw';
 import softwareRaw from '../schemas/software.yaml?raw';
 import webAppRaw from '../schemas/web-app.yaml?raw';
-import { sampleDiagramRaw } from '../semantic/bundled-diagrams';
+import { starterDiagramRaw } from '../semantic/bundled-diagrams';
 import { parseDocument, parseSchema } from '../util/serialization';
 import { diagnosticsToMessages } from './diagnostics';
 import { buildSchemaActivation } from './schema-ref';
@@ -88,7 +88,7 @@ describe('validateDocument naming', () => {
       raw,
       selection: buildSchemaSelection({ raw }),
     });
-    const sampleDoc = parseDocument(sampleDiagramRaw);
+    const sampleDoc = parseDocument(starterDiagramRaw);
     const diagnostics = validateDocument(sampleDoc, runtime.resolved.effectiveSchema);
     const errors = diagnosticsToMessages(diagnostics);
     const namingErrors = errors.filter((error) => error.includes('requires a name'));

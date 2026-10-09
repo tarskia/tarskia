@@ -556,9 +556,6 @@ export default function PublicGalleryViewer() {
             onResetFocusView={focusRootId ? clearFocus : undefined}
             onCopyDiagramView={() => {}}
             canCopyDiagramView={false}
-            availableSchemas={[]}
-            onToggleSchema={() => {}}
-            showSchemas={false}
             showCopy={false}
             centerOffset={showInspector ? INSPECTOR_CENTER_OFFSET : 0}
           />

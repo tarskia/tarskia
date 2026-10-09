@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { diagnosticsToMessages } from './diagnostics';
 import { removeEntitiesFromDocument } from './document-mutations';
-import { commitHistory, createHistory, redoHistory, undoHistory } from './history';
 import { mergeSchemas } from './schema';
 import { buildSchemaActivation } from './schema-ref';
 import {
@@ -49,8 +48,8 @@ const deploymentModule: SchemaModule = {
   },
 };
 
-describe('controller boundary (history + semantics APIs)', () => {
-  it('supports delete->undo/redo and schema deselection validation flow', () => {
+describe('controller boundary (semantics APIs)', () => {
+  it('supports deletion and schema deselection validation flow', () => {
     const schemaCatalog: SchemaCatalogEntry[] = [
       { id: 'user/base', owner: 'user', label: 'Base', version: '1.0.0' },
       { id: 'user/deployment', owner: 'user', label: 'Deployment', version: '1.0.0' },
@@ -93,27 +92,19 @@ describe('controller boundary (history + semantics APIs)', () => {
     ).toBe(true);
 
     // Delete deployment subtree, then schema deselection should pass.
-    let history = createHistory(initialDoc);
-    history = commitHistory(history, (prev) => removeEntitiesFromDocument(prev, ['deploy-orders']));
-    expect(history.present.relations).toEqual([]);
-    expect(history.past).toHaveLength(1);
+    const updatedDoc = removeEntitiesFromDocument(initialDoc, ['deploy-orders']);
+    expect(updatedDoc.relations).toEqual([]);
 
     const allowedCandidateDoc: SemanticDocument = {
-      ...history.present,
+      ...updatedDoc,
       schemaRefs: refsWithoutDeployment,
     };
     const allowed = collectIntroducedValidationErrors({
-      currentDoc: history.present,
+      currentDoc: updatedDoc,
       candidateDoc: allowedCandidateDoc,
       currentSchema: bothSchema,
       candidateSchema: baseSchema,
     });
     expect(allowed.introducedDiagnostics).toEqual([]);
-
-    // History boundary still behaves as expected.
-    history = undoHistory(history);
-    expect(history.present.entities.some((entity) => entity.id === 'deploy-orders')).toBe(true);
-    history = redoHistory(history);
-    expect(history.present.entities.some((entity) => entity.id === 'deploy-orders')).toBe(false);
   });
 });

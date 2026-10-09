@@ -1,7 +1,5 @@
 import { ChevronsDownUp, ChevronsUpDown, Copy, Focus, LayoutGrid, Undo2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import type { SchemaOptionView } from '../viewer-core/view-models';
-import { SchemasPopover } from './SchemasPopover';
 
 interface CanvasToolbarProps {
   onCenter: () => void;
@@ -12,10 +10,7 @@ interface CanvasToolbarProps {
   isCopyingDiagramView?: boolean;
   onFocusView?: () => void;
   onResetFocusView?: () => void;
-  availableSchemas: SchemaOptionView[];
-  onToggleSchema: (schemaRef: string) => void;
   showCopy?: boolean;
-  showSchemas?: boolean;
   centerOffset?: number;
 }
 
@@ -28,10 +23,7 @@ export function CanvasToolbar({
   isCopyingDiagramView = false,
   onFocusView,
   onResetFocusView,
-  availableSchemas,
-  onToggleSchema,
   showCopy = true,
-  showSchemas = true,
   centerOffset = 0,
 }: CanvasToolbarProps) {
   const centerTitle = 'Centre the diagram in the viewport';
@@ -80,13 +72,6 @@ export function CanvasToolbar({
         </>
       ) : null}
 
-      {/* Schemas */}
-      {showSchemas ? (
-        <>
-          <div className="w-px h-4 bg-border mx-0.5" />
-          <SchemasPopover availableSchemas={availableSchemas} onToggleSchema={onToggleSchema} />
-        </>
-      ) : null}
       {/* Focus controls */}
       {onFocusView || onResetFocusView ? (
         <>
