@@ -60,8 +60,6 @@ export function collectLayoutBounds(tree: LayoutTree, ids?: Set<string>): Viewpo
   return bounds;
 }
 
-const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
-
 export function computeViewRect(params: {
   viewport: ViewportSpec;
   canvas: { width: number; height: number };
@@ -72,38 +70,4 @@ export function computeViewRect(params: {
   const maxX = (-viewport.x + canvas.width) / viewport.zoom;
   const maxY = (-viewport.y + canvas.height) / viewport.zoom;
   return { minX, minY, maxX, maxY };
-}
-
-export function computeViewportForBounds(params: {
-  bounds: ViewportBounds;
-  canvas: { width: number; height: number };
-  padding?: number;
-  mode?: 'center-top' | 'anchor';
-  anchor?: { x: number; y: number };
-  minZoom: number;
-  maxZoom: number;
-}): ViewportSpec {
-  const { bounds, canvas, minZoom, maxZoom } = params;
-  const padding = params.padding ?? 40;
-  const mode = params.mode ?? 'center-top';
-  const width = Math.max(1, bounds.maxX - bounds.minX);
-  const height = Math.max(1, bounds.maxY - bounds.minY);
-  const zoomX = (canvas.width - padding * 2) / width;
-  const zoomY = (canvas.height - padding * 2) / height;
-  const zoom = clamp(Math.min(zoomX, zoomY), minZoom, maxZoom);
-
-  if (mode === 'anchor') {
-    const anchor = params.anchor ?? { x: 0.5, y: 0.2 };
-    return {
-      x: -(bounds.minX * zoom) + canvas.width * anchor.x,
-      y: -(bounds.minY * zoom) + canvas.height * anchor.y,
-      zoom,
-    };
-  }
-
-  return {
-    x: -(bounds.minX * zoom) + (canvas.width - width * zoom) / 2,
-    y: -(bounds.minY * zoom) + padding,
-    zoom,
-  };
 }

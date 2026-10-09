@@ -30,6 +30,7 @@ import {
   type TransitionOverlayManagerState,
 } from '../canvas/useTransitionOverlayManager';
 import { computeViewportForBoundsInVisibleCanvas } from '../canvas/viewport-visibility';
+import { interpolateCameraViewport } from './camera-interpolation';
 import {
   type ResolvedNavigationPolicy,
   resolveNavigationPolicy,
@@ -110,17 +111,6 @@ const createMotionSettlement = (callbacks?: MotionCallbacks) => {
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const easeStructuralCamera = (value: number) => -(Math.cos(Math.PI * value) - 1) / 2;
-const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount;
-
-const interpolateViewport = (
-  from: ViewportState,
-  to: ViewportState,
-  progress: number,
-): ViewportState => ({
-  x: lerp(from.x, to.x, progress),
-  y: lerp(from.y, to.y, progress),
-  zoom: lerp(from.zoom, to.zoom, progress),
-});
 
 type SnapshotBounds = { minX: number; minY: number; maxX: number; maxY: number };
 
@@ -982,7 +972,14 @@ export function useDiagramMotionManager({
           ? 1
           : clamp((now - activeMotion.segmentStartedAt) / segment.durationMs, 0, 1);
       const eased = easeStructuralCamera(rawProgress);
-      const currentViewport = interpolateViewport(sourceViewport, segment.camera.to, eased);
+      const currentViewport = interpolateCameraViewport({
+        from: sourceViewport,
+        to: segment.camera.to,
+        progress: eased,
+        canvas: getCurrentCanvasSize() ?? { width: 0, height: 0 },
+        minZoom,
+        maxZoom,
+      });
       applyViewport(currentViewport);
       cameraDone = rawProgress >= 1;
     }
