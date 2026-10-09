@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SemanticDocument } from '../../../model/types';
 import { buildSchemaVersionCatalog } from '../../../model/validation';
+import { buildSchemaRuntimeFromCatalog } from '../../../semantic';
 import { semanticBootstrap } from '../../../semantic/bootstrap';
 import { compileDiagramViewState } from '../../../semantic/view/compile-diagram-view-tree';
 import tutorialLayoutRaw from '../../../test-fixtures/tutorial-layout.yaml?raw';
@@ -14,10 +15,10 @@ const tutorialDoc = parseDocument(tutorialLayoutRaw);
 const tutorialSchemaCatalog = buildSchemaVersionCatalog(
   semanticBootstrap.builtInSchemaCatalogEntries,
 );
-const tutorialSchema = semanticBootstrap.resolveActivatedSchema(
-  tutorialSchemaCatalog,
-  tutorialDoc.schemaRefs,
-);
+const tutorialSchema = buildSchemaRuntimeFromCatalog({
+  catalog: tutorialSchemaCatalog,
+  activations: tutorialDoc.schemaRefs,
+}).runtime.resolved.effectiveSchema;
 
 const withExpandedNodes = (doc: SemanticDocument, expandedIds: string[]): SemanticDocument => ({
   ...doc,

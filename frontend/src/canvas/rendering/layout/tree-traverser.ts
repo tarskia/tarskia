@@ -146,6 +146,7 @@ export function applySceneLayout(params: {
       childSizes[childId] = child?.size ?? baseSizes.get(childId) ?? DEFAULT_NODE_SIZE;
     }
     if (listMode) {
+      const listWidth = Math.max(...childLayouts.map((child) => child.size.width));
       for (const child of childLayouts) {
         child.listShowType = listShowType;
         if (child.hasChildren) continue;
@@ -154,7 +155,7 @@ export function applySceneLayout(params: {
           showType: listShowType,
         });
         child.size = {
-          width: child.size.width,
+          width: listWidth,
           height: listHeight,
         };
         childSizes[child.id] = child.size;

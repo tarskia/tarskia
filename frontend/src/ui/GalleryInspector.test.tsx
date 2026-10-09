@@ -13,9 +13,6 @@ const entityViewModel: InspectorViewModel = {
   typeLabel: 'API',
   typeHue: 32,
   displayedTags: [{ id: 'tag-1', label: 'Public' }],
-  explicitTagIds: [],
-  derivedTagLabels: [],
-  availableTagOptions: [],
   propertyEntries: [
     {
       path: 'docs.url',
@@ -29,7 +26,6 @@ const entityViewModel: InspectorViewModel = {
       value: 'platform',
     },
   ],
-  propertyFields: [],
   provenance: {
     confidence: 0.82,
     locations: [
@@ -43,10 +39,6 @@ const entityViewModel: InspectorViewModel = {
   selectedChildCount: 0,
   canFocusView: false,
   isFocusedEntity: false,
-  childTypeOptions: [],
-  siblingTypeOptions: [],
-  currentParentLabel: 'Top level',
-  moveParentOptions: [],
 };
 
 const relationViewModel: InspectorViewModel = {

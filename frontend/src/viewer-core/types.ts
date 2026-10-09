@@ -2,7 +2,6 @@ import type { SemanticDocument } from '../semantic';
 
 export type CommitDoc = (
   updater: SemanticDocument | ((prev: SemanticDocument) => SemanticDocument),
-  options?: { undoable?: boolean },
 ) => void;
 
 export type EnsureDiagramView = (

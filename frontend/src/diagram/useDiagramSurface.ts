@@ -5,7 +5,7 @@ import { GroupNode } from '../canvas/components/nodes/GroupNode';
 import type { GraphModel } from '../canvas/rendering/graph/graph-model';
 import { useCanvasSurfaceController } from '../canvas/useCanvasSurfaceController';
 import type { NodeVisualMode } from '../node-visual-mode';
-import type { Entity, EntityIndex, SchemaModule, SemanticDocument } from '../semantic';
+import type { EntityIndex, SchemaModule, SemanticDocument } from '../semantic';
 import type { CanvasSemanticBindings } from '../viewer-core/view-models';
 import type { NavigationIntent } from './motion-types';
 import type { useDiagramEngine } from './useDiagramEngine';
@@ -29,19 +29,7 @@ interface UseDiagramSurfaceArgs {
   };
   setSelectedEntity: (id: string | undefined) => void;
   setSelectedEdge: (id: string | undefined) => void;
-  traceSelection: (event: string, payload?: Record<string, unknown>) => void;
-  canContainEntity: (parent: Entity, childType: string) => boolean;
-  resolveDefaultEntityName: (
-    typeId: string,
-    requestedName: string | undefined,
-    existingCount: number,
-  ) => string | undefined;
-  addEntity: (typeId: string, parentId?: string, name?: string) => string;
-  commitDoc: (
-    updater: SemanticDocument | ((prev: SemanticDocument) => SemanticDocument),
-    options?: { undoable?: boolean },
-  ) => void;
-  deleteEntities: (ids: string[]) => void;
+  traceSelection?: (event: string, payload?: Record<string, unknown>) => void;
   showDebug: boolean;
   nodeVisualMode: NodeVisualMode;
   triggerEntityZoom: (entityId: string, direction: 'in' | 'out') => boolean;
@@ -51,7 +39,6 @@ interface UseDiagramSurfaceArgs {
   collapseChildGroupsWithin: (rootId: string) => void;
   minZoom: number;
   maxZoom: number;
-  readOnly?: boolean;
   semanticBindings: CanvasSemanticBindings;
   diagramEngine: ReturnType<typeof useDiagramEngine>;
 }
@@ -68,11 +55,6 @@ export function useDiagramSurface({
   setSelectedEntity,
   setSelectedEdge,
   traceSelection,
-  canContainEntity,
-  resolveDefaultEntityName,
-  addEntity,
-  commitDoc,
-  deleteEntities,
   showDebug,
   nodeVisualMode,
   triggerEntityZoom,
@@ -82,14 +64,9 @@ export function useDiagramSurface({
   collapseChildGroupsWithin,
   minZoom,
   maxZoom,
-  readOnly = false,
   semanticBindings,
   diagramEngine,
 }: UseDiagramSurfaceArgs) {
-  const selectedEntity = useMemo(
-    () => (selectedEntityId ? entityIndex.byId.get(selectedEntityId) : undefined),
-    [entityIndex.byId, selectedEntityId],
-  );
   const stableNodeTypes = useMemo(() => nodeTypes, []);
 
   return useCanvasSurfaceController({
@@ -99,8 +76,6 @@ export function useDiagramSurface({
       onCanvasInit: diagramEngine.onCanvasInit,
       onCanvasUnmount: diagramEngine.onCanvasUnmount,
       onLeftOcclusionChange: diagramEngine.setLeftOcclusion,
-      screenToWorldPosition: diagramEngine.screenToWorldPosition,
-      readOnly,
       showDebug,
       getCurrentCanvasSize: diagramEngine.getCurrentCanvasSize,
       canvasLayoutVersion: diagramEngine.canvasLayoutVersion,
@@ -114,23 +89,15 @@ export function useDiagramSurface({
       schema,
       graph,
       entityIndex,
-      selectedEntity,
       selectedEntityId,
       selectedEdgeId,
       focusRootId,
       searchMatches,
     },
-    graphQueries: {
-      canContainEntity,
-      resolveDefaultEntityName,
-    },
     semantic: semanticBindings,
     graphActions: {
       setSelectedEntity,
       setSelectedEdge,
-      addEntity,
-      commitDoc,
-      deleteEntities,
       triggerEntityZoom,
       expandAllDetailsWithin,
       collapseAllDetailsWithin,

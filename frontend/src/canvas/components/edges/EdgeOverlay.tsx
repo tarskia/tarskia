@@ -1,12 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import type { Node } from 'reactflow';
 import { useStore } from 'reactflow';
 import type { CanvasNodeHostControls, ReactFlowHostNodeData } from '../../host/reactflow/types';
-import {
-  buildBezierEdgeGeometry,
-  type CanvasPoint,
-  type CanvasRect,
-} from '../../rendering/presentation/geometry';
+import type { CanvasPoint, CanvasRect } from '../../rendering/presentation/geometry';
 import type {
   CanvasNodeView,
   CanvasOverlayEdgeView,
@@ -16,20 +12,9 @@ import { resolveEdgeLabelTransform } from './edge-label-placement';
 import { resolveEdgeOverlayRenderState } from './edge-overlay-state';
 import { buildClipPathFromOccluders } from './occluder-geometry';
 
-export interface EdgeOverlayDraftConnection {
-  sourceId: string;
-  sourcePoint: CanvasPoint;
-  currentPoint: CanvasPoint;
-  hoveredTargetId?: string;
-}
-
 export interface EdgeOverlayInteractionBindings {
   onSelectEdge?: (edgeId: string) => void;
-  onEdgeLabelClick?: (edgeId: string, x: number, y: number) => void;
-  onDraftStart?: (sourceId: string, point: { x: number; y: number }) => void;
-  onDraftMove?: (point: { x: number; y: number }, hoveredTargetId?: string) => void;
-  onDraftEnd?: (point: { x: number; y: number }, hoveredTargetId?: string) => void;
-  onDraftCancel?: () => void;
+  onEdgeLabelClick?: (edgeId: string) => void;
 }
 
 export interface EdgeOverlayHandleDescriptor {
@@ -69,45 +54,6 @@ const resolveEdgeLabelText = (edge: CanvasOverlayEdgeView) => {
     return '';
   }
   return edge.label || 'set';
-};
-
-const resolveHoveredTargetHandle = (point: { x: number; y: number }): string | undefined => {
-  if (typeof document === 'undefined') {
-    return undefined;
-  }
-  const target = document.elementFromPoint(point.x, point.y);
-  if (!(target instanceof HTMLElement)) {
-    return undefined;
-  }
-  const handle = target.closest<HTMLElement>('[data-edge-handle-role="target"]');
-  const nodeId = handle?.dataset.nodeId;
-  return nodeId && nodeId.length > 0 ? nodeId : undefined;
-};
-
-const sanitizeDraftTargetId = (
-  sourceId: string,
-  hoveredTargetId: string | undefined,
-): string | undefined =>
-  hoveredTargetId && hoveredTargetId !== sourceId ? hoveredTargetId : undefined;
-
-const buildDraftEdgePath = (draftConnection: EdgeOverlayDraftConnection) => {
-  const geometry = buildBezierEdgeGeometry({
-    sourceRect: {
-      x: draftConnection.sourcePoint.x,
-      y: draftConnection.sourcePoint.y,
-      width: 0,
-      height: 0,
-    },
-    targetRect: {
-      x: draftConnection.currentPoint.x,
-      y: draftConnection.currentPoint.y,
-      width: 0,
-      height: 0,
-    },
-    sourceSide: 'right',
-    targetSide: draftConnection.currentPoint.x < draftConnection.sourcePoint.x ? 'right' : 'left',
-  });
-  return geometry.path;
 };
 
 export const resolveEdgeSelectionId = (edge: { relationId?: string; id: string }) =>
@@ -154,14 +100,10 @@ export function EdgeOverlay({
   edges,
   nodes,
   bindings,
-  draftConnection,
-  readOnly = false,
 }: {
   edges: CanvasOverlayEdgeView[];
   nodes: Node<ReactFlowHostNodeData>[];
   bindings?: EdgeOverlayInteractionBindings;
-  draftConnection?: EdgeOverlayDraftConnection | null;
-  readOnly?: boolean;
 }) {
   const transform = useStore((state) => state.transform);
   const [tx, ty, zoom] = transform;
@@ -186,45 +128,6 @@ export function EdgeOverlay({
     [tx, ty, zoom],
   );
   const interactionScopeId = 'edge-overlay-interaction'.replace(/[^a-zA-Z0-9_-]/g, '_');
-
-  useEffect(() => {
-    if (!draftConnection) {
-      return;
-    }
-
-    const handlePointerMove = (event: PointerEvent) => {
-      const point = { x: event.clientX, y: event.clientY };
-      bindings?.onDraftMove?.(
-        point,
-        sanitizeDraftTargetId(draftConnection.sourceId, resolveHoveredTargetHandle(point)),
-      );
-    };
-
-    const handlePointerUp = (event: PointerEvent) => {
-      const point = { x: event.clientX, y: event.clientY };
-      bindings?.onDraftEnd?.(
-        point,
-        sanitizeDraftTargetId(draftConnection.sourceId, resolveHoveredTargetHandle(point)),
-      );
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') {
-        return;
-      }
-      event.preventDefault();
-      bindings?.onDraftCancel?.();
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp, { once: true });
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [bindings, draftConnection]);
 
   return (
     <div className="edge-overlay edge-overlay--host">
@@ -277,9 +180,6 @@ export function EdgeOverlay({
               }}
             />
           ))}
-          {draftConnection ? (
-            <path className="edge-draft-path" d={buildDraftEdgePath(draftConnection)} />
-          ) : null}
         </svg>
         <div className="edge-overlay-world edge-overlay-world-labels" style={transformStyle}>
           {resolvedEdges.map((edge) =>
@@ -301,11 +201,7 @@ export function EdgeOverlay({
                   if (!labelInteractivityEnabled(edge)) {
                     return;
                   }
-                  bindings?.onEdgeLabelClick?.(
-                    resolveEdgeSelectionId(edge),
-                    event.clientX,
-                    event.clientY,
-                  );
+                  bindings?.onEdgeLabelClick?.(resolveEdgeSelectionId(edge));
                 }}
               >
                 {resolveEdgeLabelText(edge)}
@@ -315,33 +211,16 @@ export function EdgeOverlay({
         </div>
         <div className="edge-overlay-world edge-overlay-world-handles" style={transformStyle}>
           {handleDescriptors.map((handle) => {
-            const hovered =
-              draftConnection?.hoveredTargetId === handle.nodeId && handle.role === 'target';
             return (
               <div
                 key={`${handle.nodeId}-${handle.role}`}
-                className={`edge-handle-button edge-handle-button-${handle.role}${handle.highlighted ? ' edge-handle-button-highlighted' : ''}${hovered ? ' edge-handle-button-hovered' : ''}`}
+                className={`edge-handle-button edge-handle-button-${handle.role}${handle.highlighted ? ' edge-handle-button-highlighted' : ''}`}
                 data-node-id={handle.nodeId}
                 data-edge-handle-role={handle.role}
                 style={{
                   transform: `translate(${handle.point.x - HANDLE_CENTER_OFFSET_PX}px, ${handle.point.y - HANDLE_CENTER_OFFSET_PX}px)`,
-                  pointerEvents: readOnly ? 'none' : 'auto',
+                  pointerEvents: 'none',
                 }}
-                onPointerDown={
-                  !readOnly && handle.role === 'source'
-                    ? (event) => {
-                        if (event.button !== 0) {
-                          return;
-                        }
-                        event.preventDefault();
-                        event.stopPropagation();
-                        bindings?.onDraftStart?.(handle.nodeId, {
-                          x: event.clientX,
-                          y: event.clientY,
-                        });
-                      }
-                    : undefined
-                }
               />
             );
           })}
