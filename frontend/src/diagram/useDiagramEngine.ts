@@ -164,19 +164,25 @@ export function useDiagramEngine({
   const { compiled, isTransitionQueued, cancelTransitions } = transitions;
   const presentation = useMemo(() => motion.hostSnapshot, [motion.hostSnapshot]);
 
-  const cameraBoundsNodes = stableSnapshot.nodes.filter(
-    (node) => !node.style.focusShell && node.opacity > 0.01,
-  );
-  const sceneBounds = collectRectBounds(cameraBoundsNodes.map((node) => node.rect));
-  sceneBoundsRef.current = sceneBounds
-    ? {
-        x: sceneBounds.minX,
-        y: sceneBounds.minY,
-        width: sceneBounds.maxX - sceneBounds.minX,
-        height: sceneBounds.maxY - sceneBounds.minY,
-      }
-    : null;
-  nodeRectsByIdRef.current = new Map(cameraBoundsNodes.map((node) => [node.id, node.rect]));
+  const { sceneBounds, nodeRectsById } = useMemo(() => {
+    const cameraBoundsNodes = stableSnapshot.nodes.filter(
+      (node) => !node.style.focusShell && node.opacity > 0.01,
+    );
+    const bounds = collectRectBounds(cameraBoundsNodes.map((node) => node.rect));
+    return {
+      sceneBounds: bounds
+        ? {
+            x: bounds.minX,
+            y: bounds.minY,
+            width: bounds.maxX - bounds.minX,
+            height: bounds.maxY - bounds.minY,
+          }
+        : null,
+      nodeRectsById: new Map(cameraBoundsNodes.map((node) => [node.id, node.rect])),
+    };
+  }, [stableSnapshot]);
+  sceneBoundsRef.current = sceneBounds;
+  nodeRectsByIdRef.current = nodeRectsById;
 
   const bootstrap = useCanvasBootstrapController({
     initialViewportKey,
