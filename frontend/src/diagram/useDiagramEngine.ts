@@ -23,7 +23,7 @@ export interface UseDiagramEngineArgs {
   skipTransitions: boolean;
   showDebug: boolean;
   persistViewport: (viewport: { x: number; y: number; zoom: number }) => void;
-  traceSelection: (event: string, payload?: Record<string, unknown>) => void;
+  traceSelection?: (event: string, payload?: Record<string, unknown>) => void;
   savedViewport?: { x: number; y: number; zoom: number };
   initialViewportKey?: string;
   cameraPolicy?: DiagramCameraPolicy;

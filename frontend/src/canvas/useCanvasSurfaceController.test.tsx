@@ -15,13 +15,6 @@ import {
   shouldSuppressHostInteractiveControls,
 } from './useCanvasSurfaceController';
 
-type EdgeSearchSeed = {
-  sourceId: string;
-  x: number;
-  y: number;
-  query: string;
-};
-
 const testEdgeGeometry = {
   sourcePoint: { x: 0, y: 0 },
   control1: { x: 10, y: 0 },
@@ -82,15 +75,7 @@ const buildTestGroupPresentation =
     overlayEdges: [],
   });
 
-type UseCanvasSurfaceControllerTestGraphQueries = {
-  canContainEntity: () => boolean;
-  resolveDefaultEntityName: () => undefined;
-};
-
 type UseCanvasSurfaceControllerTestGraphActions = {
-  addEntity: ReturnType<typeof vi.fn>;
-  commitDoc: ReturnType<typeof vi.fn>;
-  deleteEntities: ReturnType<typeof vi.fn>;
   triggerEntityZoom: ReturnType<typeof vi.fn>;
   expandAllDetailsWithin: ReturnType<typeof vi.fn>;
   collapseAllDetailsWithin: ReturnType<typeof vi.fn>;
@@ -99,7 +84,6 @@ type UseCanvasSurfaceControllerTestGraphActions = {
 };
 
 async function renderController(params?: {
-  edgeSearch?: EdgeSearchSeed;
   semanticOverrides?: Partial<import('../viewer-core/view-models').CanvasSemanticBindings>;
   transitionOverrides?: {
     reportUserGestureMove?: ReturnType<typeof vi.fn>;
@@ -110,36 +94,12 @@ async function renderController(params?: {
   selectedEntityId?: string;
   selectedEdgeId?: string;
   transitionLiteMode?: boolean;
-  readOnly?: boolean;
-  graphQueryOverrides?: Partial<UseCanvasSurfaceControllerTestGraphQueries>;
   graphActionOverrides?: Partial<UseCanvasSurfaceControllerTestGraphActions>;
   canvasLayoutVersion?: number;
   onLeftOcclusionChange?: (leftOcclusion: number) => void;
 }) {
   vi.resetModules();
-  const edgeSearch = params?.edgeSearch;
-  if (edgeSearch) {
-    vi.doMock('react', async () => {
-      const actual = await vi.importActual<typeof import('react')>('react');
-      let useStateCallCount = 0;
-      return {
-        ...actual,
-        useState: <T,>(initial: T) => {
-          useStateCallCount += 1;
-          if (useStateCallCount === 3) {
-            return [edgeSearch as T, vi.fn()] as const;
-          }
-          if (useStateCallCount === 4) {
-            return [null as T, vi.fn()] as const;
-          }
-          // biome-ignore lint/correctness/useHookAtTopLevel: This test mock intentionally delegates remaining useState calls to React.
-          return actual.useState(initial);
-        },
-      };
-    });
-  } else {
-    vi.doUnmock('react');
-  }
+  vi.doUnmock('react');
   vi.doMock('reactflow', async () => {
     const actual = await vi.importActual<typeof import('reactflow')>('reactflow');
     return {
@@ -152,27 +112,12 @@ async function renderController(params?: {
     getEntityDisplayName: vi.fn((entityId: string) => entityId),
     getEntityTypeLabel: vi.fn(() => 'Type'),
     getEntityFocusHue: vi.fn(() => undefined),
-    listCandidateTypes: vi.fn(() => []),
-    listCandidateEntities: vi.fn(() => []),
-    listRelationOptions: vi.fn(() => []),
-    createRelation: vi.fn(),
-    createRelatedEntity: vi.fn(() => undefined),
-    setRelationType: vi.fn(),
-    applyRelationOption: vi.fn(),
     ...params?.semanticOverrides,
   };
 
   const setSelectedEntity = vi.fn();
   const setSelectedEdge = vi.fn();
-  const graphQueries: UseCanvasSurfaceControllerTestGraphQueries = {
-    canContainEntity: () => true,
-    resolveDefaultEntityName: () => undefined,
-    ...params?.graphQueryOverrides,
-  };
   const graphActions: UseCanvasSurfaceControllerTestGraphActions = {
-    addEntity: vi.fn(() => 'new-entity'),
-    commitDoc: vi.fn(),
-    deleteEntities: vi.fn(),
     triggerEntityZoom: vi.fn(() => false),
     expandAllDetailsWithin: vi.fn(),
     collapseAllDetailsWithin: vi.fn(),
@@ -223,8 +168,6 @@ async function renderController(params?: {
         onCanvasUnmount: vi.fn(),
         onLeftOcclusionChange:
           params?.onLeftOcclusionChange ?? vi.fn((_leftOcclusion: number) => {}),
-        screenToWorldPosition: vi.fn((point: { x: number; y: number }) => point),
-        readOnly: params?.readOnly ?? false,
         showDebug: false,
         getCurrentCanvasSize: vi.fn(() => null),
         canvasLayoutVersion: params?.canvasLayoutVersion ?? 0,
@@ -250,12 +193,10 @@ async function renderController(params?: {
           byId: new Map(),
           parentById: new Map(),
         },
-        selectedEntity: undefined,
         selectedEntityId: params?.selectedEntityId,
         selectedEdgeId: params?.selectedEdgeId,
         focusRootId: undefined,
       },
-      graphQueries,
       semantic: semanticBindings,
       graphActions: {
         setSelectedEntity,
@@ -742,40 +683,17 @@ describe('useCanvasSurfaceController', () => {
     expect(shouldHandleViewportGestureEvent({ sourceEvent: { buttons: 1 } })).toBe(false);
   });
 
-  it('filters candidate types and entities using injected semantic bindings', async () => {
-    const { controller, semanticBindings } = await renderController({
-      edgeSearch: { sourceId: 'source-1', x: 10, y: 20, query: 'db' },
-      semanticOverrides: {
-        listCandidateTypes: vi.fn(() => [
-          { id: 'type:db', label: 'Database' },
-          { id: 'type:cache', label: 'Cache' },
-        ]),
-        listCandidateEntities: vi.fn(() => [
-          { id: 'entity:db', label: 'Primary Database' },
-          { id: 'entity:cache', label: 'Cache Cluster' },
-        ]),
-      },
-    });
-
-    expect(controller.canvasProps.filteredTypes).toEqual([{ id: 'type:db', label: 'Database' }]);
-    expect(controller.canvasProps.filteredEntities).toEqual([
-      { id: 'entity:db', label: 'Primary Database' },
-    ]);
-    expect(semanticBindings.listCandidateTypes).toHaveBeenCalledWith('source-1');
-    expect(semanticBindings.listCandidateEntities).toHaveBeenCalledWith('source-1');
-  });
-
   it('exposes overlay edge-selection bindings through the canvas props', async () => {
-    const { controller, semanticBindings } = await renderController();
+    const { controller, setSelectedEdge } = await renderController();
 
     controller.canvasProps.overlayInteractionBindings?.onSelectEdge?.('rel-1');
 
     expect(controller.canvasProps.overlayInteractionBindings).toBeDefined();
-    expect(semanticBindings.createRelation).not.toHaveBeenCalled();
+    expect(setSelectedEdge).toHaveBeenCalledWith('rel-1');
   });
 
   it('does not expose host edge callbacks on the flattened canvas contract', async () => {
-    const { controller } = await renderController({ readOnly: true });
+    const { controller } = await renderController();
 
     expect('onConnect' in controller.canvasProps).toBe(false);
     expect('onConnectStart' in controller.canvasProps).toBe(false);
@@ -783,33 +701,13 @@ describe('useCanvasSurfaceController', () => {
     expect('onEdgesDelete' in controller.canvasProps).toBe(false);
   });
 
-  it('marks host nodes as non-connectable in read-only mode', async () => {
+  it('preserves decorative connection handles on viewer nodes', async () => {
     const { controller } = await renderController({
-      readOnly: true,
       presentation: buildTestGroupPresentation(),
     });
     const groupNode = controller.canvasProps.nodes[0];
 
     expect(groupNode?.data?.controls.showConnectionHandles).toBe(true);
-    expect(controller.canvasProps.readOnly).toBe(true);
-  });
-
-  it('uses the semantic binding to create a related entity from edge search', async () => {
-    const { controller, semanticBindings, setSelectedEntity } = await renderController({
-      edgeSearch: { sourceId: 'source-1', x: 10, y: 20, query: 'Orders API' },
-      semanticOverrides: {
-        createRelatedEntity: vi.fn(() => 'entity:new'),
-      },
-    });
-
-    controller.canvasProps.onCreateFromType('type:service');
-
-    expect(semanticBindings.createRelatedEntity).toHaveBeenCalledWith(
-      'source-1',
-      'type:service',
-      'Orders API',
-    );
-    expect(setSelectedEntity).toHaveBeenCalledWith('entity:new');
   });
 
   it('reports completed viewport moves through the motion manager', async () => {

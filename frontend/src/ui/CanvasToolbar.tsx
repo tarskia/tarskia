@@ -1,16 +1,12 @@
-import { ChevronsDownUp, ChevronsUpDown, Copy, Focus, LayoutGrid, Undo2 } from 'lucide-react';
+import { ChevronsDownUp, ChevronsUpDown, Focus, LayoutGrid, Undo2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 
 interface CanvasToolbarProps {
   onCenter: () => void;
   onExpandAll: () => void;
   onCollapseAll: () => void;
-  onCopyDiagramView: () => void | Promise<void>;
-  canCopyDiagramView: boolean;
-  isCopyingDiagramView?: boolean;
   onFocusView?: () => void;
   onResetFocusView?: () => void;
-  showCopy?: boolean;
   centerOffset?: number;
 }
 
@@ -18,12 +14,8 @@ export function CanvasToolbar({
   onCenter,
   onExpandAll,
   onCollapseAll,
-  onCopyDiagramView,
-  canCopyDiagramView,
-  isCopyingDiagramView = false,
   onFocusView,
   onResetFocusView,
-  showCopy = true,
   centerOffset = 0,
 }: CanvasToolbarProps) {
   const centerTitle = 'Centre the diagram in the viewport';
@@ -50,27 +42,6 @@ export function CanvasToolbar({
         <ChevronsDownUp size={13} />
         Collapse all
       </Button>
-
-      {showCopy ? (
-        <>
-          <div className="w-px h-4 bg-border mx-0.5" />
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCopyDiagramView}
-            disabled={!canCopyDiagramView || isCopyingDiagramView}
-            title={
-              canCopyDiagramView
-                ? 'Copy the current diagram view to the clipboard as PNG'
-                : 'Clipboard image copy unavailable'
-            }
-          >
-            <Copy size={13} />
-            Copy to clipboard
-          </Button>
-        </>
-      ) : null}
 
       {/* Focus controls */}
       {onFocusView || onResetFocusView ? (

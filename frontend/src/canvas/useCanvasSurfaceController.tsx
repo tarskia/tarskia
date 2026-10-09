@@ -27,7 +27,7 @@ import type { CanvasSemanticBindings } from '../viewer-core/view-models';
 import type { CompileResult } from './compiler/compile';
 import type { EdgeOverlayInteractionBindings } from './components/edges/EdgeOverlay';
 import { resolveEdgeOverlayRenderState } from './components/edges/edge-overlay-state';
-import type { DiagramCanvasProps, EdgeMenuState, EdgeSearchState } from './DiagramCanvas';
+import type { DiagramCanvasProps } from './DiagramCanvas';
 import { collapseFocusShellDescriptors } from './focus-shells';
 import { adaptPresentationToReactFlow } from './host/reactflow/adapter';
 import type {
@@ -37,7 +37,6 @@ import type {
   ReactFlowHostRenderState,
 } from './host/reactflow/types';
 import type { GraphModel } from './rendering/graph/graph-model';
-import type { CanvasPoint } from './rendering/presentation/geometry';
 import type {
   CanvasOverlayEdgeView,
   CanvasPresentation,
@@ -54,8 +53,6 @@ export interface UseCanvasSurfaceControllerArgs {
     onCanvasInit: (instance: ReactFlowInstance) => void;
     onCanvasUnmount: () => void;
     onLeftOcclusionChange: (leftOcclusion: number) => void;
-    screenToWorldPosition: (point: { x: number; y: number }) => { x: number; y: number };
-    readOnly?: boolean;
     showDebug: boolean;
     getCurrentCanvasSize: GetCurrentCanvasSize;
     canvasLayoutVersion: number;
@@ -72,7 +69,6 @@ export interface UseCanvasSurfaceControllerArgs {
       byId: Map<string, Entity>;
       parentById: Map<string, string | undefined>;
     };
-    selectedEntity?: Entity;
     selectedEntityId?: string;
     selectedEdgeId?: string;
     focusRootId?: string;
@@ -81,24 +77,10 @@ export interface UseCanvasSurfaceControllerArgs {
       matchingRelationIds: Set<string>;
     };
   };
-  graphQueries: {
-    canContainEntity: (parent: Entity, childType: string) => boolean;
-    resolveDefaultEntityName: (
-      typeId: string,
-      requestedName: string | undefined,
-      existingCount: number,
-    ) => string | undefined;
-  };
   semantic: CanvasSemanticBindings;
   graphActions: {
     setSelectedEntity: (id: string | undefined) => void;
     setSelectedEdge: (id: string | undefined) => void;
-    addEntity: (typeId: string, parentId?: string, name?: string) => string;
-    commitDoc: (
-      updater: SemanticDocument | ((prev: SemanticDocument) => SemanticDocument),
-      options?: { undoable?: boolean },
-    ) => void;
-    deleteEntities: (ids: string[]) => void;
     triggerEntityZoom: (entityId: string, direction: 'in' | 'out') => boolean;
     expandAllDetailsWithin: (rootId: string) => void;
     collapseAllDetailsWithin: (rootId: string) => void;
@@ -125,7 +107,7 @@ export interface UseCanvasSurfaceControllerArgs {
     frameDurations: number[];
   };
   telemetry: {
-    traceSelection: (event: string, payload?: Record<string, unknown>) => void;
+    traceSelection?: (event: string, payload?: Record<string, unknown>) => void;
   };
 }
 
@@ -135,12 +117,6 @@ const FOCUS_SHELL_STEP_X = 16;
 const FOCUS_SHELL_STEP_Y = 32;
 const toSingleSelectionSet = (id?: string) => (id ? new Set([id]) : new Set<string>());
 const hostRenderStateSignatureCache = new WeakMap<ReactFlowHostRenderState, string>();
-
-const isEditableTarget = (target: EventTarget | null): boolean => {
-  if (!(target instanceof HTMLElement)) return false;
-  if (target.isContentEditable) return true;
-  return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
-};
 
 const formatDebugPoint = (point: { x: number; y: number }) =>
   `${Math.round(point.x)},${Math.round(point.y)}`;
@@ -290,7 +266,6 @@ export const shouldHandleViewportGestureEvent = (event: unknown): boolean => {
 export function useCanvasSurfaceController({
   surface,
   graphState,
-  graphQueries,
   semantic,
   graphActions,
   transition,
@@ -302,8 +277,6 @@ export function useCanvasSurfaceController({
     onCanvasInit,
     onCanvasUnmount,
     onLeftOcclusionChange,
-    screenToWorldPosition,
-    readOnly = false,
     showDebug,
     getCurrentCanvasSize,
     canvasLayoutVersion,
@@ -318,19 +291,14 @@ export function useCanvasSurfaceController({
     schema,
     graph,
     entityIndex,
-    selectedEntity,
     selectedEntityId,
     selectedEdgeId,
     focusRootId,
     searchMatches,
   } = graphState;
-  const { canContainEntity } = graphQueries;
   const {
     setSelectedEntity,
     setSelectedEdge,
-    addEntity,
-    commitDoc,
-    deleteEntities,
     triggerEntityZoom,
     expandAllDetailsWithin,
     collapseAllDetailsWithin,
@@ -360,17 +328,11 @@ export function useCanvasSurfaceController({
   const [zoom, setZoom] = useState(1);
   const zoomDebounceRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
   const suppressPaneClickRef = useRef(false);
-  const edgeSearchInputRef = useRef<HTMLInputElement | null>(null);
-  const edgeMenuInputRef = useRef<HTMLInputElement | null>(null);
   const autoVisibleSelectionKeyRef = useRef<string | null>(null);
   const viewportGestureActiveRef = useRef(false);
   const pendingDisplayGenerationRef = useRef<number | null>(null);
   const notifiedDisplayGenerationRef = useRef<number | null>(null);
   const lastAppliedHostRenderStateSignatureRef = useRef<string | null>(null);
-  const [edgeSearch, setEdgeSearch] = useState<EdgeSearchState | null>(null);
-  const [edgeMenu, setEdgeMenu] = useState<EdgeMenuState | null>(null);
-  const [draftConnection, setDraftConnection] =
-    useState<DiagramCanvasProps['draftConnection']>(null);
   const suppressPaneClickOnce = useCallback(() => {
     // Ignore the immediate pane click after node/edge/popup interactions.
     suppressPaneClickRef.current = true;
@@ -387,37 +349,6 @@ export function useCanvasSurfaceController({
     };
   }, []);
 
-  useEffect(() => {
-    if (edgeSearch) {
-      edgeSearchInputRef.current?.focus();
-    }
-  }, [edgeSearch]);
-
-  useEffect(() => {
-    if (edgeMenu) {
-      edgeMenuInputRef.current?.focus();
-    }
-  }, [edgeMenu]);
-
-  const candidateTypes = useMemo(() => {
-    if (!edgeSearch) return [];
-    return semantic.listCandidateTypes(edgeSearch.sourceId);
-  }, [edgeSearch, semantic]);
-
-  const searchQuery = edgeSearch?.query.trim().toLowerCase() ?? '';
-  const filteredTypes = candidateTypes.filter(
-    (type) =>
-      type.label.toLowerCase().includes(searchQuery) || type.id.toLowerCase().includes(searchQuery),
-  );
-  const filteredEntities = !edgeSearch
-    ? []
-    : semantic
-        .listCandidateEntities(edgeSearch.sourceId)
-        .filter(
-          (entity) =>
-            entity.label.toLowerCase().includes(searchQuery) ||
-            entity.id.toLowerCase().includes(searchQuery),
-        );
   const decoratedPresentation = useMemo(() => {
     const matchingEntityIds = searchMatches?.matchingEntityIds;
     const matchingRelationIds = searchMatches?.matchingRelationIds;
@@ -501,48 +432,21 @@ export function useCanvasSurfaceController({
   }, [entityIndex.byId, focusRootId, focusShellHue, focusShellViews, semantic]);
   const handleEdgeSelect = useCallback(
     (edgeId: string) => {
-      traceSelection('onEdgeClick', { edgeId, relationId: edgeId });
+      traceSelection?.('onEdgeClick', { edgeId, relationId: edgeId });
       setSelectedEntity(undefined);
       setSelectedEdge(edgeId);
-      setEdgeSearch(null);
-      setEdgeMenu(null);
       suppressPaneClickOnce();
     },
     [setSelectedEdge, setSelectedEntity, suppressPaneClickOnce, traceSelection],
   );
 
   const handleEdgeLabelClick = useCallback(
-    (edgeId: string, x: number, y: number) => {
-      setEdgeSearch(null);
-      setEdgeMenu(readOnly ? null : { edgeId, x, y, query: '' });
+    (edgeId: string) => {
       setSelectedEdge(edgeId);
       setSelectedEntity(undefined);
       suppressPaneClickOnce();
     },
-    [readOnly, setSelectedEdge, setSelectedEntity, suppressPaneClickOnce],
-  );
-
-  const handleDrop: React.DragEventHandler<HTMLDivElement> = useCallback(
-    (event) => {
-      event.preventDefault();
-      if (readOnly) return;
-      const typeId = event.dataTransfer.getData('application/semantic-type');
-      if (!typeId) return;
-      const selectedParent =
-        selectedEntity && canContainEntity(selectedEntity, typeId) ? selectedEntity.id : undefined;
-      addEntity(typeId, selectedParent);
-    },
-    [addEntity, canContainEntity, readOnly, selectedEntity],
-  );
-
-  const handleNodesDelete = useCallback(
-    (deleted: Node[]) => {
-      if (readOnly) return;
-      deleteEntities(deleted.map((node) => node.id));
-      setEdgeSearch(null);
-      setEdgeMenu(null);
-    },
-    [deleteEntities, readOnly],
+    [setSelectedEdge, setSelectedEntity, suppressPaneClickOnce],
   );
 
   const onMoveStart: OnMoveStart = useCallback((event) => {
@@ -586,142 +490,14 @@ export function useCanvasSurfaceController({
     [reportUserGestureEnd],
   );
 
-  const handleCreateFromType = useCallback(
-    (typeId: string) => {
-      if (!edgeSearch) return;
-      const name = edgeSearch.query.trim();
-      const createdEntityId = semantic.createRelatedEntity(edgeSearch.sourceId, typeId, name);
-      setEdgeSearch(null);
-      if (createdEntityId) {
-        setSelectedEntity(createdEntityId);
-      }
-    },
-    [edgeSearch, semantic, setSelectedEntity],
-  );
-
-  const handleLinkEntity = useCallback(
-    (targetId: string) => {
-      if (!edgeSearch) return;
-      semantic.createRelation(edgeSearch.sourceId, targetId);
-      setEdgeSearch(null);
-    },
-    [edgeSearch, semantic],
-  );
-
-  const deleteSelectedRelation = useCallback(
-    (relationId: string) => {
-      commitDoc((prev) => ({
-        ...prev,
-        relations: prev.relations.filter((rel) => rel.id !== relationId),
-      }));
-      setSelectedEdge(undefined);
-      setEdgeMenu(null);
-      setEdgeSearch(null);
-    },
-    [commitDoc, setSelectedEdge],
-  );
-
-  const resolveWorldPoint = useCallback(
-    (point: { x: number; y: number }): CanvasPoint => screenToWorldPosition(point),
-    [screenToWorldPosition],
-  );
-
-  const handleDraftStart = useCallback(
-    (sourceId: string, point: { x: number; y: number }) => {
-      if (readOnly) {
-        return;
-      }
-      const worldPoint = resolveWorldPoint(point);
-      setDraftConnection({
-        sourceId,
-        sourcePoint: worldPoint,
-        currentPoint: worldPoint,
-      });
-      setEdgeSearch(null);
-      setEdgeMenu(null);
-      suppressPaneClickOnce();
-    },
-    [readOnly, resolveWorldPoint, suppressPaneClickOnce],
-  );
-
-  const handleDraftMove = useCallback(
-    (point: { x: number; y: number }, hoveredTargetId?: string) => {
-      setDraftConnection((current) =>
-        current
-          ? {
-              ...current,
-              currentPoint: resolveWorldPoint(point),
-              hoveredTargetId,
-            }
-          : current,
-      );
-    },
-    [resolveWorldPoint],
-  );
-
-  const handleDraftEnd = useCallback(
-    (point: { x: number; y: number }, hoveredTargetId?: string) => {
-      let completedDraft: DiagramCanvasProps['draftConnection'] = null;
-      setDraftConnection((current) => {
-        completedDraft = current;
-        return null;
-      });
-      if (!completedDraft) {
-        return;
-      }
-      if (hoveredTargetId && hoveredTargetId !== completedDraft.sourceId) {
-        semantic.createRelation(completedDraft.sourceId, hoveredTargetId);
-      } else {
-        setEdgeSearch({
-          sourceId: completedDraft.sourceId,
-          x: point.x,
-          y: point.y,
-          query: '',
-        });
-      }
-      suppressPaneClickOnce();
-    },
-    [semantic, suppressPaneClickOnce],
-  );
-
-  const handleDraftCancel = useCallback(() => {
-    setDraftConnection(null);
-  }, []);
-
   const handleSelectFocusShell = useCallback(
     (entityId: string) => {
-      setEdgeSearch(null);
-      setEdgeMenu(null);
       setSelectedEdge(undefined);
       setSelectedEntity(entityId);
-      setDraftConnection(null);
     },
     [setSelectedEdge, setSelectedEntity],
   );
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (readOnly || !selectedEdgeId) return;
-      if (isEditableTarget(event.target)) return;
-      if (event.key !== 'Backspace' && event.key !== 'Delete') return;
-      event.preventDefault();
-      deleteSelectedRelation(selectedEdgeId);
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [deleteSelectedRelation, readOnly, selectedEdgeId]);
-
-  const edgeOptions = useMemo(() => {
-    if (!edgeMenu) return [];
-    return semantic.listRelationOptions(edgeMenu.edgeId);
-  }, [edgeMenu, semantic]);
-
-  const edgeQuery = edgeMenu?.query.trim().toLowerCase() ?? '';
-  const filteredEdgeOptions = edgeOptions.filter(
-    (option) =>
-      option.label.toLowerCase().includes(edgeQuery) || option.id.toLowerCase().includes(edgeQuery),
-  );
   const suppressHostEdgeChrome = shouldSuppressHostEdgeChrome({
     transitionLiteMode,
     motionPhase,
@@ -1155,76 +931,43 @@ export function useCanvasSurfaceController({
 
   const onNodeClick = useCallback(
     (_event: unknown, node: Node) => {
-      traceSelection('onNodeClick', { nodeId: node.id });
+      traceSelection?.('onNodeClick', { nodeId: node.id });
       setSelectedEntity(node.id);
       setSelectedEdge(undefined);
-      setEdgeSearch(null);
-      setEdgeMenu(null);
-      setDraftConnection(null);
       suppressPaneClickOnce();
     },
     [setSelectedEdge, setSelectedEntity, suppressPaneClickOnce, traceSelection],
   );
 
   const onCanvasPaneClick = useCallback(() => {
-    traceSelection('onPaneClick:start', {
+    traceSelection?.('onPaneClick:start', {
       suppressPaneClick: suppressPaneClickRef.current,
       selectedEntityId,
       selectedEdgeId,
     });
     if (suppressPaneClickRef.current) {
-      traceSelection('onPaneClick:suppressed');
+      traceSelection?.('onPaneClick:suppressed');
       return;
     }
-    traceSelection('onPaneClick:resolved', {
+    traceSelection?.('onPaneClick:resolved', {
       nextSelectedEntityId: undefined,
       nextSelectedEdgeId: undefined,
     });
-    setEdgeSearch(null);
-    setEdgeMenu(null);
-    setDraftConnection(null);
     setSelectedEntity(undefined);
     setSelectedEdge(undefined);
   }, [selectedEntityId, selectedEdgeId, setSelectedEdge, setSelectedEntity, traceSelection]);
 
-  const onCanvasDragOver = useCallback<React.DragEventHandler<HTMLDivElement>>((event) => {
-    event.preventDefault();
-  }, []);
-
-  const clearCanvasTransientState = useCallback(() => {
-    setDraftConnection(null);
-    setEdgeSearch(null);
-    setEdgeMenu(null);
-  }, []);
-
   const overlayInteractionBindings = useMemo<EdgeOverlayInteractionBindings>(
-    () => ({
-      onSelectEdge: handleEdgeSelect,
-      onEdgeLabelClick: handleEdgeLabelClick,
-      onDraftStart: handleDraftStart,
-      onDraftMove: handleDraftMove,
-      onDraftEnd: handleDraftEnd,
-      onDraftCancel: handleDraftCancel,
-    }),
-    [
-      handleDraftCancel,
-      handleDraftEnd,
-      handleDraftMove,
-      handleDraftStart,
-      handleEdgeLabelClick,
-      handleEdgeSelect,
-    ],
+    () => ({ onSelectEdge: handleEdgeSelect, onEdgeLabelClick: handleEdgeLabelClick }),
+    [handleEdgeSelect, handleEdgeLabelClick],
   );
 
   const canvasProps: DiagramCanvasProps = {
     canvasRef,
     onCanvasElementChange,
     onLeftOcclusionChange: handleLeftOcclusionChange,
-    readOnly,
     nodeVisualMode,
     hideHostVisuals,
-    onDrop: handleDrop,
-    onDragOver: onCanvasDragOver,
     nodes: nodes as Node[],
     overlayEdges: resolveVisibleHostOverlayEdges({
       overlayEdges,
@@ -1232,7 +975,6 @@ export function useCanvasSurfaceController({
       suppressForViewportGesture: false,
     }),
     overlayInteractionBindings,
-    draftConnection,
     transitionOverlay: transitionOverlay ?? undefined,
     transitionOverlayFrame: transitionOverlayFrame ?? undefined,
     nodeTypes,
@@ -1240,7 +982,6 @@ export function useCanvasSurfaceController({
     onNodeClick,
     onInit: onCanvasInit,
     onUnmount: onCanvasUnmount,
-    onNodesDelete: handleNodesDelete,
     onPaneClick: onCanvasPaneClick,
     onMoveStart,
     onMove,
@@ -1249,19 +990,6 @@ export function useCanvasSurfaceController({
     maxZoom,
     showDebug,
     debugSummary,
-    edgeSearch,
-    edgeSearchInputRef,
-    setEdgeSearch,
-    filteredTypes,
-    filteredEntities,
-    onCreateFromType: handleCreateFromType,
-    onLinkEntity: handleLinkEntity,
-    edgeMenu,
-    edgeMenuInputRef,
-    setEdgeMenu,
-    filteredEdgeOptions,
-    onSetRelationType: semantic.setRelationType,
-    onApplyRelationOption: semantic.applyRelationOption,
     onSelectFocusShell: handleSelectFocusShell,
     focusShells: focusShellFrames,
   };
@@ -1269,7 +997,6 @@ export function useCanvasSurfaceController({
   return {
     zoom,
     setZoom,
-    clearCanvasTransientState,
     canvasProps,
   };
 }
