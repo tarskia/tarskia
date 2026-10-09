@@ -35,6 +35,8 @@ export interface DiagramViewNode {
   parentId?: string;
   children: DiagramViewNode[];
   hasDiagramChildren: boolean;
+  /** Multiple leaf children with no relations between them, independent of view expansion. */
+  isListContainer?: boolean;
   diagramChildCount?: number;
   diagramChildTypeCounts?: Record<string, number>;
   view: {
@@ -240,11 +242,24 @@ export const applyRevealAndVisibility = (params: {
 
 export const applySemanticVisualAugmentation = (params: {
   tree: SemanticViewWorkingTree;
+  relations?: Relation[];
 }): void => {
   const { tree } = params;
   const controlsById = buildDiagramViewNodeControls({ tree });
   for (const node of tree.byId.values()) {
     node.visual.hasDiagramChildren = node.hasChildren;
+    const childIds = new Set(node.children.map((child) => child.id));
+    node.visual.isListContainer =
+      node.id !== tree.rootId &&
+      node.children.length > 1 &&
+      node.children.every((child) => !child.hasChildren) &&
+      !(params.relations ?? []).some(
+        (relation) =>
+          isRenderableRelationType(relation.type) &&
+          relation.from !== relation.to &&
+          childIds.has(relation.from) &&
+          childIds.has(relation.to),
+      );
     node.visual.diagramChildCount = node.children.length;
     node.visual.diagramChildTypeCounts = buildDiagramChildTypeCounts(node.children);
     node.visual.controls =
@@ -273,6 +288,7 @@ export const projectCompiledDiagramView = (params: {
       parentId,
       children: [],
       hasDiagramChildren: node.visual.hasDiagramChildren,
+      isListContainer: node.visual.isListContainer,
       diagramChildCount: node.visual.diagramChildCount,
       diagramChildTypeCounts: node.visual.diagramChildTypeCounts,
       view: {
@@ -301,6 +317,7 @@ export const projectCompiledDiagramView = (params: {
     parentId: undefined,
     children: [],
     hasDiagramChildren: tree.root.visual.hasDiagramChildren,
+    isListContainer: false,
     diagramChildCount: tree.root.visual.diagramChildCount,
     diagramChildTypeCounts: tree.root.visual.diagramChildTypeCounts,
     view: {
@@ -435,6 +452,7 @@ export function compileDiagramViewState(
   });
   applySemanticVisualAugmentation({
     tree: workingTree,
+    relations: renderableRelations,
   });
   const projectedTree = projectCompiledDiagramView({
     tree: workingTree,
