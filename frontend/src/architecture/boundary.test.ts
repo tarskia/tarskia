@@ -114,7 +114,7 @@ describe('architecture boundaries', () => {
     );
     const source = readFileSync(presentationPath, 'utf8');
 
-    expect(source).not.toMatch(/graph-model|GraphModel/);
+    expect(source).not.toMatch(/graph-model|SemanticIndex/);
     expect(source).not.toMatch(/\bgraph:/);
   });
 

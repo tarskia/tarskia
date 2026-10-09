@@ -1,8 +1,7 @@
-import type { EntityIndex, SchemaModule, SemanticDocument } from '@tarskia/diagram-semantics';
+import type { EntityIndex, SchemaModule, SemanticIndex } from '@tarskia/diagram-semantics';
 import { useMemo } from 'react';
 import { EntityNode } from '../canvas/components/nodes/EntityNode';
 import { GroupNode } from '../canvas/components/nodes/GroupNode';
-import type { GraphModel } from '../canvas/rendering/graph/graph-model';
 import { useCanvasSurfaceController } from '../canvas/useCanvasSurfaceController';
 import type { NodeVisualMode } from '../node-visual-mode';
 import type { CanvasSemanticBindings } from '../viewer-core/view-models';
@@ -15,9 +14,8 @@ const nodeTypes = {
 };
 
 interface UseDiagramSurfaceArgs {
-  doc: SemanticDocument;
   schema: SchemaModule;
-  graph: GraphModel;
+  graph: SemanticIndex;
   entityIndex: EntityIndex;
   selectedEntityId?: string;
   selectedEdgeId?: string;
@@ -42,7 +40,6 @@ interface UseDiagramSurfaceArgs {
 }
 
 export function useDiagramSurface({
-  doc,
   schema,
   graph,
   entityIndex,
@@ -81,7 +78,6 @@ export function useDiagramSurface({
       nodeTypes: stableNodeTypes,
     },
     graphState: {
-      doc,
       schema,
       graph,
       entityIndex,

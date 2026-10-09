@@ -1,7 +1,7 @@
-import type { SceneTree } from './scene-tree';
+import type { LayoutTree } from '../layout/layout-geometry';
 
 export const resolveEndpointChildWithinParent = (
-  tree: SceneTree,
+  tree: LayoutTree,
   parentId: string,
   childSet: Set<string>,
   endpointId: string,

@@ -4,8 +4,8 @@ import {
   type SemanticDocument,
 } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { buildSceneTree } from '../tree/scene-tree';
 import { buildLayoutEdgesForParent } from './layout-edges';
+import { createLayoutGeometry } from './layout-geometry';
 
 describe('buildLayoutEdgesForParent', () => {
   it('maps cross-container relations to direct children of the parent', () => {
@@ -21,7 +21,7 @@ describe('buildLayoutEdgesForParent', () => {
       relations: [{ id: 'rel-1', type: 'calls', from: 'api-a', to: 'api-b' }],
     };
 
-    const tree = buildSceneTree({ tree: buildEntityTree(doc) });
+    const tree = createLayoutGeometry({ tree: buildEntityTree(doc) });
     const rootChildren = tree.childrenByParent.get(tree.rootId) ?? [];
     const edges = buildLayoutEdgesForParent({
       parentId: tree.rootId,
@@ -54,7 +54,7 @@ describe('buildLayoutEdgesForParent', () => {
       relations: [{ id: 'rel-1', type: 'calls', from: 'api-a', to: 'api-b' }],
     };
 
-    const tree = buildSceneTree({ tree: buildEntityTree(doc) });
+    const tree = createLayoutGeometry({ tree: buildEntityTree(doc) });
     const rootChildren = tree.childrenByParent.get(tree.rootId) ?? [];
     const edges = buildLayoutEdgesForParent({
       parentId: tree.rootId,
@@ -86,7 +86,7 @@ describe('buildLayoutEdgesForParent', () => {
       ],
       relations: [{ id: 'rel-1', type: 'joins', from: 't1', to: 't2' }],
     };
-    const tree = buildSceneTree({ tree: buildEntityTree(doc) });
+    const tree = createLayoutGeometry({ tree: buildEntityTree(doc) });
     const children = tree.childrenByParent.get('db') ?? [];
     const edges = buildLayoutEdgesForParent({
       parentId: 'db',

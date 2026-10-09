@@ -40,7 +40,6 @@ export interface StructuralTransitionIntent extends MotionCallbacks {
 }
 
 interface NavigationIntentBase {
-  persist?: boolean;
   waitForHostSettle?: boolean;
   deferUntilNextFrame?: boolean;
 }
@@ -107,7 +106,6 @@ export interface MotionPlan {
   segments: MotionSegment[];
   sourceSnapshot?: CanvasRenderSnapshot;
   targetSnapshot?: CanvasRenderSnapshot;
-  persistFinalViewport?: boolean;
 }
 
 export interface StructuralChoreographyRequest {
@@ -126,7 +124,6 @@ export interface StructuralChoreographyRequest {
   sharedNodeGeometry?: 'freeze-from';
   collectSubtreeIds: (tree: LayoutTree, rootId: string) => Set<string>;
   planningAdvisory: TransitionPlanningAdvisory;
-  persistFinalViewport?: boolean;
 }
 
 export type MotionPhase = 'idle' | 'animating' | 'settling' | 'userGesture';

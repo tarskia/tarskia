@@ -1,3 +1,4 @@
+import { buildSemanticIndex } from '@tarskia/diagram-semantics';
 // @vitest-environment happy-dom
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -47,8 +48,8 @@ it('reduced motion expands, collapses and expands all to animated endpoints with
     const observedOverlays: boolean[] = [];
     function Harness({ doc }: { doc: SemanticDocument }) {
       engine = useDiagramEngine({
-        doc,
-        schema: gallery.graph.schema,
+        index: buildSemanticIndex(doc, gallery.graph.schema),
+        view: doc.view,
         skipTransitions,
         showDebug: false,
         persistViewport,
@@ -161,8 +162,8 @@ it.each([
   const persistViewport = vi.fn();
   function Harness({ reduced }: { reduced: boolean }) {
     engine = useDiagramEngine({
-      doc: initial.doc,
-      schema: gallery.graph.schema,
+      index: buildSemanticIndex(initial.doc, gallery.graph.schema),
+      view: initial.doc.view,
       skipTransitions: reduced,
       showDebug: false,
       persistViewport,

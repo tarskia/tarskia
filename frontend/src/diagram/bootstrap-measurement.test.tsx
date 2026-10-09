@@ -1,3 +1,4 @@
+import { buildSemanticIndex } from '@tarskia/diagram-semantics';
 // @vitest-environment happy-dom
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -55,12 +56,12 @@ it('keeps camera bounds identity while the stable scene snapshot is unchanged', 
     .spyOn(bootstrapModule, 'useCanvasBootstrapController')
     .mockReturnValue({ initialViewportPending: false });
   const gallery = loadGallery('prometheus.yaml');
-  const doc = gallery.graph.doc;
+  const doc = gallery.graph.content;
   const persistViewport = vi.fn();
   function Harness({ renderVersion }: { renderVersion: number }) {
     useDiagramEngine({
-      doc,
-      schema: gallery.graph.schema,
+      index: buildSemanticIndex(doc, gallery.graph.schema),
+      view: doc.view,
       skipTransitions: true,
       showDebug: false,
       persistViewport,

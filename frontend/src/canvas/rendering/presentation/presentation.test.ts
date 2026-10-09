@@ -1,12 +1,12 @@
 import {
   buildQualifiedSchemaObjectId,
+  buildSemanticIndex,
   CORE_GROUP_TYPE_ID,
   compileDiagramViewState,
   type SchemaModule,
   type SemanticDocument,
 } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { buildGraphModel } from '../graph/graph-model';
 import { buildLayoutResult } from '../layout/layout-pipeline';
 import { buildBezierEdgeGeometry } from './geometry';
 import { buildStaticCanvasPresentation } from './presentation';
@@ -166,7 +166,7 @@ const withView = (
 });
 
 const buildScene = (doc: SemanticDocument) => {
-  const graph = buildGraphModel(doc, schema);
+  const graph = buildSemanticIndex(doc, schema);
   const viewState = compileDiagramViewState({ doc, schema });
   return buildLayoutResult({
     graph,

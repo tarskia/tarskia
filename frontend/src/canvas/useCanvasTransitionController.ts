@@ -377,7 +377,6 @@ export function useCanvasTransitionController({
           sharedNodeGeometry: exitingScope ? undefined : 'freeze-from',
           collectSubtreeIds: viewportOps.collectSubtreeIds,
           planningAdvisory,
-          persistFinalViewport: true,
         },
         {
           onComplete: () => {
@@ -424,7 +423,6 @@ export function useCanvasTransitionController({
         endPointOfInterestNodeIds,
         collectSubtreeIds: viewportOps.collectSubtreeIds,
         planningAdvisory,
-        persistFinalViewport: true,
       },
       {
         onComplete: observedTransition.onComplete,

@@ -51,10 +51,12 @@ describe.each(galleryFiles)('$file rendering behavior', ({ file }) => {
     }
     return value;
   };
-  const entityIndex = buildEntityIndex(gallery.graph.doc.entities);
+  const entityIndex = buildEntityIndex(gallery.graph.content.entities);
   const collapsed = render([]);
-  const topIds = gallery.graph.doc.entities
-    .filter((entity) => (gallery.graph.childrenByParent.get(entity.id)?.length ?? 0) > 0)
+  const topIds = gallery.graph.content.entities
+    .filter(
+      (entity) => (gallery.graph.entityIndex.childrenByParent.get(entity.id)?.length ?? 0) > 0,
+    )
     .map((entity) => entity.id);
   const variants = [
     undefined,
@@ -82,7 +84,7 @@ describe.each(galleryFiles)('$file rendering behavior', ({ file }) => {
       for (const edge of presentation.overlayEdges) {
         expect(visible.has(edge.sourceId) && visible.has(edge.targetId), edge.id).toBe(true);
         for (const relationId of edge.relationIds ?? [edge.relationId]) {
-          const relation = gallery.graph.doc.relations.find(
+          const relation = gallery.graph.content.relations.find(
             (candidate) => candidate.id === relationId,
           );
           expect(relation, relationId).toBeDefined();

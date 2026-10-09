@@ -1,3 +1,4 @@
+import { buildSemanticIndex } from '@tarskia/diagram-semantics';
 // @vitest-environment happy-dom
 
 import type { SemanticDocument } from '@tarskia/diagram-semantics';
@@ -35,8 +36,8 @@ it('interrupts an n8n expansion at 40% without a display jump and settles at the
   const persistViewport = vi.fn();
   function Harness({ doc }: { doc: SemanticDocument }) {
     engine = useDiagramEngine({
-      doc,
-      schema: gallery.graph.schema,
+      index: buildSemanticIndex(doc, gallery.graph.schema),
+      view: doc.view,
       skipTransitions: false,
       showDebug: false,
       persistViewport,

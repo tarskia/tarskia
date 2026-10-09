@@ -1,11 +1,10 @@
 import { readFileSync } from 'node:fs';
-import { compileDiagramViewState } from '@tarskia/diagram-semantics';
+import { buildSemanticIndex, compileDiagramViewState } from '@tarskia/diagram-semantics';
 import { expect, test } from 'vitest';
 import { buildSchemaVersionCatalog } from '../../../model/validation/schema-closure';
 import { semanticBootstrap } from '../../../semantic/bootstrap';
 import { buildDiagramSemanticRuntime } from '../../../semantic/runtime';
 import { loadDiagramDocFromRaw } from '../../../viewer-core/loadDiagramDocFromRaw';
-import { buildGraphModel } from '../graph/graph-model';
 import { buildLayoutResult } from './layout-pipeline';
 
 const curatedDirectory = new URL('../../../../../gallery/curated/', import.meta.url);
@@ -38,7 +37,7 @@ test.each(manifest)('$file preserves compact-list container dimensions', ({ file
     },
   };
   const layout = buildLayoutResult({
-    graph: buildGraphModel(doc, runtime.schema),
+    graph: buildSemanticIndex(doc, runtime.schema),
     viewState: compileDiagramViewState({ doc, schema: runtime.schema }),
   });
   const lists = [...layout.tree.byId.values()].filter((node) => node.layoutMode === 'list');

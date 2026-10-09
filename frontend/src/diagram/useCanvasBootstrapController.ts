@@ -66,7 +66,6 @@ export function useCanvasBootstrapController({
   const initializeIntent = useMemo<NavigationIntent>(
     () => ({
       kind: 'initialize-diagram',
-      persist: true,
       waitForHostSettle: false,
     }),
     [],
@@ -88,7 +87,6 @@ export function useCanvasBootstrapController({
         intent: initializeIntent,
         policy: {
           ...initializePolicy,
-          persist: false,
         },
         savedViewport,
         canvasSize: usableCanvasSize,

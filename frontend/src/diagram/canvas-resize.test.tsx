@@ -1,3 +1,4 @@
+import { buildSemanticIndex } from '@tarskia/diagram-semantics';
 // @vitest-environment happy-dom
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -47,8 +48,8 @@ it.each([
   const persistViewport = vi.fn();
   function Harness() {
     engine = useDiagramEngine({
-      doc: initial.doc,
-      schema: gallery.graph.schema,
+      index: buildSemanticIndex(initial.doc, gallery.graph.schema),
+      view: initial.doc.view,
       skipTransitions: false,
       showDebug: false,
       persistViewport,

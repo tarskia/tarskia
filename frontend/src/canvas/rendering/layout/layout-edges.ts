@@ -1,6 +1,6 @@
 import type { CompiledDiagramEdge } from '@tarskia/diagram-semantics';
 import { resolveEndpointChildWithinParent } from '../tree/endpoint-projection';
-import type { SceneTree } from '../tree/scene-tree';
+import type { LayoutTree } from './layout-geometry';
 
 export type LayoutEdge = { source: string; target: string };
 
@@ -8,7 +8,7 @@ export function buildLayoutEdgesForParent(params: {
   parentId: string;
   childIds: string[];
   edges: CompiledDiagramEdge[];
-  tree: SceneTree;
+  tree: LayoutTree;
 }): LayoutEdge[] {
   const { parentId, childIds, edges, tree } = params;
   if (childIds.length === 0 || edges.length === 0) return [];
@@ -33,7 +33,7 @@ export function buildLayoutEdgesForParent(params: {
 
 /** Each relation contributes only at its lowest common ancestor, in relation order. */
 export function buildLayoutEdgesByParent(
-  tree: SceneTree,
+  tree: LayoutTree,
   edges: CompiledDiagramEdge[],
 ): Map<string, LayoutEdge[]> {
   const result = new Map<string, LayoutEdge[]>();

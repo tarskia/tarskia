@@ -1,6 +1,10 @@
 // @vitest-environment happy-dom
-import { getDiagramViewExpandedMap, type SemanticDocument } from '@tarskia/diagram-semantics';
-import { act, useState } from 'react';
+import {
+  buildSemanticIndex,
+  getDiagramViewExpandedMap,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
+import { act, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { ReactFlowInstance } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
@@ -40,14 +44,19 @@ it.each([
   const selectEntity = vi.fn(),
     selectEdge = vi.fn();
   function Harness() {
-    const [current, commitDoc] = useState(initial.doc);
+    const [current, updateContent] = useState(initial.doc);
+    const [view, commitView] = useState(initial.doc.view);
+    const index = useMemo(() => buildSemanticIndex(current, gallery.graph.schema), [current]);
     const [documentKey, updateDocumentKey] = useState('n8n');
-    replaceDocument = commitDoc;
+    replaceDocument = (next) => {
+      updateContent(next);
+      commitView(next.view);
+    };
     setDocumentKey = updateDocumentKey;
-    doc = current;
+    doc = { ...current, view };
     engine = useDiagramEngine({
-      doc: current,
-      schema: gallery.graph.schema,
+      index,
+      view,
       initialViewportKey: documentKey,
       persistViewport,
       skipTransitions: false,
@@ -56,8 +65,8 @@ it.each([
       maxZoom: 2,
     });
     const actions = useDiagramActions({
-      state: { doc: current },
-      document: { commitDoc },
+      state: { index, view },
+      document: { commitView },
       transition: {
         requestNavigation: engine.requestNavigation,
         flushUserGesture: engine.flushUserGesture,
@@ -65,12 +74,13 @@ it.each([
       },
     });
     focus = useFocusViewController({
+      index,
       sceneTree: engine.compiled.tree,
-      expanded: getDiagramViewExpandedMap(current.view),
+      expanded: getDiagramViewExpandedMap(view),
       getCurrentCanvasSize: engine.getCurrentCanvasSize,
       canvasLayoutVersion: engine.canvasLayoutVersion,
       showInspector: false,
-      commitDoc,
+      commitView,
       flushUserGesture: engine.flushUserGesture,
       triggerEntityZoom: actions.triggerEntityZoom,
       setSelectedEntity: selectEntity,

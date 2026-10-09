@@ -11,7 +11,7 @@ import { resolveTypeLayoutDefaults } from '../../../model/layout-defaults';
 import { resolveTypeProjectionOptions } from '../../../model/projection-contract';
 import { resolveTypeVisualDefaults } from '../../../model/visual-defaults';
 import { DEFAULT_NODE_SIZE } from '../layout/defaults';
-import type { SceneNode, SceneTree } from '../tree/scene-tree';
+import type { LayoutNode, LayoutTree } from '../layout/layout-geometry';
 
 export type ResolvedNodeRichContent =
   | {
@@ -72,9 +72,10 @@ const isGenericComponentCountLabel = (label: string, singularLabel?: string) => 
   );
 };
 
-const getStructuralChildCount = (node: SceneNode) => node.diagramChildCount ?? node.children.length;
+const getStructuralChildCount = (node: LayoutNode) =>
+  node.diagramChildCount ?? node.children.length;
 
-const getStructuralChildTypeCounts = (node: SceneNode) => {
+const getStructuralChildTypeCounts = (node: LayoutNode) => {
   if (node.diagramChildTypeCounts) {
     return node.diagramChildTypeCounts;
   }
@@ -85,7 +86,7 @@ const getStructuralChildTypeCounts = (node: SceneNode) => {
   return counts;
 };
 
-const getStructuralChildTypeCount = (node: SceneNode, typeId: string) => {
+const getStructuralChildTypeCount = (node: LayoutNode, typeId: string) => {
   const explicitCount = getStructuralChildTypeCounts(node)[typeId];
   if (typeof explicitCount === 'number') {
     return explicitCount;
@@ -93,7 +94,7 @@ const getStructuralChildTypeCount = (node: SceneNode, typeId: string) => {
   return 0;
 };
 
-const buildShallowStructuralSummaryLabel = (node: SceneNode, schema: SchemaModule) => {
+const buildShallowStructuralSummaryLabel = (node: LayoutNode, schema: SchemaModule) => {
   const count = getStructuralChildCount(node);
   if (count <= 0) {
     return undefined;
@@ -118,7 +119,7 @@ const visualCache = new WeakMap<SchemaModule, WeakMap<Entity, Map<string, Resolv
 
 export function buildNodeVisualMap(params: {
   schema: SchemaModule;
-  tree: SceneTree;
+  tree: LayoutTree;
   uncached?: boolean;
 }): Map<string, ResolvedNodeVisual> {
   const { schema, tree } = params;

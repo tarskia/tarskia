@@ -1,7 +1,8 @@
 import {
   buildEntityIndex,
+  buildSemanticIndex,
+  type DiagramView,
   getDiagramViewExpandedMap,
-  type SemanticDocument,
 } from '@tarskia/diagram-semantics';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, it, vi } from 'vitest';
@@ -24,17 +25,30 @@ it('Expand all uses parent-referenced children through the real viewer action', 
     sourceLabel: 'fixture',
   });
   expect(loaded.readable).toBe(true);
-  let doc = loaded.doc;
+  const doc = loaded.doc;
+  let view = doc.view;
+  const index = buildSemanticIndex(doc, {
+    owner: 'test',
+    name: 'hierarchy',
+    version: '1',
+    types: [],
+    relations: [],
+  });
   let actions!: ReturnType<typeof useDiagramActions>;
-  const commitDoc = vi.fn(
-    (updater: SemanticDocument | ((previous: SemanticDocument) => SemanticDocument)) => {
-      doc = typeof updater === 'function' ? updater(doc) : updater;
+  const commitView = vi.fn(
+    (
+      updater:
+        | DiagramView
+        | undefined
+        | ((previous: DiagramView | undefined) => DiagramView | undefined),
+    ) => {
+      view = typeof updater === 'function' ? updater(view) : updater;
     },
   );
   function Harness() {
     actions = useDiagramActions({
-      state: { doc },
-      document: { commitDoc },
+      state: { index, view },
+      document: { commitView },
       transition: {
         requestNavigation: () => ({ status: 'applied', reason: 'synchronous' }),
         flushUserGesture: () => false,
@@ -45,8 +59,8 @@ it('Expand all uses parent-referenced children through the real viewer action', 
   }
   renderToStaticMarkup(<Harness />);
   actions.expandAll();
-  expect(commitDoc).toHaveBeenCalledOnce();
-  expect(getDiagramViewExpandedMap(doc.view).platform).toBe(true);
+  expect(commitView).toHaveBeenCalledOnce();
+  expect(getDiagramViewExpandedMap(view).platform).toBe(true);
   expect(buildEntityIndex(doc.entities).parentById.get('api')).toBe('platform');
 });
 

@@ -3,18 +3,7 @@ import {
   type DocumentLayout,
   normalizeDiagramViewState,
   type SemanticDocument,
-  type ViewportState,
 } from '@tarskia/diagram-semantics';
-import { useMemo } from 'react';
-
-export interface DiagramSemanticState {
-  version: SemanticDocument['version'];
-  schemaRefs: SemanticDocument['schemaRefs'];
-  entities: SemanticDocument['entities'];
-  relations: SemanticDocument['relations'];
-  inputs: SemanticDocument['inputs'];
-  metadata: SemanticDocument['metadata'];
-}
 
 export interface DeclarativeDiagramViewState {
   view: DiagramView;
@@ -26,86 +15,49 @@ export interface DeclarativeDiagramViewState {
   key: string;
 }
 
-const collectNodeIdsByFlag = (ids: Set<string>): string[] =>
-  [...ids].sort((leftId, rightId) => leftId.localeCompare(rightId));
-
-const sortObjectKeys = (value: unknown): unknown => {
-  if (Array.isArray(value)) {
-    return value.map((entry) => sortObjectKeys(entry));
-  }
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
-        .map(([key, entryValue]) => [key, sortObjectKeys(entryValue)]),
-    );
-  }
-  return value;
-};
-
-const stableKey = (value: unknown) => JSON.stringify(sortObjectKeys(value));
-
-/** Camera and declarative view changes do not change semantic identity. */
-export const useDiagramSemanticState = (doc: SemanticDocument): DiagramSemanticState => {
-  const { version, schemaRefs, entities, relations, inputs, metadata } = doc;
-  return useMemo(
-    () => ({ version, schemaRefs, entities, relations, inputs, metadata }),
-    [version, schemaRefs, entities, relations, inputs, metadata],
+// Intern small structural selections, never the document, geometry, or camera.
+// Matching flag sets retain their revision even if another view flag changes.
+let nextRevision = 0;
+const flagRevisions: { ids: string[]; revision: string }[] = [];
+const revisionFor = (ids: string[]) => {
+  ids.sort();
+  const existing = flagRevisions.find(
+    (entry) => entry.ids.length === ids.length && entry.ids.every((id, i) => id === ids[i]),
   );
+  if (existing) return existing.revision;
+  const revision = String(++nextRevision);
+  flagRevisions.push({ ids, revision });
+  if (flagRevisions.length > 256) flagRevisions.shift();
+  return revision;
 };
-
-export const buildSemanticStateDocument = (
-  semanticState: DiagramSemanticState,
-): SemanticDocument => ({
-  version: semanticState.version,
-  schemaRefs: semanticState.schemaRefs,
-  entities: semanticState.entities,
-  relations: semanticState.relations,
-  inputs: semanticState.inputs,
-  metadata: semanticState.metadata,
-});
+const cache = new WeakMap<object, Map<string | undefined, DeclarativeDiagramViewState>>();
+const emptyNodes = {};
 
 export const selectDeclarativeDiagramViewState = (
   doc: Pick<SemanticDocument, 'view'>,
 ): DeclarativeDiagramViewState => {
-  const normalizedViewState = normalizeDiagramViewState(doc.view);
-  const view = normalizedViewState.view as DiagramView;
-  const layout = normalizedViewState.layout as DocumentLayout;
-  const expanded = normalizedViewState.expanded;
-  const highlightedIds = collectNodeIdsByFlag(normalizedViewState.highlightedIds);
-  const expandedKey = stableKey(expanded);
-  const highlightedKey = stableKey(highlightedIds);
-  const layoutKey = stableKey(layout);
-
-  return {
-    view,
-    layout,
-    expanded,
+  const nodes = doc.view?.nodesById ?? emptyNodes;
+  const scope = doc.view?.scopeRootId;
+  const cached = cache.get(nodes)?.get(scope);
+  if (cached) return cached;
+  const normalized = normalizeDiagramViewState(doc.view);
+  const expandedKey = revisionFor(Object.keys(normalized.expanded));
+  const highlightedKey = revisionFor([...normalized.highlightedIds]);
+  const result = {
+    view: normalized.view,
+    layout: normalized.layout,
+    expanded: normalized.expanded,
     expandedKey,
     highlightedKey,
-    layoutKey,
-    key: stableKey({
-      scopeRootId: view.scopeRootId,
-      expanded,
-      highlightedIds,
-      layout,
-    }),
+    // Layout is fixed; viewport persistence never changes structural transitions.
+    layoutKey: 'fixed-layout',
+    key: `${scope?.length ?? 0}:${scope ?? ''}:${expandedKey}:${highlightedKey}`,
   };
+  let scopes = cache.get(nodes);
+  if (!scopes) {
+    scopes = new Map();
+    cache.set(nodes, scopes);
+  }
+  scopes.set(scope, result);
+  return result;
 };
-
-export const combineDiagramSemanticAndDeclarativeViewState = (params: {
-  semanticState: DiagramSemanticState;
-  declarativeViewState: DeclarativeDiagramViewState;
-}): SemanticDocument => {
-  const { semanticState, declarativeViewState } = params;
-  return {
-    ...buildSemanticStateDocument(semanticState),
-    view: {
-      ...declarativeViewState.view,
-      layout: declarativeViewState.layout,
-    },
-  };
-};
-
-export const getDeclarativeViewport = (layout: DocumentLayout): ViewportState | undefined =>
-  layout.viewport;

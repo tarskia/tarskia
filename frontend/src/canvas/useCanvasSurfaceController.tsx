@@ -1,4 +1,4 @@
-import type { Entity, SchemaModule, SemanticDocument } from '@tarskia/diagram-semantics';
+import type { Entity, SchemaModule, SemanticIndex } from '@tarskia/diagram-semantics';
 import {
   type MutableRefObject,
   useCallback,
@@ -34,7 +34,6 @@ import type {
   CanvasNodeHostControls,
   ReactFlowHostRenderState,
 } from './host/reactflow/types';
-import type { GraphModel } from './rendering/graph/graph-model';
 import type { LayoutResult } from './rendering/layout/layout-pipeline';
 import type {
   CanvasOverlayEdgeView,
@@ -58,9 +57,8 @@ export interface UseCanvasSurfaceControllerArgs {
     nodeTypes: DiagramCanvasProps['nodeTypes'];
   };
   graphState: {
-    doc: SemanticDocument;
     schema: SchemaModule;
-    graph: GraphModel;
+    graph: SemanticIndex;
     entityIndex: {
       byId: Map<string, Entity>;
       parentById: Map<string, string | undefined>;
@@ -108,7 +106,6 @@ const FOCUS_SHELL_OUTER_INSET_Y = 18;
 const FOCUS_SHELL_STEP_X = 16;
 const FOCUS_SHELL_STEP_Y = 32;
 const toSingleSelectionSet = (id?: string) => (id ? new Set([id]) : new Set<string>());
-const hostRenderStateSignatureCache = new WeakMap<ReactFlowHostRenderState, string>();
 
 const formatDebugPoint = (point: { x: number; y: number }) =>
   `${Math.round(point.x)},${Math.round(point.y)}`;
@@ -125,18 +122,6 @@ export const resolveVisibleHostOverlayEdges = (params: {
 }) => {
   const { overlayEdges, hideHostVisuals } = params;
   return hideHostVisuals ? EMPTY_OVERLAY_EDGES : overlayEdges;
-};
-
-export const getHostRenderStateSignature = (state: ReactFlowHostRenderState) => {
-  const cached = hostRenderStateSignatureCache.get(state);
-  if (cached) {
-    return cached;
-  }
-  const signature = JSON.stringify(state, (_key, value) =>
-    typeof value === 'function' ? '__function__' : value,
-  );
-  hostRenderStateSignatureCache.set(state, signature);
-  return signature;
 };
 
 export const buildAutoVisibleSelectionKey = (params: {
@@ -247,7 +232,6 @@ export function useCanvasSurfaceController({
     nodeTypes,
   } = surface;
   const {
-    doc,
     schema,
     graph,
     entityIndex,
@@ -288,7 +272,7 @@ export function useCanvasSurfaceController({
   const viewportGestureActiveRef = useRef(false);
   const pendingDisplayGenerationRef = useRef<number | null>(null);
   const notifiedDisplayGenerationRef = useRef<number | null>(null);
-  const lastAppliedHostRenderStateSignatureRef = useRef<string | null>(null);
+  const lastAppliedHostRenderStateRef = useRef<ReactFlowHostRenderState | null>(null);
   const suppressPaneClickOnce = useCallback(() => {
     // Ignore the immediate pane click after node/edge/popup interactions.
     suppressPaneClickRef.current = true;
@@ -516,18 +500,12 @@ export function useCanvasSurfaceController({
       ),
     [buildHostRenderState, selectedEdgeId, selectedEntityId],
   );
-  const hostRenderStateSignature = useMemo(
-    () => getHostRenderStateSignature(hostRenderState),
-    [hostRenderState],
-  );
-
   useLayoutEffect(() => {
-    const hostRenderChanged =
-      lastAppliedHostRenderStateSignatureRef.current !== hostRenderStateSignature;
+    const hostRenderChanged = lastAppliedHostRenderStateRef.current !== hostRenderState;
     if (hostRenderChanged) {
       setNodes(hostRenderState.nodes);
       setOverlayEdges(hostRenderState.overlayEdges);
-      lastAppliedHostRenderStateSignatureRef.current = hostRenderStateSignature;
+      lastAppliedHostRenderStateRef.current = hostRenderState;
     }
     setEdgeGeometrySnapshot(presentation);
     pendingDisplayGenerationRef.current = requiredHostGeneration;
@@ -543,14 +521,7 @@ export function useCanvasSurfaceController({
       notifiedDisplayGenerationRef.current = requiredHostGeneration;
       pendingDisplayGenerationRef.current = null;
     }
-  }, [
-    hostRenderState,
-    hostRenderStateSignature,
-    presentation,
-    notifyDisplayHostSettled,
-    requiredHostGeneration,
-    setNodes,
-  ]);
+  }, [hostRenderState, presentation, notifyDisplayHostSettled, requiredHostGeneration, setNodes]);
 
   const selectedNodeView = useMemo(
     () => decoratedPresentation.nodes.find((node) => node.id === selectedEntityId),

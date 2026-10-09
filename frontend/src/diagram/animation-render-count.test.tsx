@@ -1,3 +1,4 @@
+import { buildSemanticIndex } from '@tarskia/diagram-semantics';
 // @vitest-environment happy-dom
 
 import type { SemanticDocument } from '@tarskia/diagram-semantics';
@@ -48,8 +49,8 @@ it.each([
   function Harness({ doc }: { doc: SemanticDocument }) {
     hostRenders++;
     engine = useDiagramEngine({
-      doc,
-      schema: gallery.graph.schema,
+      index: buildSemanticIndex(doc, gallery.graph.schema),
+      view: doc.view,
       skipTransitions: false,
       showDebug: false,
       persistViewport,
@@ -125,6 +126,7 @@ it.each([
     for (let i = 0; i < 60 && (callbacks.size || engine.requiredHostGeneration !== null); i++)
       await advance(now + 100);
     expect(engine.motionPhase).toBe('idle');
+    expect(persistViewport).not.toHaveBeenCalled();
     expect(engine.overlayFrameStore.getSnapshot()).toBeNull();
     expect(phases.has('animating')).toBe(true);
     expect(phases.has('idle')).toBe(true);

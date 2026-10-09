@@ -5,7 +5,6 @@ import type { NavigationIntent, NavigationRequestResult } from '../diagram/motio
 import type { UseCanvasSurfaceControllerArgs } from './useCanvasSurfaceController';
 import {
   buildAutoVisibleSelectionKey,
-  getHostRenderStateSignature,
   resolveVisibleHostOverlayEdges,
   shouldAcknowledgeDisplayGenerationImmediately,
   shouldCommitAutoVisibleSelectionKey,
@@ -410,86 +409,6 @@ describe('useCanvasSurfaceController', () => {
     expect(
       shouldCommitAutoVisibleSelectionKey({ status: 'unavailable', reason: 'missing-canvas' }),
     ).toBe(false);
-  });
-
-  it('treats semantically identical host render states as equal even when handlers are recreated', () => {
-    const baseNodeView = buildTestGroupPresentation().nodes[0];
-    const baseNodeBindings = {
-      onZoomTrigger: vi.fn(),
-      onExpandDetails: vi.fn(),
-      onCollapseDetails: vi.fn(),
-      onExpandChildGroups: vi.fn(),
-      onCollapseChildGroups: vi.fn(),
-      onEdgeLabelClick: vi.fn(),
-      onSelectNode: vi.fn(),
-      onSelectEdge: vi.fn(),
-    };
-    const baseEdgeView = {
-      id: 'edge-1',
-      relationId: 'rel-1',
-      kind: 'routed' as const,
-      sourceId: 'node-1',
-      targetId: 'node-2',
-      opacity: 1,
-      matched: false,
-      geometry: {
-        sourcePoint: { x: 0, y: 0 },
-        targetPoint: { x: 10, y: 10 },
-        control1: { x: 2, y: 2 },
-        control2: { x: 8, y: 8 },
-        path: 'M0 0 C2 2 8 8 10 10',
-        labelAnchor: { x: 5, y: 5 },
-        sourceSide: 'right' as const,
-        targetSide: 'left' as const,
-      },
-      path: 'M0 0 C2 2 8 8 10 10',
-      labelAnchor: { x: 5, y: 5 },
-      label: undefined,
-      solidOverNodeIds: [],
-    };
-    const firstState: import('./host/reactflow/types').ReactFlowHostRenderState = {
-      nodes: [
-        {
-          id: 'node-1',
-          type: 'entityNode',
-          position: { x: 10, y: 20 },
-          data: {
-            view: baseNodeView,
-            bindings: baseNodeBindings,
-            controls: {
-              selected: false,
-              disableControlActions: false,
-              hideLocalEdgeLabels: false,
-            },
-          },
-        } as import('reactflow').Node<import('./host/reactflow/types').ReactFlowHostNodeData>,
-      ],
-      overlayEdges: [baseEdgeView],
-    };
-
-    const secondState: import('./host/reactflow/types').ReactFlowHostRenderState = {
-      nodes: [
-        {
-          ...firstState.nodes[0],
-          data: {
-            ...firstState.nodes[0].data,
-            bindings: {
-              onZoomTrigger: vi.fn(),
-              onExpandDetails: vi.fn(),
-              onCollapseDetails: vi.fn(),
-              onExpandChildGroups: vi.fn(),
-              onCollapseChildGroups: vi.fn(),
-              onEdgeLabelClick: vi.fn(),
-              onSelectNode: vi.fn(),
-              onSelectEdge: vi.fn(),
-            },
-          },
-        } as import('reactflow').Node<import('./host/reactflow/types').ReactFlowHostNodeData>,
-      ],
-      overlayEdges: [{ ...firstState.overlayEdges[0] }],
-    };
-
-    expect(getHostRenderStateSignature(firstState)).toBe(getHostRenderStateSignature(secondState));
   });
 
   it('preserves semantic node controls while applying a runtime disable mask', async () => {

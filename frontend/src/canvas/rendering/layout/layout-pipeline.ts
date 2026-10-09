@@ -1,9 +1,9 @@
-import type { CompiledDiagramViewState } from '@tarskia/diagram-semantics';
-import type { GraphModel } from '../graph/graph-model';
+import type { SemanticIndex } from '@tarskia/diagram-semantics';
+import { type CompiledDiagramViewState, ImmutableMap } from '@tarskia/diagram-semantics';
 import { buildAbsolutePositions, buildSceneZIndex, type CanvasScene } from '../scene/scene';
-import { buildSceneTree } from '../tree/scene-tree';
 import { buildEdgeVisuals } from '../visual/edge-visuals';
 import { buildNodeVisualMap } from '../visual/node-visuals';
+import { createLayoutGeometry } from './layout-geometry';
 import { applySceneLayout } from './tree-traverser';
 
 /**
@@ -17,13 +17,17 @@ import { applySceneLayout } from './tree-traverser';
  */
 export type LayoutResult = CanvasScene;
 
+const results = new WeakMap<SemanticIndex, WeakMap<CompiledDiagramViewState, LayoutResult>>();
+
 export function buildLayoutResult(params: {
-  graph: GraphModel;
+  graph: SemanticIndex;
   viewState: CompiledDiagramViewState;
   uncached?: boolean;
 }): LayoutResult {
   const { graph, viewState } = params;
-  const tree = buildSceneTree({ tree: viewState.tree });
+  const cached = !params.uncached && results.get(graph)?.get(viewState);
+  if (cached) return cached;
+  const tree = createLayoutGeometry({ tree: viewState.tree });
   const nodeVisuals = buildNodeVisualMap({ schema: graph.schema, tree, uncached: params.uncached });
   const edges = buildEdgeVisuals({
     schema: graph.schema,
@@ -35,16 +39,42 @@ export function buildLayoutResult(params: {
     nodeVisuals,
     uncached: params.uncached,
   });
+  for (const node of tree.byId.values()) {
+    Object.freeze(node.size);
+    Object.freeze(node.baseSize);
+    if (node.position) Object.freeze(node.position);
+    for (const rect of node.contentOccluders ?? []) Object.freeze(rect);
+    if (node.contentOccluders) Object.freeze(node.contentOccluders);
+    Object.freeze(node.children);
+    Object.freeze(node);
+  }
+  tree.byId = new ImmutableMap(tree.byId);
+  tree.childrenByParent = new ImmutableMap(tree.childrenByParent);
+  Object.freeze(tree);
+  for (const edge of edges) Object.freeze(edge);
+  Object.freeze(edges);
+  const absolutePositions = buildAbsolutePositions(tree);
+  for (const position of Object.values(absolutePositions)) Object.freeze(position);
+  Object.freeze(absolutePositions);
   const visibleIds = (() => {
     return new Set([...tree.byId.keys()].filter((id) => id !== tree.rootId));
   })();
-  return {
+  const result = Object.freeze({
     schema: graph.schema,
     tree,
     edges,
-    nodeVisuals,
+    nodeVisuals: new ImmutableMap(nodeVisuals),
     visibleIds,
-    absolutePositions: buildAbsolutePositions(tree),
-    zIndexById: buildSceneZIndex(viewState.nodePaintOrder),
-  };
+    absolutePositions,
+    zIndexById: new ImmutableMap(buildSceneZIndex(viewState.nodePaintOrder)),
+  });
+  if (!params.uncached) {
+    let byView = results.get(graph);
+    if (!byView) {
+      byView = new WeakMap();
+      results.set(graph, byView);
+    }
+    byView.set(viewState, result);
+  }
+  return result;
 }
