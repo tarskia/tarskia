@@ -11,8 +11,6 @@ function renderToolbar(overrides: Partial<Parameters<typeof CanvasToolbar>[0]> =
       canCopyDiagramView={true}
       onExpandAll={vi.fn()}
       onCollapseAll={vi.fn()}
-      availableSchemas={[]}
-      onToggleSchema={vi.fn()}
       {...overrides}
     />,
   );
@@ -29,13 +27,6 @@ describe('CanvasToolbar', () => {
     expect(html).toContain('Copy to clipboard');
     expect(html).toContain('Copy the current diagram view to the clipboard as PNG');
     expect(html).toContain('absolute bottom-3');
-  });
-
-  it('keeps the centre action available when schema controls are hidden', () => {
-    const html = renderToolbar({ showSchemas: false });
-
-    expect(html).toContain('Centre');
-    expect(html).toContain('Centre the diagram in the viewport');
   });
 
   it('supports a horizontal center offset so the bar can stay anchored when the inspector opens', () => {
