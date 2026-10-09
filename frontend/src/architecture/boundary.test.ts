@@ -212,3 +212,25 @@ describe('architecture boundaries', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+it('keeps the complete three-phase motion pipeline below 2,000 source lines', () => {
+  const files = [
+    ...collectFiles(path.join(srcRoot, 'canvas/rendering/transition')),
+    ...[
+      'canvas/DiagramRenderer.tsx',
+      'canvas/useCanvasTransitionController.ts',
+      'diagram/useDiagramMotionManager.ts',
+      'diagram/motion-types.ts',
+      'diagram/camera-navigation.ts',
+      'diagram/camera-interpolation.ts',
+      'diagram/canvas-size.ts',
+    ].map((file) => path.join(srcRoot, file)),
+  ];
+  const lines = files.reduce(
+    (sum, file) => sum + readFileSync(file, 'utf8').split('\n').length - 1,
+    0,
+  );
+  expect(lines).toBeLessThan(2000);
+  expect(existsSync(path.join(srcRoot, 'canvas/useTransitionFrameManager.ts'))).toBe(false);
+  expect(existsSync(path.join(srcRoot, 'canvas/rendering/transition/sequencer.ts'))).toBe(false);
+});

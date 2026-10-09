@@ -2,23 +2,12 @@ import { indexTree } from '@tarskia/diagram-semantics';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LayoutResult } from '../canvas/rendering/layout/layout-pipeline';
-import {
-  ANIMATION_CONSTANTS,
-  DEFAULT_VIEWPORT_FIT_PADDING,
-  FOCUS_SCOPE_CAMERA_PAUSE_MS,
-} from '../canvas/rendering/transition/animation-constants';
+import { DEFAULT_VIEWPORT_FIT_PADDING } from '../canvas/rendering/transition/animation-constants';
 import {
   computeViewportForBoundsInVisibleCanvas,
   computeViewportToKeepRectVisible,
 } from '../canvas/viewport-visibility';
-import {
-  buildMotionPlanFromChoreographyRequest,
-  buildRetainedOnlySnapshot,
-  computePostOverlayBridgeViewport,
-  computeStructuralCameraDurationMs,
-  computeStructuralOverlayDurationMs,
-  useDiagramMotionManager,
-} from './useDiagramMotionManager';
+import { useDiagramMotionManager } from './useDiagramMotionManager';
 
 const buildSnapshot = () => ({
   nodes: [
@@ -93,28 +82,6 @@ const buildLayout = (): LayoutResult => {
     zIndexById: new Map(),
   } as unknown as LayoutResult;
 };
-
-const buildEmptyPlanningAdvisory = (direction: 'in' | 'out') => ({
-  direction,
-  structure: {
-    rootIds: { from: 'root', to: 'root' },
-    nodeDiffs: new Map(),
-    childVisibilityDiffs: [],
-    edgeDiffs: [],
-  },
-  geometry: {
-    basePositions: {},
-    targetPositions: {},
-    nodeGeometry: new Map(),
-  },
-  sequence: {
-    steps: [],
-    nodeAdvisories: new Map(),
-    childFadeAdvisories: new Map(),
-    edgeAdvisories: new Map(),
-    controlSwitchAdvisories: new Map(),
-  },
-});
 
 function renderManager(params?: {
   skipTransitions?: boolean;
@@ -223,247 +190,6 @@ describe('useDiagramMotionManager', () => {
       }),
     );
     expect(frame).not.toHaveBeenCalled();
-  });
-
-  it('scales structural camera duration with viewport travel', () => {
-    const baseDurationMs = ANIMATION_CONSTANTS.viewport.cameraDuration;
-
-    const localDurationMs = computeStructuralCameraDurationMs({
-      from: { x: 0, y: 0, zoom: 1 },
-      to: { x: 40, y: 20, zoom: 1.02 },
-      baseDurationMs,
-      canvasSize: { width: 960, height: 640 },
-    });
-    const longTravelDurationMs = computeStructuralCameraDurationMs({
-      from: { x: 0, y: 0, zoom: 1 },
-      to: { x: 720, y: 360, zoom: 1.55 },
-      baseDurationMs,
-      canvasSize: { width: 960, height: 640 },
-    });
-
-    expect(localDurationMs).toBeGreaterThanOrEqual(baseDurationMs);
-    expect(longTravelDurationMs).toBeGreaterThan(localDurationMs);
-  });
-
-  it('keeps structural overlay duration from collapsing below the choreography floor', () => {
-    const overlayDurationMs = computeStructuralOverlayDurationMs({
-      baseOverlayDurationMs: 180,
-      choreographyCameraDurationMs: 420,
-      hasStructuredPhases: true,
-    });
-
-    expect(overlayDurationMs).toBe(399);
-  });
-
-  it('bridges a relaid scoped node set back to its pre-fade screen position', () => {
-    const sourceSnapshot = {
-      ...buildSnapshot(),
-      nodes: buildSnapshot().nodes.map((node) => ({
-        ...node,
-        rect: { x: 420, y: 260, width: 160, height: 80 },
-      })),
-    };
-    const targetSnapshot = {
-      ...buildSnapshot(),
-      nodes: buildSnapshot().nodes.map((node) => ({
-        ...node,
-        rect: { x: 0, y: 0, width: 320, height: 160 },
-      })),
-    };
-    const currentViewport = { x: -120, y: 40, zoom: 0.5 };
-
-    const bridge = computePostOverlayBridgeViewport({
-      sourceSnapshot,
-      targetSnapshot,
-      nodeIds: ['node-1'],
-      currentViewport,
-      minZoom: 0.1,
-      maxZoom: 2,
-    });
-
-    expect(bridge).toEqual({
-      x: 90,
-      y: 170,
-      zoom: 0.25,
-    });
-  });
-
-  it('can filter a snapshot down to retained focused nodes and their local edges', () => {
-    const snapshot = {
-      ...buildSnapshot(),
-      nodes: [
-        {
-          ...buildSnapshot().nodes[0],
-          id: 'node-1',
-        },
-        {
-          ...buildSnapshot().nodes[0],
-          id: 'node-2',
-        },
-        {
-          ...buildSnapshot().nodes[0],
-          id: 'context',
-        },
-      ],
-      overlayEdges: [
-        {
-          id: 'retained-edge',
-          relationId: 'retained-edge',
-          kind: 'local' as const,
-          sourceId: 'node-1',
-          targetId: 'node-2',
-          matched: false,
-          opacity: 1,
-          geometry: {
-            sourcePoint: { x: 0, y: 0 },
-            control1: { x: 0, y: 0 },
-            control2: { x: 0, y: 0 },
-            targetPoint: { x: 0, y: 0 },
-            labelAnchor: { x: 0, y: 0 },
-            sourceSide: 'right' as const,
-            targetSide: 'left' as const,
-            path: '',
-          },
-          path: '',
-          labelAnchor: { x: 0, y: 0 },
-          solidOverNodeIds: [],
-        },
-        {
-          id: 'context-edge',
-          relationId: 'context-edge',
-          kind: 'local' as const,
-          sourceId: 'node-1',
-          targetId: 'context',
-          matched: false,
-          opacity: 1,
-          geometry: {
-            sourcePoint: { x: 0, y: 0 },
-            control1: { x: 0, y: 0 },
-            control2: { x: 0, y: 0 },
-            targetPoint: { x: 0, y: 0 },
-            labelAnchor: { x: 0, y: 0 },
-            sourceSide: 'right' as const,
-            targetSide: 'left' as const,
-            path: '',
-          },
-          path: '',
-          labelAnchor: { x: 0, y: 0 },
-          solidOverNodeIds: [],
-        },
-      ],
-    };
-
-    const retained = buildRetainedOnlySnapshot(snapshot, ['node-1', 'node-2']);
-
-    expect(retained.nodes.map((node) => node.id)).toEqual(['node-1', 'node-2']);
-    expect(retained.overlayEdges.map((edge) => edge.id)).toEqual(['retained-edge']);
-  });
-
-  it('builds exit-focus choreography as retained-node bridge, scene camera, pause, then context fade', () => {
-    const sourceSnapshot = {
-      ...buildSnapshot(),
-      nodes: buildSnapshot().nodes.map((node) => ({
-        ...node,
-        rect: { x: 420, y: 260, width: 160, height: 80 },
-      })),
-    };
-    const targetSnapshot = {
-      ...buildSnapshot(),
-      nodes: [
-        {
-          ...buildSnapshot().nodes[0],
-          rect: { x: 0, y: 0, width: 320, height: 160 },
-        },
-        {
-          ...buildSnapshot().nodes[0],
-          id: 'context',
-          rect: { x: 520, y: 40, width: 120, height: 80 },
-        },
-      ],
-    };
-
-    const plan = buildMotionPlanFromChoreographyRequest({
-      request: {
-        direction: 'in',
-        focus: null,
-        startLayout: buildLayout(),
-        endLayout: buildLayout(),
-        startSnapshot: sourceSnapshot,
-        endSnapshot: targetSnapshot,
-        currentViewport: { x: -120, y: 40, zoom: 0.5 },
-        endPointOfInterestNodeIds: [],
-        pauseBeforeOverlayMs: FOCUS_SCOPE_CAMERA_PAUSE_MS,
-        exitScopeRetainedNodeIds: ['node-1'],
-        collectSubtreeIds: () => new Set<string>(),
-        planningAdvisory: buildEmptyPlanningAdvisory('in'),
-      },
-      canvasSize: { width: 960, height: 640 },
-      minZoom: 0.1,
-      maxZoom: 2,
-    });
-
-    expect(plan.segments).toHaveLength(4);
-    expect(plan.segments[0]?.hostSnapshot?.nodes.map((node) => node.id)).toEqual(['node-1']);
-    expect(plan.segments[0]?.camera?.to).toEqual({
-      x: 90,
-      y: 170,
-      zoom: 0.25,
-    });
-    expect(plan.segments[1]?.camera?.from).toEqual(plan.segments[0]?.camera?.to);
-    expect(plan.segments[1]?.camera?.to).toEqual(
-      computeViewportForBoundsInVisibleCanvas({
-        bounds: { x: 0, y: 0, width: 640, height: 160 },
-        canvas: { width: 960, height: 640 },
-        minZoom: 0.1,
-        maxZoom: 2,
-        padding: DEFAULT_VIEWPORT_FIT_PADDING,
-      }),
-    );
-    expect(plan.segments[2]).toEqual({ durationMs: FOCUS_SCOPE_CAMERA_PAUSE_MS });
-    expect(plan.segments[3]?.overlay?.incomingSnapshot).toBe(targetSnapshot);
-  });
-
-  it('pauses after the enter-focus fade before completing to navigation', () => {
-    const sourceSnapshot = {
-      ...buildSnapshot(),
-      nodes: buildSnapshot().nodes.map((node) => ({
-        ...node,
-        rect: { x: 420, y: 260, width: 160, height: 80 },
-      })),
-    };
-    const targetSnapshot = {
-      ...buildSnapshot(),
-      nodes: buildSnapshot().nodes.map((node) => ({
-        ...node,
-        rect: { x: 0, y: 0, width: 320, height: 160 },
-      })),
-    };
-
-    const plan = buildMotionPlanFromChoreographyRequest({
-      request: {
-        direction: 'out',
-        focus: null,
-        startLayout: buildLayout(),
-        endLayout: buildLayout(),
-        startSnapshot: sourceSnapshot,
-        endSnapshot: targetSnapshot,
-        currentViewport: { x: -120, y: 40, zoom: 0.5 },
-        endPointOfInterestNodeIds: [],
-        pauseAfterOverlayMs: FOCUS_SCOPE_CAMERA_PAUSE_MS,
-        postOverlayViewportBridgeNodeIds: ['node-1'],
-        sharedNodeGeometry: 'freeze-from',
-        collectSubtreeIds: () => new Set<string>(),
-        planningAdvisory: buildEmptyPlanningAdvisory('out'),
-      },
-      canvasSize: { width: 960, height: 640 },
-      minZoom: 0.1,
-      maxZoom: 2,
-    });
-
-    const finalSegment = plan.segments[plan.segments.length - 1];
-
-    expect(plan.segments[0]?.overlay?.incomingSnapshot).toBe(targetSnapshot);
-    expect(finalSegment).toEqual({ durationMs: FOCUS_SCOPE_CAMERA_PAUSE_MS });
   });
 
   it('executes fit-scene navigation after canvas initialization', () => {
@@ -718,27 +444,6 @@ describe('useDiagramMotionManager', () => {
       currentViewport: { x: 0, y: 0, zoom: 1 },
       endPointOfInterestNodeIds: [],
       collectSubtreeIds: () => new Set<string>(),
-      planningAdvisory: {
-        direction: 'in',
-        structure: {
-          rootIds: { from: 'root', to: 'root' },
-          nodeDiffs: new Map(),
-          childVisibilityDiffs: [],
-          edgeDiffs: [],
-        },
-        geometry: {
-          basePositions: {},
-          targetPositions: {},
-          nodeGeometry: new Map(),
-        },
-        sequence: {
-          steps: [],
-          nodeAdvisories: new Map(),
-          childFadeAdvisories: new Map(),
-          edgeAdvisories: new Map(),
-          controlSwitchAdvisories: new Map(),
-        },
-      },
     });
 
     expect(manager.getCurrentDisplaySnapshot().nodes[0]?.rect.x).toBe(0);
@@ -747,5 +452,65 @@ describe('useDiagramMotionManager', () => {
     finishFrames();
 
     expect(manager.getCurrentDisplaySnapshot().nodes[0]?.rect.x).toBe(100);
+  });
+  const structuralRequest = (endX: number) => {
+    const startSnapshot = buildSnapshot();
+    const endSnapshot = {
+      ...buildSnapshot(),
+      nodes: buildSnapshot().nodes.map((node) => ({ ...node, rect: { ...node.rect, x: endX } })),
+    };
+    return {
+      direction: 'in' as const,
+      focus: { kind: 'single' as const, rootId: 'node-1' },
+      startLayout: buildLayout(),
+      endLayout: buildLayout(),
+      startSnapshot,
+      endSnapshot,
+      currentViewport: { x: 0, y: 0, zoom: 1 },
+      endPointOfInterestNodeIds: [],
+      collectSubtreeIds: () => new Set<string>(),
+    };
+  };
+  it('starts from the outgoing snapshot, retargets its current frame and commits the exact target', () => {
+    const { manager } = renderManager();
+    manager.onCanvasInit({} as never);
+    const first = structuralRequest(100);
+    manager.startChoreography(first);
+    expect(manager.getCurrentDisplaySnapshot().nodes[0].rect.x).toBe(0);
+    now = 160;
+    const x = manager.getCurrentDisplaySnapshot().nodes[0].rect.x;
+    expect(x).toBeCloseTo(50);
+    const second = structuralRequest(200);
+    manager.startChoreography(second);
+    expect(manager.getCurrentDisplaySnapshot().nodes[0].rect.x).toBeCloseTo(x);
+    finishFrames();
+    expect(manager.getCurrentDisplaySnapshot()).toBe(second.endSnapshot);
+  });
+  it('Centre during structure retains the current frame and completes structure before committing', () => {
+    const { manager } = renderManager();
+    manager.onCanvasInit({} as never);
+    const request = structuralRequest(100);
+    manager.startChoreography(request);
+    now = 80;
+    const before = manager.getCurrentDisplaySnapshot().nodes[0].rect.x;
+    manager.requestNavigation({ kind: 'fit-scene' });
+    expect(manager.getCurrentDisplaySnapshot().nodes[0].rect.x).toBeCloseTo(before);
+    now += 270;
+    const pending = [...frames.values()];
+    frames.clear();
+    for (const callback of pending) callback(now);
+    expect(manager.getCurrentDisplaySnapshot().nodes[0].rect.x).toBeLessThan(100);
+    finishFrames();
+    expect(manager.getCurrentDisplaySnapshot()).toBe(request.endSnapshot);
+  });
+  it('starts queued camera movement at the viewport reached by the user gesture', () => {
+    const { manager, setViewport } = renderManager();
+    manager.onCanvasInit({} as never);
+    manager.reportUserGestureStart();
+    manager.requestNavigation({ kind: 'fit-scene' });
+    const released = { x: -100, y: -80, zoom: 0.6 };
+    manager.reportUserGestureEnd(released);
+    expect(setViewport).toHaveBeenLastCalledWith(released);
+    finishFrames();
   });
 });

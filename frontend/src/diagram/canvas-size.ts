@@ -10,16 +10,14 @@ export const measureCanvasElement = (element: HTMLElement | null): CanvasSize | 
     return null;
   }
   const rect = element.getBoundingClientRect();
-  if (
-    !Number.isFinite(rect.width) ||
-    !Number.isFinite(rect.height) ||
-    rect.width <= 0 ||
-    rect.height <= 0
-  ) {
+  // Camera coordinates belong to the inner world layer, excluding the canvas border.
+  const width = element.clientWidth || rect.width;
+  const height = element.clientHeight || rect.height;
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
     return null;
   }
   return {
-    width: rect.width,
-    height: rect.height,
+    width,
+    height,
   };
 };

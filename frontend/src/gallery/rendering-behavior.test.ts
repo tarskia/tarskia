@@ -101,14 +101,17 @@ describe.each(galleryFiles)('$file rendering behavior', ({ file }) => {
   it('starts and ends expansions and collapses at their presentations, with finite contained frames', () => {
     for (const id of topIds) {
       const expanded = render([id]);
-      for (const [from, to, direction] of [
-        [collapsed, expanded, 'in'],
-        [expanded, collapsed, 'out'],
+      for (const [from, to] of [
+        [collapsed, expanded],
+        [expanded, collapsed],
       ] as const) {
-        const { overlay } = planGalleryTransition(from, to, direction);
+        const { overlay } = planGalleryTransition(from, to);
         for (let step = 0; step <= 20; step++) {
           const frame = resolveAnimationFrame(overlay, step * 50);
-          const snapshot = captureTransitionFrameSnapshot({ state: overlay, frame });
+          const snapshot = captureTransitionFrameSnapshot({
+            state: overlay,
+            frame,
+          });
           expect(
             snapshot.nodes.every(
               (node) =>
@@ -124,6 +127,60 @@ describe.each(galleryFiles)('$file rendering behavior', ({ file }) => {
           if (step === 0) expect(geometry(snapshot)).toEqual(geometry(from.presentation));
           if (step === 20) expect(geometry(snapshot)).toEqual(geometry(to.presentation));
         }
+      }
+    }
+  });
+
+  it('retargets Expand all from the visible frame without a jump and settles exactly', () => {
+    const expanded = render(gallery.graph.entities.map((entity) => entity.id));
+    const { overlay: original } = planGalleryTransition(collapsed, expanded);
+    const current = captureTransitionFrameSnapshot({
+      state: original,
+      frame: resolveAnimationFrame(original, 400),
+    });
+    const { overlay: interrupted } = planGalleryTransition(
+      { ...expanded, presentation: current },
+      collapsed,
+    );
+    expect(
+      geometry(
+        captureTransitionFrameSnapshot({
+          state: interrupted,
+          frame: resolveAnimationFrame(interrupted, 0),
+        }),
+      ),
+    ).toEqual(geometry(current));
+    expect(
+      geometry(
+        captureTransitionFrameSnapshot({
+          state: interrupted,
+          frame: resolveAnimationFrame(interrupted, 1000),
+        }),
+      ),
+    ).toEqual(geometry(collapsed.presentation));
+  });
+
+  it('starts and ends Focus and exit Focus at their exact visible presentations', () => {
+    const focusId = topIds.find((id) =>
+      collapsed.presentation.nodes.some((node) => node.id === id),
+    );
+    expect(focusId).toBeDefined();
+    if (!focusId) return;
+    const focused = gallery.render([focusId], focusId);
+    for (const [from, to] of [
+      [collapsed, focused],
+      [focused, collapsed],
+    ]) {
+      const { overlay } = planGalleryTransition(from, to);
+      for (const [time, expected] of [
+        [0, from.presentation],
+        [1000, to.presentation],
+      ] as const) {
+        const snapshot = captureTransitionFrameSnapshot({
+          state: overlay,
+          frame: resolveAnimationFrame(overlay, time),
+        });
+        expect(geometry(snapshot)).toEqual(geometry(expected));
       }
     }
   });

@@ -163,7 +163,6 @@ export function useDiagramEngine({
     layout: rendering.layout,
     stableSnapshot,
     declarativeViewState: rendering.declarativeViewState,
-    buildTransitionAdvisory: rendering.buildTransitionAdvisory,
     resolveViewportFocusRoot: rendering.resolveViewportFocusRoot,
     viewportOps: rendering.viewport,
     skipTransitions,

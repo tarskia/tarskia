@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { buildStructuralCameraAdvisory } from '../canvas/rendering/transition/camera';
 import { collectSubtreeIds } from '../canvas/rendering/transition/viewport';
 import { computeViewportForBoundsInVisibleCanvas } from '../canvas/viewport-visibility';
-import { loadGallery, planGalleryTransition } from '../test/curated-rendering';
+import { loadGallery } from '../test/curated-rendering';
 import { interpolateCameraViewport } from './camera-interpolation';
 import { buildMotionPlanFromChoreographyRequest } from './useDiagramMotionManager';
 
@@ -37,19 +36,15 @@ describe('expansion camera on the real gallery', () => {
       padding: 0.3,
     });
     const endPointOfInterestNodeIds = [...collectSubtreeIds(expanded.scene.tree, rootId)];
-    const plan = planGalleryTransition(initial, expanded, 'in');
     const motion = buildMotionPlanFromChoreographyRequest({
       request: {
         direction: 'in',
         focus: { kind: 'single', rootId },
-        startLayout: initial.scene,
         endLayout: expanded.scene,
         startSnapshot: initial.presentation,
         endSnapshot: expanded.presentation,
         currentViewport,
         endPointOfInterestNodeIds,
-        collectSubtreeIds,
-        planningAdvisory: plan.planningAdvisory,
       },
       canvasSize: canvas,
       minZoom,
@@ -59,15 +54,14 @@ describe('expansion camera on the real gallery', () => {
     const fits =
       target.size.width * currentViewport.zoom <= canvas.width - 80 &&
       target.size.height * currentViewport.zoom <= canvas.height - 80;
-    for (const segment of motion.segments) {
-      if (!segment.camera) continue;
-      expect(segment.camera.to.zoom).toBeLessThanOrEqual(currentViewport.zoom);
-      if (fits) expect(segment.camera.to.zoom).toBe(currentViewport.zoom);
+    if (motion.camera) {
+      expect(motion.camera.to.zoom).toBeLessThanOrEqual(currentViewport.zoom);
+      if (fits) expect(motion.camera.to.zoom).toBe(currentViewport.zoom);
       for (let i = 0; i <= 20; i++)
         expect(
           interpolateCameraViewport({
-            from: segment.camera.from ?? currentViewport,
-            to: segment.camera.to,
+            from: motion.camera.from ?? currentViewport,
+            to: motion.camera.to,
             progress: i / 20,
             canvas,
             minZoom,
@@ -75,20 +69,51 @@ describe('expansion camera on the real gallery', () => {
           }).zoom,
         ).toBeLessThanOrEqual(currentViewport.zoom + 1e-12);
     }
-    const advisory = buildStructuralCameraAdvisory({
-      direction: 'in',
-      focus: { kind: 'single', rootId },
-      startLayout: initial.scene,
-      endLayout: expanded.scene,
-      currentViewport,
+    if (fits) expect((motion.camera?.to ?? currentViewport).zoom).toBe(currentViewport.zoom);
+  });
+  it('keeps n8n Expand all readable from its opening view and preserves the centre world point', () => {
+    const gallery = loadGallery('n8n.yaml');
+    const initial = gallery.render();
+    const expanded = gallery.render(gallery.graph.entities.map((entity) => entity.id));
+    const rects = initial.presentation.nodes.map((node) => node.rect);
+    const x = Math.min(...rects.map((rect) => rect.x)),
+      y = Math.min(...rects.map((rect) => rect.y));
+    const currentViewport = computeViewportForBoundsInVisibleCanvas({
+      bounds: {
+        x,
+        y,
+        width: Math.max(...rects.map((rect) => rect.x + rect.width)) - x,
+        height: Math.max(...rects.map((rect) => rect.y + rect.height)) - y,
+      },
+      canvas,
+      minZoom,
+      maxZoom,
+      padding: 0.3,
+    });
+    const motion = buildMotionPlanFromChoreographyRequest({
+      request: {
+        direction: 'in',
+        focus: { kind: 'global' },
+        endLayout: expanded.scene,
+        startSnapshot: initial.presentation,
+        endSnapshot: expanded.presentation,
+        currentViewport,
+        endPointOfInterestNodeIds: [...expanded.scene.visibleIds],
+      },
       canvasSize: canvas,
-      endPointOfInterestNodeIds,
-      collectSubtreeIds,
-      padding: 40,
       minZoom,
       maxZoom,
     });
-    expect(advisory.epilogue).toBeUndefined();
-    if (fits) expect((advisory.prelude ?? currentViewport).zoom).toBe(currentViewport.zoom);
+    const target = motion.camera?.to ?? currentViewport;
+    expect(target.zoom).toBe(0.35);
+    expect(target.zoom).toBeLessThanOrEqual(currentViewport.zoom);
+    expect((canvas.width / 2 - target.x) / target.zoom).toBeCloseTo(
+      (canvas.width / 2 - currentViewport.x) / currentViewport.zoom,
+      10,
+    );
+    expect((canvas.height / 2 - target.y) / target.zoom).toBeCloseTo(
+      (canvas.height / 2 - currentViewport.y) / currentViewport.zoom,
+      10,
+    );
   });
 });

@@ -4,11 +4,6 @@ import { buildSemanticIndex, compileView, type SemanticDocument } from '@tarskia
 import { buildLayoutResult } from '../canvas/rendering/layout/layout-pipeline';
 import { buildStaticCanvasPresentation } from '../canvas/rendering/presentation/presentation';
 import { buildTransitionFrameState } from '../canvas/rendering/transition/overlay';
-import { buildTransitionPlanningAdvisory } from '../canvas/rendering/transition/sequencer';
-import {
-  buildTimedTransitionPlan,
-  buildTimedTransitionSequence,
-} from '../canvas/rendering/transition/timed-plan';
 import { buildSchemaVersionCatalog } from '../model/validation/schema-closure';
 import { semanticBootstrap } from '../semantic/bootstrap';
 import { buildDiagramSemanticRuntime } from '../semantic/runtime';
@@ -53,35 +48,22 @@ export const loadGallery = (file: string) => {
       graph: buildSemanticIndex(doc, runtime.schema),
       viewState: compileView(graph, doc.view),
     });
-    return { doc, scene, presentation: buildStaticCanvasPresentation({ scene }) };
+    return {
+      doc,
+      scene,
+      presentation: buildStaticCanvasPresentation({ scene }),
+    };
   };
   return { graph, render };
 };
 
 export type RenderedGallery = ReturnType<ReturnType<typeof loadGallery>['render']>;
-export const planGalleryTransition = (
-  from: RenderedGallery,
-  to: RenderedGallery,
-  direction: 'in' | 'out',
-) => {
-  const planningAdvisory = buildTransitionPlanningAdvisory({
-    direction,
-    fromTree: from.scene.tree,
-    toTree: to.scene.tree,
-    fromEdges: from.scene.edges,
-    toEdges: to.scene.edges,
-  });
-  const timedPlan = buildTimedTransitionPlan({ planningAdvisory });
-  const timedSequence = buildTimedTransitionSequence({ planningAdvisory });
-  const overlay = buildTransitionFrameState({
+export const planGalleryTransition = (from: RenderedGallery, to: RenderedGallery) => ({
+  overlay: buildTransitionFrameState({
     id: 1,
     startedAt: 0,
     duration: 1000,
-    planningAdvisory,
-    timedPlan,
-    timedSequence,
     fromPresentation: from.presentation,
     toPresentation: to.presentation,
-  });
-  return { planningAdvisory, timedPlan, timedSequence, overlay };
-};
+  }),
+});

@@ -1,31 +1,18 @@
 import type { DiagramCamera, ViewportState } from '@tarskia/diagram-semantics';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CanvasCamera } from '../canvas/camera';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
-import {
-  ANIMATION_CONSTANTS,
-  DEFAULT_VIEWPORT_FIT_PADDING,
-} from '../canvas/rendering/transition/animation-constants';
-import { buildStructuralCameraAdvisory } from '../canvas/rendering/transition/camera';
+import { ANIMATION_CONSTANTS } from '../canvas/rendering/transition/animation-constants';
+import { resolveStructuralCamera } from '../canvas/rendering/transition/camera';
 import {
   buildStaticTransitionFrameState,
+  buildTransitionFrameState,
   captureTransitionFrameSnapshot,
+  easeMotion,
   resolveAnimationFrame,
   type TransitionFrameState,
 } from '../canvas/rendering/transition/overlay';
 import { createOverlayFrameStore } from '../canvas/rendering/transition/overlay-frame-store';
-import {
-  buildTimedTransitionPlan,
-  buildTimedTransitionSequence,
-} from '../canvas/rendering/transition/timed-plan';
-import {
-  advanceManagedTransitionState,
-  createTransitionFrameManagerState,
-  startManagedTransitionState,
-  syncTransitionFrameManagerStableSnapshot,
-  type TransitionFrameManagerState,
-} from '../canvas/useTransitionFrameManager';
-import { computeViewportForBoundsInVisibleCanvas } from '../canvas/viewport-visibility';
 import { interpolateCameraViewport } from './camera-interpolation';
 import {
   type ResolvedNavigationPolicy,
@@ -39,22 +26,21 @@ import type {
   MotionCallbacks,
   MotionPhase,
   MotionPlan,
-  MotionSegment,
   MotionSettlementReason,
   NavigationIntent,
   NavigationRequestResult,
   StructuralChoreographyRequest,
 } from './motion-types';
 
-const MIN_STRUCTURAL_OVERLAY_DURATION_MS = 320;
-const MAX_STRUCTURAL_CAMERA_DURATION_SCALE = 1.85;
-
-interface ActiveMotion {
-  plan: MotionPlan;
-  activeSegmentIndex: number;
-  segmentStartedAt: number | null;
-  segmentSourceViewport: ViewportState | null;
-  settle: (reason: MotionSettlementReason) => void;
+interface TransitionFrameManagerState {
+  hostSnapshot: CanvasRenderSnapshot;
+  transitionFrame: TransitionFrameState | null;
+}
+const createTransitionFrameManagerState = (
+  hostSnapshot: CanvasRenderSnapshot,
+): TransitionFrameManagerState => ({ hostSnapshot, transitionFrame: null });
+interface ActiveMotion extends PendingManagedMotion {
+  startedAt: number;
 }
 
 interface PendingManagedMotion {
@@ -62,9 +48,7 @@ interface PendingManagedMotion {
   settle: (reason: MotionSettlementReason) => void;
 }
 
-interface DiagramMotionRenderState {
-  hostSnapshot: CanvasRenderSnapshot;
-  transitionFrame: TransitionFrameState | null;
+interface DiagramMotionRenderState extends TransitionFrameManagerState {
   motionPhase: MotionPhase;
 }
 
@@ -100,142 +84,6 @@ const createMotionSettlement = (callbacks?: MotionCallbacks) => {
   };
 };
 
-const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
-const easeStructuralCamera = (value: number) => -(Math.cos(Math.PI * value) - 1) / 2;
-
-type SnapshotBounds = { minX: number; minY: number; maxX: number; maxY: number };
-
-const unionSnapshotBounds = (left: SnapshotBounds, right: SnapshotBounds): SnapshotBounds => ({
-  minX: Math.min(left.minX, right.minX),
-  minY: Math.min(left.minY, right.minY),
-  maxX: Math.max(left.maxX, right.maxX),
-  maxY: Math.max(left.maxY, right.maxY),
-});
-
-const collectSnapshotNodeBounds = (
-  snapshot: CanvasRenderSnapshot,
-  nodeIds: string[],
-): SnapshotBounds | null => {
-  const requestedIds = new Set(nodeIds);
-  let bounds: SnapshotBounds | null = null;
-  for (const node of snapshot.nodes) {
-    if (!requestedIds.has(node.id) || node.opacity <= 0.001) {
-      continue;
-    }
-    const nodeBounds = {
-      minX: node.rect.x,
-      minY: node.rect.y,
-      maxX: node.rect.x + node.rect.width,
-      maxY: node.rect.y + node.rect.height,
-    };
-    bounds = bounds ? unionSnapshotBounds(bounds, nodeBounds) : nodeBounds;
-  }
-  return bounds;
-};
-
-const boundsWidth = (bounds: SnapshotBounds) => Math.max(1, bounds.maxX - bounds.minX);
-const boundsHeight = (bounds: SnapshotBounds) => Math.max(1, bounds.maxY - bounds.minY);
-
-const snapshotBoundsToRect = (bounds: SnapshotBounds): DiagramCameraRect => ({
-  x: bounds.minX,
-  y: bounds.minY,
-  width: boundsWidth(bounds),
-  height: boundsHeight(bounds),
-});
-
-const collectSnapshotSceneBounds = (snapshot: CanvasRenderSnapshot): SnapshotBounds | null => {
-  let bounds: SnapshotBounds | null = null;
-  for (const node of snapshot.nodes) {
-    if (node.style.focusShell || node.opacity <= 0.001) {
-      continue;
-    }
-    const nodeBounds = {
-      minX: node.rect.x,
-      minY: node.rect.y,
-      maxX: node.rect.x + node.rect.width,
-      maxY: node.rect.y + node.rect.height,
-    };
-    bounds = bounds ? unionSnapshotBounds(bounds, nodeBounds) : nodeBounds;
-  }
-  return bounds;
-};
-
-export const buildRetainedOnlySnapshot = (
-  snapshot: CanvasRenderSnapshot,
-  nodeIds: string[],
-): CanvasRenderSnapshot => {
-  const retainedIds = new Set(nodeIds);
-  return {
-    nodes: snapshot.nodes.filter((node) => retainedIds.has(node.id)),
-    overlayEdges: snapshot.overlayEdges.filter(
-      (edge) => retainedIds.has(edge.sourceId) && retainedIds.has(edge.targetId),
-    ),
-  };
-};
-
-export const computePostOverlayBridgeViewport = (params: {
-  sourceSnapshot: CanvasRenderSnapshot;
-  targetSnapshot: CanvasRenderSnapshot;
-  nodeIds: string[];
-  currentViewport: ViewportState;
-  minZoom: number;
-  maxZoom: number;
-}): ViewportState | null => {
-  const { sourceSnapshot, targetSnapshot, nodeIds, currentViewport, minZoom, maxZoom } = params;
-  if (nodeIds.length === 0) {
-    return null;
-  }
-  const sourceBounds = collectSnapshotNodeBounds(sourceSnapshot, nodeIds);
-  const targetBounds = collectSnapshotNodeBounds(targetSnapshot, nodeIds);
-  if (!sourceBounds || !targetBounds) {
-    return null;
-  }
-  const sourceScreenWidth = boundsWidth(sourceBounds) * currentViewport.zoom;
-  const sourceScreenHeight = boundsHeight(sourceBounds) * currentViewport.zoom;
-  const nextZoom = clamp(
-    Math.min(
-      sourceScreenWidth / boundsWidth(targetBounds),
-      sourceScreenHeight / boundsHeight(targetBounds),
-    ),
-    minZoom,
-    maxZoom,
-  );
-  const sourceScreenCenterX =
-    currentViewport.x + ((sourceBounds.minX + sourceBounds.maxX) / 2) * currentViewport.zoom;
-  const sourceScreenCenterY =
-    currentViewport.y + ((sourceBounds.minY + sourceBounds.maxY) / 2) * currentViewport.zoom;
-  const targetCenterX = (targetBounds.minX + targetBounds.maxX) / 2;
-  const targetCenterY = (targetBounds.minY + targetBounds.maxY) / 2;
-  return {
-    x: sourceScreenCenterX - targetCenterX * nextZoom,
-    y: sourceScreenCenterY - targetCenterY * nextZoom,
-    zoom: nextZoom,
-  };
-};
-
-const computeSnapshotSceneFitViewport = (params: {
-  snapshot: CanvasRenderSnapshot;
-  canvasSize: CanvasSize | null;
-  minZoom: number;
-  maxZoom: number;
-}): ViewportState | null => {
-  const { snapshot, canvasSize, minZoom, maxZoom } = params;
-  if (!canvasSize) {
-    return null;
-  }
-  const sceneBounds = collectSnapshotSceneBounds(snapshot);
-  if (!sceneBounds) {
-    return null;
-  }
-  return computeViewportForBoundsInVisibleCanvas({
-    bounds: snapshotBoundsToRect(sceneBounds),
-    canvas: canvasSize,
-    minZoom,
-    maxZoom,
-    padding: DEFAULT_VIEWPORT_FIT_PADDING,
-  });
-};
-
 const captureDisplayedSnapshot = (
   overlayState: TransitionFrameManagerState,
   now: number,
@@ -249,248 +97,35 @@ const captureDisplayedSnapshot = (
   });
 };
 
-const freezeOverlayToSnapshot = (params: {
-  previous: TransitionFrameManagerState;
-  snapshot: CanvasRenderSnapshot;
-  now: number;
-}): TransitionFrameManagerState => ({
-  ...createTransitionFrameManagerState(params.snapshot),
-  transitionFrame: buildStaticTransitionFrameState({
-    snapshot: params.snapshot,
-    id: params.now,
-    startedAt: params.now,
-  }),
+const freezeOverlayToSnapshot = (
+  snapshot: CanvasRenderSnapshot,
+  now: number,
+): TransitionFrameManagerState => ({
+  hostSnapshot: snapshot,
+  transitionFrame: buildStaticTransitionFrameState({ snapshot, id: now, startedAt: now }),
 });
 
-const getSegmentCameraTarget = (segment: MotionSegment) => segment.camera?.to ?? null;
-
-const pushPauseSegment = (segments: MotionSegment[], durationMs: number | undefined) => {
-  const resolvedDurationMs = Math.max(0, durationMs ?? 0);
-  if (resolvedDurationMs <= 0) {
-    return;
-  }
-  segments.push({ durationMs: resolvedDurationMs });
-};
-
-const isTimedPauseSegment = (segment: MotionSegment) =>
-  segment.durationMs > 0 && !segment.camera && !segment.overlay;
-
-export const computeStructuralCameraDurationMs = (params: {
-  from: ViewportState;
-  to: ViewportState;
-  baseDurationMs: number;
-  canvasSize: CanvasSize | null;
-}) => {
-  const { from, to, baseDurationMs, canvasSize } = params;
-  if (baseDurationMs <= 0 || !canvasSize) {
-    return Math.max(0, baseDurationMs);
-  }
-
-  const normalizedDx = Math.abs(to.x - from.x) / Math.max(canvasSize.width, 1);
-  const normalizedDy = Math.abs(to.y - from.y) / Math.max(canvasSize.height, 1);
-  const translationScore = Math.hypot(normalizedDx, normalizedDy);
-  const zoomScore = Math.abs(Math.log(Math.max(to.zoom, 0.001) / Math.max(from.zoom, 0.001)));
-  const scale = clamp(
-    1 + translationScore * 0.45 + zoomScore * 0.7,
-    1,
-    MAX_STRUCTURAL_CAMERA_DURATION_SCALE,
-  );
-  return Math.round(baseDurationMs * scale);
-};
-
-export const computeStructuralOverlayDurationMs = (params: {
-  baseOverlayDurationMs: number;
-  choreographyCameraDurationMs: number;
-  hasStructuredPhases: boolean;
-}) => {
-  const { baseOverlayDurationMs, choreographyCameraDurationMs, hasStructuredPhases } = params;
-  if (!hasStructuredPhases) {
-    return Math.round(baseOverlayDurationMs);
-  }
-  return Math.max(
-    Math.round(baseOverlayDurationMs),
-    MIN_STRUCTURAL_OVERLAY_DURATION_MS,
-    Math.round(choreographyCameraDurationMs * 0.95),
-  );
-};
-
-export const buildMotionPlanFromChoreographyRequest = (params: {
+export const buildMotionPlanFromChoreographyRequest = ({
+  request,
+  canvasSize,
+  minZoom,
+  maxZoom,
+}: {
   request: StructuralChoreographyRequest;
   canvasSize: CanvasSize | null;
   minZoom: number;
   maxZoom: number;
 }): MotionPlan => {
-  const { request, canvasSize, minZoom, maxZoom } = params;
-  const timedSequence = buildTimedTransitionSequence({
-    planningAdvisory: request.planningAdvisory,
-  });
-  const timedPlan = buildTimedTransitionPlan({
-    planningAdvisory: request.planningAdvisory,
-    timedSequence,
-  });
-  const cameraAdvisory = buildStructuralCameraAdvisory({
-    direction: request.direction,
-    focus: request.focus,
-    startLayout: request.startLayout,
-    endLayout: request.endLayout,
-    currentViewport: request.currentViewport,
-    canvasSize,
-    endPointOfInterestNodeIds: request.endPointOfInterestNodeIds,
-    collectSubtreeIds: request.collectSubtreeIds,
-    padding: ANIMATION_CONSTANTS.viewport.padding,
-    minZoom,
-    maxZoom,
-  });
-
-  const cameraDurationMs = Math.max(0, ANIMATION_CONSTANTS.viewport.cameraDuration);
-  const segments: MotionSegment[] = [];
-  let viewportCursor = request.currentViewport;
-  let preludeCameraDurationMs = cameraDurationMs;
-
-  if (request.direction === 'in' && request.exitScopeRetainedNodeIds?.length) {
-    const retainedSnapshot = buildRetainedOnlySnapshot(
-      request.endSnapshot,
-      request.exitScopeRetainedNodeIds,
-    );
-    const bridgeViewport = computePostOverlayBridgeViewport({
-      sourceSnapshot: request.startSnapshot,
-      targetSnapshot: request.endSnapshot,
-      nodeIds: request.exitScopeRetainedNodeIds,
-      currentViewport: viewportCursor,
-      minZoom,
-      maxZoom,
-    });
-    const sceneFitViewport = computeSnapshotSceneFitViewport({
-      snapshot: request.endSnapshot,
-      canvasSize,
-      minZoom,
-      maxZoom,
-    });
-
-    if (retainedSnapshot.nodes.length > 0 && sceneFitViewport) {
-      const retainedViewport = bridgeViewport ?? viewportCursor;
-      segments.push({
-        durationMs: 0,
-        camera: bridgeViewport
-          ? {
-              from: viewportCursor,
-              to: bridgeViewport,
-            }
-          : undefined,
-        hostSnapshot: retainedSnapshot,
-      });
-      viewportCursor = retainedViewport;
-
-      if (!viewportStatesEqual(viewportCursor, sceneFitViewport)) {
-        segments.push({
-          durationMs: Math.max(0, ANIMATION_CONSTANTS.viewport.fitDuration),
-          camera: {
-            from: viewportCursor,
-            to: sceneFitViewport,
-          },
-        });
-        viewportCursor = sceneFitViewport;
-      }
-
-      pushPauseSegment(segments, request.pauseBeforeOverlayMs);
-
-      segments.push({
-        durationMs: computeStructuralOverlayDurationMs({
-          baseOverlayDurationMs: timedPlan.totalDuration,
-          choreographyCameraDurationMs: Math.max(0, ANIMATION_CONSTANTS.viewport.fitDuration),
-          hasStructuredPhases: request.planningAdvisory.sequence.steps.length > 0,
-        }),
-        overlay: {
-          incomingSnapshot: request.endSnapshot,
-          planningAdvisory: request.planningAdvisory,
-          timedPlan,
-          timedSequence,
-        },
-      });
-
-      return {
-        segments,
-        sourceSnapshot: request.startSnapshot,
-        targetSnapshot: request.endSnapshot,
-      };
-    }
-  }
-
-  if (cameraAdvisory.prelude && !viewportStatesEqual(viewportCursor, cameraAdvisory.prelude)) {
-    preludeCameraDurationMs = computeStructuralCameraDurationMs({
-      from: viewportCursor,
-      to: cameraAdvisory.prelude,
-      baseDurationMs: cameraDurationMs,
-      canvasSize,
-    });
-    segments.push({
-      durationMs: preludeCameraDurationMs,
-      camera: {
-        from: viewportCursor,
-        to: cameraAdvisory.prelude,
-      },
-    });
-    viewportCursor = cameraAdvisory.prelude;
-  }
-
-  pushPauseSegment(segments, request.pauseBeforeOverlayMs);
-
-  segments.push({
-    durationMs: computeStructuralOverlayDurationMs({
-      baseOverlayDurationMs: timedPlan.totalDuration,
-      choreographyCameraDurationMs: preludeCameraDurationMs,
-      hasStructuredPhases: request.planningAdvisory.sequence.steps.length > 0,
-    }),
-    overlay: {
-      incomingSnapshot: request.endSnapshot,
-      planningAdvisory: request.planningAdvisory,
-      timedPlan,
-      timedSequence,
-      sharedNodeGeometry: request.sharedNodeGeometry,
-    },
-  });
-
-  if (request.postOverlayViewportBridgeNodeIds?.length) {
-    const bridgeViewport = computePostOverlayBridgeViewport({
-      sourceSnapshot: request.startSnapshot,
-      targetSnapshot: request.endSnapshot,
-      nodeIds: request.postOverlayViewportBridgeNodeIds,
-      currentViewport: viewportCursor,
-      minZoom,
-      maxZoom,
-    });
-    if (bridgeViewport && !viewportStatesEqual(viewportCursor, bridgeViewport)) {
-      segments.push({
-        durationMs: 0,
-        camera: {
-          from: viewportCursor,
-          to: bridgeViewport,
-        },
-      });
-      viewportCursor = bridgeViewport;
-    }
-  }
-
-  pushPauseSegment(segments, request.pauseAfterOverlayMs);
-
-  if (cameraAdvisory.epilogue && !viewportStatesEqual(viewportCursor, cameraAdvisory.epilogue)) {
-    const epilogueCameraDurationMs = computeStructuralCameraDurationMs({
-      from: viewportCursor,
-      to: cameraAdvisory.epilogue,
-      baseDurationMs: cameraDurationMs,
-      canvasSize,
-    });
-    segments.push({
-      durationMs: epilogueCameraDurationMs,
-      camera: {
-        from: viewportCursor,
-        to: cameraAdvisory.epilogue,
-      },
-    });
-  }
-
+  const target = resolveStructuralCamera({ ...request, canvasSize, minZoom, maxZoom });
+  const camera =
+    target && !viewportStatesEqual(target, request.currentViewport)
+      ? { from: request.currentViewport, to: target }
+      : undefined;
   return {
-    segments,
+    camera,
+    cameraDuration: camera ? ANIMATION_CONSTANTS.viewport.cameraDuration : 0,
+    structureDuration: 320,
+    settleDuration: 120,
     sourceSnapshot: request.startSnapshot,
     targetSnapshot: request.endSnapshot,
   };
@@ -585,12 +220,7 @@ export function useDiagramMotionManager({
   const publish = useCallback(
     (_now: number) => {
       const overlayState = overlayStateRef.current;
-      const nextTransitionFrame = overlayState.transitionFrame;
-      const nextAnimationFrame = nextTransitionFrame
-        ? resolveAnimationFrame(nextTransitionFrame, _now)
-        : null;
-      const transitionFrame = nextTransitionFrame;
-      const animationFrame = nextAnimationFrame;
+      const transitionFrame = overlayState.transitionFrame;
       const previous = renderStateRef.current;
       const next = {
         hostSnapshot: overlayState.hostSnapshot,
@@ -605,7 +235,9 @@ export function useDiagramMotionManager({
         renderStateRef.current = next;
         setRenderState(next);
       }
-      overlayFrameStore.publish(animationFrame);
+      overlayFrameStore.publish(
+        transitionFrame ? resolveAnimationFrame(transitionFrame, _now) : null,
+      );
     },
     [overlayFrameStore],
   );
@@ -635,155 +267,30 @@ export function useDiagramMotionManager({
     [publish],
   );
 
-  const enterSegmentRef = useRef<(segmentIndex: number, now: number) => void>(() => {});
   const stepRef = useRef<(now: number) => void>(() => {});
-
-  enterSegmentRef.current = (segmentIndex: number, now: number) => {
-    const activeMotion = activeMotionRef.current;
-    if (!activeMotion) {
+  stepRef.current = (now) => {
+    const active = activeMotionRef.current;
+    if (!active) return;
+    const { plan, startedAt } = active;
+    const elapsed = Math.max(0, now - startedAt);
+    if (plan.camera)
+      applyViewport(
+        interpolateCameraViewport({
+          from: plan.camera.from,
+          to: plan.camera.to,
+          progress: easeMotion(plan.cameraDuration <= 0 ? 1 : elapsed / plan.cameraDuration),
+          canvas: getCurrentCanvasSize() ?? { width: 0, height: 0 },
+          minZoom,
+          maxZoom,
+        }),
+      );
+    if (elapsed >= plan.cameraDuration + plan.structureDuration + plan.settleDuration) {
       finishMotion(now);
-      return;
-    }
-    const segment = activeMotion.plan.segments[segmentIndex];
-    if (!segment) {
-      finishMotion(now);
-      return;
-    }
-
-    let overlayState = overlayStateRef.current;
-    const segmentStartedAt: number | null = now;
-
-    if (segment.hostSnapshot) {
-      const displaySnapshot = captureDisplayedSnapshot(overlayState, now);
-      overlayState = freezeOverlayToSnapshot({
-        previous: overlayState,
-        snapshot: displaySnapshot,
-        now,
-      });
-    } else if (segment.overlay) {
-      overlayState = startManagedTransitionState(overlayState, {
-        incomingSnapshot: segment.overlay.incomingSnapshot,
-        planningAdvisory: segment.overlay.planningAdvisory,
-        timedPlan: segment.overlay.timedPlan,
-        timedSequence: segment.overlay.timedSequence,
-        duration: Math.max(1, segment.durationMs),
-        sharedNodeGeometry: segment.overlay.sharedNodeGeometry,
-        now,
-      });
-    }
-
-    overlayStateRef.current = overlayState;
-    const cameraStartViewport = segment.camera?.from ?? getObservedViewport();
-
-    activeMotionRef.current = {
-      ...activeMotion,
-      activeSegmentIndex: segmentIndex,
-      segmentStartedAt,
-      segmentSourceViewport: segmentStartedAt !== null ? cameraStartViewport : null,
-    };
-
-    if (segmentStartedAt !== null) {
-      const cameraTarget = getSegmentCameraTarget(segment);
-      if (cameraTarget) {
-        applyViewport(segment.durationMs <= 0 ? cameraTarget : cameraStartViewport);
-      }
-    }
-
-    if (segmentStartedAt === null) {
-      motionPhaseRef.current = userGestureActiveRef.current ? 'userGesture' : 'settling';
-      publish(now);
-      return;
-    }
-
-    const hasAnimatedCamera = Boolean(segment.camera && segment.durationMs > 0);
-    const hasAnimatedOverlay = Boolean(segment.overlay);
-    const hasTimedPause = isTimedPauseSegment(segment);
-    motionPhaseRef.current = userGestureActiveRef.current ? 'userGesture' : 'animating';
-    publish(now);
-
-    if (segment.durationMs <= 0 && !hasAnimatedOverlay) {
-      const cameraTarget = getSegmentCameraTarget(segment);
-      if (cameraTarget) {
-        applyViewport(cameraTarget);
-      }
-      enterSegmentRef.current(segmentIndex + 1, now);
-      return;
-    }
-
-    if (hasAnimatedCamera || hasAnimatedOverlay || hasTimedPause) {
-      scheduleNextFrame();
-      return;
-    }
-
-    enterSegmentRef.current(segmentIndex + 1, now);
-  };
-
-  stepRef.current = (now: number) => {
-    const activeMotion = activeMotionRef.current;
-    if (!activeMotion) {
-      publish(now);
-      return;
-    }
-    const segment = activeMotion.plan.segments[activeMotion.activeSegmentIndex];
-    if (!segment || activeMotion.segmentStartedAt === null) {
-      publish(now);
-      return;
-    }
-
-    if (segment.overlay) {
-      const advanced = advanceManagedTransitionState(overlayStateRef.current, now);
-      overlayStateRef.current = advanced.state;
-    }
-
-    let cameraDone = !segment.camera;
-    if (segment.camera) {
-      const sourceViewport = activeMotion.segmentSourceViewport ?? getObservedViewport();
-      const rawProgress =
-        segment.durationMs <= 0
-          ? 1
-          : clamp((now - activeMotion.segmentStartedAt) / segment.durationMs, 0, 1);
-      const eased = easeStructuralCamera(rawProgress);
-      const currentViewport = interpolateCameraViewport({
-        from: sourceViewport,
-        to: segment.camera.to,
-        progress: eased,
-        canvas: getCurrentCanvasSize() ?? { width: 0, height: 0 },
-        minZoom,
-        maxZoom,
-      });
-      applyViewport(currentViewport);
-      cameraDone = rawProgress >= 1;
-    }
-    const pauseDone =
-      !isTimedPauseSegment(segment) ||
-      now - activeMotion.segmentStartedAt >= Math.max(0, segment.durationMs);
-
-    const overlayState = overlayStateRef.current;
-    const overlayDone =
-      !segment.overlay || (overlayState.transitionFrame === null && overlayState.phase === 'idle');
-    const overlayWaiting = Boolean(segment.overlay && overlayState.phase === 'settling');
-    const overlayAnimating = Boolean(segment.overlay && overlayState.phase === 'animating');
-
-    if (overlayWaiting) {
-      motionPhaseRef.current = userGestureActiveRef.current ? 'userGesture' : 'settling';
-      publish(now);
-      return;
-    }
-
-    if (overlayAnimating || !cameraDone || !pauseDone) {
-      motionPhaseRef.current = userGestureActiveRef.current ? 'userGesture' : 'animating';
+    } else {
+      motionPhaseRef.current = 'animating';
       publish(now);
       scheduleNextFrame();
-      return;
     }
-
-    if (!overlayDone) {
-      motionPhaseRef.current = userGestureActiveRef.current ? 'userGesture' : 'settling';
-      publish(now);
-      return;
-    }
-
-    enterSegmentRef.current(activeMotion.activeSegmentIndex + 1, now);
   };
 
   const applyImmediatePlan = useCallback(
@@ -794,17 +301,15 @@ export function useDiagramMotionManager({
     ) => {
       cancelScheduledFrame();
       pendingManagedMotionRef.current = null;
-      activeMotionRef.current = null;
-      const finalCamera = [...plan.segments].reverse().find((segment) => segment.camera)?.camera;
-      if (finalCamera) applyViewport(finalCamera.to);
-      overlayStateRef.current = createTransitionFrameManagerState(
-        plan.targetSnapshot ?? stableSnapshotRef.current,
-      );
-      motionPhaseRef.current = 'idle';
-      publish(performance.now());
-      settle(reason);
+      const now = performance.now();
+      activeMotionRef.current = {
+        plan: { ...plan, cameraDuration: 0, structureDuration: 0, settleDuration: 0 },
+        startedAt: now,
+        settle: () => settle(reason),
+      };
+      stepRef.current(now);
     },
-    [applyViewport, cancelScheduledFrame, publish],
+    [cancelScheduledFrame],
   );
 
   const startPlan = useCallback(
@@ -829,6 +334,15 @@ export function useDiagramMotionManager({
         return { status: 'queued', reason: 'pending-motion' };
       }
       const previousActive = activeMotionRef.current;
+      if (!plan.targetSnapshot && previousActive?.plan.targetSnapshot) {
+        plan = {
+          ...plan,
+          targetSnapshot: previousActive.plan.targetSnapshot,
+          structureDuration: 320,
+          settleDuration: 120,
+        };
+      }
+      if (plan.camera) plan = { ...plan, camera: { ...plan.camera, from: getObservedViewport() } };
       if (skipTransitionsRef.current) {
         applyImmediatePlan(plan, settle);
         previousActive?.settle('superseded');
@@ -839,28 +353,23 @@ export function useDiagramMotionManager({
       cancelScheduledFrame();
       const now = performance.now();
       const currentOverlayState = overlayStateRef.current;
-      const firstSegment = plan.segments[0];
       const currentSnapshot = currentOverlayState.transitionFrame
         ? captureDisplayedSnapshot(currentOverlayState, now)
         : (plan.sourceSnapshot ?? currentOverlayState.hostSnapshot);
-
-      let nextOverlayState = createTransitionFrameManagerState(currentSnapshot);
-      if (currentOverlayState.transitionFrame && !firstSegment?.overlay) {
-        nextOverlayState = freezeOverlayToSnapshot({
-          previous: currentOverlayState,
-          snapshot: currentSnapshot,
-          now,
-        });
-      }
-
-      overlayStateRef.current = nextOverlayState;
-      activeMotionRef.current = {
-        plan,
-        activeSegmentIndex: 0,
-        segmentStartedAt: null,
-        segmentSourceViewport: null,
-        settle,
+      overlayStateRef.current = {
+        ...createTransitionFrameManagerState(currentSnapshot),
+        transitionFrame: plan.targetSnapshot
+          ? buildTransitionFrameState({
+              id: now,
+              startedAt: now + plan.cameraDuration,
+              duration: plan.structureDuration + plan.settleDuration,
+              settleDuration: plan.settleDuration,
+              fromPresentation: currentSnapshot,
+              toPresentation: plan.targetSnapshot,
+            })
+          : currentOverlayState.transitionFrame,
       };
+      activeMotionRef.current = { plan, startedAt: now, settle };
 
       // Install the replacement before callbacks can request another motion.
       previousActive?.settle('superseded');
@@ -868,15 +377,10 @@ export function useDiagramMotionManager({
       if (activeMotionRef.current?.settle !== settle)
         return { status: 'queued', reason: 'motion-plan' };
 
-      if (!firstSegment) {
-        finishMotion(now);
-        return { status: 'applied', reason: 'synchronous' };
-      }
-
-      enterSegmentRef.current(0, now);
+      stepRef.current(now);
       return { status: 'queued', reason: 'motion-plan' };
     },
-    [applyImmediatePlan, cancelDeferredNavigationFrame, cancelScheduledFrame, finishMotion],
+    [applyImmediatePlan, cancelDeferredNavigationFrame, cancelScheduledFrame, getObservedViewport],
   );
 
   const computeNavigationViewport = useCallback(
@@ -962,15 +466,10 @@ export function useDiagramMotionManager({
       }
       return startPlan(
         {
-          segments: [
-            {
-              durationMs: policy.durationMs,
-              camera: {
-                from: currentViewport,
-                to: targetViewport,
-              },
-            },
-          ],
+          camera: { from: currentViewport, to: targetViewport },
+          cameraDuration: policy.durationMs,
+          structureDuration: 0,
+          settleDuration: 0,
         },
         undefined,
         settle,
@@ -986,17 +485,16 @@ export function useDiagramMotionManager({
     ],
   );
 
-  const requestNavigation = useCallback(
-    (intent: NavigationIntent, options?: MotionCallbacks): NavigationRequestResult =>
-      navigate(intent, options),
-    [navigate],
-  );
+  const requestNavigation = navigate;
 
   const startChoreography = useCallback(
     (request: StructuralChoreographyRequest, options?: MotionCallbacks) => {
-      automaticFramingRef.current = request.endPointOfInterestNodeIds.length
-        ? { kind: 'fit-node-set', nodeIds: request.endPointOfInterestNodeIds, preset: 'focus' }
-        : { kind: 'fit-scene' };
+      automaticFramingRef.current =
+        request.direction === 'in' && request.focus?.kind === 'global'
+          ? null
+          : request.endPointOfInterestNodeIds.length
+            ? { kind: 'fit-node-set', nodeIds: request.endPointOfInterestNodeIds, preset: 'focus' }
+            : { kind: 'fit-scene' };
       startPlan(
         buildMotionPlanFromChoreographyRequest({
           request,
@@ -1032,26 +530,12 @@ export function useDiagramMotionManager({
       });
       const shiftPlan = (plan: MotionPlan): MotionPlan => ({
         ...plan,
-        segments: plan.segments.map((segment) =>
-          segment.camera
-            ? {
-                ...segment,
-                camera: { from: shift(segment.camera.from), to: shift(segment.camera.to) },
-              }
-            : segment,
-        ),
+        camera: plan.camera
+          ? { from: shift(plan.camera.from), to: shift(plan.camera.to) }
+          : undefined,
       });
       const active = activeMotionRef.current;
-      if (active) {
-        // Shift both interpolation endpoints so the current frame and remaining path stay continuous.
-        activeMotionRef.current = {
-          ...active,
-          plan: shiftPlan(active.plan),
-          segmentSourceViewport: active.segmentSourceViewport
-            ? shift(active.segmentSourceViewport)
-            : null,
-        };
-      }
+      if (active) activeMotionRef.current = { ...active, plan: shiftPlan(active.plan) };
       const pending = pendingManagedMotionRef.current;
       if (pending) pendingManagedMotionRef.current = { ...pending, plan: shiftPlan(pending.plan) };
       const framing = automaticFramingRef.current;
@@ -1075,21 +559,12 @@ export function useDiagramMotionManager({
     const currentOverlayState = overlayStateRef.current;
     if (currentOverlayState.transitionFrame) {
       const currentSnapshot = captureDisplayedSnapshot(currentOverlayState, now);
-      overlayStateRef.current = freezeOverlayToSnapshot({
-        previous: currentOverlayState,
-        snapshot: currentSnapshot,
-        now,
-      });
+      overlayStateRef.current = freezeOverlayToSnapshot(currentSnapshot, now);
     }
     const interrupted = activeMotionRef.current;
-    if (interrupted?.plan.segments.some((segment) => segment.overlay)) {
+    if (interrupted?.plan.targetSnapshot) {
       pendingManagedMotionRef.current = {
-        plan: {
-          ...interrupted.plan,
-          segments: interrupted.plan.segments
-            .slice(interrupted.activeSegmentIndex)
-            .map((segment) => ({ ...segment, camera: undefined })),
-        },
+        plan: { ...interrupted.plan, camera: undefined, cameraDuration: 0 },
         settle: interrupted.settle,
       };
     }
@@ -1151,21 +626,14 @@ export function useDiagramMotionManager({
     const now = performance.now();
     if (overlayStateRef.current.transitionFrame) {
       const snapshot = captureDisplayedSnapshot(overlayStateRef.current, now);
-      overlayStateRef.current = freezeOverlayToSnapshot({
-        previous: overlayStateRef.current,
-        snapshot,
-        now,
-      });
+      overlayStateRef.current = freezeOverlayToSnapshot(snapshot, now);
       motionPhaseRef.current = 'settling';
       publish(now);
       active?.settle('cancelled');
       pending?.settle('cancelled');
       return;
     }
-    overlayStateRef.current = syncTransitionFrameManagerStableSnapshot(
-      overlayStateRef.current,
-      stableSnapshotRef.current,
-    );
+    overlayStateRef.current = createTransitionFrameManagerState(stableSnapshotRef.current);
     motionPhaseRef.current = userGestureActiveRef.current ? 'userGesture' : 'idle';
     publish(now);
     active?.settle('cancelled');
@@ -1247,7 +715,7 @@ export function useDiagramMotionManager({
     // refs/state. If that happens mid-transition, restart the frame loop from the preserved
     // motion state instead of leaving animations permanently stranded until a full reload.
     const activeMotion = activeMotionRef.current;
-    if (activeMotion && activeMotion.segmentStartedAt !== null && rafRef.current === null) {
+    if (activeMotion && rafRef.current === null) {
       scheduleNextFrame();
     }
   });
@@ -1256,52 +724,30 @@ export function useDiagramMotionManager({
     if (activeMotionRef.current || userGestureActiveRef.current) {
       return;
     }
-    overlayStateRef.current = syncTransitionFrameManagerStableSnapshot(
-      overlayStateRef.current,
-      stableSnapshot,
-    );
+    overlayStateRef.current = createTransitionFrameManagerState(stableSnapshot);
     motionPhaseRef.current = overlayStateRef.current.transitionFrame ? 'settling' : 'idle';
     publish(performance.now());
   }, [publish, stableSnapshot]);
 
-  return useMemo(
-    () => ({
-      onCanvasInit,
-      onCanvasUnmount,
-      notifyCanvasResize,
-      getCurrentDisplaySnapshot,
-      requestNavigation,
-      startChoreography,
-      cancelMotion,
-      reportUserGestureStart,
-      reportUserGestureMove,
-      reportUserGestureEnd,
-      flushUserGesture,
-      getCurrentViewport: getObservedViewport,
-      canvasReady,
-      hostSnapshot: renderState.hostSnapshot,
-      transitionFrame: renderState.transitionFrame,
-      overlayFrameStore,
-      motionPhase: renderState.motionPhase,
-      isMotionActive:
-        renderState.motionPhase === 'animating' || renderState.motionPhase === 'settling',
-    }),
-    [
-      getCurrentDisplaySnapshot,
-      getObservedViewport,
-      notifyCanvasResize,
-      onCanvasInit,
-      onCanvasUnmount,
-      renderState,
-      overlayFrameStore,
-      reportUserGestureEnd,
-      flushUserGesture,
-      reportUserGestureMove,
-      reportUserGestureStart,
-      requestNavigation,
-      startChoreography,
-      cancelMotion,
-      canvasReady,
-    ],
-  );
+  return {
+    onCanvasInit,
+    onCanvasUnmount,
+    notifyCanvasResize,
+    getCurrentDisplaySnapshot,
+    requestNavigation,
+    startChoreography,
+    cancelMotion,
+    reportUserGestureStart,
+    reportUserGestureMove,
+    reportUserGestureEnd,
+    flushUserGesture,
+    getCurrentViewport: getObservedViewport,
+    canvasReady,
+    hostSnapshot: renderState.hostSnapshot,
+    transitionFrame: renderState.transitionFrame,
+    overlayFrameStore,
+    motionPhase: renderState.motionPhase,
+    isMotionActive:
+      renderState.motionPhase === 'animating' || renderState.motionPhase === 'settling',
+  };
 }

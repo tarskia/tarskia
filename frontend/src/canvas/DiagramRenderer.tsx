@@ -79,7 +79,6 @@ export const DiagramRenderer = memo(function DiagramRenderer({
     () => ({ nodes: records.nodes.map((node) => node.data.view), overlayEdges: records.edges }),
     [records],
   );
-  const initialEdges = records.edges;
   useLayoutEffect(() => {
     const container = root.current;
     if (!container) return;
@@ -159,13 +158,14 @@ export const DiagramRenderer = memo(function DiagramRenderer({
         const label = labels.get(edge.id);
         if (label) {
           label.style.display = '';
+          const labelOpacity = edge.opacity * (edge.labelOpacity ?? 1);
           for (const button of label.querySelectorAll('button'))
-            button.disabled = edge.opacity <= 0.15;
+            button.disabled = labelOpacity <= 0.15;
           const content = label.firstElementChild as HTMLElement | null;
           if (content) {
             content.style.transform = resolveEdgeLabelTransform(edge);
-            content.style.opacity = String(edge.opacity);
-            content.style.pointerEvents = edge.opacity > 0.15 ? 'all' : 'none';
+            content.style.opacity = String(labelOpacity);
+            content.style.pointerEvents = labelOpacity > 0.15 ? 'all' : 'none';
           }
         }
       }
@@ -209,7 +209,7 @@ export const DiagramRenderer = memo(function DiagramRenderer({
       <div className="edge-overlay edge-overlay--host">
         <svg className="edge-overlay-svg" aria-hidden="true">
           <defs>
-            {initialEdges.map((edge) => (
+            {records.edges.map((edge) => (
               <g key={edge.id}>
                 {(['solid', 'blocked'] as const).map((kind) => (
                   <clipPath
@@ -224,7 +224,7 @@ export const DiagramRenderer = memo(function DiagramRenderer({
               </g>
             ))}
           </defs>
-          {initialEdges.map((edge) => (
+          {records.edges.map((edge) => (
             <g key={edge.id} data-render-edge={edge.id} style={{ opacity: edge.opacity }}>
               <path
                 className={`edge-underlay-path${edge.selected ? ' edge-underlay-path-selected' : ''}${edge.matched ? ' edge-underlay-path-matched' : ''}`}
