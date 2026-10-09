@@ -40,7 +40,6 @@ export interface StructuralTransitionIntent extends MotionCallbacks {
 }
 
 interface NavigationIntentBase {
-  waitForHostSettle?: boolean;
   deferUntilNextFrame?: boolean;
 }
 
@@ -99,7 +98,6 @@ export interface MotionSegment {
   camera?: CameraTrack;
   overlay?: OverlayMotionTrack;
   hostSnapshot?: CanvasRenderSnapshot;
-  waitForHostGeneration?: boolean;
 }
 
 export interface MotionPlan {

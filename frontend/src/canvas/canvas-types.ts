@@ -51,3 +51,8 @@ export type CanvasMoveHandler = (
   event: Event | null,
   viewport: { x: number; y: number; zoom: number },
 ) => void;
+
+export interface EdgeOverlayInteractionBindings {
+  onSelectEdge?: (edgeId: string) => void;
+  onEdgeLabelClick?: (edgeId: string) => void;
+}

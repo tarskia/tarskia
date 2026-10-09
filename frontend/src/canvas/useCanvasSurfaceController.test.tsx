@@ -5,23 +5,9 @@ import type { NavigationIntent, NavigationRequestResult } from '../diagram/motio
 import type { UseCanvasSurfaceControllerArgs } from './useCanvasSurfaceController';
 import {
   buildAutoVisibleSelectionKey,
-  resolveVisibleHostOverlayEdges,
   shouldCommitAutoVisibleSelectionKey,
   shouldHandleViewportGestureEvent,
-  shouldSuppressHostEdgeChrome,
-  shouldSuppressHostInteractiveControls,
 } from './useCanvasSurfaceController';
-
-const testEdgeGeometry = {
-  sourcePoint: { x: 0, y: 0 },
-  control1: { x: 10, y: 0 },
-  control2: { x: 90, y: 100 },
-  targetPoint: { x: 100, y: 100 },
-  path: 'M 0,0 L 100,100',
-  labelAnchor: { x: 50, y: 50 },
-  sourceSide: 'right' as const,
-  targetSide: 'left' as const,
-};
 
 const buildTestGroupPresentation =
   (): import('./rendering/presentation/presentation').CanvasPresentation => ({
@@ -196,7 +182,6 @@ async function renderController(params?: {
         reportUserGestureStart: vi.fn(),
         reportUserGestureMove,
         reportUserGestureEnd,
-        notifyDisplayHostSettled: vi.fn(),
         presentation: params?.presentation ?? {
           nodes: [],
           overlayEdges: [],
@@ -204,14 +189,12 @@ async function renderController(params?: {
         compiled: {
           visibleIds: new Set<string>((params?.presentation?.nodes ?? []).map((node) => node.id)),
         } as never,
-        transitionOverlay: null,
+        transitionFrame: null,
         overlayFrameStore: null,
-        hideHostVisuals: false,
         transitionLiteMode: params?.transitionLiteMode ?? false,
         isTransitionRunning: false,
         isTransitionQueued: false,
         motionPhase: 'idle',
-        requiredHostGeneration: null,
       },
     });
     return null;
@@ -236,94 +219,6 @@ describe('useCanvasSurfaceController', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.doUnmock('react');
-  });
-
-  it('suppresses host interactive controls during transition-lite phases', () => {
-    expect(shouldSuppressHostInteractiveControls(true)).toBe(true);
-    expect(shouldSuppressHostInteractiveControls(false)).toBe(false);
-  });
-
-  it('suppresses host edge chrome during transition-lite and queued structural camera phases', () => {
-    expect(
-      shouldSuppressHostEdgeChrome({
-        transitionLiteMode: true,
-        motionPhase: 'idle',
-        hasTransitionOverlay: true,
-        hasQueuedStructuralTransition: false,
-      }),
-    ).toBe(true);
-    expect(
-      shouldSuppressHostEdgeChrome({
-        transitionLiteMode: false,
-        motionPhase: 'animating',
-        hasTransitionOverlay: false,
-        hasQueuedStructuralTransition: true,
-      }),
-    ).toBe(true);
-    expect(
-      shouldSuppressHostEdgeChrome({
-        transitionLiteMode: false,
-        motionPhase: 'animating',
-        hasTransitionOverlay: true,
-        hasQueuedStructuralTransition: true,
-      }),
-    ).toBe(false);
-    expect(
-      shouldSuppressHostEdgeChrome({
-        transitionLiteMode: false,
-        motionPhase: 'animating',
-        hasTransitionOverlay: false,
-        hasQueuedStructuralTransition: false,
-      }),
-    ).toBe(false);
-    expect(
-      shouldSuppressHostEdgeChrome({
-        transitionLiteMode: false,
-        motionPhase: 'idle',
-        hasTransitionOverlay: false,
-        hasQueuedStructuralTransition: false,
-      }),
-    ).toBe(false);
-  });
-
-  it('keeps host overlay edges visible during viewport gestures and only hides them with the host', () => {
-    const overlayEdges = [
-      {
-        id: 'rel-1:source->target',
-        relationId: 'rel-1',
-        kind: 'routed' as const,
-        sourceId: 'source',
-        targetId: 'target',
-        matched: false,
-        opacity: 1,
-        geometry: testEdgeGeometry,
-        path: testEdgeGeometry.path,
-        labelAnchor: testEdgeGeometry.labelAnchor,
-        solidOverNodeIds: ['group-1'],
-      },
-    ];
-
-    expect(
-      resolveVisibleHostOverlayEdges({
-        overlayEdges,
-        hideHostVisuals: false,
-        suppressForViewportGesture: false,
-      }),
-    ).toBe(overlayEdges);
-    expect(
-      resolveVisibleHostOverlayEdges({
-        overlayEdges,
-        hideHostVisuals: false,
-        suppressForViewportGesture: true,
-      }),
-    ).toBe(overlayEdges);
-    expect(
-      resolveVisibleHostOverlayEdges({
-        overlayEdges,
-        hideHostVisuals: true,
-        suppressForViewportGesture: false,
-      }),
-    ).toEqual([]);
   });
 
   it('keys selection auto-reveal by selected node, canvas layout version', () => {
@@ -376,7 +271,7 @@ describe('useCanvasSurfaceController', () => {
     ).toBe(false);
   });
 
-  it('preserves semantic node controls while applying a runtime disable mask', async () => {
+  it('preserves semantic node controls on the stable presentation', async () => {
     const { controller } = await renderController({
       presentation: buildTestGroupPresentation(),
       transitionLiteMode: true,
@@ -390,8 +285,8 @@ describe('useCanvasSurfaceController', () => {
     expect(viewControls?.showChildGroupControls).toBe(true);
     expect(viewControls?.canCollapseDetails).toBe(true);
     expect(viewControls?.canCollapseChildGroups).toBe(true);
-    expect(runtimeControls?.disableControlActions).toBe(true);
-    expect(runtimeControls?.hideLocalEdgeLabels).toBe(true);
+    expect(runtimeControls?.disableControlActions).toBe(false);
+    expect(runtimeControls?.hideLocalEdgeLabels).toBe(false);
   });
 
   it('ignores non-user viewport move callbacks', () => {

@@ -1,9 +1,14 @@
-import { createElement } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
+// @vitest-environment happy-dom
+import { act, createElement, type ReactElement } from 'react';
+import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
-
-import { EdgeOverlay, resolveEdgeSelectionId } from './EdgeOverlay';
-import { EdgeOverlayView } from './EdgeOverlayView';
+import type { CanvasNode } from '../../canvas-types';
+import { DiagramRenderer } from '../../DiagramRenderer';
+import { buildCanvasRenderState } from '../../node-presentation';
+import type {
+  CanvasNodeView,
+  CanvasOverlayEdgeView,
+} from '../../rendering/presentation/presentation';
 import { resolveEdgeLabelOffset, resolveEdgeLabelTransform } from './edge-label-placement';
 import { resolveEdgeOverlayRenderState } from './edge-overlay-state';
 import {
@@ -15,22 +20,43 @@ import {
   splitOccludersByNodeIds,
 } from './occluder-geometry';
 
-describe('resolveEdgeSelectionId', () => {
-  it('prefers relationId when provided', () => {
-    const id = resolveEdgeSelectionId({
-      id: 'rel-1:source->target',
-      relationId: 'rel-1',
-    });
-    expect(id).toBe('rel-1');
-  });
-
-  it('falls back to edge id when relationId is missing', () => {
-    const id = resolveEdgeSelectionId({
-      id: 'rel-2:source->target',
-    });
-    expect(id).toBe('rel-2:source->target');
-  });
-});
+const bindings = {
+  onZoomTrigger: () => false,
+  onExpandDetails: () => {},
+  onCollapseDetails: () => {},
+  onExpandChildGroups: () => {},
+  onCollapseChildGroups: () => {},
+  onEdgeLabelClick: () => {},
+};
+const renderMarkup = (element: ReactElement) => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  const host = document.createElement('div');
+  const root = createRoot(host);
+  try {
+    act(() => root.render(element));
+    return host.innerHTML;
+  } finally {
+    act(() => root.unmount());
+    vi.unstubAllGlobals();
+  }
+};
+const edgeRenderer = ({
+  edges,
+  nodes,
+}: {
+  edges: CanvasOverlayEdgeView[];
+  nodes: CanvasNodeView[];
+}) => {
+  const host = buildCanvasRenderState({ presentation: { nodes, overlayEdges: edges }, bindings });
+  return createElement(DiagramRenderer, { nodes: host.nodes, edges, nodeTypes: {} });
+};
+const hostEdgeRenderer = ({
+  edges,
+  nodes,
+}: {
+  edges: CanvasOverlayEdgeView[];
+  nodes: CanvasNode[];
+}) => edgeRenderer({ edges, nodes: nodes.map((node) => node.data.view) });
 
 describe('edge label placement', () => {
   it('nudges labels to the side of vertical routed trunks', () => {
@@ -59,7 +85,7 @@ describe('edge label placement', () => {
   });
 });
 
-describe('EdgeOverlayView', () => {
+describe('shared edge geometry and renderer', () => {
   it('resolves overlay pass occluders for a selected edge trace', () => {
     const renderState = resolveEdgeOverlayRenderState({
       edges: [
@@ -421,8 +447,8 @@ describe('EdgeOverlayView', () => {
   });
 
   it('renders solid spans plus dotted blocked spans from a single blocker mask', () => {
-    const markup = renderToStaticMarkup(
-      EdgeOverlayView({
+    const markup = renderMarkup(
+      edgeRenderer({
         edges: [
           {
             id: 'rel-1:source->target',
@@ -534,7 +560,6 @@ describe('EdgeOverlayView', () => {
             contentOccluders: [],
           },
         ],
-        transform: { tx: 0, ty: 0, zoom: 1 },
       }),
     );
 
@@ -547,9 +572,9 @@ describe('EdgeOverlayView', () => {
     expect(markup).not.toContain('edge-overlay-path-branch edge-overlay-path-branch-selected');
   });
 
-  it('renders local and routed overlay edges in world space under pan and zoom', () => {
-    const markup = renderToStaticMarkup(
-      EdgeOverlayView({
+  it('renders local and routed edges in shared world coordinates', () => {
+    const markup = renderMarkup(
+      edgeRenderer({
         edges: [
           {
             id: 'rel-local',
@@ -769,18 +794,16 @@ describe('EdgeOverlayView', () => {
             contentOccluders: [],
           },
         ],
-        transform: { tx: 48, ty: 32, zoom: 1.5 },
       }),
     );
 
-    expect(markup).toContain('translate(48px, 32px) scale(1.5)');
     expect(markup).toContain('M 60,80 L 220,120');
     expect(markup).toContain('M 220,120 L 380,88');
   });
 
-  it('honors hideLabel for local overlay edges', () => {
-    const markup = renderToStaticMarkup(
-      EdgeOverlayView({
+  it('preserves local edge path geometry', () => {
+    const markup = renderMarkup(
+      edgeRenderer({
         edges: [
           {
             id: 'rel-local',
@@ -852,7 +875,6 @@ describe('EdgeOverlayView', () => {
             contentOccluders: [],
           },
         ],
-        transform: { tx: 0, ty: 0, zoom: 1 },
       }),
     );
 
@@ -860,10 +882,10 @@ describe('EdgeOverlayView', () => {
   });
 });
 
-describe('EdgeOverlay', () => {
+describe('diagram edge interaction', () => {
   it('clips edge hit paths to the solid-visible mask so blocked segments stay non-interactive', () => {
-    const markup = renderToStaticMarkup(
-      createElement(EdgeOverlay, {
+    const markup = renderMarkup(
+      hostEdgeRenderer({
         edges: [
           {
             id: 'rel-1:source->target',
@@ -1038,9 +1060,19 @@ describe('EdgeOverlay', () => {
     );
 
     expect(markup).toContain('class="edge-hit-path"');
-    expect(markup).toContain(
-      'clip-path="url(#edge-overlay-clip-edge-overlay-interaction-solid-rel-1_source-_target)"',
-    );
+    const rendered = document.createElement('div');
+    rendered.innerHTML = markup;
+    const hitClip = rendered.querySelector('.edge-hit-path')?.getAttribute('clip-path');
+    const solidClip = rendered.querySelector('.edge-underlay-path')?.getAttribute('clip-path');
+    const blockedClip = rendered.querySelector('.edge-overlay-path')?.getAttribute('clip-path');
+    expect(hitClip).toBe(solidClip);
+    expect(hitClip).not.toBe(blockedClip);
+    const clipId = hitClip!.slice(5, -1);
+    expect(
+      [...rendered.querySelectorAll('clipPath')]
+        .find((clip) => clip.id === clipId)
+        ?.getAttribute('data-render-clip'),
+    ).toBe('rel-1:source->target:solid');
   });
 });
 

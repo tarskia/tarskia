@@ -6,7 +6,7 @@ import { act, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { CanvasCamera } from '../canvas/camera';
-import { resolveTransitionOverlayFrame } from '../canvas/rendering/transition/overlay';
+import { resolveAnimationFrame } from '../canvas/rendering/transition/overlay';
 import { loadGallery } from '../test/curated-rendering';
 import { useDiagramEngine } from './useDiagramEngine';
 
@@ -84,9 +84,6 @@ it.each([
       callbacks.clear();
       for (const callback of pending) callback(now);
     });
-    const requiredGeneration = engine.requiredHostGeneration;
-    if (requiredGeneration !== null)
-      await act(async () => engine.notifyDisplayHostSettled(requiredGeneration));
   };
   try {
     await act(async () => root.render(<Harness doc={initial.doc} />));
@@ -100,31 +97,27 @@ it.each([
         },
       } as unknown as CanvasCamera);
     });
-    for (let i = 0; i < 30 && (callbacks.size || engine.requiredHostGeneration !== null); i++)
-      await advance(now + 100);
+    for (let i = 0; i < 30 && callbacks.size; i++) await advance(now + 100);
     const transitionStartRenders = hostRenders;
     phases.clear();
     await act(async () => {
       engine.setPendingStructuralTransitionIntent({ direction: 'in', focus: null });
       root.render(<Harness doc={expanded.doc} />);
     });
-    for (let i = 0; i < 30 && !engine.transitionOverlay; i++) await advance(now + 50);
-    expect(engine.transitionOverlay).not.toBeNull();
-    const overlay = engine.transitionOverlay;
+    for (let i = 0; i < 30 && !engine.transitionFrame; i++) await advance(now + 50);
+    expect(engine.transitionFrame).not.toBeNull();
+    const overlay = engine.transitionFrame;
     if (!overlay) throw new Error('Expected an active overlay');
     const beforeRenders = hostRenders;
     receivedFrames.clear();
     for (let i = 1; i <= frameCount; i++) {
       await advance(overlay.startedAt + overlay.duration * (0.05 + (0.8 * i) / frameCount));
-      expect(engine.overlayFrameStore.getSnapshot()).toEqual(
-        resolveTransitionOverlayFrame(overlay, now),
-      );
+      expect(engine.overlayFrameStore.getSnapshot()).toEqual(resolveAnimationFrame(overlay, now));
     }
     const frameRenders = hostRenders - beforeRenders;
     expect(receivedFrames.size).toBe(frameCount);
     expect(frameRenders).toBeLessThanOrEqual(6);
-    for (let i = 0; i < 60 && (callbacks.size || engine.requiredHostGeneration !== null); i++)
-      await advance(now + 100);
+    for (let i = 0; i < 60 && callbacks.size; i++) await advance(now + 100);
     expect(engine.motionPhase).toBe('idle');
     expect(persistViewport).not.toHaveBeenCalled();
     expect(engine.overlayFrameStore.getSnapshot()).toBeNull();

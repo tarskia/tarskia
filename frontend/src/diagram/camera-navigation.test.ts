@@ -4,10 +4,7 @@ import {
   ANIMATION_CONSTANTS,
   DEFAULT_VIEWPORT_FIT_PADDING,
 } from '../canvas/rendering/transition/animation-constants';
-import {
-  computeViewportForBoundsInVisibleCanvas,
-  computeViewportToKeepRectVisible,
-} from '../canvas/viewport-visibility';
+import { computeViewportForBoundsInVisibleCanvas } from '../canvas/viewport-visibility';
 import { resolveNavigationPolicy, resolveNavigationViewport } from './camera-navigation';
 import type { NavigationIntent } from './motion-types';
 
@@ -72,30 +69,25 @@ describe('camera navigation helpers', () => {
     const initialized = resolveViewport({ kind: 'initialize-diagram' });
     const fitted = resolveViewport({ kind: 'fit-scene', preset: 'layout' });
     expect(initialized.policy.durationMs).toBe(0);
-    expect(initialized.policy.waitForHostGeneration).toBe(false);
     expect(fitted.policy.mode).toBe('animated');
     expect(fitted.policy.durationMs).toBe(ANIMATION_CONSTANTS.viewport.fitDuration);
-    expect(fitted.policy.waitForHostGeneration).toBe(true);
     expect(fitted.viewport).toEqual(initialized.viewport);
   });
 
-  it('retains host-settle options on live intents', () => {
+  it('retains animated navigation policy for live intents', () => {
     expect(
       resolveNavigationPolicy({
         kind: 'fit-node-set',
         nodeIds: ['a'],
-        waitForHostSettle: false,
       }),
     ).toMatchObject({
       mode: 'animated',
       durationMs: 260,
-      waitForHostGeneration: false,
     });
     expect(resolveNavigationPolicy({ kind: 'ensure-visible', rect: sceneBounds })).toMatchObject({
       mode: 'animated',
       durationMs: 180,
       padding: 40,
-      waitForHostGeneration: false,
     });
   });
 

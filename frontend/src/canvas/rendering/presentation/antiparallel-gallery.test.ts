@@ -1,9 +1,6 @@
 import { expect, test } from 'vitest';
 import { loadGallery, planGalleryTransition } from '../../../test/curated-rendering';
-import {
-  captureTransitionOverlaySnapshot,
-  resolveTransitionOverlayFrame,
-} from '../transition/overlay';
+import { captureTransitionFrameSnapshot, resolveAnimationFrame } from '../transition/overlay';
 import { routeCanvasEdges } from './edge-routing';
 import { buildBezierEdgeGeometry } from './geometry';
 
@@ -32,8 +29,8 @@ test('n8n has one worker/queue line, independent primary IDs and no shared label
       .size,
   ).toBe(presentation.overlayEdges.length);
   const { overlay } = planGalleryTransition(rendered, rendered, 'in');
-  const frame = resolveTransitionOverlayFrame(overlay, 1000);
-  const snapshot = captureTransitionOverlaySnapshot({ state: overlay, frame });
+  const frame = resolveAnimationFrame(overlay, 1000);
+  const snapshot = captureTransitionFrameSnapshot({ state: overlay, frame });
   const captured = snapshot.overlayEdges.find((edge) => edge.id === pair[0].id)!;
   expect(captured.directionalLabels).toEqual(pair[0].directionalLabels);
   expect(captured.relationIds).toEqual(pair[0].relationIds);

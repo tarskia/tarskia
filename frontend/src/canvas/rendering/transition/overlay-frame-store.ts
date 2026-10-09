@@ -1,12 +1,12 @@
-import type { TransitionOverlayFrame } from './overlay';
+import type { AnimationFrame } from './overlay';
 
 export interface OverlayFrameStore {
-  getSnapshot: () => TransitionOverlayFrame | null;
+  getSnapshot: () => AnimationFrame | null;
   subscribe: (listener: () => void) => () => void;
 }
 
 export const createOverlayFrameStore = () => {
-  let frame: TransitionOverlayFrame | null = null;
+  let frame: AnimationFrame | null = null;
   const listeners = new Set<() => void>();
   return {
     getSnapshot: () => frame,
@@ -16,7 +16,7 @@ export const createOverlayFrameStore = () => {
         listeners.delete(listener);
       };
     },
-    publish: (next: TransitionOverlayFrame | null) => {
+    publish: (next: AnimationFrame | null) => {
       if (frame === next) return;
       frame = next;
       for (const listener of listeners) listener();

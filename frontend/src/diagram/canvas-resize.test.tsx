@@ -80,12 +80,9 @@ it.each([
       callbacks.clear();
       for (const callback of queued) callback(now);
     });
-    const generation = engine.requiredHostGeneration;
-    if (generation !== null) await act(async () => engine.notifyDisplayHostSettled(generation));
   };
   const settle = async () => {
-    for (let i = 0; i < 60 && (callbacks.size || engine.requiredHostGeneration !== null); i++)
-      await step(now + 100);
+    for (let i = 0; i < 60 && callbacks.size; i++) await step(now + 100);
   };
   try {
     await act(async () => root.render(<Harness />));
@@ -118,7 +115,6 @@ it.each([
           kind: 'fit-node-set',
           nodeIds: [focusNode.id],
           preset: 'focus',
-          waitForHostSettle: false,
         }),
       );
       if (mode === 'transition') {

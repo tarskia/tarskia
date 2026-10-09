@@ -10,12 +10,14 @@ import { buildCanvasRenderState } from './node-presentation';
 
 let nodeCommits = 0;
 let edgeCommits = 0;
-vi.mock('./components/edges/EdgeOverlay', async () => {
+vi.mock('./DiagramRenderer', async () => {
+  const actual = await vi.importActual<typeof import('./DiagramRenderer')>('./DiagramRenderer');
   const { Profiler } = await import('react');
   return {
-    EdgeOverlay: () => (
+    DiagramRenderer: (props: React.ComponentProps<typeof actual.DiagramRenderer>) => (
       <Profiler id="edges" onRender={() => edgeCommits++}>
         <div>
+          <actual.DiagramRenderer {...props} />
           <svg aria-hidden="true">
             <path data-relation-id="test-relation" />
           </svg>
@@ -75,7 +77,6 @@ it('moves the shared world synchronously without a node or edge React commit dur
         canvasRef={ref}
         onCanvasElementChange={measure}
         nodeVisualMode="outline"
-        hideHostVisuals={false}
         nodes={nodes}
         overlayEdges={overlayEdges}
         nodeTypes={nodeTypes}
@@ -150,7 +151,6 @@ it('uses delegated Tab, Enter, Space, Escape and relation selection', async () =
       <DiagramCanvas
         canvasRef={{ current: null }}
         nodeVisualMode="outline"
-        hideHostVisuals={false}
         nodes={nodes}
         overlayEdges={overlayEdges}
         nodeTypes={nodeTypes}
@@ -188,9 +188,25 @@ it('uses delegated Tab, Enter, Space, Escape and relation selection', async () =
     ),
   );
   expect(clear).toHaveBeenCalledWith(true);
+  // Union records remain mounted while entering/exiting; roving focus skips invisible frames.
+  elements[2].style.display = 'none';
+  elements[3].style.opacity = '0';
+  elements[4].style.pointerEvents = 'none';
+  await act(async () =>
+    elements[1].dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }),
+    ),
+  );
+  expect(document.activeElement).toBe(elements[5]);
+  await act(async () =>
+    elements[5].dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }),
+    ),
+  );
+  expect(document.activeElement).toBe(elements[1]);
   await act(async () =>
     container
-      .querySelector('[data-relation-id]')!
+      .querySelector('[data-relation-id="test-relation"]')!
       .dispatchEvent(new MouseEvent('click', { bubbles: true })),
   );
   expect(relation).toHaveBeenCalledWith('test-relation');

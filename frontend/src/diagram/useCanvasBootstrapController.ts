@@ -70,7 +70,6 @@ export function useCanvasBootstrapController({
   const initializeIntent = useMemo<NavigationIntent>(
     () => ({
       kind: 'initialize-diagram',
-      waitForHostSettle: false,
     }),
     [],
   );

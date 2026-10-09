@@ -53,10 +53,6 @@ async function mountManager() {
       frames.clear();
       for (const callback of pending) callback(now);
     });
-    if (manager.requiredHostGeneration !== null) {
-      const generation = manager.requiredHostGeneration;
-      await act(async () => manager.notifyDisplayHostSettled(generation));
-    }
   };
   return {
     get manager() {
@@ -67,19 +63,17 @@ async function mountManager() {
     },
     step,
     settle: async () => {
-      for (let i = 0; i < 30 && (frames.size || manager.requiredHostGeneration !== null); i++)
-        await step();
+      for (let i = 0; i < 30 && frames.size; i++) await step();
       expect(frames.size).toBe(0);
     },
     unmount: () => act(async () => root.unmount()),
   };
 }
 const callbacks = () => ({ onComplete: vi.fn(), onSettled: vi.fn() });
-const sceneIntent = { kind: 'fit-scene', waitForHostSettle: false } as const;
+const sceneIntent = { kind: 'fit-scene' } as const;
 const focusIntent = {
   kind: 'fit-node-set' as const,
   nodeIds: ['node-1'],
-  waitForHostSettle: false,
 };
 
 it.each([

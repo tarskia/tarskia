@@ -3,8 +3,8 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
 import { loadGallery } from '../../../test/curated-rendering';
-import type { CanvasNode, CanvasNodeData } from '../../canvas-types';
-import { EdgeOverlay } from './EdgeOverlay';
+import { DiagramRenderer } from '../../DiagramRenderer';
+import { buildCanvasRenderState } from '../../node-presentation';
 import { resolveCachedEdgeOverlayRenderState } from './edge-overlay-state';
 import * as occlusion from './occluder-geometry';
 
@@ -18,17 +18,28 @@ it('reuses geometry across host selection/search updates while rendering fresh d
   const gallery = loadGallery('n8n.yaml');
   const snapshot = gallery.render(gallery.graph.entities.map((entity) => entity.id)).presentation;
   const flatten = vi.spyOn(occlusion, 'flattenOccluders');
-  const nodes = snapshot.nodes.map((view) => ({
-    id: view.id,
-    position: { x: 0, y: 0 },
-    data: { view, controls: {} },
-  })) as CanvasNode<CanvasNodeData>[];
+  const { nodes } = buildCanvasRenderState({
+    presentation: snapshot,
+    bindings: {
+      onZoomTrigger: () => false,
+      onExpandDetails: () => {},
+      onCollapseDetails: () => {},
+      onExpandChildGroups: () => {},
+      onCollapseChildGroups: () => {},
+      onEdgeLabelClick: () => {},
+    },
+  });
   const host = document.createElement('div');
   const root = createRoot(host);
   try {
     await act(async () =>
       root.render(
-        <EdgeOverlay geometrySnapshot={snapshot} edges={snapshot.overlayEdges} nodes={nodes} />,
+        <DiagramRenderer
+          nodeTypes={{}}
+          geometrySnapshot={snapshot}
+          edges={snapshot.overlayEdges}
+          nodes={nodes}
+        />,
       ),
     );
     expect(host.querySelectorAll('[data-edge-handle-role], .edge-handle-button')).toHaveLength(0);
@@ -44,7 +55,8 @@ it('reuses geometry across host selection/search updates while rendering fresh d
     }));
     await act(async () =>
       root.render(
-        <EdgeOverlay
+        <DiagramRenderer
+          nodeTypes={{}}
           geometrySnapshot={snapshot}
           edges={decorated}
           nodes={nodes.map((node) => ({ ...node, selected: true }))}

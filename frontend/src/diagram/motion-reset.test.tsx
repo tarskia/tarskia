@@ -84,8 +84,6 @@ it.each([
       callbacks.clear();
       for (const callback of pending) callback(now);
     });
-    const generation = engine.requiredHostGeneration;
-    if (generation !== null) await act(async () => engine.notifyDisplayHostSettled(generation));
   };
   try {
     await act(async () =>
@@ -95,18 +93,16 @@ it.each([
       engine.onCanvasElementChange(canvas);
       engine.onCanvasInit(instance);
     });
-    for (let i = 0; i < 40 && (callbacks.size || engine.requiredHostGeneration !== null); i++)
-      await advance(now + 50);
+    for (let i = 0; i < 40 && callbacks.size; i++) await advance(now + 50);
     await act(async () => {
       engine.setPendingStructuralTransitionIntent({ direction: 'in', focus: null });
       root.render(<Harness doc={expanded.doc} schema={first.graph.schema} diagramKey="n8n" />);
     });
-    for (let i = 0; i < 40 && !engine.transitionOverlay; i++) await advance(now + 50);
-    const overlay = engine.transitionOverlay;
+    for (let i = 0; i < 40 && !engine.transitionFrame; i++) await advance(now + 50);
+    const overlay = engine.transitionFrame;
     expect(overlay).not.toBeNull();
     if (!overlay) throw new Error('Expected a real in-flight expansion');
     await advance(overlay.startedAt + overlay.duration * 0.4);
-    expect(engine.hideHostVisuals).toBe(true);
     expect(engine.motionPhase).not.toBe('idle');
     if (reset === 'diagram-key') {
       await act(async () => {
@@ -128,9 +124,8 @@ it.each([
       });
     } else {
       await act(async () => engine.onCanvasUnmount());
-      expect(engine.transitionOverlay).toBeNull();
+      expect(engine.transitionFrame).toBeNull();
       expect(engine.overlayFrameStore.getSnapshot()).toBeNull();
-      expect(engine.hideHostVisuals).toBe(false);
       expect(callbacks.size).toBe(0);
     }
     await act(async () =>
@@ -139,9 +134,8 @@ it.each([
       ),
     );
     if (reset === 'canvas-unmount') await act(async () => engine.onCanvasInit(instance));
-    expect(engine.transitionOverlay).toBeNull();
+    expect(engine.transitionFrame).toBeNull();
     expect(engine.overlayFrameStore.getSnapshot()).toBeNull();
-    expect(engine.hideHostVisuals).toBe(false);
     expect(engine.motionPhase).toBe('idle');
     expect(engine.presentation.nodes.map((node) => node.id)).toEqual(
       target.presentation.nodes.map((node) => node.id),

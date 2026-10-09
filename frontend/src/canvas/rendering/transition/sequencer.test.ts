@@ -4,7 +4,7 @@ import type { LayoutNode, LayoutTree } from '../layout/tree-traverser';
 import { buildStaticCanvasPresentation } from '../presentation/presentation';
 import { buildAbsolutePositions } from '../scene/scene';
 import { buildNodeVisualMap } from '../visual/node-visuals';
-import { buildTransitionOverlayState, resolveTransitionOverlayFrame } from './overlay';
+import { buildTransitionFrameState, resolveAnimationFrame } from './overlay';
 import { buildTransitionPlanningAdvisory } from './sequencer';
 import { buildTimedTransitionPlan, buildTimedTransitionSequence } from './timed-plan';
 
@@ -88,7 +88,7 @@ const buildOverlay = (fromTree: LayoutTree, toTree: LayoutTree, direction: 'in' 
   const planningAdvisory = buildTransitionPlanningAdvisory({ direction, fromTree, toTree });
   const timedSequence = buildTimedTransitionSequence({ planningAdvisory });
   const timedPlan = buildTimedTransitionPlan({ planningAdvisory, timedSequence });
-  return buildTransitionOverlayState({
+  return buildTransitionFrameState({
     id: 1,
     startedAt: 0,
     duration: 1000,
@@ -582,7 +582,7 @@ describe('buildTimedTransitionPlan', () => {
 
     const overlay = buildOverlay(fromTree, toTree, 'in');
     for (let step = 0; step <= 60; step += 1) {
-      const frame = resolveTransitionOverlayFrame(overlay, (step / 60) * 1000);
+      const frame = resolveAnimationFrame(overlay, (step / 60) * 1000);
       const b = frame.nodes.find((node) => node.id === 'B');
       const c = frame.nodes.find((node) => node.id === 'C');
       expect(b).toBeDefined();
@@ -645,11 +645,9 @@ describe('buildTimedTransitionPlan', () => {
     const overlay = buildOverlay(fromTree, toTree, 'out');
     const fromAHeight = fromTree.byId.get('A')?.size.height ?? 0;
     let sawParentShrink = false;
-    expect(resolveTransitionOverlayFrame(overlay, 0).nodes.some((node) => node.id === 'B')).toBe(
-      true,
-    );
+    expect(resolveAnimationFrame(overlay, 0).nodes.some((node) => node.id === 'B')).toBe(true);
     for (let step = 0; step <= 60; step += 1) {
-      const frame = resolveTransitionOverlayFrame(overlay, (step / 60) * 1000);
+      const frame = resolveAnimationFrame(overlay, (step / 60) * 1000);
       const parent = frame.nodes.find((node) => node.id === 'A');
       expect(parent).toBeDefined();
       if ((parent?.rect.height ?? fromAHeight) < fromAHeight - 1e-6) {
