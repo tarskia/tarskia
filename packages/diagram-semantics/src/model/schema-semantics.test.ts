@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import { CORE_GROUP_TYPE_ID } from './schema-ids';
 import { buildSchemaActivation } from './schema-ref';
 import {
+  canContainEntity,
   compileSchemaSemantics,
+  evaluateContainment,
   getAllowedChildTypeIds,
   getResolvedRelationSemantics,
   getResolvedTypeSemantics,
   isAllowedChildType,
+  typedGroupAllowsChild,
 } from './schema-semantics';
 import type { EntityTypeDef, SchemaModule } from './types';
 
@@ -261,5 +265,144 @@ describe('explicit containment alternatives', () => {
         child.id,
       ).toBe(allowed.includes(child.id));
     }
+  });
+});
+
+describe('shared containment evaluation', () => {
+  const layered: SchemaModule = {
+    owner: 'test',
+    name: 'containment',
+    version: '1.0',
+    relations: [],
+    traits: [
+      { id: 'core/base.traits.container', label: 'Container' },
+      { id: 'core/base.traits.containable', label: 'Containable' },
+      { id: 'core/base.traits.group-like', label: 'Group' },
+    ],
+    types: [
+      {
+        id: 'parent',
+        label: 'Parent',
+        originSchemaId: 'test/parent@1',
+        containment: { allowedChildTypes: ['explicit', 'group'] },
+      },
+      {
+        id: 'generic',
+        label: 'Generic',
+        originSchemaId: 'test/parent@1',
+        traits: ['core/base.traits.container'],
+      },
+      { id: 'empty', label: 'Empty', originSchemaId: 'test/parent@1' },
+      { id: 'explicit', label: 'Explicit', originSchemaId: 'test/child@1' },
+      {
+        id: 'containable',
+        label: 'Containable',
+        originSchemaId: 'test/child@1',
+        traits: ['core/base.traits.containable'],
+      },
+      {
+        id: 'group',
+        label: 'Group',
+        originSchemaId: 'test/child@1',
+        traits: ['core/base.traits.group-like'],
+      },
+    ],
+  };
+  const activations = (delta: number) => [
+    buildSchemaActivation('test/parent@1', 1),
+    buildSchemaActivation('test/child@1', 1 + delta),
+  ];
+  it.each([
+    ['parent', 'explicit', 0, true, undefined],
+    ['parent', 'explicit', 1, true, undefined],
+    ['generic', 'containable', 1, true, undefined],
+    ['parent', 'explicit', 2, false, 'invalid_parent'],
+    ['parent', 'explicit', -1, false, 'invalid_parent'],
+    ['parent', 'group', 2, true, undefined],
+    ['parent', 'group', -1, true, undefined],
+    ['empty', 'explicit', 0, false, 'invalid_parent'],
+    ['parent', 'containable', 0, false, 'invalid_child'],
+  ] as const)('%s → %s at layer delta %s', (parentTypeId, childTypeId, delta, allowed, failure) => {
+    expect(
+      evaluateContainment({
+        schema: layered,
+        parentTypeId,
+        childTypeId,
+        schemaActivations: activations(delta),
+      }),
+    ).toMatchObject({ allowed, failure, parentLayer: 1, childLayer: 1 + delta });
+  });
+  it('retains explicit and generic reasons independently', () => {
+    expect(
+      evaluateContainment({
+        schema: layered,
+        parentTypeId: 'parent',
+        childTypeId: 'explicit',
+        schemaActivations: activations(1),
+      }),
+    ).toMatchObject({
+      allowed: true,
+      explicitContainmentOk: true,
+      genericCrossLayerContainmentOk: false,
+    });
+    expect(
+      evaluateContainment({
+        schema: layered,
+        parentTypeId: 'generic',
+        childTypeId: 'containable',
+        schemaActivations: activations(1),
+      }),
+    ).toMatchObject({
+      allowed: true,
+      explicitContainmentOk: false,
+      genericCrossLayerContainmentOk: true,
+    });
+  });
+  it.each([-1, 0, 1, 2])('lists exactly the accepted types at layer delta %s', (delta) => {
+    for (const parent of layered.types) {
+      const args = {
+        schema: layered,
+        parentTypeId: parent.id,
+        schemaActivations: activations(delta),
+      };
+      expect(getAllowedChildTypeIds(args)).toEqual(
+        layered.types
+          .filter((child) => evaluateContainment({ ...args, childTypeId: child.id }).allowed)
+          .map((child) => child.id)
+          .sort(),
+      );
+    }
+  });
+});
+
+describe('typed group containment', () => {
+  const groupSchema: SchemaModule = {
+    ...schema,
+    types: [...schema.types, { id: CORE_GROUP_TYPE_ID, label: 'Group', containment: {} }],
+  };
+  const service = 'core/test.types.service';
+  const store = 'core/test.types.store';
+  it.each([
+    [service, { mode: 'typed', groupType: service }, store, true],
+    [CORE_GROUP_TYPE_ID, {}, store, true],
+    [CORE_GROUP_TYPE_ID, { mode: 'typed' }, store, true],
+    [CORE_GROUP_TYPE_ID, { mode: 'typed', groupType: '' }, store, true],
+    [CORE_GROUP_TYPE_ID, { groupType: 'unknown' }, store, true],
+    [CORE_GROUP_TYPE_ID, { groupType: service }, service, true],
+    [CORE_GROUP_TYPE_ID, { groupType: service }, CORE_GROUP_TYPE_ID, true],
+    [CORE_GROUP_TYPE_ID, { groupType: service }, store, false],
+    [CORE_GROUP_TYPE_ID, { mode: 'typed', groupType: service }, store, false],
+  ] as const)('checks %s with %j and child %s', (type, props, childTypeId, allowed) => {
+    expect(
+      typedGroupAllowsChild({ schema: groupSchema, parent: { type, props }, childTypeId }),
+    ).toBe(allowed);
+  });
+  it('combines type-level and typed-group restrictions', () => {
+    const parent = { type: CORE_GROUP_TYPE_ID, props: { groupType: service } };
+    expect(canContainEntity({ schema: groupSchema, parent, childTypeId: service })).toBe(true);
+    expect(canContainEntity({ schema: groupSchema, parent, childTypeId: store })).toBe(false);
+    expect(
+      canContainEntity({ schema: groupSchema, parent: { type: service }, childTypeId: service }),
+    ).toBe(false);
   });
 });

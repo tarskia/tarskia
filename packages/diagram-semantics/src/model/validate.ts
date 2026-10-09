@@ -4,17 +4,18 @@ import {
   type RelationAnalysisDiagnosticDetails,
 } from './diagnostics';
 import { buildEntityIndex } from './entity-tree';
-import { matchesExplicitContainment, resolveTypeDef, traitMatches } from './schema';
+import { resolveTypeDef, traitMatches } from './schema';
 import {
   CORE_CONTAINS_RELATION_ID,
   CORE_GROUP_TYPE_ID,
   FREEFORM_RELATION_TYPE,
 } from './schema-ids';
-import { buildSchemaActivationMap, buildSchemaId, parseSchemaRef } from './schema-ref';
 import {
   compileSchemaSemantics,
+  evaluateContainment,
   getAllowedChildTypeIds,
   relationTypeMatchesEndpoints,
+  typedGroupAllowsChild,
 } from './schema-semantics';
 import type {
   DocumentInput,
@@ -25,8 +26,6 @@ import type {
   SemanticDocument,
 } from './types';
 
-const CONTAINER_TRAIT_ID = 'core/base.traits.container';
-const CONTAINABLE_TRAIT_ID = 'core/base.traits.containable';
 const GROUP_LIKE_TRAIT_ID = 'core/base.traits.group-like';
 
 export interface DiagramValidationOptions {
@@ -678,7 +677,6 @@ export function validateDocument(
   const entities = entityIndex.entries.map((entry) => entry.entity);
   const entityMap = entityIndex.byId;
   const entityIds = new Set(entityMap.keys());
-  const activationMap = buildSchemaActivationMap(doc.schemaRefs);
   const childrenByParent = new Map<string, Set<string>>();
   const addChild = (parentId: string, childId: string) => {
     if (!parentId || !childId) return;
@@ -739,24 +737,14 @@ export function validateDocument(
       const parentEntity = entityMap.get(parentId);
       const parentTypeDef = parentEntity ? resolveTypeDef(schema, parentEntity.type) : undefined;
       const containment = parentTypeDef?.containment;
-      const parentLayer = parentTypeDef?.originSchemaId
-        ? activationMap.get(buildSchemaId(parseSchemaRef(parentTypeDef.originSchemaId)))?.layer
-        : undefined;
-      const childLayer = typeDef?.originSchemaId
-        ? activationMap.get(buildSchemaId(parseSchemaRef(typeDef.originSchemaId)))?.layer
-        : undefined;
-
-      const explicitContainmentOk = matchesExplicitContainment(schema, containment, entity.type);
-      const structuralGroupContainmentOk =
-        explicitContainmentOk && traitMatches(schema, entity.type, [GROUP_LIKE_TRAIT_ID]);
-
-      const genericCrossLayerContainmentOk =
-        parentLayer !== undefined &&
-        childLayer !== undefined &&
-        childLayer - parentLayer === 1 &&
-        parentEntity !== undefined &&
-        traitMatches(schema, parentEntity.type, [CONTAINER_TRAIT_ID]) &&
-        traitMatches(schema, entity.type, [CONTAINABLE_TRAIT_ID]);
+      const evaluation = evaluateContainment({
+        schema,
+        parentTypeId: parentEntity?.type ?? '',
+        childTypeId: entity.type,
+        schemaActivations: doc.schemaRefs,
+      });
+      const { parentLayer, childLayer, explicitContainmentOk, genericCrossLayerContainmentOk } =
+        evaluation;
       const allowedChildTypeIds = parentEntity
         ? getAllowedChildTypeIds({
             schema,
@@ -780,15 +768,7 @@ export function validateDocument(
           ? `Use an allowed child type such as ${allowedChildTypeIds.slice(0, 5).join(', ')} or move ${entity.id} to a compatible parent.`
           : `Move ${entity.id} to a compatible parent or remove the child nesting.`;
 
-      const invalidLayerDirection =
-        parentLayer !== undefined &&
-        childLayer !== undefined &&
-        (childLayer < parentLayer || childLayer > parentLayer + 1);
-
-      if (
-        (!containment && !genericCrossLayerContainmentOk) ||
-        (invalidLayerDirection && !structuralGroupContainmentOk)
-      ) {
+      if (evaluation.failure === 'invalid_parent') {
         pushDiagramError(diagnostics, {
           phase: 'document',
           severity: 'error',
@@ -799,7 +779,7 @@ export function validateDocument(
           hint: containmentHint,
           details: containmentDetails,
         });
-      } else if (!genericCrossLayerContainmentOk && !explicitContainmentOk) {
+      } else if (evaluation.failure === 'invalid_child') {
         pushDiagramError(diagnostics, {
           phase: 'document',
           severity: 'error',
@@ -932,10 +912,7 @@ export function validateDocument(
     for (const childId of children) {
       const child = entityMap.get(childId);
       if (!child) continue;
-      if (child.type === CORE_GROUP_TYPE_ID) {
-        continue;
-      }
-      if (child.type !== groupType) {
+      if (!typedGroupAllowsChild({ schema, parent: entity, childTypeId: child.type })) {
         pushDiagramError(diagnostics, {
           phase: 'document',
           severity: 'error',
