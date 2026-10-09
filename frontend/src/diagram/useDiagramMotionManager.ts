@@ -81,6 +81,7 @@ interface DiagramMotionRenderState {
 interface UseDiagramMotionManagerArgs {
   stableSnapshot: CanvasRenderSnapshot;
   skipTransitions?: boolean;
+  initialViewportKey?: string;
   animationSettings: AnimationSettings;
   savedViewport?: ViewportState;
   cameraPolicy?: DiagramCameraPolicy;
@@ -715,6 +716,7 @@ export const buildMotionPlanFromChoreographyRequest = (params: {
 export function useDiagramMotionManager({
   stableSnapshot,
   skipTransitions = false,
+  initialViewportKey,
   animationSettings,
   savedViewport,
   cameraPolicy,
@@ -1417,19 +1419,35 @@ export function useDiagramMotionManager({
     [getCurrentViewport, onCanvasInitRaw, startPlan],
   );
 
-  const onCanvasUnmount = useCallback(() => {
-    onCanvasUnmountRaw();
+  const resetMotionState = useCallback(() => {
     cancelScheduledFrame();
     cancelDeferredNavigationFrame();
     activeMotionRef.current = null;
     pendingManagedMotionRef.current = null;
-    canvasReadyRef.current = false;
-    setCanvasReady(false);
+    userGestureActiveRef.current = false;
+    overlayStateRef.current = preserveOverlayCounters(
+      createTransitionOverlayManagerState(stableSnapshotRef.current),
+      overlayStateRef.current,
+    );
     lastFrameAtRef.current = null;
     frameDurationsRef.current = [];
     motionPhaseRef.current = 'idle';
     publish(performance.now());
-  }, [cancelDeferredNavigationFrame, cancelScheduledFrame, onCanvasUnmountRaw, publish]);
+  }, [cancelDeferredNavigationFrame, cancelScheduledFrame, publish]);
+
+  const onCanvasUnmount = useCallback(() => {
+    onCanvasUnmountRaw();
+    canvasReadyRef.current = false;
+    setCanvasReady(false);
+    resetMotionState();
+  }, [onCanvasUnmountRaw, resetMotionState]);
+
+  const previousViewportKeyRef = useRef(initialViewportKey);
+  useEffect(() => {
+    if (previousViewportKeyRef.current === initialViewportKey) return;
+    previousViewportKeyRef.current = initialViewportKey;
+    resetMotionState();
+  }, [initialViewportKey, resetMotionState]);
 
   useEffect(
     () => () => {

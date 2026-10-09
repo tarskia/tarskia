@@ -106,6 +106,7 @@ export function useDiagramEngine({
   );
 
   const motion = useDiagramMotionManager({
+    initialViewportKey,
     stableSnapshot,
     skipTransitions,
     animationSettings,
