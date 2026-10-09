@@ -18,8 +18,6 @@ const defaultNodeControls: CanvasNodeHostControls = {
   selected: false,
   disableControlActions: false,
   hideLocalEdgeLabels: false,
-  highlightSourceHandle: false,
-  highlightTargetHandle: false,
 };
 
 const defaultEdgeControls: CanvasEdgeHostControls = {

@@ -815,7 +815,6 @@ button.node-meta-cell:disabled {
 }
 
 .edge-overlay-world-labels,
-.edge-overlay-world-handles,
 .edge-overlay-svg-interaction {
   pointer-events: none;
 }
@@ -1002,37 +1001,6 @@ button.node-meta-cell:disabled {
 
 .transition-overlay-label-layer .edge-label {
   pointer-events: none;
-}
-
-.edge-handle-button {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(229, 238, 244, 1);
-  border: none;
-  box-shadow: 0 0 0 1px rgba(8, 18, 26, 0.55);
-  pointer-events: auto;
-}
-
-.edge-handle-button-source {
-  cursor: crosshair;
-}
-
-.edge-handle-button-target {
-  cursor: copy;
-}
-
-.edge-handle-button-highlighted {
-  background: rgba(255, 191, 112, 0.92);
-  border-color: rgba(255, 234, 205, 0.98);
-  box-shadow: 0 0 0 2px rgba(255, 191, 112, 0.2);
-}
-
-.edge-handle-button-hovered {
-  background: rgba(255, 220, 170, 0.95);
-  border-color: rgba(255, 242, 225, 1);
-  box-shadow: 0 0 0 2px rgba(255, 220, 170, 0.18);
 }
 
 .canvas-host-hidden .react-flow__nodes,

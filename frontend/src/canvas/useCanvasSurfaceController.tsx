@@ -193,32 +193,6 @@ export const shouldSuppressHostEdgeChrome = (params: {
   );
 };
 
-export const resolveSelectedEdgeEndpointHighlights = (
-  presentation: CanvasPresentation,
-  selectedRelationIds?: Set<string>,
-) => {
-  const highlightedSourceNodeIds = new Set<string>();
-  const highlightedTargetNodeIds = new Set<string>();
-  if (!selectedRelationIds || selectedRelationIds.size === 0) {
-    return {
-      highlightedSourceNodeIds,
-      highlightedTargetNodeIds,
-    };
-  }
-  for (const edge of presentation.overlayEdges) {
-    const representedRelationIds = edge.relationIds ?? [edge.relationId];
-    if (!representedRelationIds.some((relationId) => selectedRelationIds.has(relationId))) {
-      continue;
-    }
-    highlightedSourceNodeIds.add(edge.sourceId);
-    highlightedTargetNodeIds.add(edge.targetId);
-  }
-  return {
-    highlightedSourceNodeIds,
-    highlightedTargetNodeIds,
-  };
-};
-
 const getClientPoint = (event: unknown): { x: number; y: number } | null => {
   if (!event || typeof event !== 'object') return null;
   const candidate = event as {
@@ -579,9 +553,7 @@ export function useCanvasSurfaceController({
   );
 
   const buildNodeControlsById = useCallback(
-    (selectedIds?: Set<string>, selectedRelationIds?: Set<string>) => {
-      const { highlightedSourceNodeIds, highlightedTargetNodeIds } =
-        resolveSelectedEdgeEndpointHighlights(decoratedPresentation, selectedRelationIds);
+    (selectedIds?: Set<string>) => {
       const controlsById = new Map<string, CanvasNodeHostControls>();
       const suppressInteractiveControls = shouldSuppressHostInteractiveControls(transitionLiteMode);
       for (const node of decoratedPresentation.nodes) {
@@ -589,9 +561,6 @@ export function useCanvasSurfaceController({
           selected: selectedIds?.has(node.id) ?? false,
           disableControlActions: suppressInteractiveControls,
           hideLocalEdgeLabels: suppressHostEdgeChrome,
-          showConnectionHandles: true,
-          highlightSourceHandle: highlightedSourceNodeIds.has(node.id),
-          highlightTargetHandle: highlightedTargetNodeIds.has(node.id),
         });
       }
       return controlsById;
@@ -604,7 +573,7 @@ export function useCanvasSurfaceController({
       adaptPresentationToReactFlow({
         presentation: decoratedPresentation,
         bindings: interactionBindings,
-        nodeControlsById: buildNodeControlsById(selectedNodeIds, selectedRelationIds),
+        nodeControlsById: buildNodeControlsById(selectedNodeIds),
         edgeControlsById: buildEdgeControlsById(selectedRelationIds),
       }),
     [buildEdgeControlsById, buildNodeControlsById, decoratedPresentation, interactionBindings],

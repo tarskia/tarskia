@@ -129,8 +129,6 @@ const buildHostState = () => {
             selected: true,
             disableControlActions: false,
             hideLocalEdgeLabels: false,
-            highlightSourceHandle: false,
-            highlightTargetHandle: false,
           },
         ],
       ]),
@@ -192,8 +190,6 @@ describe('adaptPresentationToReactFlow', () => {
 
     expect(appNode?.selected).toBe(true);
     expect(appNode?.data.controls.selected).toBe(true);
-    expect(appNode?.data.controls.highlightSourceHandle).toBe(false);
-    expect(appNode?.data.controls.highlightTargetHandle).toBe(false);
     expect(overlayEdge?.selected).toBe(true);
     expect(overlayEdge?.hideLabel).toBe(true);
   });
@@ -264,8 +260,6 @@ describe('adaptPresentationToReactFlow', () => {
             selected: false,
             disableControlActions: false,
             hideLocalEdgeLabels: true,
-            highlightSourceHandle: false,
-            highlightTargetHandle: false,
           },
         ],
       ]),

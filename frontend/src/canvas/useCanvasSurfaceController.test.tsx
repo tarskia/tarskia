@@ -6,7 +6,6 @@ import type { UseCanvasSurfaceControllerArgs } from './useCanvasSurfaceControlle
 import {
   buildAutoVisibleSelectionKey,
   getHostRenderStateSignature,
-  resolveSelectedEdgeEndpointHighlights,
   resolveVisibleHostOverlayEdges,
   shouldAcknowledgeDisplayGenerationImmediately,
   shouldCommitAutoVisibleSelectionKey,
@@ -481,8 +480,6 @@ describe('useCanvasSurfaceController', () => {
               selected: false,
               disableControlActions: false,
               hideLocalEdgeLabels: false,
-              highlightSourceHandle: false,
-              highlightTargetHandle: false,
             },
           },
         } as import('reactflow').Node<import('./host/reactflow/types').ReactFlowHostNodeData>,
@@ -533,131 +530,6 @@ describe('useCanvasSurfaceController', () => {
     expect(runtimeControls?.hideLocalEdgeLabels).toBe(true);
   });
 
-  it('resolves selected edge endpoints so their handles can be highlighted', () => {
-    const { highlightedSourceNodeIds, highlightedTargetNodeIds } =
-      resolveSelectedEdgeEndpointHighlights(
-        {
-          nodes: [
-            {
-              ...buildTestGroupPresentation().nodes[0],
-              id: 'group-left',
-            },
-            {
-              ...buildTestGroupPresentation().nodes[0],
-              id: 'group-right',
-            },
-          ],
-          overlayEdges: [
-            {
-              id: 'rel-1:hidden-source->hidden-target',
-              relationId: 'rel-1',
-              kind: 'routed',
-              sourceId: 'visible-source-ancestor',
-              targetId: 'visible-target-ancestor',
-              matched: false,
-              opacity: 1,
-              geometry: testEdgeGeometry,
-              path: testEdgeGeometry.path,
-              labelAnchor: testEdgeGeometry.labelAnchor,
-              solidOverNodeIds: [],
-            },
-            {
-              id: 'rel-2:child-a->child-b',
-              relationId: 'rel-2',
-              kind: 'local',
-              sourceId: 'group-left',
-              targetId: 'group-right',
-              scopeId: 'group-1',
-              matched: false,
-              opacity: 1,
-              geometry: {
-                sourcePoint: { x: 0, y: 0 },
-                control1: { x: 10, y: 0 },
-                control2: { x: 90, y: 100 },
-                targetPoint: { x: 100, y: 100 },
-                path: 'M 0,0 L 100,100',
-                labelAnchor: { x: 50, y: 50 },
-                sourceSide: 'right',
-                targetSide: 'left',
-              },
-              path: 'M 0,0 L 100,100',
-              labelAnchor: { x: 50, y: 50 },
-              solidOverNodeIds: ['group-1'],
-            },
-          ],
-        },
-        new Set(['rel-1']),
-      );
-
-    expect([...highlightedSourceNodeIds]).toEqual(['visible-source-ancestor']);
-    expect([...highlightedTargetNodeIds]).toEqual(['visible-target-ancestor']);
-  });
-
-  it('treats collapsed visible edges as representing all grouped relation ids', () => {
-    const { highlightedSourceNodeIds, highlightedTargetNodeIds } =
-      resolveSelectedEdgeEndpointHighlights(
-        {
-          nodes: [],
-          overlayEdges: [
-            {
-              id: 'rel-primary:checkout->ns-checkout',
-              relationId: 'rel-primary',
-              relationIds: ['rel-primary', 'rel-secondary', 'rel-tertiary'],
-              kind: 'routed',
-              sourceId: 'checkout',
-              targetId: 'ns-checkout',
-              matched: false,
-              opacity: 1,
-              geometry: testEdgeGeometry,
-              path: testEdgeGeometry.path,
-              labelAnchor: testEdgeGeometry.labelAnchor,
-              solidOverNodeIds: [],
-            },
-          ],
-        },
-        new Set(['rel-secondary']),
-      );
-
-    expect([...highlightedSourceNodeIds]).toEqual(['checkout']);
-    expect([...highlightedTargetNodeIds]).toEqual(['ns-checkout']);
-  });
-
-  it('resolves local edge endpoints from the rendered node scope when selected', () => {
-    const presentation = buildTestGroupPresentation();
-    presentation.nodes = [
-      {
-        ...presentation.nodes[0],
-        id: 'group-left',
-      },
-      {
-        ...presentation.nodes[0],
-        id: 'group-right',
-      },
-    ];
-    presentation.overlayEdges = [
-      {
-        id: 'rel-2:child-a->child-b',
-        relationId: 'rel-2',
-        kind: 'local',
-        sourceId: 'group-left',
-        targetId: 'group-right',
-        scopeId: 'group-1',
-        matched: false,
-        opacity: 1,
-        geometry: testEdgeGeometry,
-        path: testEdgeGeometry.path,
-        labelAnchor: testEdgeGeometry.labelAnchor,
-        solidOverNodeIds: ['group-1'],
-      },
-    ];
-
-    const { highlightedSourceNodeIds, highlightedTargetNodeIds } =
-      resolveSelectedEdgeEndpointHighlights(presentation, new Set(['rel-2']));
-
-    expect([...highlightedSourceNodeIds]).toEqual(['group-left']);
-    expect([...highlightedTargetNodeIds]).toEqual(['group-right']);
-  });
-
   it('ignores non-user viewport move callbacks', () => {
     expect(shouldHandleViewportGestureEvent(null)).toBe(false);
     expect(shouldHandleViewportGestureEvent(undefined)).toBe(false);
@@ -699,15 +571,6 @@ describe('useCanvasSurfaceController', () => {
     expect('onConnectStart' in controller.canvasProps).toBe(false);
     expect('onConnectEnd' in controller.canvasProps).toBe(false);
     expect('onEdgesDelete' in controller.canvasProps).toBe(false);
-  });
-
-  it('preserves decorative connection handles on viewer nodes', async () => {
-    const { controller } = await renderController({
-      presentation: buildTestGroupPresentation(),
-    });
-    const groupNode = controller.canvasProps.nodes[0];
-
-    expect(groupNode?.data?.controls.showConnectionHandles).toBe(true);
   });
 
   it('reports completed viewport moves through the motion manager', async () => {

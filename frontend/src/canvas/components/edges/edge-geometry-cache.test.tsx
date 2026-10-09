@@ -26,7 +26,7 @@ it('reuses geometry across host selection/search updates while rendering fresh d
   const nodes = snapshot.nodes.map((view) => ({
     id: view.id,
     position: { x: 0, y: 0 },
-    data: { view, controls: { showConnectionHandles: false } },
+    data: { view, controls: {} },
   })) as Node<ReactFlowHostNodeData>[];
   const host = document.createElement('div');
   const root = createRoot(host);
@@ -36,6 +36,7 @@ it('reuses geometry across host selection/search updates while rendering fresh d
         <EdgeOverlay geometrySnapshot={snapshot} edges={snapshot.overlayEdges} nodes={nodes} />,
       ),
     );
+    expect(host.querySelectorAll('[data-edge-handle-role], .edge-handle-button')).toHaveLength(0);
     const calls = flatten.mock.calls.length;
     expect(calls).toBe(snapshot.overlayEdges.length);
     expect(calls).toBeGreaterThan(0);
@@ -55,6 +56,7 @@ it('reuses geometry across host selection/search updates while rendering fresh d
         />,
       ),
     );
+    expect(host.querySelectorAll('[data-edge-handle-role], .edge-handle-button')).toHaveLength(0);
     expect(flatten).toHaveBeenCalledTimes(calls);
     expect(host.querySelectorAll('.edge-underlay-path-selected')).toHaveLength(decorated.length);
     expect(host.querySelectorAll('.edge-underlay-path-matched')).toHaveLength(decorated.length);
