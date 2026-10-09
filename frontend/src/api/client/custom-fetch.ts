@@ -53,7 +53,6 @@ export const customFetch = async <TData>(
 ): Promise<TData> => {
   const requestInit: RequestInit = {
     ...options,
-    credentials: 'include',
     headers: {
       ...(options.body ? { 'Content-Type': 'application/json' } : {}),
       ...(options.headers ?? {}),

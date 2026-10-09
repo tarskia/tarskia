@@ -2,7 +2,7 @@ owner: gallery
 name: tarskia
 version: "0.1"
 description: >-
-  Tarskia-shaped architectural wrappers for the browser gallery/studio app, the shared semantic
+  Tarskia-shaped architectural wrappers for the browser gallery app, the shared semantic
   package, and the checked-in gallery assets, aligned to the repository runtime and authoring
   surfaces.
 use:
@@ -74,7 +74,7 @@ types:
         label: components
   - id: portal-app
     label: Portal App
-    description: Browser-facing React app that serves the public gallery and schema editor surfaces.
+    description: Browser-facing React app that serves the public gallery and viewer surfaces.
     extends: core/frontend.types.frontend
     traits:
       - gallery/tarskia.traits.browser-surface-like

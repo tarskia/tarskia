@@ -6,7 +6,7 @@ import type { GraphModel } from '../canvas/rendering/graph/graph-model';
 import { useCanvasSurfaceController } from '../canvas/useCanvasSurfaceController';
 import type { NodeVisualMode } from '../node-visual-mode';
 import type { Entity, EntityIndex, SchemaModule, SemanticDocument } from '../semantic';
-import type { CanvasSemanticBindings } from '../shell/view-models';
+import type { CanvasSemanticBindings } from '../viewer-core/view-models';
 import type { NavigationIntent } from './motion-types';
 import type { useDiagramEngine } from './useDiagramEngine';
 

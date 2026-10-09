@@ -24,8 +24,6 @@ export {
   assessSchemaModuleCompatibility,
 } from './schema-compatibility';
 export { validateSchemaDraft } from './schema-draft';
-export type { SchemaEditorAssessment } from './schema-editor-assessment';
-export { assessSchemaEditorInput } from './schema-editor-assessment';
 export type {
   SchemaPublishAssessment,
   SchemaPublishAssessmentSnapshot,

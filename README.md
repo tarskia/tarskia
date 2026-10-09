@@ -5,9 +5,9 @@ diagrams of software repositories. Diagrams are code: every entity has a type,
 types come from versioned schemas, and the result is plain YAML that fits into
 normal source control.
 
-This repository contains the frontend, diagram renderer, curated gallery
-source, and shared diagram model. The generation worker and hosted backend are
-private.
+This repository contains the public gallery frontend, diagram renderer, curated
+gallery source, and shared diagram model. The generation worker, hosted backend,
+and studio are private or archived separately.
 
 ## To come
 
@@ -21,9 +21,6 @@ private.
 The public gallery and renderer run from this repository without the private
 backend. In local dev, the gallery loads checked-in YAML diagrams from
 `gallery/curated` if the backend API is unavailable.
-
-The studio UI is included, but persistence, auth, and hosted account features
-depend on the private backend.
 
 ## Repository Layout
 

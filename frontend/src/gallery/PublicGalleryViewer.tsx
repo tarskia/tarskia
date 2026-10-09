@@ -21,17 +21,20 @@ import {
   useDiagramSemanticRuntime,
 } from '../semantic';
 import { semanticBootstrap } from '../semantic/bootstrap';
-import { buildCanvasSemanticBindings } from '../shell/buildCanvasSemanticBindings';
+import { CanvasToolbar } from '../ui/CanvasToolbar';
+import { GalleryInspector } from '../ui/GalleryInspector';
+import { buildCanvasSemanticBindings } from '../viewer-core/buildCanvasSemanticBindings';
 import {
   buildDiagramProvenanceSource,
   buildInspectorViewModel,
-} from '../shell/buildInspectorViewModel';
-import { ensureDiagramView, ensureDiagramViewLayout } from '../shell/diagram-view';
-import { useFocusViewController } from '../shell/focus-view';
-import { createBlankDiagramDocument, loadDiagramDocFromRaw } from '../shell/loadDiagramDocFromRaw';
-import { useShellDiagramActions } from '../shell/useShellDiagramActions';
-import { CanvasToolbar } from '../ui/CanvasToolbar';
-import { GalleryInspector } from '../ui/GalleryInspector';
+} from '../viewer-core/buildInspectorViewModel';
+import { ensureDiagramView, ensureDiagramViewLayout } from '../viewer-core/diagram-view';
+import { useFocusViewController } from '../viewer-core/focus-view';
+import {
+  createBlankDiagramDocument,
+  loadDiagramDocFromRaw,
+} from '../viewer-core/loadDiagramDocFromRaw';
+import { useDiagramActions } from '../viewer-core/useDiagramActions';
 import {
   GALLERY_QUERY_STALE_TIME_MS,
   galleryRetryDelay,
@@ -241,7 +244,7 @@ export default function PublicGalleryViewer() {
     collapseAllDetailsWithin,
     expandChildGroupsWithin,
     collapseChildGroupsWithin,
-  } = useShellDiagramActions({
+  } = useDiagramActions({
     state: {
       doc,
       expanded,

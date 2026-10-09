@@ -1,16 +1,16 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useShellDiagramActions } from './useShellDiagramActions';
+import { useDiagramActions } from './useDiagramActions';
 
-describe('useShellDiagramActions', () => {
+describe('useDiagramActions', () => {
   it('centerScene requests a scene fit without mutating layout state', () => {
     const commitDoc = vi.fn();
     const requestNavigation = vi.fn();
-    let captured: ReturnType<typeof useShellDiagramActions> | null = null;
+    let captured: ReturnType<typeof useDiagramActions> | null = null;
 
     function Harness() {
-      captured = useShellDiagramActions({
+      captured = useDiagramActions({
         state: {
           doc: {
             version: '1',
@@ -81,10 +81,10 @@ describe('useShellDiagramActions', () => {
     const commitDoc = vi.fn();
     const setPendingStructuralTransitionIntent = vi.fn();
     const flushUserGesture = vi.fn(() => true);
-    let captured: ReturnType<typeof useShellDiagramActions> | null = null;
+    let captured: ReturnType<typeof useDiagramActions> | null = null;
 
     function Harness() {
-      captured = useShellDiagramActions({
+      captured = useDiagramActions({
         state: {
           doc: {
             version: '1',
@@ -183,10 +183,10 @@ describe('useShellDiagramActions', () => {
     const commitDoc = vi.fn();
     const setPendingStructuralTransitionIntent = vi.fn();
     const flushUserGesture = vi.fn(() => true);
-    let captured: ReturnType<typeof useShellDiagramActions> | null = null;
+    let captured: ReturnType<typeof useDiagramActions> | null = null;
 
     function Harness() {
-      captured = useShellDiagramActions({
+      captured = useDiagramActions({
         state: {
           doc: {
             version: '1',
@@ -270,10 +270,10 @@ describe('useShellDiagramActions', () => {
   it('does not commit expand-all view state when everything is already expanded', () => {
     const commitDoc = vi.fn();
     const setPendingStructuralTransitionIntent = vi.fn();
-    let captured: ReturnType<typeof useShellDiagramActions> | null = null;
+    let captured: ReturnType<typeof useDiagramActions> | null = null;
 
     function Harness() {
-      captured = useShellDiagramActions({
+      captured = useDiagramActions({
         state: {
           doc: {
             version: '1',
@@ -376,10 +376,10 @@ describe('useShellDiagramActions', () => {
       },
     );
     const setPendingStructuralTransitionIntent = vi.fn();
-    let captured: ReturnType<typeof useShellDiagramActions> | null = null;
+    let captured: ReturnType<typeof useDiagramActions> | null = null;
 
     function Harness() {
-      captured = useShellDiagramActions({
+      captured = useDiagramActions({
         state: {
           doc: {
             ...currentDoc,
@@ -467,7 +467,7 @@ describe('useShellDiagramActions', () => {
   it('expands through a single-child chain when requested by focus zoom', () => {
     const commitDoc = vi.fn();
     const setPendingStructuralTransitionIntent = vi.fn();
-    let captured: ReturnType<typeof useShellDiagramActions> | null = null;
+    let captured: ReturnType<typeof useDiagramActions> | null = null;
     const childrenByParent = new Map<string, Array<{ id: string }>>([
       ['service-a', [{ id: 'wrapper-a' }]],
       ['wrapper-a', [{ id: 'group-a' }]],
@@ -475,7 +475,7 @@ describe('useShellDiagramActions', () => {
     ]);
 
     function Harness() {
-      captured = useShellDiagramActions({
+      captured = useDiagramActions({
         state: {
           doc: {
             version: '1',
@@ -582,10 +582,10 @@ describe('useShellDiagramActions', () => {
   it('carries completion callbacks through single-node zoom transitions', () => {
     const setPendingStructuralTransitionIntent = vi.fn();
     const onComplete = vi.fn();
-    let captured: ReturnType<typeof useShellDiagramActions> | null = null;
+    let captured: ReturnType<typeof useDiagramActions> | null = null;
 
     function Harness() {
-      captured = useShellDiagramActions({
+      captured = useDiagramActions({
         state: {
           doc: {
             version: '1',

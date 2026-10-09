@@ -100,7 +100,7 @@ type UseCanvasSurfaceControllerTestGraphActions = {
 
 async function renderController(params?: {
   edgeSearch?: EdgeSearchSeed;
-  semanticOverrides?: Partial<import('../shell/view-models').CanvasSemanticBindings>;
+  semanticOverrides?: Partial<import('../viewer-core/view-models').CanvasSemanticBindings>;
   transitionOverrides?: {
     reportUserGestureMove?: ReturnType<typeof vi.fn>;
     reportUserGestureEnd?: ReturnType<typeof vi.fn>;
@@ -148,7 +148,7 @@ async function renderController(params?: {
     };
   });
 
-  const semanticBindings: import('../shell/view-models').CanvasSemanticBindings = {
+  const semanticBindings: import('../viewer-core/view-models').CanvasSemanticBindings = {
     getEntityDisplayName: vi.fn((entityId: string) => entityId),
     getEntityTypeLabel: vi.fn(() => 'Type'),
     getEntityFocusHue: vi.fn(() => undefined),

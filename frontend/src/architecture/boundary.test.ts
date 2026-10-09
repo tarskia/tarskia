@@ -10,8 +10,11 @@ const srcRoot = path.join(projectRoot, 'src');
 
 const normalizePath = (value: string) => value.split(path.sep).join('/');
 
-const collectFiles = (dir: string): string[] =>
-  readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+const collectFiles = (dir: string): string[] => {
+  if (!existsSync(dir)) {
+    return [];
+  }
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       return collectFiles(fullPath);
@@ -20,12 +23,13 @@ const collectFiles = (dir: string): string[] =>
     if (!/\.(ts|tsx)$/.test(entry.name) || entry.name.includes('.test.')) return [];
     return [fullPath];
   });
+};
 
 describe('architecture boundaries', () => {
-  it('keeps UI, shell, and top-level canvas/diagram files off model internals', () => {
+  it('keeps UI, viewer core, and top-level canvas/diagram files off model internals', () => {
     const scopedFiles = [
       ...collectFiles(path.join(srcRoot, 'ui')),
-      ...collectFiles(path.join(srcRoot, 'shell')),
+      ...collectFiles(path.join(srcRoot, 'viewer-core')),
       path.join(srcRoot, 'canvas', 'DiagramCanvas.tsx'),
       path.join(srcRoot, 'canvas', 'useCanvasSurfaceController.tsx'),
       path.join(srcRoot, 'diagram', 'useDiagramEngine.ts'),
@@ -175,10 +179,9 @@ describe('architecture boundaries', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('keeps raw viewport adapter calls out of shell, surface, and transition orchestration', () => {
+  it('keeps raw viewport adapter calls out of viewer core, surface, and transition orchestration', () => {
     const scopedFiles = [
-      path.join(srcRoot, 'shell', 'useAppShellController.tsx'),
-      path.join(srcRoot, 'shell', 'useShellDiagramActions.ts'),
+      path.join(srcRoot, 'viewer-core', 'useDiagramActions.ts'),
       path.join(srcRoot, 'canvas', 'useCanvasSurfaceController.tsx'),
       path.join(srcRoot, 'canvas', 'useCanvasTransitionController.ts'),
     ];
@@ -190,6 +193,31 @@ describe('architecture boundaries', () => {
     ];
 
     const offenders = scopedFiles.flatMap((file) => {
+      const source = readFileSync(file, 'utf8');
+      const matches = forbiddenPatterns.filter((pattern) => pattern.test(source)).map(String);
+      return matches.length > 0
+        ? [`${normalizePath(path.relative(projectRoot, file))}: ${matches.join(', ')}`]
+        : [];
+    });
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps the public frontend free of archived studio boundaries', () => {
+    const studioPath = path.join(srcRoot, 'studio');
+    expect(existsSync(studioPath)).toBe(false);
+
+    const forbiddenPatterns = [
+      /frontend\/src\/studio/,
+      /(?:\.\.\/)+studio\//,
+      /api\/generated\/auth/,
+      /api\/generated\/diagrams/,
+      /api\/generated\/schemas/,
+      /\/studio\b/,
+      /EditorShell\b/,
+    ];
+
+    const offenders = collectFiles(srcRoot).flatMap((file) => {
       const source = readFileSync(file, 'utf8');
       const matches = forbiddenPatterns.filter((pattern) => pattern.test(source)).map(String);
       return matches.length > 0

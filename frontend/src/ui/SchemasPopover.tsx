@@ -1,7 +1,7 @@
 import { Database } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
-import type { SchemaOptionView } from '../shell/view-models';
+import type { SchemaOptionView } from '../viewer-core/view-models';
 import { PopoverCheckbox } from './PopoverCheckbox';
 
 interface SchemasPopoverProps {

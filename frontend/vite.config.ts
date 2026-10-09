@@ -78,15 +78,7 @@ function resolveManualChunk(id: string) {
   return undefined;
 }
 
-const API_PROXY_PREFIXES = [
-  '/auth',
-  '/diagram-streams',
-  '/api/gallery',
-  '/healthz',
-  '/me',
-  '/ping',
-  '/schema-streams',
-] as const;
+const API_PROXY_PREFIXES = ['/api/gallery', '/healthz', '/ping'] as const;
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, WORKSPACE_ROOT, '');
