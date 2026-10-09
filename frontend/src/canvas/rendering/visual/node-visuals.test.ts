@@ -7,7 +7,7 @@ import {
   type SemanticDocument,
 } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { buildSceneTree } from '../tree/scene-tree';
+import { createLayoutGeometry } from '../layout/layout-geometry';
 import { buildNodeVisualMap } from './node-visuals';
 
 const INTERACTION_TAG_ID = buildQualifiedSchemaObjectId('user/test-display', 'tags', 'interaction');
@@ -143,7 +143,7 @@ const schema: SchemaModule = {
 };
 
 const buildVisualMap = (doc: SemanticDocument) => {
-  const tree = buildSceneTree({ tree: buildEntityTree(doc) });
+  const tree = createLayoutGeometry({ tree: buildEntityTree(doc) });
   return buildNodeVisualMap({ schema, tree });
 };
 
@@ -257,7 +257,7 @@ describe('buildNodeVisualMap', () => {
       ],
       relations: [],
     };
-    const tree = buildSceneTree({ tree: buildEntityTree(doc) });
+    const tree = createLayoutGeometry({ tree: buildEntityTree(doc) });
     const visual = buildNodeVisualMap({ schema: specificSchema, tree }).get('parent');
 
     expect(visual?.projection.summaryLabel).toBe('1 note');
@@ -429,7 +429,7 @@ describe('buildNodeVisualMap', () => {
       props: { mode: 'mixed' },
       children: [{ id: 'worker-a', type: COMPONENT_TYPE_ID, name: 'A' }],
     };
-    const tree = buildSceneTree({
+    const tree = createLayoutGeometry({
       tree: indexTree({
         rootId: 'root',
         byId: new Map([
@@ -476,7 +476,7 @@ describe('buildNodeVisualMap', () => {
       type: COMPONENT_TYPE_ID,
       name: 'Visible Child',
     };
-    const tree = buildSceneTree({
+    const tree = createLayoutGeometry({
       tree: indexTree({
         rootId: 'root',
         byId: new Map([
@@ -519,7 +519,7 @@ describe('buildNodeVisualMap', () => {
       type: CONTAINER_TYPE_ID,
       name: 'Parent Container',
     };
-    const tree = buildSceneTree({
+    const tree = createLayoutGeometry({
       tree: indexTree({
         rootId: 'root',
         byId: new Map([
@@ -565,7 +565,7 @@ describe('buildNodeVisualMap', () => {
       type: SERVICE_TYPE_ID,
       name: 'Parent Service',
     };
-    const tree = buildSceneTree({
+    const tree = createLayoutGeometry({
       tree: indexTree({
         rootId: 'root',
         byId: new Map([
@@ -613,14 +613,14 @@ it('reuses visual work only for the same immutable entity, schema and projection
     relations: [],
     entities: [{ id: 'service', type: SERVICE_TYPE_ID, name: 'Original' }],
   };
-  const tree = buildSceneTree({ tree: buildEntityTree(doc) });
+  const tree = createLayoutGeometry({ tree: buildEntityTree(doc) });
   const first = buildNodeVisualMap({ schema, tree }).get('service')!;
   expect(buildNodeVisualMap({ schema, tree }).get('service')).toBe(first);
   expect(Object.isFrozen(first.layout.baseSize)).toBe(true);
   const changedDoc = { ...doc, entities: [{ ...doc.entities[0], name: 'Updated' }] };
   const updated = buildNodeVisualMap({
     schema,
-    tree: buildSceneTree({ tree: buildEntityTree(changedDoc) }),
+    tree: createLayoutGeometry({ tree: buildEntityTree(changedDoc) }),
   }).get('service')!;
   expect(updated.projection.explicitLabel).toBe('Updated');
   expect(updated).not.toBe(first);
@@ -633,11 +633,16 @@ it('reuses visual work only for the same immutable entity, schema and projection
   expect(
     buildNodeVisualMap({ schema: changedSchema, tree }).get('service')?.projection.typeLabel,
   ).toBe('Renamed');
-  const node = tree.byId.get('service')!;
-  node.hasChildren = true;
-  node.diagramChildCount = 2;
-  node.diagramChildTypeCounts = { [COMPONENT_TYPE_ID]: 2 };
-  const projected = buildNodeVisualMap({ schema, tree }).get('service')!;
+  const changedProjection = buildEntityTree(doc);
+  Object.assign(changedProjection.byId.get('service')!, {
+    hasChildren: true,
+    diagramChildCount: 2,
+    diagramChildTypeCounts: { [COMPONENT_TYPE_ID]: 2 },
+  });
+  const changedTree = createLayoutGeometry({ tree: changedProjection });
+  const projected = buildNodeVisualMap({ schema, tree: changedTree }).get('service')!;
   expect(projected).not.toBe(first);
-  expect(projected).toEqual(buildNodeVisualMap({ schema, tree, uncached: true }).get('service'));
+  expect(projected).toEqual(
+    buildNodeVisualMap({ schema, tree: changedTree, uncached: true }).get('service'),
+  );
 });

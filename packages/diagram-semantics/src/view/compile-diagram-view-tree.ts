@@ -1,19 +1,23 @@
 import { CORE_CONTAINS_RELATION_ID } from '../model/schema-ids';
-import type { Entity, Relation, SchemaModule, SemanticDocument } from '../model/types';
+import type { DiagramView, Entity, Relation, SchemaModule, SemanticDocument } from '../model/types';
 import {
   type CanonicalTree,
   collectSingleChildChainDown,
   getChildren,
   indexTree,
 } from '../tree/canonical-tree';
-import { buildEntityTree } from '../tree/entity-tree';
-import { resolveRelationDisplayLabel } from './display-labels';
 import { buildDiagramViewNodeControls, type DiagramViewNodeControls } from './node-controls';
 import {
   type NormalizedDiagramViewState,
   normalizeDiagramViewState,
 } from './normalize-diagram-view';
 import { type RevealAnnotations, resolveRevealAnnotations } from './reveal-tree';
+import {
+  buildSemanticIndex,
+  ImmutableMap,
+  type SemanticIndex,
+  type SemanticNodeMetadata,
+} from './semantic-index';
 import {
   buildSemanticViewWorkingTree,
   EMPTY_CONTROLS,
@@ -191,25 +195,31 @@ export const applyRevealAndVisibility = (params: {
 export const applySemanticVisualAugmentation = (params: {
   tree: SemanticViewWorkingTree;
   relations?: Relation[];
+  nodeMetadata?: ReadonlyMap<string, SemanticNodeMetadata>;
 }): void => {
   const { tree } = params;
   const controlsById = buildDiagramViewNodeControls({ tree });
   for (const node of tree.byId.values()) {
-    node.visual.hasDiagramChildren = node.hasChildren;
-    const childIds = new Set(node.children.map((child) => child.id));
-    node.visual.isListContainer =
-      node.id !== tree.rootId &&
-      node.children.length > 1 &&
-      node.children.every((child) => !child.hasChildren) &&
-      !(params.relations ?? []).some(
-        (relation) =>
-          isRenderableRelationType(relation.type) &&
-          relation.from !== relation.to &&
-          childIds.has(relation.from) &&
-          childIds.has(relation.to),
-      );
-    node.visual.diagramChildCount = node.children.length;
-    node.visual.diagramChildTypeCounts = buildDiagramChildTypeCounts(node.children);
+    const metadata = params.nodeMetadata?.get(node.id);
+    if (metadata) {
+      Object.assign(node.visual, metadata);
+    } else {
+      node.visual.hasDiagramChildren = node.hasChildren;
+      const childIds = new Set(node.children.map((child) => child.id));
+      node.visual.isListContainer =
+        node.id !== tree.rootId &&
+        node.children.length > 1 &&
+        node.children.every((child) => !child.hasChildren) &&
+        !(params.relations ?? []).some(
+          (relation) =>
+            isRenderableRelationType(relation.type) &&
+            relation.from !== relation.to &&
+            childIds.has(relation.from) &&
+            childIds.has(relation.to),
+        );
+      node.visual.diagramChildCount = node.children.length;
+      node.visual.diagramChildTypeCounts = buildDiagramChildTypeCounts(node.children);
+    }
     node.visual.controls =
       controlsById.get(node.id) ??
       ({
@@ -305,10 +315,9 @@ const projectCompiledDiagramEdges = (params: {
   tree: SemanticViewWorkingTree;
   scopeBoundaryId: string;
   relations: Relation[];
-  schema: SchemaModule;
+  relationDisplayById: ReadonlyMap<string, string | undefined>;
 }) => {
-  const { tree, scopeBoundaryId, relations, schema } = params;
-  const relationTypeById = new Map(schema.relations.map((relation) => [relation.id, relation]));
+  const { tree, scopeBoundaryId, relations, relationDisplayById } = params;
   const resolveVisibleNodeId = (entityId: string): string | null => {
     let currentId: string | undefined = entityId;
     while (currentId) {
@@ -348,7 +357,7 @@ const projectCompiledDiagramEdges = (params: {
       semanticSourceId: relation.from,
       semanticTargetId: relation.to,
       type: relation.type,
-      label: resolveRelationDisplayLabel(relation, relationTypeById),
+      label: relationDisplayById.get(relation.id),
       state: relation.state ?? (relation.type ? undefined : 'undecided'),
       solidOverNodeIds: collectSemanticSolidOverNodeIds({
         tree,
@@ -360,17 +369,27 @@ const projectCompiledDiagramEdges = (params: {
   return edges;
 };
 
-export function compileDiagramViewState(
-  params: CompileDiagramViewTreeParams,
-): CompiledDiagramViewState {
-  const { doc, schema } = params;
-  const entityTree = buildEntityTree(doc);
-  const renderableRelations = doc.relations.filter((relation) =>
-    isRenderableRelationType(relation.type),
-  );
+const EMPTY_VIEW_NODES = {};
+const compiledViews = new WeakMap<
+  SemanticIndex,
+  WeakMap<object, Map<string | undefined, CompiledDiagramViewState>>
+>();
 
-  const normalizedViewState = normalizeDiagramViewState(doc.view);
-  const workingTree = buildSemanticViewWorkingTree(entityTree);
+export function compileView(
+  index: SemanticIndex,
+  view: DiagramView | undefined,
+): CompiledDiagramViewState {
+  let byNodes = compiledViews.get(index);
+  if (!byNodes) {
+    byNodes = new WeakMap();
+    compiledViews.set(index, byNodes);
+  }
+  const nodesKey = view?.nodesById ?? EMPTY_VIEW_NODES;
+  const byScope = byNodes.get(nodesKey) ?? new Map<string | undefined, CompiledDiagramViewState>();
+  const cached = byScope.get(view?.scopeRootId);
+  if (cached) return cached;
+  const normalizedViewState = normalizeDiagramViewState(view);
+  const workingTree = buildSemanticViewWorkingTree(index.tree);
   const effectiveExpansion = applyEffectiveExpansion({
     tree: workingTree,
     normalizedViewState,
@@ -382,23 +401,55 @@ export function compileDiagramViewState(
   });
   applySemanticVisualAugmentation({
     tree: workingTree,
-    relations: renderableRelations,
+    nodeMetadata: index.nodeMetadata,
   });
   const projectedTree = projectCompiledDiagramView({
     tree: workingTree,
     scopeBoundaryId: revealAndVisibility.scopeBoundaryId,
   });
 
-  return {
+  const result = {
     tree: projectedTree,
     edges: projectCompiledDiagramEdges({
       tree: workingTree,
       scopeBoundaryId: revealAndVisibility.scopeBoundaryId,
-      relations: renderableRelations,
-      schema,
+      relations: index.renderableRelations,
+      relationDisplayById: index.relationDisplayById,
     }),
     nodePaintOrder: buildCompiledDiagramNodePaintOrder(projectedTree),
   };
+  for (const node of projectedTree.byId.values()) {
+    Object.freeze(node.children);
+    Object.freeze(node.view.controls);
+    Object.freeze(node.view);
+    if (node.diagramChildTypeCounts) Object.freeze(node.diagramChildTypeCounts);
+    Object.freeze(node);
+  }
+  projectedTree.byId = new ImmutableMap(projectedTree.byId);
+  projectedTree.childrenByParent = new ImmutableMap(projectedTree.childrenByParent);
+  Object.freeze(projectedTree);
+  for (const edge of result.edges) {
+    if (edge.solidOverNodeIds) Object.freeze(edge.solidOverNodeIds);
+    Object.freeze(edge);
+  }
+  Object.freeze(result.edges);
+  Object.freeze(result.nodePaintOrder);
+  Object.freeze(result);
+  byScope.set(view?.scopeRootId, result);
+  if (byScope.size > 32) byScope.delete(byScope.keys().next().value);
+  byNodes.set(nodesKey, byScope);
+  return result;
+}
+
+export function compileDiagramViewState(
+  params: CompileDiagramViewTreeParams,
+): CompiledDiagramViewState {
+  // Legacy callers may mutate documents in place. Only explicit SemanticIndex callers
+  // opt into the immutable-content identity contract and cross-call compilation cache.
+  return compileView(
+    buildSemanticIndex({ ...params.doc, entities: [...params.doc.entities] }, params.schema),
+    params.doc.view,
+  );
 }
 
 export function compileDiagramViewTree(params: CompileDiagramViewTreeParams): DiagramViewTree {

@@ -60,7 +60,6 @@ interface ActiveMotion {
   segmentStartedAt: number | null;
   segmentSourceViewport: ViewportState | null;
   waitingForHostGeneration: number | null;
-  persistFinalViewport: boolean;
   settle: (reason: MotionSettlementReason) => void;
 }
 
@@ -595,7 +594,6 @@ export const buildMotionPlanFromChoreographyRequest = (params: {
         segments,
         sourceSnapshot: request.startSnapshot,
         targetSnapshot: request.endSnapshot,
-        persistFinalViewport: request.persistFinalViewport ?? true,
       };
     }
   }
@@ -677,7 +675,6 @@ export const buildMotionPlanFromChoreographyRequest = (params: {
     segments,
     sourceSnapshot: request.startSnapshot,
     targetSnapshot: request.endSnapshot,
-    persistFinalViewport: request.persistFinalViewport ?? true,
   };
 };
 
@@ -827,13 +824,10 @@ export function useDiagramMotionManager({
       }
       motionPhaseRef.current = overlayStateRef.current.transitionOverlay ? 'settling' : 'idle';
 
-      if (activeMotion?.persistFinalViewport) {
-        persistNow(getObservedViewport());
-      }
       publish(now);
       activeMotion?.settle('completed');
     },
-    [getObservedViewport, persistNow, publish],
+    [publish],
   );
 
   const enterSegmentRef = useRef<(segmentIndex: number, now: number) => void>(() => {});
@@ -1037,11 +1031,10 @@ export function useDiagramMotionManager({
         overlayStateRef.current,
       );
       motionPhaseRef.current = 'idle';
-      if (plan.persistFinalViewport) persistNow(getObservedViewport());
       publish(performance.now());
       settle(reason);
     },
-    [applyViewport, cancelScheduledFrame, getObservedViewport, persistNow, publish],
+    [applyViewport, cancelScheduledFrame, publish],
   );
 
   const startPlan = useCallback(
@@ -1100,7 +1093,6 @@ export function useDiagramMotionManager({
         segmentStartedAt: null,
         segmentSourceViewport: null,
         waitingForHostGeneration: null,
-        persistFinalViewport: plan.persistFinalViewport ?? false,
         settle,
       };
 
@@ -1195,9 +1187,6 @@ export function useDiagramMotionManager({
       }
       const currentViewport = getObservedViewport();
       if (viewportStatesEqual(currentViewport, targetViewport)) {
-        if (policy.persist) {
-          persistNow(targetViewport);
-        }
         settle('completed');
         return { status: 'noop', reason: 'same-viewport' };
       }
@@ -1213,7 +1202,6 @@ export function useDiagramMotionManager({
               waitForHostGeneration: policy.waitForHostGeneration,
             },
           ],
-          persistFinalViewport: policy.persist,
         },
         undefined,
         settle,
@@ -1225,7 +1213,6 @@ export function useDiagramMotionManager({
       savedViewport,
       getCurrentCanvasSize,
       getObservedViewport,
-      persistNow,
       startPlan,
     ],
   );
@@ -1305,9 +1292,8 @@ export function useDiagramMotionManager({
           : null;
       const next = fitted ?? shift(getObservedViewport());
       applyViewport(next);
-      if (!active && !pending) persistNow(next);
     },
-    [computeNavigationViewport, applyViewport, getObservedViewport, persistNow],
+    [computeNavigationViewport, applyViewport, getObservedViewport],
   );
 
   const reportUserGestureStart = useCallback(() => {

@@ -1,6 +1,13 @@
 // @vitest-environment happy-dom
-import type { SemanticDocument } from '@tarskia/diagram-semantics';
-import { act, useState } from 'react';
+
+import * as semantics from '@tarskia/diagram-semantics';
+import {
+  applyDiagramViewOperation,
+  type DiagramView,
+  type DiagramViewOperation,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
+import { act, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
 import * as layout from '../canvas/rendering/layout/layout-pipeline';
@@ -32,24 +39,29 @@ it('keeps camera persistence and view changes off semantic validation, restoring
   const validate = vi.spyOn(validation, 'validateDiagramDoc');
   const buildSchema = vi.spyOn(schemaClosure, 'buildSchemaRuntimeFromCatalog');
   const buildLayout = vi.spyOn(layout, 'buildLayoutResult');
+  const buildIndex = vi.spyOn(semantics, 'buildSemanticIndex');
   let camera!: ReturnType<typeof useViewerViewport>;
   let rendered!: ReturnType<typeof useDiagramRenderingController>;
   let runtime!: ReturnType<typeof useDiagramSemanticRuntime>;
-  let setDoc!: (doc: SemanticDocument) => void;
-  let currentDoc!: SemanticDocument;
+  let setView!: (view: DiagramView | undefined) => void;
+  let currentView: DiagramView | undefined;
   let renderCount = 0;
   function Harness({ source }: { source: SemanticDocument }) {
-    const [doc, updateDoc] = useState(source);
-    currentDoc = doc;
-    setDoc = updateDoc;
+    const content = useMemo(() => {
+      const { view: _view, ...content } = source;
+      return content;
+    }, [source]);
+    const [view, updateView] = useState(source.view);
+    currentView = view;
+    setView = updateView;
     renderCount++;
     camera = useViewerViewport(source);
     runtime = useDiagramSemanticRuntime({
-      doc,
+      doc: content,
       validationDocument: source,
       schemaVersionCatalog: catalog,
     });
-    rendered = useDiagramRenderingController({ doc, schema: runtime.schema });
+    rendered = useDiagramRenderingController({ index: runtime.index, view });
     return null;
   }
   const host = document.createElement('div');
@@ -61,11 +73,12 @@ it('keeps camera persistence and view changes off semantic validation, restoring
     expect(buildSchema).toHaveBeenCalledTimes(1);
     const initialLayout = rendered.layout,
       initialGraph = rendered.graph,
-      initialIndex = runtime.entityIndex;
+      initialIndex = runtime.index;
+    const initialIndexCalls = buildIndex.mock.calls.length;
     const initialCalls = buildLayout.mock.calls.length,
       initialRenders = renderCount;
     await act(async () => camera.persistViewport({ x: 100, y: 200, zoom: 1.2 }));
-    expect(currentDoc).toBe(loaded);
+    expect(currentView).toBe(loaded.view);
     expect(renderCount).toBe(initialRenders);
     expect(validate).toHaveBeenCalledTimes(1);
     expect(buildLayout).toHaveBeenCalledTimes(initialCalls);
@@ -76,23 +89,44 @@ it('keeps camera persistence and view changes off semantic validation, restoring
       ...loaded,
       view: { ...loaded.view!, nodesById: { 'browser-editor-shell': { expanded: true } } },
     };
-    await act(async () => setDoc(expanded));
+    await act(async () => setView(expanded.view));
     expect(validate).toHaveBeenCalledTimes(1);
     expect(buildSchema).toHaveBeenCalledTimes(1);
-    expect(runtime.entityIndex).toBe(initialIndex);
+    expect(runtime.index).toBe(initialIndex);
     expect(rendered.graph).toBe(initialGraph);
     expect(rendered.layout).not.toBe(initialLayout);
     expect(rendered.layout.tree.byId.size).toBeGreaterThan(initialLayout.tree.byId.size);
-    await act(async () => setDoc(loaded));
+    await act(async () => setView(loaded.view));
     expect(validate).toHaveBeenCalledTimes(1);
     expect(rendered.layout.tree.byId.size).toBe(initialLayout.tree.byId.size);
+    expect(buildIndex).toHaveBeenCalledTimes(initialIndexCalls);
+    const searchTarget = runtime.index.tree.byId.get('browser-editor-shell')?.children[0]?.id;
+    if (!searchTarget) throw new Error('Expected a nested gallery entity for search reveal');
+    const operations: DiagramViewOperation[] = [
+      { kind: 'enter-focus', entityId: 'browser-editor-shell', expandTarget: true },
+      { kind: 'clear-focus' },
+      { kind: 'collapse-all' },
+      {
+        kind: 'search-reveal',
+        entityIds: new Set([searchTarget]),
+      },
+    ];
+    for (const operation of operations) {
+      const nextView = applyDiagramViewOperation(runtime.index.tree, currentView, operation);
+      expect(nextView).not.toBe(currentView);
+      await act(async () => setView(nextView));
+      expect(runtime.index).toBe(initialIndex);
+      expect(buildIndex).toHaveBeenCalledTimes(initialIndexCalls);
+      expect(validate).toHaveBeenCalledTimes(1);
+      expect(buildSchema).toHaveBeenCalledTimes(1);
+    }
     const next = {
       ...loaded,
       entities: [...loaded.entities],
       view: { ...loaded.view!, layout: { viewport: { x: 8, y: 9, zoom: 0.4 } } },
     };
     await act(async () => {
-      setDoc(next);
+      setView(next.view);
       root.render(<Harness source={next} />);
     });
     expect(camera.savedViewport).toEqual(next.view.layout.viewport);

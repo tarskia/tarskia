@@ -1,4 +1,8 @@
-import { parseDocument, type SemanticDocument } from '@tarskia/diagram-semantics';
+import {
+  buildSemanticIndex,
+  parseDocument,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
 import {
   buildSchemaRuntimeFromCatalog,
@@ -7,7 +11,6 @@ import {
 import { semanticBootstrap } from '../../../semantic/bootstrap';
 import { compileDiagramViewState } from '../../../semantic/view/compile-diagram-view-tree';
 import occlusionFixtureRaw from '../../../test-fixtures/commerce-occlusion.yaml?raw';
-import { buildGraphModel } from '../../rendering/graph/graph-model';
 import { buildLayoutResult } from '../../rendering/layout/layout-pipeline';
 import { buildStaticCanvasPresentation } from '../../rendering/presentation/presentation';
 import { resolveEdgeOverlayRenderState } from './edge-overlay-state';
@@ -36,7 +39,7 @@ describe('commerce occlusion', () => {
       'orders-db',
       'orders-schema',
     ]);
-    const graph = buildGraphModel(doc, sampleSchema);
+    const graph = buildSemanticIndex(doc, sampleSchema);
     const viewState = compileDiagramViewState({ doc, schema: sampleSchema });
     const scene = buildLayoutResult({
       graph,

@@ -1,4 +1,8 @@
-import { parseDocument, type SemanticDocument } from '@tarskia/diagram-semantics';
+import {
+  buildSemanticIndex,
+  parseDocument,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
 import { buildSchemaVersionCatalog } from '../../../model/validation';
 import { buildSchemaRuntimeFromCatalog } from '../../../model/validation/schema-closure';
@@ -6,7 +10,6 @@ import { semanticBootstrap } from '../../../semantic/bootstrap';
 import { compileDiagramViewState } from '../../../semantic/view/compile-diagram-view-tree';
 import tutorialLayoutRaw from '../../../test-fixtures/tutorial-layout.yaml?raw';
 import { computeViewportForBoundsInVisibleCanvas } from '../../viewport-visibility';
-import { buildGraphModel } from '../graph/graph-model';
 import { buildStaticCanvasPresentation } from '../presentation/presentation';
 import { buildLayoutResult } from './layout-pipeline';
 
@@ -34,7 +37,7 @@ const withExpandedNodes = (doc: SemanticDocument, expandedIds: string[]): Semant
 
 const buildTutorialLayout = (expandedIds: string[]) => {
   const doc = withExpandedNodes(tutorialDoc, expandedIds);
-  const graph = buildGraphModel(doc, tutorialSchema);
+  const graph = buildSemanticIndex(doc, tutorialSchema);
   const viewState = compileDiagramViewState({ doc, schema: tutorialSchema });
   return buildLayoutResult({
     graph,
@@ -50,7 +53,7 @@ describe('tutorial layout', () => {
   });
 
   it('fits the contracted tutorial to the rendered root instead of hidden nested expansions', () => {
-    const graph = buildGraphModel(tutorialDoc, tutorialSchema);
+    const graph = buildSemanticIndex(tutorialDoc, tutorialSchema);
     const viewState = compileDiagramViewState({ doc: tutorialDoc, schema: tutorialSchema });
     const scene = buildLayoutResult({
       graph,

@@ -1,24 +1,24 @@
 import {
   applyDiagramViewOperation,
-  buildEntityTree,
+  type DiagramView,
   type DiagramViewOperation,
-  type SemanticDocument,
+  type SemanticIndex,
 } from '@tarskia/diagram-semantics';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import type {
   MotionCallbacks,
   NavigationIntent,
   NavigationRequestResult,
   StructuralTransitionIntent,
 } from '../diagram/motion-types';
-import type { CommitDoc } from './types';
+import type { CommitView } from './types';
 
 interface EntityZoomOptions extends MotionCallbacks {
   expandSingleChildChain?: boolean;
 }
 interface UseDiagramActionsArgs {
-  state: { doc: SemanticDocument };
-  document: { commitDoc: CommitDoc };
+  state: { index: SemanticIndex; view: DiagramView | undefined };
+  document: { commitView: CommitView };
   transition: {
     requestNavigation: (intent: NavigationIntent) => NavigationRequestResult;
     setPendingStructuralTransitionIntent: (intent: StructuralTransitionIntent | null) => void;
@@ -27,24 +27,21 @@ interface UseDiagramActionsArgs {
 }
 
 export function useDiagramActions({
-  state: { doc },
-  document: { commitDoc },
+  state: { index, view },
+  document: { commitView },
   transition,
 }: UseDiagramActionsArgs) {
   const { requestNavigation, setPendingStructuralTransitionIntent, flushUserGesture } = transition;
-  const tree = useMemo(() => buildEntityTree({ entities: doc.entities }), [doc.entities]);
+  const tree = index.tree;
   const dispatch = useCallback(
     (operation: DiagramViewOperation, intent: StructuralTransitionIntent) => {
-      if (applyDiagramViewOperation(tree, doc.view, operation) === doc.view) return false;
+      if (applyDiagramViewOperation(tree, view, operation) === view) return false;
       flushUserGesture();
       setPendingStructuralTransitionIntent(intent);
-      commitDoc((previous) => {
-        const view = applyDiagramViewOperation(tree, previous.view, operation);
-        return view === previous.view ? previous : { ...previous, view };
-      });
+      commitView((previous) => applyDiagramViewOperation(tree, previous, operation));
       return true;
     },
-    [tree, doc.view, commitDoc, flushUserGesture, setPendingStructuralTransitionIntent],
+    [tree, view, commitView, flushUserGesture, setPendingStructuralTransitionIntent],
   );
   const centerScene = useCallback(() => {
     requestNavigation({ kind: 'fit-scene', preset: 'layout' });

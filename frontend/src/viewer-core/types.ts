@@ -1,5 +1,8 @@
-import type { SemanticDocument } from '@tarskia/diagram-semantics';
+import type { DiagramView } from '@tarskia/diagram-semantics';
 
-export type CommitDoc = (
-  updater: SemanticDocument | ((prev: SemanticDocument) => SemanticDocument),
+export type CommitView = (
+  updater:
+    | DiagramView
+    | undefined
+    | ((previous: DiagramView | undefined) => DiagramView | undefined),
 ) => void;

@@ -433,7 +433,6 @@ describe('useDiagramMotionManager', () => {
         exitScopeRetainedNodeIds: ['node-1'],
         collectSubtreeIds: () => new Set<string>(),
         planningAdvisory: buildEmptyPlanningAdvisory('in'),
-        persistFinalViewport: true,
       },
       canvasSize: { width: 960, height: 640 },
       minZoom: 0.1,
@@ -492,7 +491,6 @@ describe('useDiagramMotionManager', () => {
         sharedNodeGeometry: 'freeze-from',
         collectSubtreeIds: () => new Set<string>(),
         planningAdvisory: buildEmptyPlanningAdvisory('out'),
-        persistFinalViewport: true,
       },
       canvasSize: { width: 960, height: 640 },
       minZoom: 0.1,
@@ -607,7 +605,6 @@ describe('useDiagramMotionManager', () => {
 
     const result = manager.requestNavigation({
       kind: 'fit-scene',
-      persist: false,
       waitForHostSettle: true,
       deferUntilNextFrame: true,
     });
@@ -845,7 +842,6 @@ describe('useDiagramMotionManager', () => {
           controlSwitchAdvisories: new Map(),
         },
       },
-      persistFinalViewport: true,
     });
 
     expect(manager.getCurrentDisplaySnapshot().nodes[0]?.rect.x).toBe(0);

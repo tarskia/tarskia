@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { compileDiagramViewState, type SemanticDocument } from '@tarskia/diagram-semantics';
-import { buildGraphModel } from '../canvas/rendering/graph/graph-model';
+import { buildSemanticIndex, compileView, type SemanticDocument } from '@tarskia/diagram-semantics';
 import { buildLayoutResult } from '../canvas/rendering/layout/layout-pipeline';
 import { buildStaticCanvasPresentation } from '../canvas/rendering/presentation/presentation';
 import { buildTransitionOverlayState } from '../canvas/rendering/transition/overlay';
@@ -32,7 +31,7 @@ export const loadGallery = (file: string) => {
     schemaVersionCatalog: catalog,
     fallbackSchema: semanticBootstrap.schemaModules[0],
   });
-  const graph = buildGraphModel(loaded.doc, runtime.schema);
+  const graph = buildSemanticIndex(loaded.doc, runtime.schema);
   const render = (expanded?: string[], scopeRootId?: string) => {
     const doc: SemanticDocument = expanded
       ? {
@@ -51,8 +50,8 @@ export const loadGallery = (file: string) => {
         }
       : loaded.doc;
     const scene = buildLayoutResult({
-      graph: buildGraphModel(doc, runtime.schema),
-      viewState: compileDiagramViewState({ doc, schema: runtime.schema }),
+      graph: buildSemanticIndex(doc, runtime.schema),
+      viewState: compileView(graph, doc.view),
     });
     return { doc, scene, presentation: buildStaticCanvasPresentation({ scene }) };
   };

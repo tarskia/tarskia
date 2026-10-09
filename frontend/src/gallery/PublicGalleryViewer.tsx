@@ -1,4 +1,8 @@
-import { buildDiagramViewForSearchReveal, searchDiagramText } from '@tarskia/diagram-semantics';
+import {
+  applyDiagramViewOperation,
+  type DiagramView,
+  searchDiagramText,
+} from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import type { DtoGalleryDiagramDetailResponse } from '../api/generated/model';
@@ -18,7 +22,7 @@ import {
   buildDiagramProvenanceSource,
   buildInspectorViewModel,
 } from '../viewer-core/buildInspectorViewModel';
-import { canFocusSceneNode, useFocusViewController } from '../viewer-core/focus-view';
+import { canFocusLayoutNode, useFocusViewController } from '../viewer-core/focus-view';
 import {
   createBlankDiagramDocument,
   loadDiagramDocFromRaw,
@@ -58,8 +62,9 @@ export default function PublicGalleryViewer() {
     [],
   );
   const fallbackSchema = semanticBootstrap.schemaModules[0];
-  const [doc, setDoc] = useState(() => createBlankDiagramDocument('0.1.0'));
-  const [validationDocument, setValidationDocument] = useState(doc);
+  const [content, setContent] = useState(() => createBlankDiagramDocument('0.1.0'));
+  const [view, setView] = useState<DiagramView | undefined>();
+  const [validationDocument, setValidationDocument] = useState(content);
   const [sourceDiagnostics, setSourceDiagnostics] = useState<
     ReturnType<typeof loadDiagramDocFromRaw>['sourceDiagnostics']
   >([]);
@@ -86,7 +91,9 @@ export default function PublicGalleryViewer() {
     if (!loadedDiagram) {
       return;
     }
-    setDoc(loadedDiagram.doc);
+    const { view: loadedView, ...loadedContent } = loadedDiagram.doc;
+    setContent(loadedContent);
+    setView(loadedView);
     setValidationDocument(loadedDiagram.doc);
     setSourceDiagnostics(loadedDiagram.sourceDiagnostics);
     setSelectedEntity(undefined);
@@ -104,34 +111,26 @@ export default function PublicGalleryViewer() {
     [],
   );
 
-  const commitDoc = useCallback((updater: typeof doc | ((previous: typeof doc) => typeof doc)) => {
-    setDoc((previous) =>
-      typeof updater === 'function'
-        ? (updater as (previous: typeof doc) => typeof doc)(previous)
-        : updater,
-    );
-  }, []);
-
   const { persistViewport, savedViewport } = useViewerViewport(loadedDiagram?.doc);
 
   const semanticRuntime = useDiagramSemanticRuntime({
-    doc,
+    doc: content,
     validationDocument,
     schemaVersionCatalog,
     fallbackSchema,
     sourceDiagnostics,
   });
-  const { schema, entityIndex } = semanticRuntime;
-  const focusRootId = doc.view?.scopeRootId;
+  const { schema, entityIndex, index } = semanticRuntime;
+  const focusRootId = view?.scopeRootId;
   const diagramSearchQuery = searchParams.get('q') ?? '';
   const diagramSearchMatches = useMemo(
-    () => searchDiagramText({ doc, schema, query: diagramSearchQuery }),
-    [diagramSearchQuery, doc, schema],
+    () => searchDiagramText({ doc: content, schema, query: diagramSearchQuery }),
+    [diagramSearchQuery, content, schema],
   );
 
   const diagramEngine = useDiagramEngine({
-    doc,
-    schema,
+    index,
+    view,
     skipTransitions: reducedMotion,
     showDebug: false,
     persistViewport,
@@ -148,7 +147,7 @@ export default function PublicGalleryViewer() {
     setPendingStructuralTransitionIntent,
   } = diagramEngine;
   const defaultViewport = diagramEngine.initialViewport;
-  const hasSceneContent = doc.entities.length > 0 || doc.relations.length > 0;
+  const hasSceneContent = content.entities.length > 0 || content.relations.length > 0;
   const shouldDelayCanvasMount = shouldDelayGalleryCanvasMount({
     viewerDocumentReady,
     hasSceneContent,
@@ -166,12 +165,8 @@ export default function PublicGalleryViewer() {
     expandChildGroupsWithin,
     collapseChildGroupsWithin,
   } = useDiagramActions({
-    state: {
-      doc,
-    },
-    document: {
-      commitDoc,
-    },
+    state: { index, view },
+    document: { commitView: setView },
     transition: {
       requestNavigation,
       flushUserGesture: diagramEngine.flushUserGesture,
@@ -184,13 +179,13 @@ export default function PublicGalleryViewer() {
     [entityIndex.byId, selectedEntityId],
   );
   const selectedEdge = useMemo(
-    () => doc.relations.find((relation) => relation.id === selectedEdgeId),
-    [doc.relations, selectedEdgeId],
+    () => content.relations.find((relation) => relation.id === selectedEdgeId),
+    [content.relations, selectedEdgeId],
   );
   const selectedEntityCanFocus = Boolean(
-    selectedEntity && canFocusSceneNode({ sceneTree: compiled.tree, entityId: selectedEntity.id }),
+    selectedEntity && canFocusLayoutNode({ sceneTree: compiled.tree, entityId: selectedEntity.id }),
   );
-  const diagramProvenance = useMemo(() => buildDiagramProvenanceSource(doc), [doc]);
+  const diagramProvenance = useMemo(() => buildDiagramProvenanceSource(content), [content]);
   const inspectorViewModel = useMemo(
     () =>
       buildInspectorViewModel({
@@ -220,7 +215,6 @@ export default function PublicGalleryViewer() {
   );
 
   const { canvasProps } = useDiagramSurface({
-    doc,
     schema,
     graph,
     entityIndex,
@@ -269,7 +263,8 @@ export default function PublicGalleryViewer() {
     getCurrentCanvasSize: diagramEngine.getCurrentCanvasSize,
     canvasLayoutVersion: diagramEngine.canvasLayoutVersion,
     showInspector,
-    commitDoc,
+    index,
+    commitView: setView,
     flushUserGesture: diagramEngine.flushUserGesture,
     triggerEntityZoom,
     setSelectedEntity,
@@ -286,13 +281,13 @@ export default function PublicGalleryViewer() {
   );
   const visibleSearchRelationMatchCount = useMemo(
     () =>
-      doc.relations.filter(
+      content.relations.filter(
         (relation) =>
           diagramSearchMatches.matchingRelationIds.has(relation.id) &&
           compiled.visibleIds.has(relation.from) &&
           compiled.visibleIds.has(relation.to),
       ).length,
-    [compiled.visibleIds, diagramSearchMatches.matchingRelationIds, doc.relations],
+    [compiled.visibleIds, diagramSearchMatches.matchingRelationIds, content.relations],
   );
   const searchHiddenMatches = Math.max(
     0,
@@ -308,16 +303,17 @@ export default function PublicGalleryViewer() {
       focus: { kind: 'global' },
       allowNonExpansionViewChanges: true,
     });
-    commitDoc((previous) => ({
-      ...previous,
-      view: buildDiagramViewForSearchReveal({
-        doc: previous,
-        matchingEntityIds: diagramSearchMatches.matchingEntityIds,
-        matchingRelationIds: diagramSearchMatches.matchingRelationIds,
+    setView((previous) =>
+      applyDiagramViewOperation(index.tree, previous, {
+        kind: 'search-reveal',
+        entityIds: diagramSearchMatches.matchingEntityIds,
+        relationIds: diagramSearchMatches.matchingRelationIds,
+        relations: content.relations,
       }),
-    }));
+    );
   }, [
-    commitDoc,
+    index,
+    content.relations,
     diagramSearchMatches.matchingEntityIds,
     diagramSearchMatches.matchingRelationIds,
     flushUserGesture,

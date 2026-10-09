@@ -114,20 +114,17 @@ describe('camera navigation helpers', () => {
       resolveNavigationPolicy({
         kind: 'fit-node-set',
         nodeIds: ['a'],
-        persist: false,
         waitForHostSettle: false,
       }),
     ).toMatchObject({
       mode: 'animated',
       durationMs: 260,
-      persist: false,
       waitForHostGeneration: false,
     });
     expect(resolveNavigationPolicy({ kind: 'ensure-visible', rect: sceneBounds })).toMatchObject({
       mode: 'animated',
       durationMs: 180,
       padding: 40,
-      persist: true,
       waitForHostGeneration: false,
     });
   });

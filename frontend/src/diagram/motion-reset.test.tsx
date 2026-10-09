@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import type { SchemaModule, SemanticDocument } from '@tarskia/diagram-semantics';
+import { buildSemanticIndex } from '@tarskia/diagram-semantics';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { ReactFlowInstance } from 'reactflow';
@@ -43,8 +44,8 @@ it.each([
     diagramKey: string;
   }) {
     engine = useDiagramEngine({
-      doc,
-      schema,
+      index: buildSemanticIndex(doc, schema),
+      view: doc.view,
       initialViewportKey: diagramKey,
       skipTransitions: false,
       showDebug: false,

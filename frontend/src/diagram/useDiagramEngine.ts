@@ -1,4 +1,9 @@
-import type { SchemaModule, SemanticDocument } from '@tarskia/diagram-semantics';
+import type {
+  DiagramView,
+  SchemaModule,
+  SemanticDocument,
+  SemanticIndex,
+} from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { collectRectBounds } from '../canvas/focus-viewport';
 import { buildStaticCanvasPresentation } from '../canvas/rendering/presentation/presentation';
@@ -11,8 +16,10 @@ import { useCanvasBootstrapController } from './useCanvasBootstrapController';
 import { useDiagramMotionManager } from './useDiagramMotionManager';
 
 export interface UseDiagramEngineArgs {
-  doc: SemanticDocument;
-  schema: SchemaModule;
+  doc?: SemanticDocument;
+  index?: SemanticIndex;
+  view?: DiagramView;
+  schema?: SchemaModule;
   skipTransitions: boolean;
   showDebug: boolean;
   persistViewport: (viewport: { x: number; y: number; zoom: number }) => void;
@@ -27,6 +34,8 @@ export const resolveTransitionLiteMode = (hasTransitionOverlay: boolean) => hasT
 export function useDiagramEngine({
   doc,
   schema,
+  index,
+  view,
   skipTransitions,
   showDebug,
   persistViewport,
@@ -78,6 +87,8 @@ export function useDiagramEngine({
   const rendering = useDiagramRenderingController({
     doc,
     schema,
+    index,
+    view,
   });
 
   const stableSnapshot = useMemo(

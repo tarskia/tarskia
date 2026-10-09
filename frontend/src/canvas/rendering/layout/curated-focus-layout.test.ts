@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { galleryFiles, loadGallery } from '../../../test/curated-rendering';
-import { canFocusSceneNode } from '../../../viewer-core/focus-view';
+import { canFocusLayoutNode } from '../../../viewer-core/focus-view';
 
 // Each case lays out every container in three view states; large galleries need more than 5s.
 test.each(galleryFiles)('$file focuses every container with full-size, nonoverlapping cards', ({
@@ -17,7 +17,7 @@ test.each(galleryFiles)('$file focuses every container with full-size, nonoverla
     const collapsed = gallery.render(ids.filter((id) => id !== container.id));
     for (const scene of [expanded.scene, collapsed.scene]) {
       expect(
-        canFocusSceneNode({ sceneTree: scene.tree, entityId: container.id }),
+        canFocusLayoutNode({ sceneTree: scene.tree, entityId: container.id }),
         container.id,
       ).toBe(true);
       expect(scene.tree.byId.get(container.id)?.isListContainer).toBe(container.isListContainer);

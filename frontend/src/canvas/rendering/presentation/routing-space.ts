@@ -1,5 +1,5 @@
 import type { CompiledDiagramEdge } from '@tarskia/diagram-semantics';
-import type { SceneTree } from '../tree/scene-tree';
+import type { LayoutTree } from '../layout/layout-geometry';
 import {
   countEdgeIncidents,
   getRoutingChannelReservations,
@@ -9,7 +9,7 @@ import {
 /** Shift whole Dagre columns only where their actual lane/label occupancy needs extra space. */
 export const reserveScopeRoutingSpace = (
   parentId: string,
-  tree: SceneTree,
+  tree: LayoutTree,
   edges: CompiledDiagramEdge[],
   positions: Record<string, { x: number; y: number }>,
   incidentCounts?: ReadonlyMap<string, number>,

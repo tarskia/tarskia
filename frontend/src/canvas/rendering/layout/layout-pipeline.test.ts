@@ -1,10 +1,10 @@
 import {
+  buildSemanticIndex,
   compileDiagramViewState,
   type SchemaModule,
   type SemanticDocument,
 } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { buildGraphModel } from '../graph/graph-model';
 import { getGroupHeaderHeight } from './component-renderer';
 import { buildLayoutResult } from './layout-pipeline';
 
@@ -212,7 +212,7 @@ const withView = (
 });
 
 const buildTestLayout = (doc: SemanticDocument) => {
-  const graph = buildGraphModel(doc, schema);
+  const graph = buildSemanticIndex(doc, schema);
   const viewState = compileDiagramViewState({ doc, schema });
   return buildLayoutResult({ graph, viewState });
 };
@@ -257,7 +257,7 @@ describe('buildLayoutResult', () => {
 
   it('treats semantic view node paint order as the z-index source of truth', () => {
     const doc = buildSiblingDoc();
-    const graph = buildGraphModel(doc, schema);
+    const graph = buildSemanticIndex(doc, schema);
     const viewState = compileDiagramViewState({ doc, schema });
     const layout = buildLayoutResult({
       graph,

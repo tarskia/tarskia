@@ -1,7 +1,6 @@
 import type { CompiledDiagramEdge } from '@tarskia/diagram-semantics';
 import { countEdgeIncidents } from '../presentation/edge-routing';
 import { reserveScopeRoutingSpace } from '../presentation/routing-space';
-import type { SceneNode, SceneTree } from '../tree/scene-tree';
 import type { ResolvedNodeVisual } from '../visual/node-visuals';
 import {
   getGroupHeaderHeight,
@@ -15,6 +14,7 @@ import {
 } from './component-renderer';
 import { DEFAULT_NODE_SIZE } from './defaults';
 import { buildLayoutEdgesByParent, buildLayoutEdgesForParent } from './layout-edges';
+import type { LayoutNode, LayoutTree } from './layout-geometry';
 
 /**
  * Layout tree builder
@@ -23,8 +23,7 @@ import { buildLayoutEdgesByParent, buildLayoutEdgesForParent } from './layout-ed
  * - Stores relative positions (child positions are relative to parent).
  * - Produces a tree structure suitable for diffing/animation or projection.
  */
-export type LayoutNode = SceneNode;
-export type LayoutTree = SceneTree;
+export type { LayoutNode, LayoutTree } from './layout-geometry';
 
 const FOCUS_SHELL_BASE_HEIGHT = 920;
 const FOCUS_SHELL_STEP_HEIGHT = 120;
@@ -34,10 +33,10 @@ const FOCUS_SHELL_INSET_Y = 56;
 
 export function applySceneLayout(params: {
   edges: CompiledDiagramEdge[];
-  tree: SceneTree;
+  tree: LayoutTree;
   nodeVisuals: Map<string, ResolvedNodeVisual>;
   uncached?: boolean;
-}): SceneTree {
+}): LayoutTree {
   const { edges, tree, nodeVisuals } = params;
   const edgesByParent = params.uncached ? undefined : buildLayoutEdgesByParent(tree, edges);
   const focusShellAspect = FOCUS_SHELL_FALLBACK_ASPECT;

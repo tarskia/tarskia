@@ -203,21 +203,10 @@ describe('transition overlay manager state', () => {
     );
   });
 
-  it('treats semantically identical stable snapshots as unchanged', () => {
+  it('treats the same immutable snapshot revision as unchanged', () => {
     const original = buildSnapshot(0);
-    const semanticallyEqualClone = {
-      ...buildSnapshot(0),
-      nodes: buildSnapshot(0).nodes.map((node) => ({
-        ...node,
-        rect: { ...node.rect },
-        controls: { ...node.controls },
-        capabilities: { ...node.capabilities },
-      })),
-      overlayEdges: [],
-    } satisfies CanvasRenderSnapshot;
-
     const state = createTransitionOverlayManagerState(original);
-    const synced = syncTransitionOverlayManagerStableSnapshot(state, semanticallyEqualClone);
+    const synced = syncTransitionOverlayManagerStableSnapshot(state, original);
 
     expect(synced).toBe(state);
   });

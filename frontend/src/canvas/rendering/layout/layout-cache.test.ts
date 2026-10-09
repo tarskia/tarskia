@@ -1,8 +1,7 @@
 import { performance } from 'node:perf_hooks';
-import { compileDiagramViewState } from '@tarskia/diagram-semantics';
+import { buildSemanticIndex, compileDiagramViewState } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
 import { galleryFiles, loadGallery } from '../../../test/curated-rendering';
-import { buildGraphModel } from '../graph/graph-model';
 import type { CanvasScene } from '../scene/scene';
 import {
   clearComponentLayoutCache,
@@ -116,7 +115,7 @@ for (const { file } of galleryFiles) {
   it(`${file}: 200 seeded toggles preserve every box and visual`, () => {
     const { graph } = loadGallery(file);
     const groups = graph.entities
-      .filter((entity) => (graph.childrenByParent.get(entity.id)?.length ?? 0) > 0)
+      .filter((entity) => (graph.entityIndex.childrenByParent.get(entity.id)?.length ?? 0) > 0)
       .map((entity) => entity.id);
     const expanded = new Set(groups);
     let seed = 31;
@@ -127,7 +126,7 @@ for (const { file } of galleryFiles) {
       if (expanded.has(id)) expanded.delete(id);
       else expanded.add(id);
       const doc = {
-        ...graph.doc,
+        ...graph.content,
         view: {
           kind: 'semantic-diagram-view' as const,
           version: 2 as const,
@@ -137,7 +136,7 @@ for (const { file } of galleryFiles) {
         },
       };
       const params = {
-        graph: buildGraphModel(doc, graph.schema),
+        graph: buildSemanticIndex(doc, graph.schema),
         viewState: compileDiagramViewState({ doc, schema: graph.schema }),
       };
       const cached = buildLayoutResult(params);
@@ -152,7 +151,7 @@ for (const name of ['n8n', 'supabase', 'chatwoot'])
     const file = galleryFiles.find((entry) => entry.file.includes(name))!.file;
     const { graph } = loadGallery(file);
     const groups = graph.entities
-      .filter((entity) => (graph.childrenByParent.get(entity.id)?.length ?? 0) > 0)
+      .filter((entity) => (graph.entityIndex.childrenByParent.get(entity.id)?.length ?? 0) > 0)
       .map((entity) => entity.id);
     const timings: number[] = [];
     const baseline: number[] = [];
@@ -160,7 +159,7 @@ for (const name of ['n8n', 'supabase', 'chatwoot'])
     for (let index = 0; index < 400; index++) {
       const collapsed = groups[index % groups.length];
       const doc = {
-        ...graph.doc,
+        ...graph.content,
         view: {
           kind: 'semantic-diagram-view' as const,
           version: 2 as const,
@@ -170,7 +169,7 @@ for (const name of ['n8n', 'supabase', 'chatwoot'])
         },
       };
       const params = {
-        graph: buildGraphModel(doc, graph.schema),
+        graph: buildSemanticIndex(doc, graph.schema),
         viewState: compileDiagramViewState({ doc, schema: graph.schema }),
       };
       const start = performance.now();
@@ -194,7 +193,7 @@ it('every small curated container and focus projection retain Dagre geometry', (
   for (const { file } of galleryFiles) {
     const { graph, render } = loadGallery(file);
     const groups = graph.entities
-      .filter((entity) => (graph.childrenByParent.get(entity.id)?.length ?? 0) > 0)
+      .filter((entity) => (graph.entityIndex.childrenByParent.get(entity.id)?.length ?? 0) > 0)
       .map((entity) => entity.id);
     const scene = render(groups).scene;
     for (const node of scene.tree.byId.values()) {
@@ -215,7 +214,7 @@ it('every small curated container and focus projection retain Dagre geometry', (
     }
     for (const scopeRootId of groups.slice(0, 5)) {
       const doc = {
-        ...graph.doc,
+        ...graph.content,
         view: {
           kind: 'semantic-diagram-view' as const,
           version: 2 as const,
@@ -224,7 +223,7 @@ it('every small curated container and focus projection retain Dagre geometry', (
         },
       };
       const params = {
-        graph: buildGraphModel(doc, graph.schema),
+        graph: buildSemanticIndex(doc, graph.schema),
         viewState: compileDiagramViewState({ doc, schema: graph.schema }),
       };
       expect(geometry(buildLayoutResult(params))).toEqual(

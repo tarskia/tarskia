@@ -1,30 +1,48 @@
+import {
+  buildSemanticIndex,
+  type DiagramView,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
 import { useDiagramActions } from './useDiagramActions';
 
+const stateForDoc = (doc: SemanticDocument) => ({
+  index: buildSemanticIndex(doc, {
+    owner: 'test',
+    name: 'actions',
+    version: '1',
+    types: [],
+    relations: [],
+  }),
+  view: doc.view,
+});
+const applyViewUpdate = (
+  update: (view: DiagramView | undefined) => DiagramView | undefined,
+  doc: SemanticDocument,
+) => ({ ...doc, view: update(doc.view) });
+
 describe('useDiagramActions', () => {
   it('centerScene requests a scene fit without mutating layout state', () => {
-    const commitDoc = vi.fn();
+    const commitView = vi.fn();
     const requestNavigation = vi.fn();
     let captured: ReturnType<typeof useDiagramActions> | null = null;
 
     function Harness() {
       captured = useDiagramActions({
-        state: {
-          doc: {
-            version: '1',
-            schemaRefs: [],
-            entities: [],
-            relations: [],
-            view: {
-              kind: 'semantic-diagram-view',
-              version: 2,
-            },
+        state: stateForDoc({
+          version: '1',
+          schemaRefs: [],
+          entities: [],
+          relations: [],
+          view: {
+            kind: 'semantic-diagram-view',
+            version: 2,
           },
-        },
+        }),
         document: {
-          commitDoc,
+          commitView,
         },
         transition: {
           requestNavigation,
@@ -42,7 +60,7 @@ describe('useDiagramActions', () => {
 
     captured.centerScene();
 
-    expect(commitDoc).not.toHaveBeenCalled();
+    expect(commitView).not.toHaveBeenCalled();
     expect(requestNavigation).toHaveBeenCalledWith({
       kind: 'fit-scene',
       preset: 'layout',
@@ -50,33 +68,31 @@ describe('useDiagramActions', () => {
   });
 
   it('expands all viewer details', () => {
-    const commitDoc = vi.fn();
+    const commitView = vi.fn();
     const setPendingStructuralTransitionIntent = vi.fn();
     const flushUserGesture = vi.fn(() => true);
     let captured: ReturnType<typeof useDiagramActions> | null = null;
 
     function Harness() {
       captured = useDiagramActions({
-        state: {
-          doc: {
-            version: '1',
-            schemaRefs: [],
-            entities: [
-              {
-                id: 'service-a',
-                type: 'service',
-                children: [{ id: 'endpoint-a', type: 'endpoint' }],
-              },
-            ],
-            relations: [],
-            view: {
-              kind: 'semantic-diagram-view',
-              version: 2,
+        state: stateForDoc({
+          version: '1',
+          schemaRefs: [],
+          entities: [
+            {
+              id: 'service-a',
+              type: 'service',
+              children: [{ id: 'endpoint-a', type: 'endpoint' }],
             },
+          ],
+          relations: [],
+          view: {
+            kind: 'semantic-diagram-view',
+            version: 2,
           },
-        },
+        }),
         document: {
-          commitDoc,
+          commitView,
         },
         transition: {
           requestNavigation: vi.fn(),
@@ -99,10 +115,10 @@ describe('useDiagramActions', () => {
       direction: 'in',
       focus: { kind: 'global' },
     });
-    expect(commitDoc).toHaveBeenCalledTimes(1);
-    const updater = commitDoc.mock.calls[0]?.[0];
+    expect(commitView).toHaveBeenCalledTimes(1);
+    const updater = commitView.mock.calls[0]?.[0];
     expect(typeof updater).toBe('function');
-    const updated = updater({
+    const updated = applyViewUpdate(updater, {
       version: '1',
       schemaRefs: [],
       entities: [
@@ -122,38 +138,36 @@ describe('useDiagramActions', () => {
   });
 
   it('collapses all viewer details', () => {
-    const commitDoc = vi.fn();
+    const commitView = vi.fn();
     const setPendingStructuralTransitionIntent = vi.fn();
     const flushUserGesture = vi.fn(() => true);
     let captured: ReturnType<typeof useDiagramActions> | null = null;
 
     function Harness() {
       captured = useDiagramActions({
-        state: {
-          doc: {
-            version: '1',
-            schemaRefs: [],
-            entities: [
-              {
-                id: 'service-a',
-                type: 'service',
-                children: [{ id: 'endpoint-a', type: 'endpoint' }],
-              },
-            ],
-            relations: [],
-            view: {
-              kind: 'semantic-diagram-view',
-              version: 2,
-              nodesById: {
-                'service-a': {
-                  expanded: true,
-                },
+        state: stateForDoc({
+          version: '1',
+          schemaRefs: [],
+          entities: [
+            {
+              id: 'service-a',
+              type: 'service',
+              children: [{ id: 'endpoint-a', type: 'endpoint' }],
+            },
+          ],
+          relations: [],
+          view: {
+            kind: 'semantic-diagram-view',
+            version: 2,
+            nodesById: {
+              'service-a': {
+                expanded: true,
               },
             },
           },
-        },
+        }),
         document: {
-          commitDoc,
+          commitView,
         },
         transition: {
           requestNavigation: vi.fn(),
@@ -176,41 +190,39 @@ describe('useDiagramActions', () => {
       direction: 'out',
       focus: { kind: 'global' },
     });
-    expect(commitDoc).toHaveBeenCalledTimes(1);
+    expect(commitView).toHaveBeenCalledTimes(1);
   });
 
   it('does not commit expand-all view state when everything is already expanded', () => {
-    const commitDoc = vi.fn();
+    const commitView = vi.fn();
     const setPendingStructuralTransitionIntent = vi.fn();
     let captured: ReturnType<typeof useDiagramActions> | null = null;
 
     function Harness() {
       captured = useDiagramActions({
-        state: {
-          doc: {
-            version: '1',
-            schemaRefs: [],
-            entities: [
-              {
-                id: 'service-a',
-                type: 'service',
-                children: [{ id: 'endpoint-a', type: 'endpoint' }],
-              },
-            ],
-            relations: [],
-            view: {
-              kind: 'semantic-diagram-view',
-              version: 2,
-              nodesById: {
-                'service-a': {
-                  expanded: true,
-                },
+        state: stateForDoc({
+          version: '1',
+          schemaRefs: [],
+          entities: [
+            {
+              id: 'service-a',
+              type: 'service',
+              children: [{ id: 'endpoint-a', type: 'endpoint' }],
+            },
+          ],
+          relations: [],
+          view: {
+            kind: 'semantic-diagram-view',
+            version: 2,
+            nodesById: {
+              'service-a': {
+                expanded: true,
               },
             },
           },
-        },
+        }),
         document: {
-          commitDoc,
+          commitView,
         },
         transition: {
           requestNavigation: vi.fn(),
@@ -229,51 +241,49 @@ describe('useDiagramActions', () => {
     captured.expandAll();
 
     expect(setPendingStructuralTransitionIntent).not.toHaveBeenCalled();
-    expect(commitDoc).not.toHaveBeenCalled();
+    expect(commitView).not.toHaveBeenCalled();
   });
 
   it('expands through a single-child chain when requested by focus zoom', () => {
-    const commitDoc = vi.fn();
+    const commitView = vi.fn();
     const setPendingStructuralTransitionIntent = vi.fn();
     let captured: ReturnType<typeof useDiagramActions> | null = null;
 
     function Harness() {
       captured = useDiagramActions({
-        state: {
-          doc: {
-            version: '1',
-            schemaRefs: [],
-            entities: [
-              {
-                id: 'service-a',
-                type: 'service',
-                children: [
-                  {
-                    id: 'wrapper-a',
-                    type: 'group',
-                    children: [
-                      {
-                        id: 'group-a',
-                        type: 'group',
-                        children: [
-                          { id: 'endpoint-a', type: 'endpoint' },
-                          { id: 'endpoint-b', type: 'endpoint' },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-            relations: [],
-            view: {
-              kind: 'semantic-diagram-view',
-              version: 2,
+        state: stateForDoc({
+          version: '1',
+          schemaRefs: [],
+          entities: [
+            {
+              id: 'service-a',
+              type: 'service',
+              children: [
+                {
+                  id: 'wrapper-a',
+                  type: 'group',
+                  children: [
+                    {
+                      id: 'group-a',
+                      type: 'group',
+                      children: [
+                        { id: 'endpoint-a', type: 'endpoint' },
+                        { id: 'endpoint-b', type: 'endpoint' },
+                      ],
+                    },
+                  ],
+                },
+              ],
             },
+          ],
+          relations: [],
+          view: {
+            kind: 'semantic-diagram-view',
+            version: 2,
           },
-        },
+        }),
         document: {
-          commitDoc,
+          commitView,
         },
         transition: {
           requestNavigation: vi.fn(),
@@ -297,9 +307,9 @@ describe('useDiagramActions', () => {
       direction: 'in',
       focus: { kind: 'single', rootId: 'service-a' },
     });
-    const updater = commitDoc.mock.calls[0]?.[0];
+    const updater = commitView.mock.calls[0]?.[0];
     expect(typeof updater).toBe('function');
-    const updated = (updater as Parameters<typeof commitDoc>[0])({
+    const updated = applyViewUpdate(updater, {
       version: '1',
       schemaRefs: [],
       entities: [],
@@ -322,26 +332,24 @@ describe('useDiagramActions', () => {
 
     function Harness() {
       captured = useDiagramActions({
-        state: {
-          doc: {
-            version: '1',
-            schemaRefs: [],
-            entities: [
-              {
-                id: 'service-a',
-                type: 'service',
-                children: [{ id: 'endpoint-a', type: 'endpoint' }],
-              },
-            ],
-            relations: [],
-            view: {
-              kind: 'semantic-diagram-view',
-              version: 2,
+        state: stateForDoc({
+          version: '1',
+          schemaRefs: [],
+          entities: [
+            {
+              id: 'service-a',
+              type: 'service',
+              children: [{ id: 'endpoint-a', type: 'endpoint' }],
             },
+          ],
+          relations: [],
+          view: {
+            kind: 'semantic-diagram-view',
+            version: 2,
           },
-        },
+        }),
         document: {
-          commitDoc: vi.fn(),
+          commitView: vi.fn(),
         },
         transition: {
           requestNavigation: vi.fn(),

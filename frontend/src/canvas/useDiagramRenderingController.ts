@@ -1,18 +1,15 @@
 import {
+  buildSemanticIndex,
   type CompiledDiagramEdge,
-  compileDiagramViewState,
+  compileView,
+  type DiagramView,
   getSingleChildChainTop,
   type SchemaModule,
   type SemanticDocument,
+  type SemanticIndex,
 } from '@tarskia/diagram-semantics';
 import { useCallback, useMemo } from 'react';
-import {
-  buildSemanticStateDocument,
-  combineDiagramSemanticAndDeclarativeViewState,
-  selectDeclarativeDiagramViewState,
-  useDiagramSemanticState,
-} from '../semantic/view/declarative-view-state';
-import { buildGraphModel } from './rendering/graph/graph-model';
+import { selectDeclarativeDiagramViewState } from '../semantic/view/declarative-view-state';
 import { buildLayoutResult, type LayoutResult } from './rendering/layout/layout-pipeline';
 import {
   buildTransitionPlanningAdvisory,
@@ -27,46 +24,21 @@ const viewportHelpers = {
   collectSubtreeIds,
 };
 
-export function useDiagramRenderingController({
-  doc,
-  schema,
-}: {
-  doc: SemanticDocument;
-  schema: SchemaModule;
+export function useDiagramRenderingController(params: {
+  doc?: SemanticDocument;
+  schema?: SchemaModule;
+  index?: SemanticIndex;
+  view?: DiagramView;
 }) {
-  const semanticState = useDiagramSemanticState(doc);
-  const declarativeViewState = useMemo(
-    () => selectDeclarativeDiagramViewState({ view: doc.view }),
-    [doc.view],
-  );
-  const semanticDocument = useMemo(
-    () => buildSemanticStateDocument(semanticState),
-    [semanticState],
-  );
-  const renderDocument = useMemo(
-    () =>
-      combineDiagramSemanticAndDeclarativeViewState({
-        semanticState,
-        declarativeViewState,
-      }),
-    [declarativeViewState, semanticState],
-  );
-  const graph = useMemo(
-    () => buildGraphModel(semanticDocument, schema),
-    [schema, semanticDocument],
-  );
-  const viewState = useMemo(
-    () => compileDiagramViewState({ doc: renderDocument, schema }),
-    [renderDocument, schema],
-  );
-  const layout = useMemo(
-    () =>
-      buildLayoutResult({
-        graph,
-        viewState,
-      }),
-    [graph, viewState],
-  );
+  const graph = useMemo(() => {
+    if (params.index) return params.index;
+    if (!params.doc || !params.schema) throw new Error('Diagram content and schema are required');
+    return buildSemanticIndex(params.doc, params.schema);
+  }, [params.index, params.doc, params.schema]);
+  const view = params.index ? params.view : params.doc?.view;
+  const declarativeViewState = useMemo(() => selectDeclarativeDiagramViewState({ view }), [view]);
+  const viewState = useMemo(() => compileView(graph, view), [graph, view]);
+  const layout = useMemo(() => buildLayoutResult({ graph, viewState }), [graph, viewState]);
 
   const buildTransitionAdvisory = useCallback(
     ({

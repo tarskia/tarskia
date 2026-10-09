@@ -211,29 +211,13 @@ interface RawOverlayEdgeSpec
   semanticTargetId?: string;
 }
 
-const snapshotSignatureCache = new WeakMap<CanvasRenderSnapshot, string>();
-
-const getCanvasRenderSnapshotSignature = (snapshot: CanvasRenderSnapshot): string => {
-  const cached = snapshotSignatureCache.get(snapshot);
-  if (cached) {
-    return cached;
-  }
-  const signature = JSON.stringify(snapshot);
-  snapshotSignatureCache.set(snapshot, signature);
-  return signature;
-};
-
+/** Immutable render snapshots are revisions; unchanged inputs retain their identity. */
 export const areCanvasRenderSnapshotsEqual = (
   left: CanvasRenderSnapshot,
   right: CanvasRenderSnapshot,
-): boolean => {
-  if (left === right) {
-    return true;
-  }
-  return getCanvasRenderSnapshotSignature(left) === getCanvasRenderSnapshotSignature(right);
-};
+): boolean => left === right;
 
-export const buildStaticCanvasPresentation = ({
+const buildStaticCanvasPresentationUncached = ({
   scene,
   debug,
 }: {
@@ -460,4 +444,23 @@ export const buildStaticCanvasPresentation = ({
     nodes,
     overlayEdges: routeCanvasEdges(nodes, overlayEdges),
   };
+};
+
+const staticPresentations = new WeakMap<CanvasScene, Map<boolean, CanvasRenderSnapshot>>();
+export const buildStaticCanvasPresentation = (params: {
+  scene: CanvasScene;
+  debug?: boolean;
+}): CanvasRenderSnapshot => {
+  let variants = staticPresentations.get(params.scene);
+  if (!variants) {
+    variants = new Map();
+    staticPresentations.set(params.scene, variants);
+  }
+  const key = Boolean(params.debug);
+  let result = variants.get(key);
+  if (!result) {
+    result = buildStaticCanvasPresentationUncached(params);
+    variants.set(key, result);
+  }
+  return result;
 };

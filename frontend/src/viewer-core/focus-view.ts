@@ -2,12 +2,13 @@ import {
   applyDiagramViewOperation,
   buildEntityTree,
   type SemanticDocument,
+  type SemanticIndex,
 } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { SceneTree } from '../canvas/rendering/tree/scene-tree';
+import type { LayoutTree } from '../canvas/rendering/layout/layout-geometry';
 import type { GetCurrentCanvasSize } from '../diagram/canvas-size';
 import type { MotionCallbacks } from '../diagram/motion-types';
-import type { CommitDoc } from './types';
+import type { CommitView } from './types';
 
 type FocusTransitionTrigger = (
   entityId: string,
@@ -85,7 +86,7 @@ export const buildClearFocusScopeDocument = (previous: SemanticDocument): Semant
   return view === previous.view ? previous : { ...previous, view };
 };
 
-export const canFocusSceneNode = (params: { sceneTree: SceneTree; entityId: string }) => {
+export const canFocusLayoutNode = (params: { sceneTree: LayoutTree; entityId: string }) => {
   const sceneNode = params.sceneTree.byId.get(params.entityId);
   // List containers also support focus; capability must not depend on expanded layout.
   return Boolean(sceneNode?.hasChildren);
@@ -97,19 +98,21 @@ export function useFocusViewController({
   canvasLayoutVersion = 0,
   skipTransitions = false,
   showInspector,
-  commitDoc,
+  commitView,
+  index,
   flushUserGesture,
   triggerEntityZoom,
   setSelectedEntity,
   setSelectedEdge,
   onClearTransientFocusChrome,
 }: {
-  sceneTree: SceneTree;
+  sceneTree: LayoutTree;
   getCurrentCanvasSize?: GetCurrentCanvasSize;
   canvasLayoutVersion?: number;
   skipTransitions?: boolean;
   showInspector: boolean;
-  commitDoc: CommitDoc;
+  commitView: CommitView;
+  index: SemanticIndex;
   flushUserGesture: () => boolean;
   triggerEntityZoom: FocusTransitionTrigger;
   setSelectedEntity: (id: string | undefined) => void;
@@ -139,16 +142,16 @@ export function useFocusViewController({
 
   const enterFocusScope = useCallback(
     (entityId: string, expandTarget = false) => {
-      commitDoc((previous) =>
-        buildFocusScopeDocument({
-          previous,
+      commitView((previous) =>
+        applyDiagramViewOperation(index.tree, previous, {
+          kind: 'enter-focus',
           entityId,
           expandTarget,
         }),
       );
       onClearTransientFocusChrome?.();
     },
-    [commitDoc, onClearTransientFocusChrome],
+    [commitView, index, onClearTransientFocusChrome],
   );
 
   const runFocusViewOnEntity = useCallback(
@@ -234,7 +237,7 @@ export function useFocusViewController({
 
   const focusViewOnEntity = useCallback(
     (entityId: string) => {
-      if (!canFocusSceneNode({ sceneTree, entityId })) {
+      if (!canFocusLayoutNode({ sceneTree, entityId })) {
         return false;
       }
       clearPendingFocusRequest();
@@ -268,9 +271,11 @@ export function useFocusViewController({
   const clearFocus = useCallback(() => {
     clearPendingFocusRequest();
     flushUserGesture();
-    commitDoc(buildClearFocusScopeDocument);
+    commitView((previous) =>
+      applyDiagramViewOperation(index.tree, previous, { kind: 'clear-focus' }),
+    );
     onClearTransientFocusChrome?.();
-  }, [clearPendingFocusRequest, commitDoc, flushUserGesture, onClearTransientFocusChrome]);
+  }, [clearPendingFocusRequest, commitView, index, flushUserGesture, onClearTransientFocusChrome]);
 
   return {
     clearFocus,

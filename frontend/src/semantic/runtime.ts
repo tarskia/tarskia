@@ -1,10 +1,12 @@
 import type { SchemaSemantics } from '@tarskia/diagram-semantics';
 import {
-  buildEntityIndex,
+  buildSemanticIndex,
+  type DiagramContent,
   type EntityIndex,
   type SchemaModule,
   type SchemaRuntime,
   type SemanticDocument,
+  type SemanticIndex,
   type Diagnostic as ValidationDiagnostic,
 } from '@tarskia/diagram-semantics';
 import { useMemo } from 'react';
@@ -13,12 +15,12 @@ import {
   buildSchemaRuntimeFromCatalog,
   type SchemaVersionCatalog,
 } from '../model/validation/schema-closure';
-import { buildSemanticStateDocument, useDiagramSemanticState } from './view/declarative-view-state';
 
 type SchemaRuntimeResult = ReturnType<typeof buildSchemaRuntimeFromCatalog>;
 
 export interface DiagramSemanticRuntime {
-  doc: SemanticDocument;
+  doc: DiagramContent;
+  index: SemanticIndex;
   schemaRuntimeResult: SchemaRuntimeResult;
   schemaRuntime: SchemaRuntime;
   schema: SchemaModule;
@@ -51,13 +53,15 @@ export const buildDiagramSemanticRuntime = (params: {
     ...validationDiagnostics,
   ];
 
+  const index = buildSemanticIndex(params.doc, schema);
   return {
     doc: params.doc,
+    index,
     schemaRuntimeResult,
     schemaRuntime: schemaRuntimeResult.runtime,
     schema,
     schemaSemantics: schemaRuntimeResult.runtime.semantics,
-    entityIndex: buildEntityIndex(params.doc.entities),
+    entityIndex: index.entityIndex,
     diagnostics,
     validationDiagnostics,
     valid: diagnostics.every((diagnostic) => diagnostic.severity !== 'error'),
@@ -65,7 +69,7 @@ export const buildDiagramSemanticRuntime = (params: {
 };
 
 export const useDiagramSemanticRuntime = (params: {
-  doc: SemanticDocument;
+  doc: DiagramContent;
   /** The loaded snapshot, including its initial view, remains fixed during viewer navigation. */
   validationDocument?: SemanticDocument;
   schemaVersionCatalog: SchemaVersionCatalog;
@@ -73,11 +77,6 @@ export const useDiagramSemanticRuntime = (params: {
   sourceDiagnostics?: ValidationDiagnostic[];
 }): DiagramSemanticRuntime => {
   const { doc, fallbackSchema, schemaVersionCatalog, sourceDiagnostics } = params;
-  const semanticState = useDiagramSemanticState(doc);
-  const semanticDocument = useMemo(
-    () => buildSemanticStateDocument(semanticState),
-    [semanticState],
-  );
   const schemaRuntimeResult = useMemo(
     () =>
       buildSchemaRuntimeFromCatalog({
@@ -88,8 +87,9 @@ export const useDiagramSemanticRuntime = (params: {
   );
   const schema = schemaRuntimeResult.runtime.resolved.effectiveSchema ?? fallbackSchema;
   if (!schema) throw new Error('Unable to resolve a schema for the active semantic runtime.');
-  const entityIndex = useMemo(() => buildEntityIndex(doc.entities), [doc.entities]);
-  const validationDocument = params.validationDocument ?? semanticDocument;
+  const index = useMemo(() => buildSemanticIndex(doc, schema), [doc, schema]);
+  const entityIndex = index.entityIndex;
+  const validationDocument = params.validationDocument ?? doc;
   const validationDiagnostics = useMemo(
     () => validateDiagramDoc(validationDocument, schema).diagnostics,
     [validationDocument, schema],
@@ -105,6 +105,7 @@ export const useDiagramSemanticRuntime = (params: {
   return useMemo(
     () => ({
       doc,
+      index,
       schemaRuntimeResult,
       schemaRuntime: schemaRuntimeResult.runtime,
       schema,
@@ -114,6 +115,6 @@ export const useDiagramSemanticRuntime = (params: {
       validationDiagnostics,
       valid: diagnostics.every((diagnostic) => diagnostic.severity !== 'error'),
     }),
-    [doc, schemaRuntimeResult, schema, entityIndex, diagnostics, validationDiagnostics],
+    [doc, index, schemaRuntimeResult, schema, entityIndex, diagnostics, validationDiagnostics],
   );
 };

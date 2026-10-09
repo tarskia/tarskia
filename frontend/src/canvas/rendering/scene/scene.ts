@@ -1,11 +1,11 @@
 import type { SchemaModule } from '@tarskia/diagram-semantics';
-import type { SceneTree } from '../tree/scene-tree';
+import type { LayoutTree } from '../layout/layout-geometry';
 import type { ResolvedVisualEdge } from '../visual/edge-visuals';
 import type { ResolvedNodeVisual } from '../visual/node-visuals';
 
 export interface CanvasScene {
   schema: SchemaModule;
-  tree: SceneTree;
+  tree: LayoutTree;
   edges: ResolvedVisualEdge[];
   nodeVisuals: Map<string, ResolvedNodeVisual>;
   visibleIds: Set<string>;
@@ -13,7 +13,7 @@ export interface CanvasScene {
   zIndexById: Map<string, number>;
 }
 
-export function buildAbsolutePositions(tree: SceneTree): Record<string, { x: number; y: number }> {
+export function buildAbsolutePositions(tree: LayoutTree): Record<string, { x: number; y: number }> {
   const positions: Record<string, { x: number; y: number }> = {};
   const queue: Array<{ id: string; abs: { x: number; y: number } }> = [];
   for (const child of tree.root.children) {
