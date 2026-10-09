@@ -17,7 +17,10 @@ import { EdgeOverlay, type EdgeOverlayInteractionBindings } from './components/e
 import { TransitionOverlay } from './components/transition/TransitionOverlay';
 import type { ReactFlowHostNodeData } from './host/reactflow/types';
 import { scheduleHotReloadSafeUnmount } from './hot-reload-unmount';
-import type { CanvasOverlayEdgeView } from './rendering/presentation/presentation';
+import type {
+  CanvasOverlayEdgeView,
+  CanvasRenderSnapshot,
+} from './rendering/presentation/presentation';
 import type {
   TransitionOverlayFrame,
   TransitionOverlayState,
@@ -36,6 +39,7 @@ export interface DiagramCanvasProps {
   hideHostVisuals: boolean;
   nodes: Node[];
   overlayEdges: CanvasOverlayEdgeView[];
+  edgeGeometrySnapshot?: CanvasRenderSnapshot;
   overlayInteractionBindings?: EdgeOverlayInteractionBindings;
   transitionOverlay?: TransitionOverlayState;
   transitionOverlayFrame?: TransitionOverlayFrame;
@@ -81,6 +85,7 @@ export function DiagramCanvas({
   hideHostVisuals,
   nodes,
   overlayEdges,
+  edgeGeometrySnapshot,
   overlayInteractionBindings,
   transitionOverlay,
   transitionOverlayFrame,
@@ -174,6 +179,7 @@ export function DiagramCanvas({
         <Background gap={20} size={1.2} color="rgba(255,255,255,0.12)" />
         <EdgeOverlay
           edges={overlayEdges}
+          geometrySnapshot={edgeGeometrySnapshot}
           nodes={overlayNodes}
           bindings={overlayInteractionBindings}
         />

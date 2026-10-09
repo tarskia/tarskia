@@ -6,11 +6,14 @@ import type { CanvasPoint, CanvasRect } from '../../rendering/presentation/geome
 import type {
   CanvasNodeView,
   CanvasOverlayEdgeView,
+  CanvasRenderSnapshot,
 } from '../../rendering/presentation/presentation';
 import { EdgeOverlayView } from './EdgeOverlayView';
 import { resolveEdgeLabelTransform } from './edge-label-placement';
-import { resolveEdgeOverlayRenderState } from './edge-overlay-state';
-import { buildClipPathFromOccluders } from './occluder-geometry';
+import {
+  resolveCachedEdgeOverlayRenderState,
+  resolveEdgeOverlayRenderState,
+} from './edge-overlay-state';
 
 export interface EdgeOverlayInteractionBindings {
   onSelectEdge?: (edgeId: string) => void;
@@ -100,7 +103,9 @@ export function EdgeOverlay({
   edges,
   nodes,
   bindings,
+  geometrySnapshot,
 }: {
+  geometrySnapshot?: CanvasRenderSnapshot;
   edges: CanvasOverlayEdgeView[];
   nodes: Node<ReactFlowHostNodeData>[];
   bindings?: EdgeOverlayInteractionBindings;
@@ -111,11 +116,13 @@ export function EdgeOverlay({
   const nodeViews = useMemo(() => overlayNodes.map((node) => node.view), [overlayNodes]);
   const overlayRenderState = useMemo(
     () =>
-      resolveEdgeOverlayRenderState({
-        edges,
-        nodes: nodeViews,
-      }),
-    [edges, nodeViews],
+      geometrySnapshot
+        ? resolveCachedEdgeOverlayRenderState(geometrySnapshot, edges)
+        : resolveEdgeOverlayRenderState({
+            edges,
+            nodes: nodeViews,
+          }),
+    [edges, nodeViews, geometrySnapshot],
   );
   const resolvedEdges = overlayRenderState.edges;
   const handleDescriptors = useMemo(() => buildOverlayHandleDescriptors(nodes), [nodes]);
@@ -152,13 +159,7 @@ export function EdgeOverlay({
                 id={`edge-overlay-clip-${interactionScopeId}-solid-${edge.id.replace(/[^a-zA-Z0-9_-]/g, '_')}`}
                 clipPathUnits="userSpaceOnUse"
               >
-                <path
-                  d={buildClipPathFromOccluders({
-                    include: [overlayRenderState.overlayWorldBounds],
-                    exclude: edge.blockerOccluders,
-                  })}
-                  clipRule="nonzero"
-                />
+                <path d={edge.solidClipPath} clipRule="nonzero" />
               </clipPath>
             ))}
           </defs>

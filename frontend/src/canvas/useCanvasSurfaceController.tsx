@@ -25,7 +25,7 @@ import type { NodeVisualMode } from '../node-visual-mode';
 import type { CanvasSemanticBindings } from '../viewer-core/view-models';
 import type { CompileResult } from './compiler/compile';
 import type { EdgeOverlayInteractionBindings } from './components/edges/EdgeOverlay';
-import { resolveEdgeOverlayRenderState } from './components/edges/edge-overlay-state';
+import { resolveCachedEdgeOverlayRenderState } from './components/edges/edge-overlay-state';
 import type { DiagramCanvasProps } from './DiagramCanvas';
 import { collapseFocusShellDescriptors } from './focus-shells';
 import { adaptPresentationToReactFlow } from './host/reactflow/adapter';
@@ -618,6 +618,7 @@ export function useCanvasSurfaceController({
   }
   const [nodes, setNodes, onNodesChange] = useNodesState(initialFlowStateRef.current.nodes);
   const [overlayEdges, setOverlayEdges] = useState(initialFlowStateRef.current.overlayEdges);
+  const [edgeGeometrySnapshot, setEdgeGeometrySnapshot] = useState(presentation);
   const hostRenderState = useMemo(
     () =>
       buildHostRenderState(
@@ -639,6 +640,7 @@ export function useCanvasSurfaceController({
       setOverlayEdges(hostRenderState.overlayEdges);
       lastAppliedHostRenderStateSignatureRef.current = hostRenderStateSignature;
     }
+    setEdgeGeometrySnapshot(presentation);
     pendingDisplayGenerationRef.current = requiredHostGeneration;
 
     if (
@@ -655,6 +657,7 @@ export function useCanvasSurfaceController({
   }, [
     hostRenderState,
     hostRenderStateSignature,
+    presentation,
     notifyDisplayHostSettled,
     requiredHostGeneration,
     setNodes,
@@ -737,10 +740,10 @@ export function useCanvasSurfaceController({
       delete debugWindow.__TARSKIA_EDGE_OVERLAY_DEBUG__;
       return;
     }
-    const overlayRenderState = resolveEdgeOverlayRenderState({
-      edges: hostRenderState.overlayEdges,
-      nodes: hostRenderState.nodes.flatMap((node) => (node.data?.view ? [node.data.view] : [])),
-    });
+    const overlayRenderState = resolveCachedEdgeOverlayRenderState(
+      presentation,
+      hostRenderState.overlayEdges,
+    );
     const selectedEdgeTrace =
       selectedEdgeId === undefined
         ? null
@@ -758,7 +761,7 @@ export function useCanvasSurfaceController({
     return () => {
       delete debugWindow.__TARSKIA_EDGE_OVERLAY_DEBUG__;
     };
-  }, [hostRenderState, selectedEdgeId, showDebug]);
+  }, [hostRenderState, selectedEdgeId, showDebug, presentation]);
 
   const debugSummary = useMemo(() => {
     // Keep debug geometry current without storing canvas dimensions in React state.
@@ -831,10 +834,10 @@ export function useCanvasSurfaceController({
     }
 
     const transitionActive = isTransitionRunning || isTransitionQueued;
-    const overlayRenderState = resolveEdgeOverlayRenderState({
-      edges: hostRenderState.overlayEdges,
-      nodes: hostRenderState.nodes.flatMap((node) => (node.data?.view ? [node.data.view] : [])),
-    });
+    const overlayRenderState = resolveCachedEdgeOverlayRenderState(
+      presentation,
+      hostRenderState.overlayEdges,
+    );
     const selectedResolvedEdge =
       selectedEdgeId === undefined
         ? null
@@ -926,6 +929,7 @@ export function useCanvasSurfaceController({
     getCurrentViewport,
     hostRenderState,
     selectedEdgeId,
+    presentation,
   ]);
 
   const onNodeClick = useCallback(
@@ -968,6 +972,7 @@ export function useCanvasSurfaceController({
     nodeVisualMode,
     hideHostVisuals,
     nodes: nodes as Node[],
+    edgeGeometrySnapshot,
     overlayEdges: resolveVisibleHostOverlayEdges({
       overlayEdges,
       hideHostVisuals,

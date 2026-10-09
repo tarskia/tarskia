@@ -3,7 +3,6 @@ import type {
   CanvasOverlayEdgeView,
 } from '../../rendering/presentation/presentation';
 import { type EdgeOverlayRenderState, resolveEdgeOverlayRenderState } from './edge-overlay-state';
-import { buildClipPathFromOccluders } from './occluder-geometry';
 
 export interface EdgeOverlayTransform {
   tx: number;
@@ -27,7 +26,7 @@ export function EdgeOverlayView({
   if (edges.length === 0) return null;
 
   const overlayScopeId = (className ?? 'edge-overlay').replace(/[^a-zA-Z0-9_-]/g, '_');
-  const { overlayWorldBounds, edges: edgesWithResolvedOccluders } =
+  const { edges: edgesWithResolvedOccluders } =
     renderState ?? resolveEdgeOverlayRenderState({ edges, nodes });
 
   const transformStyle = {
@@ -50,25 +49,14 @@ export function EdgeOverlayView({
                   id={buildClipId('solid', edge.id)}
                   clipPathUnits="userSpaceOnUse"
                 >
-                  <path
-                    d={buildClipPathFromOccluders({
-                      include: [overlayWorldBounds],
-                      exclude: edge.blockerOccluders,
-                    })}
-                    clipRule="nonzero"
-                  />
+                  <path d={edge.solidClipPath} clipRule="nonzero" />
                 </clipPath>,
                 <clipPath
                   key={`clip-blocked-${edge.id}`}
                   id={buildClipId('blocked', edge.id)}
                   clipPathUnits="userSpaceOnUse"
                 >
-                  <path
-                    d={buildClipPathFromOccluders({
-                      include: edge.blockerOccluders,
-                    })}
-                    clipRule="nonzero"
-                  />
+                  <path d={edge.blockedClipPath} clipRule="nonzero" />
                 </clipPath>,
               ]
             ) : (
@@ -77,12 +65,7 @@ export function EdgeOverlayView({
                 id={buildClipId('solid', edge.id)}
                 clipPathUnits="userSpaceOnUse"
               >
-                <path
-                  d={buildClipPathFromOccluders({
-                    include: [overlayWorldBounds],
-                  })}
-                  clipRule="nonzero"
-                />
+                <path d={edge.solidClipPath} clipRule="nonzero" />
               </clipPath>
             ),
           )}
