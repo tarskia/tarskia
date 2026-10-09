@@ -221,7 +221,7 @@ async function renderController(params?: {
           },
         } as never,
         transitionOverlay: null,
-        transitionOverlayFrame: null,
+        overlayFrameStore: null,
         hideHostVisuals: false,
         transitionLiteMode: params?.transitionLiteMode ?? false,
         isTransitionRunning: false,
