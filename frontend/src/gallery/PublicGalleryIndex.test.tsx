@@ -7,6 +7,7 @@ vi.mock('../api/generated/gallery/gallery', () => ({
 }));
 
 import { useListGalleryDiagrams } from '../api/generated/gallery/gallery';
+import { GalleryQueryError } from './gallery-query';
 import { coerceGallerySummaryArray, coerceSuccessfulResponseBody } from './gallery-response';
 import PublicGalleryIndex, {
   filterPublicGalleryRows,
@@ -53,6 +54,45 @@ const buildRows = () => [
 ];
 
 describe('PublicGalleryIndex', () => {
+  it.each([
+    new GalleryQueryError('Service unavailable', 503),
+    new TypeError('Failed to fetch'),
+  ])('shows a retryable error for a rejected query: %s', (error) => {
+    mockedUseListGalleryDiagrams.mockReturnValue({
+      isPending: false,
+      isError: true,
+      error,
+      data: undefined,
+      refetch: vi.fn(),
+    } as never);
+
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <PublicGalleryIndex />
+      </MemoryRouter>,
+    );
+    expect(html).toContain('Couldn&#x27;t load the gallery.');
+    expect(html).toMatch(/<button[^>]*>Retry<\/button>/);
+    expect(html).not.toContain('No gallery diagrams are available.');
+    expect(html).not.toContain(error.message);
+  });
+
+  it.each([200, 404])('only shows the empty state for a successful response (%s)', (status) => {
+    mockedUseListGalleryDiagrams.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: { status, data: [] },
+      refetch: vi.fn(),
+    } as never);
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <PublicGalleryIndex />
+      </MemoryRouter>,
+    );
+    expect(html.includes('No gallery diagrams are available.')).toBe(status === 200);
+    expect(html.includes('Couldn&#x27;t load the gallery.')).toBe(status !== 200);
+  });
+
   it('renders a lean public gallery table with repository-first rows', () => {
     mockedUseListGalleryDiagrams.mockReturnValue({
       isPending: false,
