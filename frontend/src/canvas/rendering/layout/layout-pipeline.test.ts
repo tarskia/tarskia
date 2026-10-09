@@ -289,6 +289,16 @@ describe('buildLayoutResult', () => {
     expect(parent?.summaryLabel).toBe('2 tables');
   });
 
+  it('stretches mixed-type list rows to the widest row without widening the container', () => {
+    const doc = buildLeafListDoc();
+    doc.entities[2].type = 'table-group';
+    const layout = buildTestLayout(withView(doc, { expanded: { db: true } }));
+    const parent = layout.tree.byId.get('db');
+    expect(parent?.layoutMode).toBe('list');
+    expect(parent?.children.map((child) => child.size.width)).toEqual([180, 180]);
+    expect(parent?.size.width).toBe(220);
+  });
+
   it('does not use list mode when container children have internal edges', () => {
     const layout = buildTestLayout(withView(buildLeafGraphDoc(), { expanded: { db: true } }));
 
