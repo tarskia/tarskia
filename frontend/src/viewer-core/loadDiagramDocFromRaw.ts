@@ -7,6 +7,7 @@ import {
 } from '../semantic';
 
 export interface LoadedDiagramDoc {
+  readable: boolean;
   doc: SemanticDocument;
   sourceDiagnostics: ReturnType<typeof compileSourceGraph>['diagnostics'];
 }
@@ -43,6 +44,7 @@ export const loadDiagramDocFromRaw = (params: {
   });
   if (!parsedSourceResult.ok || !parsedSourceResult.value) {
     return {
+      readable: false,
       doc: withDocumentName(createBlankDiagramDocument('0.1.0'), params.streamName),
       sourceDiagnostics: parsedSourceResult.diagnostics,
     };
@@ -53,6 +55,7 @@ export const loadDiagramDocFromRaw = (params: {
       ? parsedSource
       : withDocumentName(parsedSource, params.streamName);
     return {
+      readable: true,
       doc,
       sourceDiagnostics: [],
     };
@@ -68,6 +71,7 @@ export const loadDiagramDocFromRaw = (params: {
     parsedSource.metadata?.name?.trim() || params.streamName,
   );
   return {
+    readable: Boolean(compiled.result),
     doc,
     sourceDiagnostics: compiled.diagnostics,
   };
