@@ -1,13 +1,6 @@
 import type { ViewportState } from '@tarskia/diagram-semantics';
 import type { LayoutResult } from '../canvas/rendering/layout/layout-pipeline';
-import type { LayoutTree } from '../canvas/rendering/layout/tree-traverser';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
-import type { TransitionPlanningAdvisory } from '../canvas/rendering/transition/sequencer';
-import type {
-  TimedTransitionPlan,
-  TimedTransitionSequence,
-} from '../canvas/rendering/transition/timed-plan';
-
 export type DiagramCameraRect = {
   x: number;
   y: number;
@@ -85,43 +78,21 @@ export interface CameraTrack {
   to: ViewportState;
 }
 
-export interface OverlayMotionTrack {
-  incomingSnapshot: CanvasRenderSnapshot;
-  planningAdvisory: TransitionPlanningAdvisory;
-  timedPlan: TimedTransitionPlan;
-  timedSequence: TimedTransitionSequence;
-  sharedNodeGeometry?: 'freeze-from';
-}
-
-export interface MotionSegment {
-  durationMs: number;
-  camera?: CameraTrack;
-  overlay?: OverlayMotionTrack;
-  hostSnapshot?: CanvasRenderSnapshot;
-}
-
 export interface MotionPlan {
-  segments: MotionSegment[];
+  camera?: CameraTrack;
+  cameraDuration: number;
+  structureDuration: number;
+  settleDuration: number;
   sourceSnapshot?: CanvasRenderSnapshot;
   targetSnapshot?: CanvasRenderSnapshot;
 }
-
 export interface StructuralChoreographyRequest {
   direction: 'in' | 'out';
   focus: StructuralTransitionFocus | null;
-  startLayout: LayoutResult;
   endLayout: LayoutResult;
   startSnapshot: CanvasRenderSnapshot;
   endSnapshot: CanvasRenderSnapshot;
   currentViewport: ViewportState;
   endPointOfInterestNodeIds: string[];
-  pauseBeforeOverlayMs?: number;
-  pauseAfterOverlayMs?: number;
-  exitScopeRetainedNodeIds?: string[];
-  postOverlayViewportBridgeNodeIds?: string[];
-  sharedNodeGeometry?: 'freeze-from';
-  collectSubtreeIds: (tree: LayoutTree, rootId: string) => Set<string>;
-  planningAdvisory: TransitionPlanningAdvisory;
 }
-
 export type MotionPhase = 'idle' | 'animating' | 'settling' | 'userGesture';

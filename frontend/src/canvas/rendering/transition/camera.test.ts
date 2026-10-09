@@ -1,11 +1,13 @@
 import { indexTree, type SemanticDocument } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
+import type { StructuralChoreographyRequest } from '../../../diagram/motion-types';
 import { computeViewportForBoundsInVisibleCanvas } from '../../viewport-visibility';
 import type { LayoutResult } from '../layout/layout-pipeline';
 import type { LayoutNode, LayoutTree } from '../layout/tree-traverser';
+import type { CanvasRenderSnapshot } from '../presentation/presentation';
 import { buildAbsolutePositions } from '../scene/scene';
 import { DEFAULT_VIEWPORT_FIT_PADDING } from './animation-constants';
-import { buildStructuralCameraAdvisory } from './camera';
+import { READABLE_MIN_ZOOM, resolveStructuralCamera } from './camera';
 
 type NodeDef = {
   id: string;
@@ -64,398 +66,126 @@ const buildLayout = (defs: NodeDef[]) => {
   } as unknown as LayoutResult;
 };
 
-const collectSubtreeIds = (tree: LayoutTree, rootId: string) => {
-  const ids = new Set<string>();
-  const walk = (id: string) => {
-    ids.add(id);
-    const node = tree.byId.get(id);
-    for (const child of node?.children ?? []) {
-      walk(child.id);
-    }
-  };
-  walk(rootId);
-  return ids;
-};
-
-const defaultCameraParams = {
-  padding: 40,
-  minZoom: 0.5,
-  maxZoom: 2,
-  collectSubtreeIds,
-};
-
-describe('buildStructuralCameraAdvisory', () => {
-  it('does not prefit a collapse when the anchor journey is already visible', () => {
-    const fromLayout = buildLayout([
-      {
-        id: 'A',
-        pos: { x: 0, y: 0 },
-        size: { width: 320, height: 320 },
-        children: [{ id: 'B', pos: { x: 180, y: 180 }, size: { width: 80, height: 80 } }],
-      },
-      { id: 'X', pos: { x: 420, y: 0 }, size: { width: 180, height: 180 } },
-    ]);
-    const toLayout = buildLayout([
-      { id: 'A', pos: { x: 40, y: 40 }, size: { width: 140, height: 100 } },
-      { id: 'X', pos: { x: 240, y: 40 }, size: { width: 180, height: 180 } },
-    ]);
-
-    const advisory = buildStructuralCameraAdvisory({
-      direction: 'out',
-      focus: { kind: 'global' },
-      startLayout: fromLayout,
-      endLayout: toLayout,
-      currentViewport: { x: 0, y: 0, zoom: 1 },
-      canvasSize: { width: 320, height: 320 },
-      endPointOfInterestNodeIds: ['A', 'X'],
-      ...defaultCameraParams,
-    });
-
-    expect(advisory.prelude).toBeUndefined();
+const snapshot = (layout: LayoutResult): CanvasRenderSnapshot =>
+  ({
+    nodes: [...layout.visibleIds].map((id) => {
+      const node = layout.tree.byId.get(id)!;
+      return {
+        id,
+        rect: { ...layout.absolutePositions[id], ...node.size },
+        opacity: 1,
+        style: {},
+      };
+    }),
+    overlayEdges: [],
+  }) as CanvasRenderSnapshot;
+const camera = (
+  layout: LayoutResult,
+  options: Partial<StructuralChoreographyRequest> & {
+    canvasSize?: { width: number; height: number };
+  } = {},
+) =>
+  resolveStructuralCamera({
+    direction: 'in',
+    focus: { kind: 'global' },
+    endLayout: layout,
+    startSnapshot: snapshot(layout),
+    endSnapshot: snapshot(layout),
+    currentViewport: { x: 0, y: 0, zoom: 1 },
+    endPointOfInterestNodeIds: [...layout.visibleIds],
+    canvasSize: { width: 1000, height: 600 },
+    minZoom: 0.05,
+    maxZoom: 2,
+    ...options,
+  });
+const fitted = (
+  bounds: { x: number; y: number; width: number; height: number },
+  canvas = { width: 1000, height: 600 },
+) =>
+  computeViewportForBoundsInVisibleCanvas({
+    bounds,
+    canvas,
+    minZoom: 0.05,
+    maxZoom: 2,
+    padding: DEFAULT_VIEWPORT_FIT_PADDING,
   });
 
-  it('prefits a collapse corridor when the anchor journey is off-screen', () => {
-    const fromLayout = buildLayout([
-      {
-        id: 'A',
-        pos: { x: 0, y: 0 },
-        size: { width: 320, height: 320 },
-        children: [{ id: 'B', pos: { x: 180, y: 180 }, size: { width: 80, height: 80 } }],
-      },
-      { id: 'X', pos: { x: 420, y: 0 }, size: { width: 180, height: 180 } },
-    ]);
-    const toLayout = buildLayout([
-      { id: 'A', pos: { x: 40, y: 40 }, size: { width: 140, height: 100 } },
-      { id: 'X', pos: { x: 240, y: 40 }, size: { width: 180, height: 180 } },
-    ]);
-
-    const advisory = buildStructuralCameraAdvisory({
-      direction: 'out',
-      focus: { kind: 'single', rootId: 'B' },
-      startLayout: fromLayout,
-      endLayout: toLayout,
-      currentViewport: { x: -420, y: 0, zoom: 1 },
-      canvasSize: { width: 260, height: 260 },
-      endPointOfInterestNodeIds: ['A', 'X'],
-      ...defaultCameraParams,
-    });
-
-    expect(advisory.prelude).toEqual(
-      computeViewportForBoundsInVisibleCanvas({
-        bounds: {
-          x: 16,
-          y: -8,
-          width: 268,
-          height: 316,
-        },
-        canvas: { width: 260, height: 260 },
-        padding: DEFAULT_VIEWPORT_FIT_PADDING,
-        minZoom: 0.5,
-        maxZoom: 2,
-      }),
-    );
-    expect(advisory.epilogue).toEqual(
-      computeViewportForBoundsInVisibleCanvas({
-        bounds: {
-          x: 40,
-          y: 40,
-          width: 380,
-          height: 180,
-        },
-        canvas: { width: 260, height: 260 },
-        minZoom: 0.5,
-        maxZoom: 2,
-        padding: DEFAULT_VIEWPORT_FIT_PADDING,
-      }),
-    );
-  });
-
-  it('falls back to the local focus root when the viewport anchor is outside that subtree', () => {
-    const fromLayout = buildLayout([
-      {
-        id: 'A',
-        pos: { x: 0, y: 0 },
-        size: { width: 320, height: 320 },
-        children: [{ id: 'B', pos: { x: 180, y: 180 }, size: { width: 80, height: 80 } }],
-      },
-      { id: 'X', pos: { x: 420, y: 0 }, size: { width: 180, height: 180 } },
-    ]);
-    const toLayout = buildLayout([
-      { id: 'A', pos: { x: 40, y: 40 }, size: { width: 140, height: 100 } },
-      { id: 'X', pos: { x: 240, y: 40 }, size: { width: 180, height: 180 } },
-    ]);
-
-    const advisory = buildStructuralCameraAdvisory({
-      direction: 'out',
-      focus: { kind: 'local', rootId: 'A' },
-      startLayout: fromLayout,
-      endLayout: toLayout,
-      currentViewport: { x: -440, y: 0, zoom: 1 },
-      canvasSize: { width: 240, height: 240 },
-      endPointOfInterestNodeIds: ['A', 'X'],
-      ...defaultCameraParams,
-    });
-
-    expect(advisory.prelude).toEqual(
-      computeViewportForBoundsInVisibleCanvas({
-        bounds: {
-          x: -24,
-          y: -48,
-          width: 368,
-          height: 416,
-        },
-        canvas: { width: 240, height: 240 },
-        padding: DEFAULT_VIEWPORT_FIT_PADDING,
-        minZoom: 0.5,
-        maxZoom: 2,
-      }),
-    );
-  });
-
-  it('only pans enough to reveal an expanded subtree that fits at the current zoom', () => {
-    const fromLayout = buildLayout([
-      { id: 'A', pos: { x: 900, y: 80 }, size: { width: 100, height: 100 } },
-    ]);
-    const toLayout = buildLayout([
+describe('structural camera target', () => {
+  it('only pans enough to reveal a subtree that fits at the current zoom', () => {
+    const layout = buildLayout([
       { id: 'A', pos: { x: 900, y: 80 }, size: { width: 200, height: 150 } },
     ]);
-    const advisory = buildStructuralCameraAdvisory({
-      direction: 'in',
-      focus: { kind: 'single', rootId: 'A' },
-      startLayout: fromLayout,
-      endLayout: toLayout,
-      currentViewport: { x: 0, y: 0, zoom: 1 },
-      canvasSize: { width: 1000, height: 600 },
-      endPointOfInterestNodeIds: ['A'],
-      ...defaultCameraParams,
+    expect(camera(layout, { focus: { kind: 'single', rootId: 'A' } })).toEqual({
+      x: -140,
+      y: 0,
+      zoom: 1,
     });
-    expect(advisory.prelude).toEqual({ x: -140, y: 0, zoom: 1 });
-    expect(advisory.epilogue).toBeUndefined();
   });
-
-  it('prefits single-focus expansions to the expanded end subtree', () => {
-    const fromLayout = buildLayout([
-      {
-        id: 'A',
-        pos: { x: 0, y: 0 },
-        size: { width: 140, height: 100 },
-      },
+  it('keeps an already visible local expansion at the current camera', () => {
+    const layout = buildLayout([
+      { id: 'A', pos: { x: 80, y: 80 }, size: { width: 200, height: 150 } },
     ]);
-    const toLayout = buildLayout([
-      {
-        id: 'A',
-        pos: { x: 0, y: 0 },
-        size: { width: 420, height: 320 },
-        children: [
-          { id: 'B', pos: { x: 24, y: 120 }, size: { width: 140, height: 100 } },
-          { id: 'C', pos: { x: 220, y: 120 }, size: { width: 140, height: 100 } },
-        ],
-      },
-    ]);
-
-    const advisory = buildStructuralCameraAdvisory({
-      direction: 'in',
-      focus: { kind: 'single', rootId: 'A' },
-      startLayout: fromLayout,
-      endLayout: toLayout,
-      currentViewport: { x: 0, y: 0, zoom: 1 },
-      canvasSize: { width: 280, height: 220 },
-      endPointOfInterestNodeIds: ['A', 'B', 'C'],
-      ...defaultCameraParams,
-    });
-
-    expect(advisory.prelude).toBeDefined();
-    expect(advisory.epilogue).toBeUndefined();
+    expect(camera(layout, { focus: { kind: 'single', rootId: 'A' } })).toBeNull();
   });
-
-  it('prefits global expands to the centered scene layout', () => {
-    const fromLayout = buildLayout([
-      {
-        id: 'A',
-        pos: { x: 0, y: 0 },
-        size: { width: 140, height: 100 },
-      },
-    ]);
-    const toLayout = buildLayout([
-      {
-        id: 'A',
-        pos: { x: 0, y: 0 },
-        size: { width: 420, height: 320 },
-        children: [
-          { id: 'B', pos: { x: 24, y: 120 }, size: { width: 140, height: 100 } },
-          { id: 'C', pos: { x: 220, y: 120 }, size: { width: 140, height: 100 } },
-        ],
-      },
-    ]);
-
-    const advisory = buildStructuralCameraAdvisory({
-      direction: 'in',
-      focus: { kind: 'global' },
-      startLayout: fromLayout,
-      endLayout: toLayout,
-      currentViewport: { x: 160, y: 120, zoom: 1.8 },
-      canvasSize: { width: 280, height: 220 },
-      endPointOfInterestNodeIds: ['A', 'B', 'C'],
-      ...defaultCameraParams,
-    });
-
-    expect(advisory.prelude).toEqual(
-      computeViewportForBoundsInVisibleCanvas({
-        bounds: {
-          x: 0,
-          y: 0,
-          width: 420,
-          height: 320,
-        },
-        canvas: { width: 280, height: 220 },
-        minZoom: 0.5,
-        maxZoom: 2,
-        padding: DEFAULT_VIEWPORT_FIT_PADDING,
+  it('fits an oversized local expansion with shared padding and never zooms in', () => {
+    const bounds = { x: 0, y: 0, width: 420, height: 320 };
+    const layout = buildLayout([{ id: 'A', size: bounds }]);
+    expect(
+      camera(layout, {
+        focus: { kind: 'single', rootId: 'A' },
+        canvasSize: { width: 280, height: 220 },
       }),
-    );
-    expect(advisory.epilogue).toBeUndefined();
+    ).toEqual(fitted(bounds, { width: 280, height: 220 }));
   });
-
-  it('keeps the camera unchanged when a global expansion already fits', () => {
-    const fromLayout = buildLayout([
-      {
-        id: 'A',
-        pos: { x: 80, y: 80 },
-        size: { width: 140, height: 100 },
-      },
-    ]);
-    const toLayout = buildLayout([
-      {
-        id: 'A',
-        pos: { x: 80, y: 80 },
-        size: { width: 420, height: 160 },
-      },
-    ]);
-
-    const advisory = buildStructuralCameraAdvisory({
-      direction: 'in',
-      focus: { kind: 'global' },
-      startLayout: fromLayout,
-      endLayout: toLayout,
-      currentViewport: { x: 0, y: 0, zoom: 1 },
-      canvasSize: { width: 800, height: 600 },
-      endPointOfInterestNodeIds: ['A'],
-      ...defaultCameraParams,
-    });
-
-    expect(advisory.prelude).toBeUndefined();
-    expect(advisory.epilogue).toBeUndefined();
+  it('centres a whole expanded scene when it fits readably', () => {
+    const bounds = { x: 40, y: 30, width: 1000, height: 600 };
+    const layout = buildLayout([{ id: 'A', pos: bounds, size: bounds }]);
+    const target = camera(layout)!;
+    expect(target).toEqual(fitted(bounds));
+    expect(target.zoom).toBeGreaterThanOrEqual(READABLE_MIN_ZOOM);
   });
-
-  it('adds an epilogue fit after collapse when the anchor journey is visible but the final target still needs framing', () => {
-    const fromLayout = buildLayout([
+  it.each([
+    1, 0.4, 0.2,
+  ])('uses the readable floor without zooming in from %s and preserves the centre world point', (zoom) => {
+    const layout = buildLayout([
       {
         id: 'A',
-        pos: { x: 0, y: 0 },
-        size: { width: 320, height: 320 },
-        children: [{ id: 'B', pos: { x: 180, y: 180 }, size: { width: 80, height: 80 } }],
+        pos: { x: 900, y: 800 },
+        size: { width: 12000, height: 9000 },
       },
-      { id: 'X', pos: { x: 420, y: 0 }, size: { width: 180, height: 180 } },
     ]);
-    const toLayout = buildLayout([
+    const currentViewport = { x: -420, y: 110, zoom };
+    const target = camera(layout, { currentViewport })!;
+    expect(target.zoom).toBe(Math.min(zoom, READABLE_MIN_ZOOM));
+    expect((500 - target.x) / target.zoom).toBeCloseTo((500 - currentViewport.x) / zoom, 10);
+    expect((300 - target.y) / target.zoom).toBeCloseTo((300 - currentViewport.y) / zoom, 10);
+  });
+  it('does not zoom in when Expand all already fits at a lower zoom', () => {
+    const layout = buildLayout([
+      { id: 'A', pos: { x: 80, y: 80 }, size: { width: 420, height: 160 } },
+    ]);
+    const currentViewport = { x: 100, y: 50, zoom: 0.5 };
+    expect(camera(layout, { currentViewport })).toEqual(currentViewport);
+  });
+  it.each([
+    { kind: 'global' } as const,
+    { kind: 'single', rootId: 'A' } as const,
+  ])('keeps the final full-scene collapse framing for $kind', (focus) => {
+    const layout = buildLayout([
       { id: 'A', pos: { x: 40, y: 40 }, size: { width: 140, height: 100 } },
       { id: 'X', pos: { x: 240, y: 40 }, size: { width: 180, height: 180 } },
     ]);
-
-    const advisory = buildStructuralCameraAdvisory({
-      direction: 'out',
-      focus: { kind: 'global' },
-      startLayout: fromLayout,
-      endLayout: toLayout,
-      currentViewport: { x: 0, y: 0, zoom: 1 },
-      canvasSize: { width: 320, height: 320 },
-      endPointOfInterestNodeIds: ['A', 'X'],
-      ...defaultCameraParams,
-    });
-
-    expect(advisory.prelude).toBeUndefined();
-    expect(advisory.epilogue).toEqual(
-      computeViewportForBoundsInVisibleCanvas({
-        bounds: {
-          x: 40,
-          y: 40,
-          width: 380,
-          height: 180,
-        },
-        canvas: { width: 320, height: 320 },
-        minZoom: 0.5,
-        maxZoom: 2,
-        padding: DEFAULT_VIEWPORT_FIT_PADDING,
+    expect(
+      camera(layout, {
+        direction: 'out',
+        focus,
+        canvasSize: { width: 320, height: 320 },
+        endPointOfInterestNodeIds: ['A'],
       }),
-    );
+    ).toEqual(fitted({ x: 40, y: 40, width: 380, height: 180 }, { width: 320, height: 320 }));
   });
-
-  it('recentres the full visible diagram after collapsing to a top-level node', () => {
-    const fromLayout = buildLayout([
-      {
-        id: 'A',
-        pos: { x: 0, y: 0 },
-        size: { width: 320, height: 320 },
-        children: [{ id: 'B', pos: { x: 180, y: 180 }, size: { width: 80, height: 80 } }],
-      },
-      { id: 'X', pos: { x: 420, y: 0 }, size: { width: 180, height: 180 } },
-    ]);
-    const toLayout = buildLayout([
-      { id: 'A', pos: { x: 40, y: 40 }, size: { width: 140, height: 100 } },
-      { id: 'X', pos: { x: 240, y: 40 }, size: { width: 180, height: 180 } },
-    ]);
-
-    const advisory = buildStructuralCameraAdvisory({
-      direction: 'out',
-      focus: { kind: 'single', rootId: 'A' },
-      startLayout: fromLayout,
-      endLayout: toLayout,
-      currentViewport: { x: 0, y: 0, zoom: 1 },
-      canvasSize: { width: 320, height: 320 },
-      endPointOfInterestNodeIds: ['A'],
-      ...defaultCameraParams,
-    });
-
-    expect(advisory.epilogue).toEqual(
-      computeViewportForBoundsInVisibleCanvas({
-        bounds: {
-          x: 40,
-          y: 40,
-          width: 380,
-          height: 180,
-        },
-        canvas: { width: 320, height: 320 },
-        minZoom: 0.5,
-        maxZoom: 2,
-        padding: DEFAULT_VIEWPORT_FIT_PADDING,
-      }),
-    );
-  });
-
-  it('recentres the full visible diagram after collapsing a single-child chain to a top-level branch', () => {
-    const fromLayout = buildLayout([
-      {
-        id: 'A',
-        pos: { x: 0, y: 0 },
-        size: { width: 520, height: 420 },
-        children: [
-          {
-            id: 'B',
-            pos: { x: 60, y: 120 },
-            size: { width: 360, height: 240 },
-            children: [
-              {
-                id: 'C',
-                pos: { x: 80, y: 80 },
-                size: { width: 180, height: 140 },
-                children: [{ id: 'D', pos: { x: 24, y: 60 }, size: { width: 80, height: 60 } }],
-              },
-            ],
-          },
-        ],
-      },
-    ]);
-    const toLayout = buildLayout([
+  it('recentres the full scene when collapsing a single-child chain to a top-level branch', () => {
+    const layout = buildLayout([
       {
         id: 'A',
         pos: { x: 40, y: 30 },
@@ -465,36 +195,30 @@ describe('buildStructuralCameraAdvisory', () => {
             id: 'B',
             pos: { x: 48, y: 80 },
             size: { width: 220, height: 160 },
-            children: [{ id: 'C', pos: { x: 40, y: 48 }, size: { width: 120, height: 80 } }],
+            children: [
+              {
+                id: 'C',
+                pos: { x: 40, y: 48 },
+                size: { width: 120, height: 80 },
+              },
+            ],
           },
         ],
       },
     ]);
-
-    const advisory = buildStructuralCameraAdvisory({
-      direction: 'out',
-      focus: { kind: 'single', rootId: 'C' },
-      startLayout: fromLayout,
-      endLayout: toLayout,
-      currentViewport: { x: 0, y: 0, zoom: 1 },
-      canvasSize: { width: 320, height: 320 },
-      endPointOfInterestNodeIds: ['C'],
-      ...defaultCameraParams,
-    });
-
-    expect(advisory.epilogue).toEqual(
-      computeViewportForBoundsInVisibleCanvas({
-        bounds: {
-          x: 40,
-          y: 30,
-          width: 360,
-          height: 280,
-        },
-        canvas: { width: 320, height: 320 },
-        minZoom: 0.5,
-        maxZoom: 2,
-        padding: DEFAULT_VIEWPORT_FIT_PADDING,
+    expect(
+      camera(layout, {
+        direction: 'out',
+        focus: { kind: 'single', rootId: 'C' },
+        canvasSize: { width: 320, height: 320 },
+        endPointOfInterestNodeIds: ['C'],
       }),
-    );
+    ).toEqual(fitted({ x: 40, y: 30, width: 360, height: 280 }, { width: 320, height: 320 }));
+  });
+  it('uses the same centred fit for Focus and exit Focus', () => {
+    const bounds = { x: 40, y: 30, width: 1000, height: 600 };
+    const layout = buildLayout([{ id: 'A', pos: bounds, size: bounds }]);
+    for (const direction of ['in', 'out'] as const)
+      expect(camera(layout, { direction, focus: null })).toEqual(fitted(bounds));
   });
 });

@@ -28,7 +28,7 @@ test('n8n has one worker/queue line, independent primary IDs and no shared label
     new Set(presentation.overlayEdges.map((edge) => `${edge.labelAnchor.x},${edge.labelAnchor.y}`))
       .size,
   ).toBe(presentation.overlayEdges.length);
-  const { overlay } = planGalleryTransition(rendered, rendered, 'in');
+  const { overlay } = planGalleryTransition(rendered, rendered);
   const frame = resolveAnimationFrame(overlay, 1000);
   const snapshot = captureTransitionFrameSnapshot({ state: overlay, frame });
   const captured = snapshot.overlayEdges.find((edge) => edge.id === pair[0].id)!;

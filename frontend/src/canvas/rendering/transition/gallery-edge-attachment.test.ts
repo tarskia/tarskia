@@ -53,7 +53,7 @@ it.each(galleryFiles)('$title keeps every single-node toggle edge attached and s
       [collapsed, expanded, 'in'],
       [expanded, collapsed, 'out'],
     ] as const) {
-      const { overlay } = planGalleryTransition(from, to, direction);
+      const { overlay } = planGalleryTransition(from, to);
       for (let step = 0; step <= 20; step++) {
         const frame = resolveAnimationFrame(overlay, step * 50);
         const rects = new Map(frame.nodes.map((node) => [node.id, node.rect]));

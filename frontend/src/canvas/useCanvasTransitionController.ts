@@ -1,4 +1,4 @@
-import type { CompiledDiagramEdge, ViewportState } from '@tarskia/diagram-semantics';
+import type { ViewportState } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import type {
   MotionCallbacks,
@@ -11,8 +11,6 @@ import type {
 import type { DeclarativeDiagramViewState } from '../semantic/view/declarative-view-state';
 import type { LayoutResult } from './rendering/layout/layout-pipeline';
 import type { CanvasRenderSnapshot } from './rendering/presentation/presentation';
-import { FOCUS_SCOPE_CAMERA_PAUSE_MS } from './rendering/transition/animation-constants';
-import type { TransitionPlanningAdvisory } from './rendering/transition/sequencer';
 
 export type TransitionFocus = StructuralTransitionFocus;
 
@@ -44,13 +42,6 @@ export interface UseCanvasTransitionControllerArgs {
   layout: LayoutResult;
   stableSnapshot: CanvasRenderSnapshot;
   declarativeViewState: DeclarativeDiagramViewState;
-  buildTransitionAdvisory: (params: {
-    direction: 'in' | 'out';
-    fromTree: LayoutResult['tree'];
-    toTree: LayoutResult['tree'];
-    fromEdges: CompiledDiagramEdge[];
-    toEdges: CompiledDiagramEdge[];
-  }) => TransitionPlanningAdvisory;
   resolveViewportFocusRoot: (tree: LayoutResult['tree'], requestedRootId: string) => string;
   viewportOps: ViewportOps;
   skipTransitions: boolean;
@@ -73,19 +64,8 @@ export interface CanvasTransitionControllerResult {
 interface ObservedExpandedTransition {
   direction: 'in' | 'out';
   focus: StructuralTransitionFocus | null;
-  changedExpandedNodeIds: string[];
-  fromLayout: LayoutResult;
-  toLayout: LayoutResult;
   onComplete?: MotionCallbacks['onComplete'];
   onSettled?: MotionCallbacks['onSettled'];
-}
-
-interface ObservedScopeTransition {
-  direction: 'in' | 'out';
-  fromLayout: LayoutResult;
-  toLayout: LayoutResult;
-  retainedNodeIds: string[];
-  navigationIntent: NavigationIntent | null;
 }
 
 export const collectChangedExpandedNodeIds = (params: {
@@ -199,39 +179,15 @@ export const buildScopeNavigationIntent = (params: {
 export const buildObservedScopeTransition = (params: {
   previousViewState: DeclarativeDiagramViewState;
   currentViewState: DeclarativeDiagramViewState;
-  previousLayout: LayoutResult;
-  currentLayout: LayoutResult;
-}): ObservedScopeTransition | null => {
-  const { previousViewState, currentViewState, previousLayout, currentLayout } = params;
-  if (
-    !hasOnlyScopeRootChanged({
-      previousViewState,
-      currentViewState,
-    })
-  ) {
-    return null;
-  }
-  return {
-    direction: currentViewState.view.scopeRootId ? 'out' : 'in',
-    fromLayout: previousLayout,
-    toLayout: currentLayout,
-    retainedNodeIds: Array.from(currentLayout.visibleIds).filter((nodeId) =>
-      previousLayout.visibleIds.has(nodeId),
-    ),
-    navigationIntent: buildScopeNavigationIntent({
-      previousViewState,
-      currentViewState,
-      previousLayout,
-      currentLayout,
-    }),
-  };
-};
+}) =>
+  hasOnlyScopeRootChanged(params)
+    ? { direction: params.currentViewState.view.scopeRootId ? ('out' as const) : ('in' as const) }
+    : null;
 
 export function useCanvasTransitionController({
   layout,
   stableSnapshot,
   declarativeViewState,
-  buildTransitionAdvisory,
   resolveViewportFocusRoot,
   viewportOps,
   skipTransitions,
@@ -281,9 +237,6 @@ export function useCanvasTransitionController({
           return {
             direction,
             focus: pendingStructuralTransitionIntent.focus,
-            changedExpandedNodeIds,
-            fromLayout: previousLayoutRef.current,
-            toLayout: layout,
             onComplete: pendingStructuralTransitionIntent.onComplete,
             onSettled: pendingStructuralTransitionIntent.onSettled,
           };
@@ -294,8 +247,6 @@ export function useCanvasTransitionController({
       ? buildObservedScopeTransition({
           previousViewState: previousDeclarativeViewStateRef.current,
           currentViewState: declarativeViewState,
-          previousLayout: previousLayoutRef.current,
-          currentLayout: layout,
         })
       : null;
   const isTransitionQueued =
@@ -340,71 +291,14 @@ export function useCanvasTransitionController({
       return;
     }
 
-    if (observedScopeTransition) {
-      const planningAdvisory = buildTransitionAdvisory({
-        direction: observedScopeTransition.direction,
-        fromTree: observedScopeTransition.fromLayout.tree,
-        toTree: observedScopeTransition.toLayout.tree,
-        fromEdges: observedScopeTransition.fromLayout.edges,
-        toEdges: observedScopeTransition.toLayout.edges,
-      });
-
-      const currentDisplaySnapshot = getCurrentDisplaySnapshot();
-      const startSnapshot =
-        isMotionActive || !previousStableSnapshotRef.current
-          ? currentDisplaySnapshot
-          : previousStableSnapshotRef.current;
-      const exitingScope = observedScopeTransition.direction === 'in';
-
-      startChoreography(
-        {
-          direction: observedScopeTransition.direction,
-          focus: null,
-          startLayout: observedScopeTransition.fromLayout,
-          endLayout: observedScopeTransition.toLayout,
-          startSnapshot,
-          endSnapshot: stableSnapshot,
-          currentViewport: getCurrentViewport(),
-          endPointOfInterestNodeIds: [],
-          pauseBeforeOverlayMs: exitingScope ? FOCUS_SCOPE_CAMERA_PAUSE_MS : undefined,
-          pauseAfterOverlayMs: exitingScope ? undefined : FOCUS_SCOPE_CAMERA_PAUSE_MS,
-          exitScopeRetainedNodeIds: exitingScope
-            ? observedScopeTransition.retainedNodeIds
-            : undefined,
-          postOverlayViewportBridgeNodeIds: exitingScope
-            ? undefined
-            : observedScopeTransition.retainedNodeIds,
-          sharedNodeGeometry: exitingScope ? undefined : 'freeze-from',
-          collectSubtreeIds: viewportOps.collectSubtreeIds,
-          planningAdvisory,
-        },
-        {
-          onComplete: () => {
-            if (!exitingScope && observedScopeTransition.navigationIntent) {
-              requestNavigation(observedScopeTransition.navigationIntent);
-            }
-          },
-        },
-      );
-      syncObservedState();
-      return;
-    }
-
-    const planningAdvisory = buildTransitionAdvisory({
-      direction: observedTransition.direction,
-      fromTree: observedTransition.fromLayout.tree,
-      toTree: observedTransition.toLayout.tree,
-      fromEdges: observedTransition.fromLayout.edges,
-      toEdges: observedTransition.toLayout.edges,
-    });
-
+    const transition = observedScopeTransition ?? observedTransition;
+    const focus = observedScopeTransition ? null : observedTransition?.focus;
     const endPointOfInterestNodeIds = resolvePointOfInterestNodeIds({
-      focus: observedTransition.focus,
-      layout: observedTransition.toLayout,
+      focus,
+      layout,
       resolveViewportFocusRoot,
       collectSubtreeIds: viewportOps.collectSubtreeIds,
     });
-
     const currentDisplaySnapshot = getCurrentDisplaySnapshot();
     const startSnapshot =
       isMotionActive || !previousStableSnapshotRef.current
@@ -413,25 +307,21 @@ export function useCanvasTransitionController({
 
     startChoreography(
       {
-        direction: observedTransition.direction,
-        focus: observedTransition.focus,
-        startLayout: observedTransition.fromLayout,
-        endLayout: observedTransition.toLayout,
+        direction: transition?.direction,
+        focus,
+        endLayout: layout,
         startSnapshot,
         endSnapshot: stableSnapshot,
         currentViewport: getCurrentViewport(),
         endPointOfInterestNodeIds,
-        collectSubtreeIds: viewportOps.collectSubtreeIds,
-        planningAdvisory,
       },
       {
-        onComplete: observedTransition.onComplete,
-        onSettled: observedTransition.onSettled,
+        onComplete: observedTransition?.onComplete,
+        onSettled: observedTransition?.onSettled,
       },
     );
     syncObservedState();
   }, [
-    buildTransitionAdvisory,
     clearPendingStructuralTransitionIntent,
     declarativeViewState,
     getCurrentDisplaySnapshot,

@@ -315,7 +315,7 @@ describe('useCanvasTransitionController helpers', () => {
     });
   });
 
-  it('builds an enter-focus scope transition with deferred navigation', () => {
+  it('builds an enter-focus scope transition for the global camera phase', () => {
     const previousViewState = selectDeclarativeDiagramViewState(
       buildViewDoc({ expanded: { svc: true } }),
     );
@@ -339,18 +339,10 @@ describe('useCanvasTransitionController helpers', () => {
       }),
     ).toMatchObject({
       direction: 'out',
-      fromLayout: previousLayout,
-      toLayout: currentLayout,
-      navigationIntent: {
-        kind: 'fit-node-set',
-        nodeIds: ['api-group', 'api-leaf'],
-        preset: 'focus',
-        deferUntilNextFrame: true,
-      },
     });
   });
 
-  it('builds an exit-focus scope transition with deferred scene navigation', () => {
+  it('builds an exit-focus scope transition for the global camera phase', () => {
     const focusedViewState = selectDeclarativeDiagramViewState(
       buildViewDoc({
         expanded: { svc: true },
@@ -372,13 +364,6 @@ describe('useCanvasTransitionController helpers', () => {
       }),
     ).toMatchObject({
       direction: 'in',
-      fromLayout: previousLayout,
-      toLayout: currentLayout,
-      navigationIntent: {
-        kind: 'fit-scene',
-        preset: 'layout',
-        deferUntilNextFrame: true,
-      },
     });
   });
 

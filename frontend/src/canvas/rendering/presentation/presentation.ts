@@ -195,6 +195,7 @@ export interface CanvasOverlayEdgeView {
   opacity: number;
   selected?: boolean;
   hideLabel?: boolean;
+  labelOpacity?: number;
   solidOverNodeIds: string[];
 }
 

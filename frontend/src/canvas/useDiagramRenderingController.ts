@@ -1,6 +1,5 @@
 import {
   buildSemanticIndex,
-  type CompiledDiagramEdge,
   compileView,
   type DiagramView,
   getSingleChildChainTop,
@@ -11,14 +10,9 @@ import {
 import { useCallback, useMemo } from 'react';
 import { selectDeclarativeDiagramViewState } from '../semantic/view/declarative-view-state';
 import { buildLayoutResult, type LayoutResult } from './rendering/layout/layout-pipeline';
-import {
-  buildTransitionPlanningAdvisory,
-  type TransitionPlanningAdvisory,
-} from './rendering/transition/sequencer';
-import type { TimedTransitionPlan } from './rendering/transition/timed-plan';
 import { collectSubtreeIds } from './rendering/transition/viewport';
 
-export type { LayoutResult, TimedTransitionPlan, TransitionPlanningAdvisory };
+export type { LayoutResult };
 
 const viewportHelpers = {
   collectSubtreeIds,
@@ -40,30 +34,6 @@ export function useDiagramRenderingController(params: {
   const viewState = useMemo(() => compileView(graph, view), [graph, view]);
   const layout = useMemo(() => buildLayoutResult({ graph, viewState }), [graph, viewState]);
 
-  const buildTransitionAdvisory = useCallback(
-    ({
-      direction,
-      fromTree,
-      toTree,
-      fromEdges,
-      toEdges,
-    }: {
-      direction: 'in' | 'out';
-      fromTree: LayoutResult['tree'];
-      toTree: LayoutResult['tree'];
-      fromEdges: CompiledDiagramEdge[];
-      toEdges: CompiledDiagramEdge[];
-    }) =>
-      buildTransitionPlanningAdvisory({
-        direction,
-        fromTree,
-        toTree,
-        fromEdges,
-        toEdges,
-      }),
-    [],
-  );
-
   const resolveViewportFocusRoot = useCallback(
     (tree: LayoutResult['tree'], requestedRootId: string) =>
       getSingleChildChainTop(tree, requestedRootId),
@@ -74,10 +44,9 @@ export function useDiagramRenderingController(params: {
       graph,
       layout,
       declarativeViewState,
-      buildTransitionAdvisory,
       resolveViewportFocusRoot,
       viewport: viewportHelpers,
     }),
-    [buildTransitionAdvisory, declarativeViewState, graph, layout, resolveViewportFocusRoot],
+    [declarativeViewState, graph, layout, resolveViewportFocusRoot],
   );
 }

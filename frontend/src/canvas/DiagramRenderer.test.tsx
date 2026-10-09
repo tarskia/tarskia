@@ -24,7 +24,7 @@ it('keeps one interactive node/edge tree through frames, retarget and final geom
   const gallery = loadGallery('n8n.yaml');
   const initial = gallery.render([]),
     expanded = gallery.render(['browser-editor-shell']);
-  const { overlay: state } = planGalleryTransition(initial, expanded, 'in');
+  const { overlay: state } = planGalleryTransition(initial, expanded);
   const store = createOverlayFrameStore();
   const zoom = vi.fn(() => true);
   const bindings = {
@@ -58,6 +58,19 @@ it('keeps one interactive node/edge tree through frames, retarget and final geom
     const node = host.querySelector<HTMLElement>('[data-render-node="browser-editor-shell"]');
     if (!node) throw new Error('Expected real gallery node');
     const path = host.querySelector('[data-render-edge] .edge-underlay-path');
+    const hiddenLabels = resolveAnimationFrame(state, 300);
+    hiddenLabels.edges = hiddenLabels.edges.map((edge) => ({ ...edge, labelOpacity: 0 }));
+    await act(async () => store.publish(hiddenLabels));
+    const labelButtons = [
+      ...host.querySelectorAll<HTMLButtonElement>('[data-render-label] button'),
+    ];
+    expect(labelButtons.length).toBeGreaterThan(0);
+    expect(labelButtons.every((button) => button.disabled)).toBe(true);
+    expect(
+      [...host.querySelectorAll('[data-render-edge] .edge-hit-path')].some(
+        (path) => path.getAttribute('pointer-events') === 'stroke',
+      ),
+    ).toBe(true);
     const initialCommits = commits.mock.calls.length;
     for (let step = 1; step <= 8; step++)
       await act(async () => store.publish(resolveAnimationFrame(state, step * 50)));
@@ -77,7 +90,6 @@ it('keeps one interactive node/edge tree through frames, retarget and final geom
     const { overlay: retarget } = planGalleryTransition(
       { ...expanded, presentation: current },
       initial,
-      'out',
     );
     store.publish(resolveAnimationFrame(retarget, 0));
     await act(async () => root.render(render(current, retarget)));
