@@ -1,6 +1,5 @@
 import type { CompiledDiagramEdge } from '@tarskia/diagram-semantics';
 import type { LayoutTree } from '../layout/tree-traverser';
-import type { AnimationSettings } from './animation-constants';
 import { buildSequencedTransitionAdvisory } from './sequencer/entities';
 import { buildTransitionGeometryAdvisory } from './sequencer/geometry';
 import { buildStructuralTransitionDiff } from './sequencer/structure';
@@ -40,10 +39,8 @@ export function buildTransitionPlanningAdvisory(params: {
   toTree: LayoutTree;
   fromEdges?: CompiledDiagramEdge[];
   toEdges?: CompiledDiagramEdge[];
-  animationSettings?: AnimationSettings;
 }): TransitionPlanningAdvisory {
-  const { direction = 'in', fromTree, toTree, fromEdges, toEdges, animationSettings } = params;
-  void animationSettings;
+  const { direction = 'in', fromTree, toTree, fromEdges, toEdges } = params;
   const structure = buildStructuralTransitionDiff({
     direction,
     fromTree,

@@ -2,31 +2,22 @@ import type { SchemaModule, SemanticDocument } from '@tarskia/diagram-semantics'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { collectRectBounds } from '../canvas/focus-viewport';
 import { buildStaticCanvasPresentation } from '../canvas/rendering/presentation/presentation';
-import type { AnimationSettings } from '../canvas/rendering/transition/animation-constants';
 import { useCanvasTransitionController } from '../canvas/useCanvasTransitionController';
 import { useCanvasViewportAdapter } from '../canvas/useCanvasViewportAdapter';
 import { useDiagramRenderingController } from '../canvas/useDiagramRenderingController';
 import { type CanvasSize, measureCanvasElement } from './canvas-size';
-import type {
-  DiagramCameraPolicy,
-  DiagramCameraRect,
-  StructuralTransitionIntent,
-} from './motion-types';
+import type { DiagramCameraRect, StructuralTransitionIntent } from './motion-types';
 import { useCanvasBootstrapController } from './useCanvasBootstrapController';
 import { useDiagramMotionManager } from './useDiagramMotionManager';
 
 export interface UseDiagramEngineArgs {
   doc: SemanticDocument;
   schema: SchemaModule;
-  animationSettings: AnimationSettings;
   skipTransitions: boolean;
   showDebug: boolean;
   persistViewport: (viewport: { x: number; y: number; zoom: number }) => void;
-  traceSelection?: (event: string, payload?: Record<string, unknown>) => void;
   savedViewport?: { x: number; y: number; zoom: number };
   initialViewportKey?: string;
-  cameraPolicy?: DiagramCameraPolicy;
-  leftOcclusion?: number;
   minZoom: number;
   maxZoom: number;
 }
@@ -36,15 +27,11 @@ export const resolveTransitionLiteMode = (hasTransitionOverlay: boolean) => hasT
 export function useDiagramEngine({
   doc,
   schema,
-  animationSettings,
   skipTransitions,
   showDebug,
   persistViewport,
-  traceSelection,
   savedViewport,
   initialViewportKey,
-  cameraPolicy,
-  leftOcclusion,
   minZoom,
   maxZoom,
 }: UseDiagramEngineArgs) {
@@ -102,18 +89,11 @@ export function useDiagramEngine({
     [rendering.layout, showDebug],
   );
 
-  const getEffectiveLeftOcclusion = useCallback(
-    () => leftOcclusion ?? viewportAdapter.getLeftOcclusion(),
-    [leftOcclusion, viewportAdapter],
-  );
-
   const motion = useDiagramMotionManager({
     initialViewportKey,
     stableSnapshot,
     skipTransitions,
-    animationSettings,
     savedViewport,
-    cameraPolicy,
     getCurrentCanvasSize,
     minZoom,
     maxZoom,
@@ -121,7 +101,6 @@ export function useDiagramEngine({
     onCanvasInit: viewportAdapter.onCanvasInit,
     onCanvasUnmount: viewportAdapter.onCanvasUnmount,
     getCurrentViewport: viewportAdapter.getCurrentViewport,
-    getLeftOcclusion: getEffectiveLeftOcclusion,
     getSceneBounds: () => sceneBoundsRef.current,
     getNodeSetBounds: (nodeIds) => {
       const rects = nodeIds
@@ -150,7 +129,6 @@ export function useDiagramEngine({
     buildTransitionAdvisory: rendering.buildTransitionAdvisory,
     resolveViewportFocusRoot: rendering.resolveViewportFocusRoot,
     viewportOps: rendering.viewport,
-    animationSettings,
     skipTransitions,
     getCurrentViewport: motion.getCurrentViewport,
     getCurrentDisplaySnapshot: motion.getCurrentDisplaySnapshot,
@@ -162,7 +140,6 @@ export function useDiagramEngine({
     clearPendingStructuralTransitionIntent: () => {
       pendingStructuralTransitionIntentRef.current = null;
     },
-    traceSelection,
   });
 
   const { compiled, isTransitionQueued, cancelTransitions } = transitions;
@@ -196,9 +173,6 @@ export function useDiagramEngine({
     sceneBounds: sceneBoundsRef.current,
     minZoom,
     maxZoom,
-    animationSettings,
-    cameraPolicy,
-    getLeftOcclusion: getEffectiveLeftOcclusion,
     canvasReady: motion.canvasReady,
     requestNavigation: motion.requestNavigation,
   });
@@ -210,7 +184,6 @@ export function useDiagramEngine({
     canvasLayoutVersion,
     onCanvasInit: motion.onCanvasInit,
     onCanvasUnmount: motion.onCanvasUnmount,
-    setLeftOcclusion: viewportAdapter.setLeftOcclusion,
     getCurrentViewport: motion.getCurrentViewport,
     screenToWorldPosition: viewportAdapter.screenToWorldPosition,
     requestNavigation: motion.requestNavigation,
@@ -234,7 +207,6 @@ export function useDiagramEngine({
     motionPhase: motion.motionPhase,
     initialViewportPending: bootstrap.initialViewportPending,
     requiredHostGeneration: motion.requiredHostGeneration,
-    frameDurations: motion.frameDurations,
     cancelTransitions,
   };
 }

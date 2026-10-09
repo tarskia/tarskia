@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LayoutResult } from '../canvas/rendering/layout/layout-pipeline';
 import type { CanvasOverlayEdgeView } from '../canvas/rendering/presentation/presentation';
 import {
-  DEFAULT_ANIMATION_SETTINGS,
+  ANIMATION_CONSTANTS,
   DEFAULT_VIEWPORT_FIT_PADDING,
   FOCUS_SCOPE_CAMERA_PAUSE_MS,
 } from '../canvas/rendering/transition/animation-constants';
@@ -23,7 +23,6 @@ import {
   computePostOverlayBridgeViewport,
   computeStructuralCameraDurationMs,
   computeStructuralOverlayDurationMs,
-  computeStructuralOverlayPhaseWindow,
   shouldDisplayTransitionOverlay,
   useDiagramMotionManager,
 } from './useDiagramMotionManager';
@@ -164,7 +163,6 @@ function renderManager(params?: {
   const rawOnCanvasUnmount = vi.fn();
   let currentViewport = params?.initialViewport ?? { x: 0, y: 0, zoom: 1 };
   const getCurrentViewport = vi.fn(() => currentViewport);
-  const getLeftOcclusion = vi.fn(() => 0);
   const getSceneBounds = vi.fn(() => ({ x: 0, y: 0, width: 480, height: 320 }));
   const getNodeSetBounds = vi.fn(() => ({ x: 120, y: 80, width: 240, height: 180 }));
   const setViewport = vi.fn((viewport: typeof currentViewport) => {
@@ -177,7 +175,6 @@ function renderManager(params?: {
     captured = useDiagramMotionManager({
       stableSnapshot: buildSnapshot(),
       skipTransitions: params?.skipTransitions,
-      animationSettings: DEFAULT_ANIMATION_SETTINGS,
       savedViewport: undefined,
       getCurrentCanvasSize: params?.getCurrentCanvasSize ?? (() => ({ width: 960, height: 640 })),
       minZoom: 0.5,
@@ -186,7 +183,6 @@ function renderManager(params?: {
       onCanvasInit: rawOnCanvasInit,
       onCanvasUnmount: rawOnCanvasUnmount,
       getCurrentViewport,
-      getLeftOcclusion,
       getSceneBounds,
       getNodeSetBounds,
       setViewport,
@@ -204,7 +200,6 @@ function renderManager(params?: {
     rawOnCanvasInit,
     rawOnCanvasUnmount,
     getCurrentViewport,
-    getLeftOcclusion,
     getSceneBounds,
     getNodeSetBounds,
     setViewport,
@@ -216,12 +211,27 @@ describe('useDiagramMotionManager', () => {
   const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
   const originalCancelAnimationFrame = globalThis.cancelAnimationFrame;
 
+  let now = 0;
+  let nextFrameId = 0;
+  const frames = new Map<number, FrameRequestCallback>();
+  const finishFrames = () => {
+    for (let step = 0; step < 30 && frames.size; step++) {
+      now += 100;
+      const pending = [...frames.values()];
+      frames.clear();
+      for (const callback of pending) callback(now);
+    }
+  };
   beforeEach(() => {
+    now = 0;
+    nextFrameId = 0;
+    frames.clear();
+    vi.spyOn(performance, 'now').mockImplementation(() => now);
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-      callback(performance.now() + 200);
-      return 1;
+      frames.set(++nextFrameId, callback);
+      return nextFrameId;
     });
-    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
   });
 
   afterEach(() => {
@@ -248,14 +258,13 @@ describe('useDiagramMotionManager', () => {
         minZoom: 0.5,
         maxZoom: 2,
         padding: DEFAULT_VIEWPORT_FIT_PADDING,
-        leftOcclusion: 0,
       }),
     );
     expect(frame).not.toHaveBeenCalled();
   });
 
   it('scales structural camera duration with viewport travel', () => {
-    const baseDurationMs = DEFAULT_ANIMATION_SETTINGS.viewport.cameraDuration;
+    const baseDurationMs = ANIMATION_CONSTANTS.viewport.cameraDuration;
 
     const localDurationMs = computeStructuralCameraDurationMs({
       from: { x: 0, y: 0, zoom: 1 },
@@ -282,27 +291,6 @@ describe('useDiagramMotionManager', () => {
     });
 
     expect(overlayDurationMs).toBe(399);
-  });
-
-  it('trims leading no-op time from structural overlay phase windows', () => {
-    const phaseWindow = computeStructuralOverlayPhaseWindow({
-      totalDuration: 100,
-      basePositions: {},
-      targetPositions: {},
-      nodeTimings: new Map([
-        [
-          'node-1',
-          {
-            moveX: { start: 0.08, end: 0.2 },
-            resizeY: { start: 0.2, end: 0.4 },
-          },
-        ],
-      ]),
-      childFadeByParent: new Map(),
-      edgePlans: [],
-    });
-
-    expect(phaseWindow).toEqual({ start: 0.08, end: 1 });
   });
 
   it('bridges a relaid scoped node set back to its pre-fade screen position', () => {
@@ -448,9 +436,7 @@ describe('useDiagramMotionManager', () => {
         planningAdvisory: buildEmptyPlanningAdvisory('in'),
         persistFinalViewport: true,
       },
-      animationSettings: DEFAULT_ANIMATION_SETTINGS,
       canvasSize: { width: 960, height: 640 },
-      leftOcclusion: 0,
       minZoom: 0.1,
       maxZoom: 2,
     });
@@ -470,7 +456,6 @@ describe('useDiagramMotionManager', () => {
         minZoom: 0.1,
         maxZoom: 2,
         padding: DEFAULT_VIEWPORT_FIT_PADDING,
-        leftOcclusion: 0,
       }),
     );
     expect(plan.segments[2]).toEqual({ durationMs: FOCUS_SCOPE_CAMERA_PAUSE_MS });
@@ -510,9 +495,7 @@ describe('useDiagramMotionManager', () => {
         planningAdvisory: buildEmptyPlanningAdvisory('out'),
         persistFinalViewport: true,
       },
-      animationSettings: DEFAULT_ANIMATION_SETTINGS,
       canvasSize: { width: 960, height: 640 },
-      leftOcclusion: 0,
       minZoom: 0.1,
       maxZoom: 2,
     });
@@ -573,7 +556,6 @@ describe('useDiagramMotionManager', () => {
         childOpacity: node.content.childOpacity ?? 1,
       })),
       edges: [buildOverlayEdge({ opacity: 0.35 })],
-      overlayEdges: [],
     } satisfies TransitionOverlayFrame;
 
     expect(
@@ -593,12 +575,12 @@ describe('useDiagramMotionManager', () => {
     manager.requestNavigation({
       kind: 'fit-scene',
       preset: 'search-reveal',
-      duration: 0,
     });
 
     expect(setViewport).not.toHaveBeenCalled();
 
     manager.notifyDisplayHostSettled(1);
+    finishFrames();
 
     expect(setViewport).toHaveBeenCalledWith(
       computeViewportForBoundsInVisibleCanvas({
@@ -607,7 +589,6 @@ describe('useDiagramMotionManager', () => {
         minZoom: 0.5,
         maxZoom: 2,
         padding: DEFAULT_VIEWPORT_FIT_PADDING,
-        leftOcclusion: 0,
       }),
     );
   });
@@ -627,7 +608,6 @@ describe('useDiagramMotionManager', () => {
 
     const result = manager.requestNavigation({
       kind: 'fit-scene',
-      duration: 0,
       persist: false,
       waitForHostSettle: true,
       deferUntilNextFrame: true,
@@ -646,6 +626,17 @@ describe('useDiagramMotionManager', () => {
     expect(setViewport).not.toHaveBeenCalled();
 
     manager.notifyDisplayHostSettled(1);
+    expect(setViewport).not.toHaveBeenLastCalledWith(
+      computeViewportForBoundsInVisibleCanvas({
+        bounds: currentBounds,
+        canvas: { width: 960, height: 640 },
+        minZoom: 0.5,
+        maxZoom: 2,
+        padding: DEFAULT_VIEWPORT_FIT_PADDING,
+      }),
+    );
+    now += 1000;
+    for (const callback of queuedFrames.splice(0)) callback(now);
 
     expect(setViewport).toHaveBeenCalledWith(
       computeViewportForBoundsInVisibleCanvas({
@@ -654,26 +645,25 @@ describe('useDiagramMotionManager', () => {
         minZoom: 0.5,
         maxZoom: 2,
         padding: DEFAULT_VIEWPORT_FIT_PADDING,
-        leftOcclusion: 0,
       }),
     );
   });
 
-  it('fits an explicit rect for focus navigation after the host settles', () => {
+  it('fits the requested node bounds for focus navigation after the host settles', () => {
     const { manager, setViewport } = renderManager();
     const rect = { x: 120, y: 80, width: 240, height: 180 };
 
     manager.onCanvasInit({} as never);
     manager.requestNavigation({
-      kind: 'fit-rect',
-      rect,
+      kind: 'fit-node-set',
+      nodeIds: ['node-1'],
       preset: 'focus',
-      duration: 0,
     });
 
     expect(setViewport).not.toHaveBeenCalled();
 
     manager.notifyDisplayHostSettled(1);
+    finishFrames();
 
     expect(setViewport).toHaveBeenCalledWith(
       computeViewportForBoundsInVisibleCanvas({
@@ -682,7 +672,6 @@ describe('useDiagramMotionManager', () => {
         minZoom: 0.5,
         maxZoom: 2,
         padding: DEFAULT_VIEWPORT_FIT_PADDING,
-        leftOcclusion: 0,
       }),
     );
   });
@@ -700,17 +689,16 @@ describe('useDiagramMotionManager', () => {
       kind: 'ensure-visible',
       preset: 'selection',
       rect,
-      duration: 0,
     });
 
     expect(result).toEqual({ status: 'queued', reason: 'motion-plan' });
+    finishFrames();
     expect(setViewport).toHaveBeenCalledWith(
       computeViewportToKeepRectVisible({
         viewport: { x: 0, y: 0, zoom: 1 },
         canvas: { width: 640, height: 640 },
         rect,
         padding: 40,
-        leftOcclusion: 0,
       }),
     );
   });
@@ -725,7 +713,6 @@ describe('useDiagramMotionManager', () => {
       kind: 'ensure-visible',
       preset: 'selection',
       rect: { x: 920, y: 120, width: 180, height: 100 },
-      duration: 0,
     });
 
     expect(result).toEqual({ status: 'unavailable', reason: 'missing-canvas' });
@@ -740,7 +727,6 @@ describe('useDiagramMotionManager', () => {
       kind: 'ensure-visible',
       preset: 'selection',
       rect: { x: 120, y: 120, width: 180, height: 100 },
-      duration: 0,
     });
 
     expect(result).toEqual({ status: 'noop', reason: 'no-target' });
@@ -754,14 +740,12 @@ describe('useDiagramMotionManager', () => {
       minZoom: 0.5,
       maxZoom: 2,
       padding: DEFAULT_VIEWPORT_FIT_PADDING,
-      leftOcclusion: 0,
     });
     const { manager, setViewport } = renderManager({ initialViewport: currentViewport });
 
     manager.onCanvasInit({} as never);
     const result = manager.requestNavigation({
       kind: 'fit-scene',
-      duration: 0,
     });
 
     expect(result).toEqual({ status: 'noop', reason: 'same-viewport' });
@@ -800,12 +784,12 @@ describe('useDiagramMotionManager', () => {
       kind: 'ensure-visible',
       preset: 'selection',
       rect: { x: 920, y: 120, width: 180, height: 100 },
-      duration: 0,
     });
 
     expect(setViewport).not.toHaveBeenCalled();
 
     manager.reportUserGestureEnd({ x: 0, y: 0, zoom: 1 });
+    finishFrames();
 
     expect(setViewport).toHaveBeenCalledWith(
       computeViewportToKeepRectVisible({
@@ -813,7 +797,6 @@ describe('useDiagramMotionManager', () => {
         canvas: { width: 960, height: 640 },
         rect: { x: 920, y: 120, width: 180, height: 100 },
         padding: 40,
-        leftOcclusion: 0,
       }),
     );
   });
@@ -869,6 +852,7 @@ describe('useDiagramMotionManager', () => {
     expect(manager.getCurrentDisplaySnapshot().nodes[0]?.rect.x).toBe(0);
 
     manager.reportUserGestureEnd({ x: 0, y: 0, zoom: 1 });
+    finishFrames();
 
     expect(manager.getCurrentDisplaySnapshot().nodes[0]?.rect.x).toBe(100);
   });

@@ -30,8 +30,6 @@ export interface DiagramCanvasProps {
   onCanvasElementChange?: (element: HTMLDivElement | null) => void;
   defaultViewport?: { x: number; y: number; zoom: number };
   hidden?: boolean;
-  leftOcclusion?: number;
-  onLeftOcclusionChange?: (leftOcclusion: number) => void;
   nodeVisualMode: NodeVisualMode;
   hideHostVisuals: boolean;
   nodes: Node[];
@@ -47,7 +45,6 @@ export interface DiagramCanvasProps {
   onInit: (instance: ReactFlowInstance) => void;
   onUnmount?: () => void;
   onPaneClick: () => void;
-  onMoveStart: OnMoveStart;
   onMove: OnMove;
   onMoveEnd: OnMove;
   minZoom: number;
@@ -76,8 +73,6 @@ export function DiagramCanvas({
   onCanvasElementChange,
   defaultViewport,
   hidden = false,
-  leftOcclusion = 0,
-  onLeftOcclusionChange,
   nodeVisualMode,
   hideHostVisuals,
   nodes,
@@ -93,7 +88,6 @@ export function DiagramCanvas({
   onInit,
   onUnmount,
   onPaneClick,
-  onMoveStart,
   onMove,
   onMoveEnd,
   minZoom,
@@ -113,10 +107,6 @@ export function DiagramCanvas({
     },
     [canvasRef, onCanvasElementChange],
   );
-
-  useLayoutEffect(() => {
-    onLeftOcclusionChange?.(leftOcclusion);
-  }, [leftOcclusion, onLeftOcclusionChange]);
 
   useEffect(() => {
     const effectGeneration = unmountEffectGenerationRef.current + 1;
@@ -140,11 +130,7 @@ export function DiagramCanvas({
       className={`canvas h-full w-full canvas-visual-${nodeVisualMode}${hideHostVisuals ? ' canvas-host-hidden' : ''}${hidden ? ' invisible' : ''}`}
     >
       {focusShells && focusShells.length > 0 ? (
-        <CanvasFocusShellOverlay
-          shells={focusShells}
-          leftOcclusion={leftOcclusion}
-          onSelectShell={onSelectFocusShell}
-        />
+        <CanvasFocusShellOverlay shells={focusShells} onSelectShell={onSelectFocusShell} />
       ) : null}
       <ReactFlow
         nodes={nodes}
@@ -157,7 +143,6 @@ export function DiagramCanvas({
         onNodeContextMenu={onNodeContextMenu}
         onInit={onInit}
         onPaneClick={onPaneClick}
-        onMoveStart={onMoveStart}
         onMove={onMove}
         onMoveEnd={onMoveEnd}
         nodesDraggable={false}

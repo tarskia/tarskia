@@ -1,14 +1,8 @@
 import type { ViewportState } from '@tarskia/diagram-semantics';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { AnimationSettings } from '../canvas/rendering/transition/animation-constants';
 import { resolveNavigationPolicy, resolveNavigationViewport } from './camera-navigation';
 import type { CanvasSize, GetCurrentCanvasSize } from './canvas-size';
-import type {
-  DiagramCameraPolicy,
-  DiagramCameraRect,
-  NavigationIntent,
-  NavigationRequestResult,
-} from './motion-types';
+import type { DiagramCameraRect, NavigationIntent, NavigationRequestResult } from './motion-types';
 
 const MIN_BOOTSTRAP_CANVAS_LENGTH = 32;
 
@@ -27,9 +21,6 @@ interface UseCanvasBootstrapControllerArgs {
   sceneBounds: DiagramCameraRect | null;
   minZoom: number;
   maxZoom: number;
-  animationSettings: AnimationSettings;
-  cameraPolicy?: DiagramCameraPolicy;
-  getLeftOcclusion: () => number;
   canvasReady: boolean;
   requestNavigation: (intent: NavigationIntent) => NavigationRequestResult;
 }
@@ -66,9 +57,6 @@ export function useCanvasBootstrapController({
   sceneBounds,
   minZoom,
   maxZoom,
-  animationSettings,
-  cameraPolicy,
-  getLeftOcclusion,
   canvasReady,
   requestNavigation,
 }: UseCanvasBootstrapControllerArgs): CanvasBootstrapControllerResult {
@@ -78,15 +66,14 @@ export function useCanvasBootstrapController({
   const initializeIntent = useMemo<NavigationIntent>(
     () => ({
       kind: 'initialize-diagram',
-      mode: cameraPolicy?.openingMode,
       persist: true,
       waitForHostSettle: false,
     }),
-    [cameraPolicy?.openingMode],
+    [],
   );
   const initializePolicy = useMemo(
-    () => resolveNavigationPolicy(initializeIntent, animationSettings, cameraPolicy),
-    [animationSettings, cameraPolicy, initializeIntent],
+    () => resolveNavigationPolicy(initializeIntent),
+    [initializeIntent],
   );
   const defaultViewport = useMemo(() => {
     if (!initialViewportKey || pendingKey !== initialViewportKey) {
@@ -96,7 +83,6 @@ export function useCanvasBootstrapController({
     void canvasLayoutVersion;
     const canvasSize = getCurrentCanvasSize();
     const usableCanvasSize = isBootstrapCanvasSizeUsable(canvasSize) ? canvasSize : null;
-    const leftOcclusion = getLeftOcclusion();
     const viewport =
       resolveNavigationViewport({
         intent: initializeIntent,
@@ -108,7 +94,6 @@ export function useCanvasBootstrapController({
         canvasSize: usableCanvasSize,
         sceneBounds,
         currentViewport: savedViewport ?? { x: 0, y: 0, zoom: 1 },
-        leftOcclusion,
         minZoom,
         maxZoom,
         getNodeSetBounds: () => null,
@@ -120,7 +105,7 @@ export function useCanvasBootstrapController({
     pendingKey,
     canvasLayoutVersion,
     getCurrentCanvasSize,
-    getLeftOcclusion,
+
     initializeIntent,
     initializePolicy,
     maxZoom,

@@ -5,7 +5,6 @@ import { act, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { ReactFlowInstance } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
-import { DEFAULT_ANIMATION_SETTINGS } from '../canvas/rendering/transition/animation-constants';
 import { resolveTransitionOverlayFrame } from '../canvas/rendering/transition/overlay';
 import { loadGallery } from '../test/curated-rendering';
 import { useDiagramEngine } from './useDiagramEngine';
@@ -33,8 +32,7 @@ it.each([
     expanded = gallery.render(['browser-editor-shell']);
   expect(expanded.presentation.nodes.length).toBeGreaterThan(initial.presentation.nodes.length);
   let engine!: ReturnType<typeof useDiagramEngine>;
-  const persistViewport = vi.fn(),
-    traceSelection = vi.fn();
+  const persistViewport = vi.fn();
   let hostRenders = 0;
   const phases = new Set<string>();
   const receivedFrames = new Set<number>();
@@ -52,11 +50,9 @@ it.each([
     engine = useDiagramEngine({
       doc,
       schema: gallery.graph.schema,
-      animationSettings: DEFAULT_ANIMATION_SETTINGS,
       skipTransitions: false,
       showDebug: false,
       persistViewport,
-      traceSelection,
       minZoom: 0.01,
       maxZoom: 2,
     });

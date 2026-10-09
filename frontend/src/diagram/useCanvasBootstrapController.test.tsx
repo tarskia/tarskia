@@ -1,10 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  DEFAULT_ANIMATION_SETTINGS,
-  DEFAULT_VIEWPORT_FIT_PADDING,
-} from '../canvas/rendering/transition/animation-constants';
+import { DEFAULT_VIEWPORT_FIT_PADDING } from '../canvas/rendering/transition/animation-constants';
 import { computeViewportForBoundsInVisibleCanvas } from '../canvas/viewport-visibility';
 import {
   resolvePendingBootstrapAction,
@@ -69,8 +66,6 @@ describe('useCanvasBootstrapController', () => {
         sceneBounds,
         minZoom: 0.1,
         maxZoom: 2,
-        animationSettings: DEFAULT_ANIMATION_SETTINGS,
-        getLeftOcclusion: () => 0,
         canvasReady: false,
         requestNavigation: vi.fn(),
       });
@@ -90,7 +85,6 @@ describe('useCanvasBootstrapController', () => {
         minZoom: 0.1,
         maxZoom: 2,
         padding: DEFAULT_VIEWPORT_FIT_PADDING,
-        leftOcclusion: 0,
       }),
     );
   });

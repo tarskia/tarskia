@@ -28,7 +28,6 @@ interface UseDiagramSurfaceArgs {
   };
   setSelectedEntity: (id: string | undefined) => void;
   setSelectedEdge: (id: string | undefined) => void;
-  traceSelection?: (event: string, payload?: Record<string, unknown>) => void;
   showDebug: boolean;
   nodeVisualMode: NodeVisualMode;
   triggerEntityZoom: (entityId: string, direction: 'in' | 'out') => boolean;
@@ -53,7 +52,6 @@ export function useDiagramSurface({
   searchMatches,
   setSelectedEntity,
   setSelectedEdge,
-  traceSelection,
   showDebug,
   nodeVisualMode,
   triggerEntityZoom,
@@ -74,7 +72,6 @@ export function useDiagramSurface({
       onCanvasElementChange: diagramEngine.onCanvasElementChange,
       onCanvasInit: diagramEngine.onCanvasInit,
       onCanvasUnmount: diagramEngine.onCanvasUnmount,
-      onLeftOcclusionChange: diagramEngine.setLeftOcclusion,
       showDebug,
       getCurrentCanvasSize: diagramEngine.getCurrentCanvasSize,
       canvasLayoutVersion: diagramEngine.canvasLayoutVersion,
@@ -120,10 +117,6 @@ export function useDiagramSurface({
       isTransitionQueued: diagramEngine.isTransitionQueued,
       motionPhase: diagramEngine.motionPhase,
       requiredHostGeneration: diagramEngine.requiredHostGeneration,
-      frameDurations: diagramEngine.frameDurations,
-    },
-    telemetry: {
-      traceSelection,
     },
   });
 }

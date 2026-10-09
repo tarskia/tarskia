@@ -1,5 +1,5 @@
 import type { LayoutTree } from '../../layout/tree-traverser';
-import { ANIMATION_CONSTANTS, type AnimationSettings } from '../animation-constants';
+import { ANIMATION_CONSTANTS } from '../animation-constants';
 
 export const DEFAULT_TIMELINE_MS = ANIMATION_CONSTANTS.timelineMs;
 
@@ -43,25 +43,16 @@ export const buildDepthMap = (tree: LayoutTree) => {
   return depths;
 };
 
-export const buildSegmentOrder = (direction: 'in' | 'out') => {
-  if (direction === 'out') {
-    // Collapse: fade contents, shrink containers, then move dependents into
-    // the vacated space. Doing move-before-resize causes temporary overlap.
-    return ['fade', 'shrink', 'move', 'grow'] as const;
-  }
-  return ['shrink', 'move', 'grow', 'fade'] as const;
-};
-
 export const getInterSegmentPause = (
   direction: 'in' | 'out',
-  timelineMs: AnimationSettings['timelineMs'] = DEFAULT_TIMELINE_MS,
+  timelineMs: typeof ANIMATION_CONSTANTS.timelineMs = DEFAULT_TIMELINE_MS,
 ) => (direction === 'in' ? 0 : timelineMs.pause);
 
 export const durationForSegment = (
   segment: string,
   direction: 'in' | 'out',
   fadeIn: number,
-  timelineMs: AnimationSettings['timelineMs'] = DEFAULT_TIMELINE_MS,
+  timelineMs: typeof ANIMATION_CONSTANTS.timelineMs = DEFAULT_TIMELINE_MS,
 ) => {
   switch (segment) {
     case 'move':
@@ -74,33 +65,4 @@ export const durationForSegment = (
     default:
       return 0;
   }
-};
-
-export const buildSegmentWindows = (
-  direction: 'in' | 'out',
-  depthIndex: number,
-  depthDuration: number,
-  totalDuration: number,
-  fadeIn: number,
-  timelineMs: AnimationSettings['timelineMs'] = DEFAULT_TIMELINE_MS,
-): Record<string, { start: number; end: number }> => {
-  const sequence = buildSegmentOrder(direction);
-  const interSegmentPause = getInterSegmentPause(direction, timelineMs);
-  const baseOffset = depthIndex * depthDuration;
-  let cursor = baseOffset;
-  const windows: Record<string, { start: number; end: number }> = {};
-  sequence.forEach((segment, index) => {
-    const duration = durationForSegment(segment, direction, fadeIn, timelineMs);
-    const start = cursor;
-    const end = cursor + duration;
-    windows[segment] = {
-      start: start / totalDuration,
-      end: end / totalDuration,
-    };
-    cursor = end;
-    if (index < sequence.length - 1) {
-      cursor += interSegmentPause;
-    }
-  });
-  return windows;
 };

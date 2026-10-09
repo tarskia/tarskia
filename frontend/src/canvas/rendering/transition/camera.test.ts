@@ -343,51 +343,6 @@ describe('buildStructuralCameraAdvisory', () => {
     expect(advisory.epilogue).toBeUndefined();
   });
 
-  it('treats space behind the left sidebar as non-visible for expansion prelude fits', () => {
-    const fromLayout = buildLayout([
-      {
-        id: 'A',
-        pos: { x: 40, y: 40 },
-        size: { width: 180, height: 120 },
-      },
-    ]);
-    const toLayout = buildLayout([
-      {
-        id: 'A',
-        pos: { x: 40, y: 40 },
-        size: { width: 180, height: 120 },
-      },
-    ]);
-
-    const advisory = buildStructuralCameraAdvisory({
-      direction: 'in',
-      focus: { kind: 'global' },
-      startLayout: fromLayout,
-      endLayout: toLayout,
-      currentViewport: { x: 0, y: 0, zoom: 1 },
-      canvasSize: { width: 280, height: 220 },
-      leftOcclusion: 120,
-      endPointOfInterestNodeIds: ['A'],
-      ...defaultCameraParams,
-    });
-
-    const visibleFit = computeViewportForBoundsInVisibleCanvas({
-      bounds: {
-        x: 40,
-        y: 40,
-        width: 180,
-        height: 120,
-      },
-      canvas: { width: 280, height: 220 },
-      minZoom: 0.5,
-      maxZoom: 2,
-      padding: DEFAULT_VIEWPORT_FIT_PADDING,
-      leftOcclusion: 120,
-    });
-
-    expect(advisory.prelude).toEqual(visibleFit);
-  });
-
   it('adds an epilogue fit after collapse when the anchor journey is visible but the final target still needs framing', () => {
     const fromLayout = buildLayout([
       {

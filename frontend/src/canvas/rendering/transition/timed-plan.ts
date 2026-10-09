@@ -1,4 +1,4 @@
-import { ANIMATION_CONSTANTS, type AnimationSettings } from './animation-constants';
+import { ANIMATION_CONSTANTS } from './animation-constants';
 import type {
   ChildFadeTiming,
   EdgePlan,
@@ -68,7 +68,7 @@ const buildStepChannelUsage = (
 const getOrderedTimedChannels = (
   kind: StructuralStepKind,
   usage: StepChannelUsage | undefined,
-  timelineMs: AnimationSettings['timelineMs'],
+  timelineMs: typeof ANIMATION_CONSTANTS.timelineMs,
 ): TimedChannel[] => {
   switch (kind) {
     case 'move':
@@ -92,7 +92,7 @@ const getStepDuration = (
   kind: StructuralStepKind,
   stepChannelUsage: Map<string, StepChannelUsage>,
   fadeInMultiplier: number,
-  timelineMs: AnimationSettings['timelineMs'],
+  timelineMs: typeof ANIMATION_CONSTANTS.timelineMs,
 ) => {
   switch (kind) {
     case 'fadeOut':
@@ -117,7 +117,7 @@ const resolveStepChannelWindow = (params: {
   channelKey: keyof StepChannelUsage;
   stepWindow: PhaseWindow | undefined;
   stepChannelUsage: Map<string, StepChannelUsage>;
-  timelineMs: AnimationSettings['timelineMs'];
+  timelineMs: typeof ANIMATION_CONSTANTS.timelineMs;
 }): PhaseWindow | undefined => {
   const { stepId, stepKind, channelKey, stepWindow, stepChannelUsage, timelineMs } = params;
   if (!stepWindow) {
@@ -152,16 +152,6 @@ const resolveStepChannelWindow = (params: {
   }
 
   return undefined;
-};
-
-const pickLatest = (windows: PhaseWindow[]) => {
-  let selected: PhaseWindow | undefined;
-  for (const window of windows) {
-    if (!selected || window.start > selected.start) {
-      selected = window;
-    }
-  }
-  return selected;
 };
 
 const pickEarliest = (windows: PhaseWindow[]) => {
@@ -206,12 +196,10 @@ const buildIncomingEdgeRevealWindow = (stepWindows: Map<string, PhaseWindow>): P
 
 export function buildTimedTransitionSequence(params: {
   planningAdvisory: TransitionPlanningAdvisory;
-  animationSettings?: AnimationSettings;
 }): TimedTransitionSequence {
   const { planningAdvisory } = params;
-  const animationSettings = params.animationSettings ?? ANIMATION_CONSTANTS;
-  const timelineMs = animationSettings.timelineMs;
-  const fadeInMultiplier = animationSettings.fadeInMultiplier;
+  const timelineMs = ANIMATION_CONSTANTS.timelineMs;
+  const fadeInMultiplier = ANIMATION_CONSTANTS.fadeInMultiplier;
   const interSegmentPause = getInterSegmentPause(planningAdvisory.direction, timelineMs);
   const stepChannelUsage = buildStepChannelUsage(planningAdvisory.sequence.nodeAdvisories);
 
@@ -227,7 +215,7 @@ export function buildTimedTransitionSequence(params: {
   );
   const totalDuration = Math.max(
     1,
-    totalStepDuration * animationSettings.transitionSpeedMultiplier,
+    totalStepDuration * ANIMATION_CONSTANTS.transitionSpeedMultiplier,
   );
 
   const stepWindows = new Map<string, PhaseWindow>();
@@ -260,7 +248,6 @@ export function buildTimedTransitionSequence(params: {
 
 export function buildTimedTransitionPlan(params: {
   planningAdvisory: TransitionPlanningAdvisory;
-  animationSettings?: AnimationSettings;
   timedSequence?: TimedTransitionSequence;
 }): TimedTransitionPlan {
   const { planningAdvisory } = params;
@@ -268,10 +255,8 @@ export function buildTimedTransitionPlan(params: {
     params.timedSequence ??
     buildTimedTransitionSequence({
       planningAdvisory,
-      animationSettings: params.animationSettings,
     });
-  const animationSettings = params.animationSettings ?? ANIMATION_CONSTANTS;
-  const timelineMs = animationSettings.timelineMs;
+  const timelineMs = ANIMATION_CONSTANTS.timelineMs;
   const stepKindById = new Map(planningAdvisory.sequence.steps.map((step) => [step.id, step.kind]));
   const stepChannelUsage = buildStepChannelUsage(planningAdvisory.sequence.nodeAdvisories);
 

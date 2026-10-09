@@ -1,18 +1,13 @@
 import type { ViewportState } from '@tarskia/diagram-semantics';
 import {
-  type AnimationSettings,
+  ANIMATION_CONSTANTS,
   DEFAULT_VIEWPORT_FIT_PADDING,
 } from '../canvas/rendering/transition/animation-constants';
 import {
   computeViewportForBoundsInVisibleCanvas,
   computeViewportToKeepRectVisible,
 } from '../canvas/viewport-visibility';
-import type {
-  CameraExecutionMode,
-  DiagramCameraPolicy,
-  DiagramCameraRect,
-  NavigationIntent,
-} from './motion-types';
+import type { CameraExecutionMode, DiagramCameraRect, NavigationIntent } from './motion-types';
 
 export const DEFAULT_FIT_DURATION_MS = 260;
 export const DEFAULT_ENSURE_PADDING = 40;
@@ -34,7 +29,6 @@ export interface ResolveNavigationViewportArgs {
   canvasSize: { width: number; height: number } | null;
   sceneBounds: DiagramCameraRect | null;
   currentViewport: ViewportState;
-  leftOcclusion: number;
   minZoom: number;
   maxZoom: number;
   getNodeSetBounds: (nodeIds: string[]) => DiagramCameraRect | null;
@@ -48,18 +42,8 @@ export const viewportStatesEqual = (
   Math.abs((left?.y ?? 0) - (right?.y ?? 0)) <= VIEWPORT_EPSILON &&
   Math.abs((left?.zoom ?? 1) - (right?.zoom ?? 1)) <= VIEWPORT_EPSILON;
 
-export const resolveNavigationPolicy = (
-  intent: NavigationIntent,
-  animationSettings: AnimationSettings,
-  cameraPolicy?: DiagramCameraPolicy,
-): ResolvedNavigationPolicy => {
-  const intentPadding = 'padding' in intent ? intent.padding : undefined;
-  const mode =
-    intent.mode ??
-    (intent.kind === 'initialize-diagram'
-      ? (cameraPolicy?.openingMode ?? 'immediate')
-      : undefined) ??
-    'animated';
+export const resolveNavigationPolicy = (intent: NavigationIntent): ResolvedNavigationPolicy => {
+  const mode = intent.kind === 'initialize-diagram' ? 'immediate' : 'animated';
 
   let defaultPadding: number | undefined;
   let defaultDurationMs = DEFAULT_FIT_DURATION_MS;
@@ -69,23 +53,16 @@ export const resolveNavigationPolicy = (
   switch (intent.kind) {
     case 'initialize-diagram':
       defaultPadding = DEFAULT_VIEWPORT_FIT_PADDING;
-      defaultDurationMs = animationSettings.viewport.fitDuration;
+      defaultDurationMs = ANIMATION_CONSTANTS.viewport.fitDuration;
       defaultPersist = true;
       defaultWaitForHostGeneration = false;
       break;
-    case 'restore-saved':
-      defaultPadding = undefined;
-      defaultDurationMs = 0;
-      defaultPersist = false;
-      defaultWaitForHostGeneration = true;
-      break;
     case 'ensure-visible':
-      defaultPadding = intent.padding ?? DEFAULT_ENSURE_PADDING;
+      defaultPadding = DEFAULT_ENSURE_PADDING;
       defaultDurationMs = DEFAULT_ENSURE_DURATION_MS;
       defaultPersist = true;
       defaultWaitForHostGeneration = false;
       break;
-    case 'fit-rect':
     case 'fit-node-set':
       defaultPadding = DEFAULT_VIEWPORT_FIT_PADDING;
       defaultDurationMs = DEFAULT_FIT_DURATION_MS;
@@ -96,7 +73,7 @@ export const resolveNavigationPolicy = (
       defaultPadding = DEFAULT_VIEWPORT_FIT_PADDING;
       defaultDurationMs =
         intent.preset === 'layout'
-          ? animationSettings.viewport.fitDuration
+          ? ANIMATION_CONSTANTS.viewport.fitDuration
           : DEFAULT_FIT_DURATION_MS;
       defaultPersist = true;
       defaultWaitForHostGeneration = true;
@@ -105,8 +82,8 @@ export const resolveNavigationPolicy = (
 
   return {
     mode,
-    padding: intentPadding ?? defaultPadding,
-    durationMs: mode === 'immediate' ? 0 : Math.max(0, intent.duration ?? defaultDurationMs),
+    padding: defaultPadding,
+    durationMs: mode === 'immediate' ? 0 : defaultDurationMs,
     persist: intent.persist ?? defaultPersist,
     waitForHostGeneration:
       mode === 'immediate' ? false : (intent.waitForHostSettle ?? defaultWaitForHostGeneration),
@@ -118,12 +95,10 @@ const resolveRestoreSavedViewport = (params: {
   canvasSize: { width: number; height: number } | null;
   sceneBounds: DiagramCameraRect | null;
   padding: number | undefined;
-  leftOcclusion: number;
   minZoom: number;
   maxZoom: number;
 }): ViewportState | null => {
-  const { savedViewport, canvasSize, sceneBounds, padding, leftOcclusion, minZoom, maxZoom } =
-    params;
+  const { savedViewport, canvasSize, sceneBounds, padding, minZoom, maxZoom } = params;
   if (!savedViewport) {
     return null;
   }
@@ -136,7 +111,6 @@ const resolveRestoreSavedViewport = (params: {
     minZoom,
     maxZoom,
     padding: padding ?? DEFAULT_VIEWPORT_FIT_PADDING,
-    leftOcclusion,
   });
   if (
     savedViewport.zoom <= minZoom + VIEWPORT_EPSILON &&
@@ -150,7 +124,6 @@ const resolveRestoreSavedViewport = (params: {
       canvas: canvasSize,
       rect: sceneBounds,
       padding: DEFAULT_ENSURE_PADDING,
-      leftOcclusion,
     }) ?? savedViewport
   );
 };
@@ -159,11 +132,10 @@ const resolveSceneFitViewport = (params: {
   canvasSize: { width: number; height: number } | null;
   sceneBounds: DiagramCameraRect | null;
   padding: number | undefined;
-  leftOcclusion: number;
   minZoom: number;
   maxZoom: number;
 }): ViewportState | null => {
-  const { canvasSize, sceneBounds, padding, leftOcclusion, minZoom, maxZoom } = params;
+  const { canvasSize, sceneBounds, padding, minZoom, maxZoom } = params;
   if (!canvasSize || !sceneBounds) {
     return null;
   }
@@ -173,7 +145,6 @@ const resolveSceneFitViewport = (params: {
     minZoom,
     maxZoom,
     padding: padding ?? DEFAULT_VIEWPORT_FIT_PADDING,
-    leftOcclusion,
   });
 };
 
@@ -184,7 +155,6 @@ export const resolveNavigationViewport = ({
   canvasSize,
   sceneBounds,
   currentViewport,
-  leftOcclusion,
   minZoom,
   maxZoom,
   getNodeSetBounds,
@@ -197,7 +167,6 @@ export const resolveNavigationViewport = ({
             canvasSize,
             sceneBounds,
             padding: policy.padding,
-            leftOcclusion,
             minZoom,
             maxZoom,
           })
@@ -205,40 +174,16 @@ export const resolveNavigationViewport = ({
             canvasSize,
             sceneBounds,
             padding: policy.padding,
-            leftOcclusion,
             minZoom,
             maxZoom,
           });
-    case 'restore-saved':
-      return resolveRestoreSavedViewport({
-        savedViewport,
-        canvasSize,
-        sceneBounds,
-        padding: policy.padding,
-        leftOcclusion,
-        minZoom,
-        maxZoom,
-      });
     case 'fit-scene':
       return resolveSceneFitViewport({
         canvasSize,
         sceneBounds,
         padding: policy.padding,
-        leftOcclusion,
         minZoom,
         maxZoom,
-      });
-    case 'fit-rect':
-      if (!canvasSize) {
-        return null;
-      }
-      return computeViewportForBoundsInVisibleCanvas({
-        bounds: intent.rect,
-        canvas: canvasSize,
-        minZoom,
-        maxZoom,
-        padding: policy.padding ?? DEFAULT_VIEWPORT_FIT_PADDING,
-        leftOcclusion,
       });
     case 'fit-node-set': {
       if (!canvasSize || intent.nodeIds.length === 0) {
@@ -254,7 +199,6 @@ export const resolveNavigationViewport = ({
         minZoom,
         maxZoom,
         padding: policy.padding ?? DEFAULT_VIEWPORT_FIT_PADDING,
-        leftOcclusion,
       });
     }
     case 'ensure-visible':
@@ -267,7 +211,6 @@ export const resolveNavigationViewport = ({
           canvas: canvasSize,
           rect: intent.rect,
           padding: policy.padding ?? DEFAULT_ENSURE_PADDING,
-          leftOcclusion,
         }) ?? null
       );
   }

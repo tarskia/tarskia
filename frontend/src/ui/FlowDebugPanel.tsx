@@ -17,15 +17,6 @@ export type DebugSummary = {
   topBounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
   viewRect: { minX: number; minY: number; maxX: number; maxY: number } | null;
   overflowParents: string[];
-  frameStats: {
-    avgMs: number;
-    p95Ms: number;
-    maxMs: number;
-    sampleCount: number;
-    over16_7Count: number;
-    over25Count: number;
-    over33_3Count: number;
-  } | null;
   selectedEdgeTrace: {
     id: string;
     relationId: string;
@@ -97,19 +88,6 @@ export function FlowDebugPanel({ show, summary }: { show: boolean; summary: Debu
         Overflow parents:{' '}
         {summary.overflowParents.length ? summary.overflowParents.join(' ') : 'none'}
       </div>
-      {summary.frameStats && (
-        <>
-          <div>
-            RAF frame ms: avg {summary.frameStats.avgMs.toFixed(1)} / p95{' '}
-            {summary.frameStats.p95Ms.toFixed(1)} / max {summary.frameStats.maxMs.toFixed(1)}
-          </div>
-          <div>RAF samples: {summary.frameStats.sampleCount}</div>
-          <div>
-            RAF overruns: &gt;16.7 {summary.frameStats.over16_7Count} / &gt;25{' '}
-            {summary.frameStats.over25Count} / &gt;33.3 {summary.frameStats.over33_3Count}
-          </div>
-        </>
-      )}
       {summary.selectedEdgeTrace && (
         <>
           <div>

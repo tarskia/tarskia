@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  DEFAULT_ANIMATION_SETTINGS,
+  ANIMATION_CONSTANTS,
   DEFAULT_VIEWPORT_FIT_PADDING,
 } from '../canvas/rendering/transition/animation-constants';
 import {
@@ -18,14 +18,13 @@ const minZoom = 0.5;
 const maxZoom = 2;
 
 const resolveViewport = (intent: NavigationIntent) => {
-  const policy = resolveNavigationPolicy(intent, DEFAULT_ANIMATION_SETTINGS);
+  const policy = resolveNavigationPolicy(intent);
   const viewport = resolveNavigationViewport({
     intent,
     policy,
     canvasSize,
     sceneBounds,
     currentViewport,
-    leftOcclusion: 0,
     minZoom,
     maxZoom,
     getNodeSetBounds: () => null,
@@ -48,7 +47,6 @@ describe('camera navigation helpers', () => {
         minZoom,
         maxZoom,
         padding: DEFAULT_VIEWPORT_FIT_PADDING,
-        leftOcclusion: 0,
       }),
     );
   });
@@ -56,7 +54,7 @@ describe('camera navigation helpers', () => {
   it('restores and corrects a saved viewport through initialize-diagram', () => {
     const savedViewport = { x: 720, y: 520, zoom: 1 };
     const intent: NavigationIntent = { kind: 'initialize-diagram' };
-    const policy = resolveNavigationPolicy(intent, DEFAULT_ANIMATION_SETTINGS);
+    const policy = resolveNavigationPolicy(intent);
 
     expect(
       resolveNavigationViewport({
@@ -66,7 +64,6 @@ describe('camera navigation helpers', () => {
         canvasSize,
         sceneBounds,
         currentViewport,
-        leftOcclusion: 0,
         minZoom,
         maxZoom,
         getNodeSetBounds: () => null,
@@ -77,7 +74,6 @@ describe('camera navigation helpers', () => {
         canvas: canvasSize,
         rect: sceneBounds,
         padding: 40,
-        leftOcclusion: 0,
       }) ?? savedViewport,
     );
   });
@@ -85,7 +81,7 @@ describe('camera navigation helpers', () => {
   it('repairs a degenerate min-zoom saved viewport while initializing', () => {
     const savedViewport = { x: 417, y: -3.15, zoom: 0.05 };
     const intent: NavigationIntent = { kind: 'initialize-diagram' };
-    const policy = resolveNavigationPolicy(intent, DEFAULT_ANIMATION_SETTINGS);
+    const policy = resolveNavigationPolicy(intent);
 
     const viewport = resolveNavigationViewport({
       intent,
@@ -94,7 +90,6 @@ describe('camera navigation helpers', () => {
       canvasSize,
       sceneBounds,
       currentViewport,
-      leftOcclusion: 240,
       minZoom: 0.05,
       maxZoom,
       getNodeSetBounds: () => null,
@@ -103,45 +98,55 @@ describe('camera navigation helpers', () => {
     expect(viewport?.zoom).toBeGreaterThan(1);
   });
 
-  it('resolves the same fit-scene target for immediate and animated modes', () => {
-    const animatedIntent: NavigationIntent = {
-      kind: 'fit-scene',
-      preset: 'layout',
+  it('uses the same fit target for immediate initialization and animated layout fitting', () => {
+    const initialized = resolveViewport({ kind: 'initialize-diagram' });
+    const fitted = resolveViewport({ kind: 'fit-scene', preset: 'layout' });
+    expect(initialized.policy.durationMs).toBe(0);
+    expect(initialized.policy.waitForHostGeneration).toBe(false);
+    expect(fitted.policy.mode).toBe('animated');
+    expect(fitted.policy.durationMs).toBe(ANIMATION_CONSTANTS.viewport.fitDuration);
+    expect(fitted.policy.waitForHostGeneration).toBe(true);
+    expect(fitted.viewport).toEqual(initialized.viewport);
+  });
+
+  it('retains persistence and host-settle options on live intents', () => {
+    expect(
+      resolveNavigationPolicy({
+        kind: 'fit-node-set',
+        nodeIds: ['a'],
+        persist: false,
+        waitForHostSettle: false,
+      }),
+    ).toMatchObject({
       mode: 'animated',
-    };
-    const immediateIntent: NavigationIntent = {
-      kind: 'fit-scene',
-      preset: 'layout',
-      mode: 'immediate',
-    };
-    const animatedPolicy = resolveNavigationPolicy(animatedIntent, DEFAULT_ANIMATION_SETTINGS);
-    const immediatePolicy = resolveNavigationPolicy(immediateIntent, DEFAULT_ANIMATION_SETTINGS);
-
-    const animatedViewport = resolveNavigationViewport({
-      intent: animatedIntent,
-      policy: animatedPolicy,
-      canvasSize,
-      sceneBounds,
-      currentViewport,
-      leftOcclusion: 0,
-      minZoom,
-      maxZoom,
-      getNodeSetBounds: () => null,
+      durationMs: 260,
+      persist: false,
+      waitForHostGeneration: false,
     });
-    const immediateViewport = resolveNavigationViewport({
-      intent: immediateIntent,
-      policy: immediatePolicy,
-      canvasSize,
-      sceneBounds,
-      currentViewport,
-      leftOcclusion: 0,
-      minZoom,
-      maxZoom,
-      getNodeSetBounds: () => null,
+    expect(resolveNavigationPolicy({ kind: 'ensure-visible', rect: sceneBounds })).toMatchObject({
+      mode: 'animated',
+      durationMs: 180,
+      padding: 40,
+      persist: true,
+      waitForHostGeneration: false,
     });
+  });
 
-    expect(animatedPolicy.durationMs).toBe(DEFAULT_ANIMATION_SETTINGS.viewport.fitDuration);
-    expect(immediatePolicy.durationMs).toBe(0);
-    expect(immediateViewport).toEqual(animatedViewport);
+  it('retains a saved viewport when initialization has no measured canvas', () => {
+    const savedViewport = { x: 24, y: 56, zoom: 1.25 };
+    const intent: NavigationIntent = { kind: 'initialize-diagram' };
+    expect(
+      resolveNavigationViewport({
+        intent,
+        policy: resolveNavigationPolicy(intent),
+        savedViewport,
+        canvasSize: null,
+        sceneBounds,
+        currentViewport,
+        minZoom,
+        maxZoom,
+        getNodeSetBounds: () => null,
+      }),
+    ).toBe(savedViewport);
   });
 });

@@ -77,16 +77,8 @@ export interface TransitionOverlayNodeTrack {
 }
 
 export interface TransitionOverlayLabelTrack {
-  id: string;
-  relationId: string;
   label?: string;
   state?: 'undecided' | 'none';
-  fromAnchor: CanvasPoint;
-  toAnchor: CanvasPoint;
-  fromOpacity: number;
-  toOpacity: number;
-  fade?: PhaseWindow;
-  fadeMode?: 'in' | 'out';
 }
 
 export interface TransitionOverlayEdgeTrack {
@@ -111,29 +103,12 @@ export interface TransitionOverlayEdgeTrack {
   labelTrack?: TransitionOverlayLabelTrack;
 }
 
-export interface TransitionOverlayOccluderTrack {
-  id: string;
-  relationId: string;
-  sourceId: string;
-  targetId: string;
-  solidOverNodeIds: string[];
-  fromGeometry: CanvasEdgeGeometry;
-  toGeometry: CanvasEdgeGeometry;
-  lockedSides: Pick<CanvasEdgeGeometry, 'sourceSide' | 'targetSide'>;
-  fromOpacity: number;
-  toOpacity: number;
-  fade?: PhaseWindow;
-  fadeMode?: 'in' | 'out';
-}
-
 export interface TransitionOverlayState {
   id: number;
   startedAt: number;
   duration: number;
-  phaseWindow: { start: number; end: number };
   nodes: TransitionOverlayNodeTrack[];
   edges: TransitionOverlayEdgeTrack[];
-  overlayEdges: TransitionOverlayOccluderTrack[];
 }
 
 export interface TransitionOverlayNodeFrame {
@@ -167,7 +142,6 @@ export interface TransitionOverlayFrame {
   progress: number;
   nodes: TransitionOverlayNodeFrame[];
   edges: TransitionOverlayEdgeFrame[];
-  overlayEdges: CanvasOverlayEdgeView[];
 }
 
 const EMPTY_TIMED_PLAN: TimedTransitionPlan = {
@@ -618,14 +592,8 @@ const buildNormalizedGeometry = (params: {
   });
 };
 
-const resolveSequenceProgress = (state: TransitionOverlayState, now: number) => {
-  const rawProgress = clamp((now - state.startedAt) / Math.max(state.duration, 1), 0, 1);
-  const { start, end } = state.phaseWindow;
-  if (end <= start) {
-    return 1;
-  }
-  return clamp((rawProgress - start) / (end - start), 0, 1);
-};
+const resolveSequenceProgress = (state: TransitionOverlayState, now: number) =>
+  clamp((now - state.startedAt) / Math.max(state.duration, 1), 0, 1);
 
 const resolveNodeRect = (track: TransitionOverlayNodeTrack, progress: number): CanvasRect => {
   const hasGeometryTiming = Boolean(
@@ -806,51 +774,10 @@ export const resolveTransitionOverlayFrame = (
     edges.push(edge);
   }
 
-  const overlayEdges: CanvasOverlayEdgeView[] = [];
-  for (const track of state.overlayEdges) {
-    const geometry = resolveCurrentGeometry({
-      sourceId: track.sourceId,
-      targetId: track.targetId,
-      rectByNodeId,
-      lockedSides: track.lockedSides,
-      fallbackFrom: track.fromGeometry,
-      fallbackTo: track.toGeometry,
-      progress,
-      staticOverlay,
-    });
-    const opacity = resolveFadeOpacity({
-      progress,
-      fade: track.fade,
-      fadeMode: track.fadeMode,
-      fromOpacity: track.fromOpacity,
-      toOpacity: track.toOpacity,
-    });
-    if (opacity <= VISIBILITY_EPSILON) {
-      continue;
-    }
-    const sourceRect = rectByNodeId.get(track.sourceId);
-    const targetRect = rectByNodeId.get(track.targetId);
-    if (!sourceRect || !targetRect) continue;
-    overlayEdges.push({
-      id: track.id,
-      relationId: track.relationId,
-      kind: 'routed',
-      sourceId: track.sourceId,
-      targetId: track.targetId,
-      matched: false,
-      opacity,
-      geometry,
-      path: geometry.path,
-      labelAnchor: geometry.labelAnchor,
-      solidOverNodeIds: track.solidOverNodeIds,
-    });
-  }
-
   return {
     progress,
     nodes,
     edges,
-    overlayEdges,
   };
 };
 
@@ -858,7 +785,6 @@ export const buildTransitionOverlayState = (params: {
   id: number;
   startedAt: number;
   duration: number;
-  phaseWindow?: { start: number; end: number };
   sharedNodeGeometry?: 'freeze-from';
   planningAdvisory: TransitionPlanningAdvisory;
   timedPlan: TimedTransitionPlan;
@@ -870,7 +796,6 @@ export const buildTransitionOverlayState = (params: {
     id,
     startedAt,
     duration,
-    phaseWindow,
     planningAdvisory,
     timedPlan,
     timedSequence,
@@ -1001,32 +926,6 @@ export const buildTransitionOverlayState = (params: {
       preferredSides,
       fallback: fallbackGeometry,
     });
-    const buildLabelTrack = (params: {
-      trackId: string;
-      relationId: string;
-      label?: string;
-      state?: 'undecided' | 'none';
-      fromAnchor: CanvasPoint;
-      toAnchor: CanvasPoint;
-      fromOpacity: number;
-      toOpacity: number;
-      fade?: PhaseWindow;
-      fadeMode?: 'in' | 'out';
-    }) =>
-      params.label !== undefined || params.state !== undefined
-        ? ({
-            id: `${params.trackId}:label`,
-            relationId: params.relationId,
-            label: params.label,
-            state: params.state,
-            fromAnchor: params.fromAnchor,
-            toAnchor: params.toAnchor,
-            fromOpacity: params.fromOpacity,
-            toOpacity: params.toOpacity,
-            fade: params.fade,
-            fadeMode: params.fadeMode,
-          } satisfies TransitionOverlayLabelTrack)
-        : undefined;
     const buildTrack = (params: {
       trackId: string;
       kind: 'local' | 'routed';
@@ -1044,8 +943,6 @@ export const buildTransitionOverlayState = (params: {
       fadeMode?: 'in' | 'out';
       activeMotionWindow?: PhaseWindow;
       freezeOutsideActiveMotionWindow?: boolean;
-      labelFromAnchor: CanvasPoint;
-      labelToAnchor: CanvasPoint;
     }) =>
       ({
         id: params.trackId,
@@ -1066,18 +963,8 @@ export const buildTransitionOverlayState = (params: {
         fadeMode: params.fadeMode,
         activeMotionWindow: params.activeMotionWindow,
         freezeOutsideActiveMotionWindow: params.freezeOutsideActiveMotionWindow,
-        labelTrack: buildLabelTrack({
-          trackId: params.trackId,
-          relationId,
-          label,
-          state: edgeState,
-          fromAnchor: params.labelFromAnchor,
-          toAnchor: params.labelToAnchor,
-          fromOpacity: params.fromOpacity,
-          toOpacity: params.toOpacity,
-          fade: params.fade,
-          fadeMode: params.fadeMode,
-        }),
+        labelTrack:
+          label !== undefined || edgeState !== undefined ? { label, state: edgeState } : undefined,
       }) satisfies TransitionOverlayEdgeTrack;
 
     if (fromEdge && toEdge && edgeAttachmentChanged({ fromEdge, toEdge })) {
@@ -1101,8 +988,6 @@ export const buildTransitionOverlayState = (params: {
           fade: fadeWindows.outgoing,
           fadeMode: 'out',
           freezeOutsideActiveMotionWindow: false,
-          labelFromAnchor: fromEdge.labelAnchor ?? normalizedFromGeometry.labelAnchor,
-          labelToAnchor: fromEdge.labelAnchor ?? normalizedFromGeometry.labelAnchor,
         }),
         buildTrack({
           trackId: `${id}::in`,
@@ -1122,8 +1007,6 @@ export const buildTransitionOverlayState = (params: {
           fade: fadeWindows.incoming,
           fadeMode: 'in',
           freezeOutsideActiveMotionWindow: false,
-          labelFromAnchor: toEdge.labelAnchor ?? normalizedToGeometry.labelAnchor,
-          labelToAnchor: toEdge.labelAnchor ?? normalizedToGeometry.labelAnchor,
         }),
       ];
     }
@@ -1176,8 +1059,6 @@ export const buildTransitionOverlayState = (params: {
         activeMotionWindow,
         motionEndGeometry,
         freezeOutsideActiveMotionWindow: kind === 'routed' && !edgePlan?.fade,
-        labelFromAnchor: fromEdge?.labelAnchor ?? normalizedFromGeometry.labelAnchor,
-        labelToAnchor: toEdge?.labelAnchor ?? normalizedToGeometry.labelAnchor,
       }),
     ];
   };
@@ -1194,13 +1075,8 @@ export const buildTransitionOverlayState = (params: {
     id,
     startedAt,
     duration,
-    phaseWindow: phaseWindow ?? { start: 0, end: 1 },
     nodes,
     edges,
-    // Transition-time edge occlusion branches are significantly more expensive than the base
-    // routed-edge animation and are the main source of jerk on edge-dense diagrams. Keep the
-    // settled host overlay rich, but drop branch overlays while motion is active.
-    overlayEdges: [],
   } satisfies TransitionOverlayState;
 };
 
@@ -1259,7 +1135,6 @@ export const buildStaticTransitionOverlayState = (params: {
     id: params.id,
     startedAt: params.startedAt,
     duration: 1,
-    phaseWindow: { start: 0, end: 1 },
     planningAdvisory: EMPTY_PLANNING_ADVISORY,
     timedPlan: EMPTY_TIMED_PLAN,
     timedSequence: EMPTY_TIMED_SEQUENCE,
