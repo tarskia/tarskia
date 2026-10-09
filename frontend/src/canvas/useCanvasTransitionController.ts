@@ -340,14 +340,6 @@ export function useCanvasTransitionController({
       currentViewState: declarativeViewState,
       currentLayout: layout,
     });
-    if (skipTransitions) {
-      if (scopeNavigationIntent) {
-        requestNavigation(scopeNavigationIntent);
-      }
-      clearPendingStructuralTransitionIntent();
-      syncObservedState();
-      return;
-    }
     if (previousDeclarativeViewStateRef.current.key !== declarativeViewState.key) {
       clearPendingStructuralTransitionIntent();
     }
@@ -506,7 +498,6 @@ export function useCanvasTransitionController({
     observedTransition,
     requestNavigation,
     resolveViewportFocusRoot,
-    skipTransitions,
     stableSnapshot,
     startChoreography,
     syncObservedState,

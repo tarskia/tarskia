@@ -108,6 +108,7 @@ export function useDiagramEngine({
 
   const motion = useDiagramMotionManager({
     stableSnapshot,
+    skipTransitions,
     animationSettings,
     savedViewport,
     cameraPolicy,
