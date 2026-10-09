@@ -71,14 +71,16 @@ describe('container layout cache', () => {
       expect(result.positions).toEqual(expected.positions);
       expect(result.requiredSize).toEqual(expected.requiredSize);
     }
+    // Fill the LRU with cheap one-node layouts: eviction does not depend on Dagre.
     // Recent hits survive eviction; the oldest untouched entry does not.
+    const fillerChildren = { a: children.a };
     for (let index = 0; index < 1999; index++)
-      renderComponentLayout(children, edges, { ...spec, padding: index + 100 });
+      renderComponentLayout(fillerChildren, [], { ...spec, padding: index + 100 });
     expect(renderComponentLayout(children, edges, spec)).not.toBe(first);
     const recent = renderComponentLayout(children, edges, spec);
     for (let index = 0; index < 2001; index++) {
       renderComponentLayout(children, edges, spec);
-      renderComponentLayout(children, edges, { ...spec, padding: index + 10000 });
+      renderComponentLayout(fillerChildren, [], { ...spec, padding: index + 10000 });
     }
     expect(renderComponentLayout(children, edges, spec)).toBe(recent);
   });
