@@ -5,8 +5,9 @@ import {
   getAllowedChildTypeIds,
   getResolvedRelationSemantics,
   getResolvedTypeSemantics,
+  isAllowedChildType,
 } from './schema-semantics';
-import type { SchemaModule } from './types';
+import type { EntityTypeDef, SchemaModule } from './types';
 
 const schema: SchemaModule = {
   owner: 'core',
@@ -189,5 +190,76 @@ describe('compileSchemaSemantics', () => {
         ],
       }),
     ).toContain('core/web-app.types.group');
+  });
+});
+
+describe('explicit containment alternatives', () => {
+  const cases: { name: string; containment: EntityTypeDef['containment']; allowed: string[] }[] = [
+    { name: 'no containment', containment: undefined, allowed: [] },
+    {
+      name: 'neither list',
+      containment: {},
+      allowed: ['parent', 'typed', 'traited', 'both', 'neither'],
+    },
+    {
+      name: 'empty lists',
+      containment: { allowedChildTypes: [], allowedChildTraits: [] },
+      allowed: ['parent', 'typed', 'traited', 'both', 'neither'],
+    },
+    {
+      name: 'types only',
+      containment: { allowedChildTypes: ['typed'] },
+      allowed: ['typed', 'both'],
+    },
+    {
+      name: 'types with empty traits',
+      containment: { allowedChildTypes: ['typed'], allowedChildTraits: [] },
+      allowed: ['typed', 'both'],
+    },
+    {
+      name: 'traits only',
+      containment: { allowedChildTraits: ['allowed'] },
+      allowed: ['traited', 'both'],
+    },
+    {
+      name: 'traits with empty types',
+      containment: { allowedChildTypes: [], allowedChildTraits: ['allowed'] },
+      allowed: ['traited', 'both'],
+    },
+    {
+      name: 'both lists',
+      containment: { allowedChildTypes: ['typed'], allowedChildTraits: ['allowed'] },
+      allowed: ['typed', 'traited', 'both'],
+    },
+  ];
+
+  it.each(cases)('$name', ({ containment, allowed }) => {
+    const containmentSchema: SchemaModule = {
+      owner: 'core',
+      name: 'containment',
+      version: '0.1.0',
+      traits: [{ id: 'allowed', label: 'Allowed' }],
+      types: [
+        { id: 'parent', label: 'Parent', containment },
+        { id: 'typed', label: 'Typed' },
+        { id: 'traited', label: 'Traited', traits: ['allowed'] },
+        { id: 'both', label: 'Both', extends: 'typed', traits: ['allowed'] },
+        { id: 'neither', label: 'Neither' },
+      ],
+      relations: [],
+    };
+    expect(getAllowedChildTypeIds({ schema: containmentSchema, parentTypeId: 'parent' })).toEqual(
+      [...allowed].sort(),
+    );
+    for (const child of containmentSchema.types) {
+      expect(
+        isAllowedChildType({
+          schema: containmentSchema,
+          parentTypeId: 'parent',
+          childTypeId: child.id,
+        }),
+        child.id,
+      ).toBe(allowed.includes(child.id));
+    }
   });
 });

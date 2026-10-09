@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CORE_CONTAINS_RELATION_ID } from './schema-ids';
 import { buildSchemaActivation } from './schema-ref';
-import type { SchemaModule, SemanticDocument } from './types';
+import type { EntityTypeDef, SchemaModule, SemanticDocument } from './types';
 import { STRICT_WORKER_GENERATED_DIAGRAM_VALIDATION_OPTIONS, validateDocument } from './validate';
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
@@ -252,5 +252,77 @@ describe('validateDocument invalid relation endpoint guidance', () => {
         }),
       ]),
     );
+  });
+});
+
+describe('explicit containment alternatives', () => {
+  const cases: { name: string; containment: EntityTypeDef['containment']; allowed: string[] }[] = [
+    { name: 'no containment', containment: undefined, allowed: [] },
+    {
+      name: 'neither list',
+      containment: {},
+      allowed: ['parent', 'typed', 'traited', 'both', 'neither'],
+    },
+    {
+      name: 'empty lists',
+      containment: { allowedChildTypes: [], allowedChildTraits: [] },
+      allowed: ['parent', 'typed', 'traited', 'both', 'neither'],
+    },
+    {
+      name: 'types only',
+      containment: { allowedChildTypes: ['typed'] },
+      allowed: ['typed', 'both'],
+    },
+    {
+      name: 'types with empty traits',
+      containment: { allowedChildTypes: ['typed'], allowedChildTraits: [] },
+      allowed: ['typed', 'both'],
+    },
+    {
+      name: 'traits only',
+      containment: { allowedChildTraits: ['allowed'] },
+      allowed: ['traited', 'both'],
+    },
+    {
+      name: 'traits with empty types',
+      containment: { allowedChildTypes: [], allowedChildTraits: ['allowed'] },
+      allowed: ['traited', 'both'],
+    },
+    {
+      name: 'both lists',
+      containment: { allowedChildTypes: ['typed'], allowedChildTraits: ['allowed'] },
+      allowed: ['typed', 'traited', 'both'],
+    },
+  ];
+
+  it.each(cases)('$name', ({ containment, allowed }) => {
+    const containmentSchema: SchemaModule = {
+      owner: 'core',
+      name: 'containment',
+      version: '0.1.0',
+      traits: [{ id: 'allowed', label: 'Allowed' }],
+      types: [
+        { id: 'parent', label: 'Parent', containment },
+        { id: 'typed', label: 'Typed' },
+        { id: 'traited', label: 'Traited', traits: ['allowed'] },
+        { id: 'both', label: 'Both', extends: 'typed', traits: ['allowed'] },
+        { id: 'neither', label: 'Neither' },
+      ],
+      relations: [],
+    };
+    for (const child of containmentSchema.types) {
+      const doc: SemanticDocument = {
+        version: '0.1.0',
+        schemaRefs: [],
+        entities: [{ id: 'parent', type: 'parent', children: [{ id: 'child', type: child.id }] }],
+        relations: [],
+      };
+      const invalidChildren = validateDocument(doc, containmentSchema).filter(
+        (diagnostic) =>
+          diagnostic.code === 'diagram.document.invalid_nested_child' ||
+          diagnostic.code === 'diagram.document.invalid_nested_parent',
+      );
+      expect(invalidChildren, child.id).toHaveLength(allowed.includes(child.id) ? 0 : 1);
+    }
   });
 });
