@@ -2,8 +2,8 @@ import { buildSemanticIndex } from '@tarskia/diagram-semantics';
 // @vitest-environment happy-dom
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { ReactFlowInstance } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
+import type { CanvasCamera } from '../canvas/camera';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
 import type { SemanticDocument } from '../model/types';
 import { loadGallery } from '../test/curated-rendering';
@@ -104,7 +104,7 @@ it('reduced motion expands, collapses and expands all to animated endpoints with
             viewport = next;
             return Promise.resolve(true);
           },
-        } as unknown as ReactFlowInstance);
+        } as unknown as CanvasCamera);
       });
       await settle();
       observedOverlays.length = 0;
@@ -198,7 +198,7 @@ it.each([
       viewport = next;
       return Promise.resolve(true);
     },
-  } as unknown as ReactFlowInstance;
+  } as unknown as CanvasCamera;
   const advance = async () => {
     await act(async () => {
       now += 50;

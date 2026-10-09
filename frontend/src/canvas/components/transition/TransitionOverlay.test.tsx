@@ -1,10 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('reactflow', () => ({
-  useStore: () => [0, 0, 1],
-}));
-
 import { buildStaticTransitionOverlayState } from '../../rendering/transition/overlay';
 import { createOverlayFrameStore } from '../../rendering/transition/overlay-frame-store';
 import { TransitionOverlay } from './TransitionOverlay';

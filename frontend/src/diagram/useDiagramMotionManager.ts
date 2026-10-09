@@ -1,6 +1,6 @@
 import type { DiagramCamera, ViewportState } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ReactFlowInstance } from 'reactflow';
+import type { CanvasCamera } from '../canvas/camera';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
 import { areCanvasRenderSnapshotsEqual } from '../canvas/rendering/presentation/presentation';
 import {
@@ -87,7 +87,7 @@ interface UseDiagramMotionManagerArgs {
   minZoom: number;
   maxZoom: number;
   persistViewport: (viewport: ViewportState) => void;
-  onCanvasInit: (instance: ReactFlowInstance) => void;
+  onCanvasInit: (instance: CanvasCamera) => void;
   onCanvasUnmount: () => void;
   getCurrentViewport: () => ViewportState;
   getSceneBounds: () => DiagramCameraRect | null;
@@ -1467,7 +1467,7 @@ export function useDiagramMotionManager({
   );
 
   const onCanvasInit = useCallback(
-    (instance: ReactFlowInstance) => {
+    (instance: CanvasCamera) => {
       onCanvasInitRaw(instance);
       canvasReadyRef.current = true;
       setCanvasReady(true);

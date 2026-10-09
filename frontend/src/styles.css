@@ -262,18 +262,18 @@ body {
   justify-content: flex-start;
 }
 
-.react-flow__node {
+.canvas-node {
   border-radius: 4px;
   background: var(--node-bg);
   border: var(--node-border);
 }
 
-.react-flow__node.selected {
+.canvas-node.selected {
   box-shadow: none;
   outline: none;
 }
 
-.react-flow__node.selected .node {
+.canvas-node.selected .node {
   box-shadow: 0 0 0 2px var(--node-selection-ring, rgba(255, 200, 120, 0.9));
 }
 
@@ -281,7 +281,7 @@ body {
   box-shadow: 0 0 0 2px rgba(141, 224, 255, 0.85);
 }
 
-.react-flow__node.selected .node.matched {
+.canvas-node.selected .node.matched {
   box-shadow:
     0 0 0 2px var(--node-selection-ring, rgba(255, 200, 120, 0.9)),
     0 0 0 4px rgba(141, 224, 255, 0.6);
@@ -465,11 +465,11 @@ body {
   border-top: 1px solid var(--border-default);
 }
 
-.react-flow__node.selectable:hover .list-item .node-body {
+.canvas-node.selectable:hover .list-item .node-body {
   background: var(--fill-subtle);
 }
 
-.react-flow__node.selected .list-item .node-body {
+.canvas-node.selected .list-item .node-body {
   background: rgba(255, 200, 120, 0.12);
 }
 
@@ -539,7 +539,7 @@ body {
   box-shadow: none;
 }
 
-.react-flow__node.selected .group-node.focus-shell {
+.canvas-node.selected .group-node.focus-shell {
   box-shadow: none;
 }
 
@@ -1028,7 +1028,7 @@ button.node-meta-cell:disabled {
   pointer-events: none;
 }
 
-.canvas-host-hidden .react-flow__nodes,
+.canvas-host-hidden .canvas-nodes,
 .canvas-host-hidden .edge-overlay--host {
   opacity: 0;
   visibility: hidden;
@@ -1039,7 +1039,7 @@ button.node-meta-cell:disabled {
   display: none;
 }
 
-.canvas-host-hidden .react-flow__node {
+.canvas-host-hidden .canvas-node {
   opacity: 0;
   pointer-events: none;
 }
@@ -1051,9 +1051,9 @@ button.node-meta-cell:disabled {
  * NOTE: The `box-shadow` values below are hardcoded and do NOT pick up
  * the `--shadow-*` chrome tokens defined in `index.css`. Those tokens
  * apply to app chrome (panels, toolbars, popovers); diagram nodes are
- * rendered by Tarskia's canvas (React Flow only handles interaction)
+ * rendered by Tarskia's canvas
  * and so their elevation is owned by these rules. Both the live-node
- * block (`.canvas-visual-outline .react-flow__node`) and the
+ * block (`.canvas-visual-outline .canvas-node`) and the
  * transition-overlay block below must be kept in sync.
  * ---------------------------------------------------------------- */
 
@@ -1090,30 +1090,30 @@ button.node-meta-cell:disabled {
   stroke-width: 1.08;
 }
 
-.canvas-visual-outline .react-flow__node {
+.canvas-visual-outline .canvas-node {
   background: var(--node-fill);
   border-width: 1px;
   border-style: solid;
   box-shadow: var(--node-shadow);
 }
 
-.canvas-visual-outline .react-flow__node .node {
+.canvas-visual-outline .canvas-node .node {
   background: transparent;
 }
 
-.canvas-visual-outline .react-flow__node .node-subtitle {
+.canvas-visual-outline .canvas-node .node-subtitle {
   color: rgba(218, 237, 250, 0.78) !important;
 }
 
-.canvas-visual-outline .react-flow__node .node-title-placeholder {
+.canvas-visual-outline .canvas-node .node-title-placeholder {
   color: rgba(222, 238, 251, 0.74);
 }
 
-.canvas-visual-outline .react-flow__node.selected .node {
+.canvas-visual-outline .canvas-node.selected .node {
   box-shadow: 0 0 0 2px var(--node-selection-ring, rgba(255, 208, 129, 0.95));
 }
 
-.canvas-visual-outline .react-flow__node.selected .list-item .node-body {
+.canvas-visual-outline .canvas-node.selected .list-item .node-body {
   background: var(--node-selection-fill, rgba(255, 200, 120, 0.12));
 }
 
@@ -1148,8 +1148,8 @@ button.node-meta-cell:disabled {
   .transition-overlay-visual-outline
   .transition-overlay-node-shell
   .node-title-placeholder,
-:root.light .canvas-visual-outline .react-flow__node .node-subtitle,
-:root.light .canvas-visual-outline .react-flow__node .node-title-placeholder {
+:root.light .canvas-visual-outline .canvas-node .node-subtitle,
+:root.light .canvas-visual-outline .canvas-node .node-title-placeholder {
   color: rgba(28, 57, 84, 0.74) !important;
 }
 
@@ -1274,7 +1274,7 @@ button.node-meta-cell:disabled {
 }
 
 /* List item accent highlights */
-:root.light .react-flow__node.selected .list-item .node-body {
+:root.light .canvas-node.selected .list-item .node-body {
   background: rgba(37, 99, 235, 0.08);
 }
 
@@ -1284,7 +1284,7 @@ button.node-meta-cell:disabled {
 }
 
 /* Selection rings */
-:root.light .react-flow__node.selected .node {
+:root.light .canvas-node.selected .node {
   box-shadow: 0 0 0 2px var(--node-selection-ring, rgba(37, 99, 235, 0.7));
 }
 
@@ -1292,7 +1292,7 @@ button.node-meta-cell:disabled {
   box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.65);
 }
 
-:root.light .react-flow__node.selected .node.matched {
+:root.light .canvas-node.selected .node.matched {
   box-shadow:
     0 0 0 2px var(--node-selection-ring, rgba(37, 99, 235, 0.7)),
     0 0 0 4px rgba(14, 165, 233, 0.4);
@@ -1411,13 +1411,40 @@ button.node-meta-cell:disabled {
   color: var(--text-tertiary);
 }
 
-.react-flow__controls button {
-  background: var(--surface-overlay);
-  color: inherit;
-  border: 1px solid var(--panel-border);
+/* A camera transforms this world directly; React owns only semantic revisions. */
+.canvas-host {
+  touch-action: none;
+  user-select: none;
 }
-
-.react-flow__minimap {
-  background: var(--surface-overlay);
-  border: 1px solid var(--panel-border);
+.canvas-world,
+.canvas-nodes {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.canvas-world {
+  z-index: 1;
+}
+.canvas-node {
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+.canvas-node:focus-visible {
+  outline: 2px solid var(--accent, #3b82f6);
+  outline-offset: 3px;
+}
+.canvas-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle,
+    var(--canvas-grid-color, rgba(255, 255, 255, 0.12)) 0 var(--canvas-grid-dot-size, 1.2px),
+    transparent var(--canvas-grid-dot-size, 1.2px)
+  );
+}
+:root.light .canvas-grid {
+  --canvas-grid-color: rgba(20, 35, 55, 0.17);
 }

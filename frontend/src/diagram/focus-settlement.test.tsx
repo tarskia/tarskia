@@ -6,8 +6,8 @@ import {
 } from '@tarskia/diagram-semantics';
 import { act, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { ReactFlowInstance } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
+import type { CanvasCamera } from '../canvas/camera';
 import { loadGallery } from '../test/curated-rendering';
 import { useFocusViewController } from '../viewer-core/focus-view';
 import { useDiagramActions } from '../viewer-core/useDiagramActions';
@@ -126,7 +126,7 @@ it.each([
           viewport = next;
           return Promise.resolve(true);
         },
-      } as unknown as ReactFlowInstance);
+      } as unknown as CanvasCamera);
     });
     await settle();
     const sourceEntity = engine.compiled.tree.byId.get('browser-editor-shell')?.entity;

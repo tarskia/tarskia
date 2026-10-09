@@ -7,10 +7,10 @@ import {
   type SemanticDocument,
 } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { buildLayoutResult } from '../../rendering/layout/layout-pipeline';
-import { buildStaticCanvasPresentation } from '../../rendering/presentation/presentation';
-import { adaptPresentationToReactFlow } from './adapter';
-import type { CanvasInteractionBindings } from './types';
+import type { CanvasInteractionBindings } from './canvas-types';
+import { buildCanvasRenderState } from './node-presentation';
+import { buildLayoutResult } from './rendering/layout/layout-pipeline';
+import { buildStaticCanvasPresentation } from './rendering/presentation/presentation';
 
 const INTERACTION_TAG_ID = buildQualifiedSchemaObjectId('user/test', 'tags', 'interaction');
 const DATA_TAG_ID = buildQualifiedSchemaObjectId('user/test', 'tags', 'data');
@@ -83,7 +83,7 @@ const withView = (
     params.expanded || params.scopeRootId
       ? {
           kind: 'semantic-diagram-view',
-          version: 3,
+          version: 2,
           scopeRootId: params.scopeRootId,
           nodesById: params.expanded
             ? Object.fromEntries(
@@ -119,33 +119,39 @@ const buildHostState = () => {
   });
   return {
     presentation,
-    host: adaptPresentationToReactFlow({
+    host: buildCanvasRenderState({
       presentation,
       bindings: noopBindings,
-      nodeControlsById: new Map([
-        [
-          'app-a',
-          {
-            selected: true,
-            disableControlActions: false,
-            hideLocalEdgeLabels: false,
-          },
-        ],
-      ]),
-      edgeControlsById: new Map([
-        [
-          'rel-1:api-a->app-b',
-          {
-            selected: true,
-            hideLabel: true,
-          },
-        ],
-      ]),
+      selectedEntityId: 'app-a',
+      selectedEdgeId: 'rel-1',
+      hideEdgeLabels: true,
     }),
   };
 };
 
-describe('adaptPresentationToReactFlow', () => {
+describe('buildCanvasRenderState', () => {
+  it('selects a represented secondary relation and applies shared interaction flags', () => {
+    const { presentation } = buildHostState();
+    const first = presentation.overlayEdges[0];
+    const host = buildCanvasRenderState({
+      presentation: {
+        ...presentation,
+        overlayEdges: [{ ...first, relationIds: [first.relationId, 'secondary'] }],
+      },
+      bindings: noopBindings,
+      selectedEdgeId: 'secondary',
+      disableControlActions: true,
+      hideEdgeLabels: true,
+    });
+    expect(host.overlayEdges[0].selected).toBe(true);
+    expect(
+      host.nodes.every(
+        (node) =>
+          node.data.controls.disableControlActions && node.data.controls.hideLocalEdgeLabels,
+      ),
+    ).toBe(true);
+  });
+
   it('emits absolute world-space Flow positions for settled nodes without host nesting', () => {
     const { presentation, host } = buildHostState();
     const appNode = presentation.nodes.find((node) => node.id === 'app-a');
@@ -155,8 +161,6 @@ describe('adaptPresentationToReactFlow', () => {
 
     expect(appNode).toBeDefined();
     expect(apiNode).toBeDefined();
-    expect(hostAppNode?.parentNode).toBeUndefined();
-    expect(hostApiNode?.parentNode).toBeUndefined();
     expect(hostAppNode?.position).toEqual({
       x: appNode?.rect.x ?? 0,
       y: appNode?.rect.y ?? 0,
@@ -209,19 +213,10 @@ describe('adaptPresentationToReactFlow', () => {
     const presentation = buildStaticCanvasPresentation({
       scene,
     });
-    const host = adaptPresentationToReactFlow({
+    const host = buildCanvasRenderState({
       presentation,
       bindings: noopBindings,
-      nodeControlsById: new Map(),
-      edgeControlsById: new Map([
-        [
-          'rel-1:api-a->app-b',
-          {
-            selected: true,
-            hideLabel: false,
-          },
-        ],
-      ]),
+      selectedEdgeId: 'rel-1',
     });
 
     expect(host.overlayEdges.at(-1)?.id).toBe('rel-1:api-a->app-b');
@@ -247,31 +242,11 @@ describe('adaptPresentationToReactFlow', () => {
     const presentation = buildStaticCanvasPresentation({
       scene,
     });
-    const localEdgeId = presentation.overlayEdges.find(
-      (edge) => edge.relationId === 'rel-local',
-    )?.id;
-    const host = adaptPresentationToReactFlow({
+    const host = buildCanvasRenderState({
       presentation,
       bindings: noopBindings,
-      nodeControlsById: new Map([
-        [
-          'group-a',
-          {
-            selected: false,
-            disableControlActions: false,
-            hideLocalEdgeLabels: true,
-          },
-        ],
-      ]),
-      edgeControlsById: new Map([
-        [
-          localEdgeId ?? 'rel-local',
-          {
-            selected: true,
-            hideLabel: true,
-          },
-        ],
-      ]),
+      selectedEdgeId: 'rel-local',
+      hideEdgeLabels: true,
     });
 
     const localOverlay = host.overlayEdges.find((edge) => edge.relationId === 'rel-local');
@@ -293,16 +268,13 @@ describe('adaptPresentationToReactFlow', () => {
     const presentation = buildStaticCanvasPresentation({
       scene,
     });
-    const host = adaptPresentationToReactFlow({
+    const host = buildCanvasRenderState({
       presentation,
       bindings: noopBindings,
-      nodeControlsById: new Map(),
-      edgeControlsById: new Map(),
     });
 
     const apiNode = presentation.nodes.find((node) => node.id === 'api-a');
     const hostApiNode = host.nodes.find((node) => node.id === 'api-a');
-    expect(hostApiNode?.parentNode).toBeUndefined();
     expect(hostApiNode?.position).toEqual({
       x: apiNode?.rect.x ?? 0,
       y: apiNode?.rect.y ?? 0,
@@ -358,17 +330,14 @@ describe('adaptPresentationToReactFlow', () => {
     const presentation = buildStaticCanvasPresentation({
       scene,
     });
-    const host = adaptPresentationToReactFlow({
+    const host = buildCanvasRenderState({
       presentation,
       bindings: noopBindings,
-      nodeControlsById: new Map(),
-      edgeControlsById: new Map(),
     });
 
     const shellNode = host.nodes.find((node) => node.id === 'table-group');
     const shellPresentationNode = presentation.nodes.find((node) => node.id === 'table-group');
     expect(shellNode?.data.view.content.focusShell).toBe(true);
-    expect(shellNode?.parentNode).toBeUndefined();
     expect(shellNode?.position).toEqual({
       x: shellPresentationNode?.rect.x ?? 0,
       y: shellPresentationNode?.rect.y ?? 0,
@@ -381,6 +350,5 @@ describe('adaptPresentationToReactFlow', () => {
     );
     expect((shellNode?.style as Record<string, string> | undefined)?.pointerEvents).toBe('none');
     expect(shellNode?.selectable).toBe(false);
-    expect(shellNode?.connectable).toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import type { CanvasInteractionBindings, CanvasNodeHostControls } from '../../host/reactflow/types';
+import type { CanvasInteractionBindings, CanvasNodeHostControls } from '../../canvas-types';
 import type { CanvasNodeView } from '../../rendering/presentation/presentation';
 import { GroupNodeView } from './GroupNodeView';
 

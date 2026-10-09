@@ -6,7 +6,6 @@ import type { UseCanvasSurfaceControllerArgs } from './useCanvasSurfaceControlle
 import {
   buildAutoVisibleSelectionKey,
   resolveVisibleHostOverlayEdges,
-  shouldAcknowledgeDisplayGenerationImmediately,
   shouldCommitAutoVisibleSelectionKey,
   shouldHandleViewportGestureEvent,
   shouldSuppressHostEdgeChrome,
@@ -97,13 +96,6 @@ async function renderController(params?: {
 }) {
   vi.resetModules();
   vi.doUnmock('react');
-  vi.doMock('reactflow', async () => {
-    const actual = await vi.importActual<typeof import('reactflow')>('reactflow');
-    return {
-      ...actual,
-      useNodesState: <T,>(initial: T[]) => [initial, vi.fn(), vi.fn()],
-    };
-  });
 
   const semanticBindings: import('../viewer-core/view-models').CanvasSemanticBindings = {
     getEntityDisplayName: vi.fn((entityId: string) => entityId),
@@ -244,33 +236,6 @@ describe('useCanvasSurfaceController', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.doUnmock('react');
-    vi.doUnmock('reactflow');
-  });
-
-  it('acknowledges camera-only display generations immediately', () => {
-    expect(
-      shouldAcknowledgeDisplayGenerationImmediately({
-        hostRenderChanged: false,
-        requiredHostGeneration: 3,
-        notifiedDisplayGeneration: 2,
-      }),
-    ).toBe(true);
-
-    expect(
-      shouldAcknowledgeDisplayGenerationImmediately({
-        hostRenderChanged: true,
-        requiredHostGeneration: 3,
-        notifiedDisplayGeneration: 2,
-      }),
-    ).toBe(false);
-
-    expect(
-      shouldAcknowledgeDisplayGenerationImmediately({
-        hostRenderChanged: false,
-        requiredHostGeneration: 3,
-        notifiedDisplayGeneration: 3,
-      }),
-    ).toBe(false);
   });
 
   it('suppresses host interactive controls during transition-lite phases', () => {

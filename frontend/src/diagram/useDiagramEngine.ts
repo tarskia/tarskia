@@ -6,10 +6,10 @@ import type {
   SemanticIndex,
 } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { CanvasCamera, CanvasPoint, CanvasViewport } from '../canvas/camera';
 import { collectRectBounds } from '../canvas/focus-viewport';
 import { buildStaticCanvasPresentation } from '../canvas/rendering/presentation/presentation';
 import { useCanvasTransitionController } from '../canvas/useCanvasTransitionController';
-import { useCanvasViewportAdapter } from '../canvas/useCanvasViewportAdapter';
 import { useDiagramRenderingController } from '../canvas/useDiagramRenderingController';
 import { captureDiagramCamera } from './camera-framing';
 import { type CanvasSize, measureCanvasElement } from './canvas-size';
@@ -46,7 +46,25 @@ export function useDiagramEngine({
   minZoom,
   maxZoom,
 }: UseDiagramEngineArgs) {
-  const viewportAdapter = useCanvasViewportAdapter();
+  const cameraRef = useRef<CanvasCamera | null>(null);
+  const onCameraInit = useCallback((camera: CanvasCamera) => {
+    cameraRef.current = camera;
+  }, []);
+  const onCameraUnmount = useCallback(() => {
+    cameraRef.current = null;
+  }, []);
+  const getCurrentViewport = useCallback(
+    () => cameraRef.current?.getViewport() ?? { x: 0, y: 0, zoom: 1 },
+    [],
+  );
+  const setViewport = useCallback(
+    (viewport: CanvasViewport) => cameraRef.current?.setViewport(viewport),
+    [],
+  );
+  const screenToWorldPosition = useCallback(
+    (point: CanvasPoint) => cameraRef.current?.screenToWorldPosition(point) ?? point,
+    [],
+  );
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const canvasResizeHandlerRef = useRef<(size: CanvasSize | null) => void>(() => {});
   const [canvasElement, setCanvasElement] = useState<HTMLDivElement | null>(null);
@@ -117,9 +135,9 @@ export function useDiagramEngine({
     minZoom,
     maxZoom,
     persistViewport,
-    onCanvasInit: viewportAdapter.onCanvasInit,
-    onCanvasUnmount: viewportAdapter.onCanvasUnmount,
-    getCurrentViewport: viewportAdapter.getCurrentViewport,
+    onCanvasInit: onCameraInit,
+    onCanvasUnmount: onCameraUnmount,
+    getCurrentViewport: getCurrentViewport,
     getSceneBounds: () => sceneBoundsRef.current,
     getNodeSetBounds: (nodeIds) => {
       const rects = nodeIds
@@ -136,7 +154,7 @@ export function useDiagramEngine({
         height: bounds.maxY - bounds.minY,
       };
     },
-    setViewport: viewportAdapter.setViewport,
+    setViewport: setViewport,
   });
 
   canvasResizeHandlerRef.current = motion.notifyCanvasResize;
@@ -229,7 +247,7 @@ export function useDiagramEngine({
     onCanvasInit: motion.onCanvasInit,
     onCanvasUnmount: motion.onCanvasUnmount,
     getCurrentViewport: motion.getCurrentViewport,
-    screenToWorldPosition: viewportAdapter.screenToWorldPosition,
+    screenToWorldPosition: screenToWorldPosition,
     requestNavigation: motion.requestNavigation,
     reportUserGestureStart: motion.reportUserGestureStart,
     reportUserGestureMove: motion.reportUserGestureMove,

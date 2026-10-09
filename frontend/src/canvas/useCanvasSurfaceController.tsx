@@ -1,20 +1,5 @@
 import type { Entity, SchemaModule, SemanticIndex } from '@tarskia/diagram-semantics';
-import {
-  type MutableRefObject,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import {
-  type Node,
-  type OnMove,
-  type OnMoveStart,
-  type ReactFlowInstance,
-  useNodesState,
-} from 'reactflow';
+import { type MutableRefObject, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import type { GetCurrentCanvasSize } from '../diagram/canvas-size';
 import type {
   MotionPhase,
@@ -23,17 +8,12 @@ import type {
 } from '../diagram/motion-types';
 import type { NodeVisualMode } from '../node-visual-mode';
 import type { CanvasSemanticBindings } from '../viewer-core/view-models';
+import type { CanvasCamera } from './camera';
+import type { CanvasInteractionBindings, CanvasMoveHandler, CanvasNode } from './canvas-types';
 import type { EdgeOverlayInteractionBindings } from './components/edges/EdgeOverlay';
-import { resolveCachedEdgeOverlayRenderState } from './components/edges/edge-overlay-state';
 import type { DiagramCanvasProps } from './DiagramCanvas';
 import { collapseFocusShellDescriptors } from './focus-shells';
-import { adaptPresentationToReactFlow } from './host/reactflow/adapter';
-import type {
-  CanvasEdgeHostControls,
-  CanvasInteractionBindings,
-  CanvasNodeHostControls,
-  ReactFlowHostRenderState,
-} from './host/reactflow/types';
+import { buildCanvasRenderState } from './node-presentation';
 import type { LayoutResult } from './rendering/layout/layout-pipeline';
 import type {
   CanvasOverlayEdgeView,
@@ -46,7 +26,7 @@ export interface UseCanvasSurfaceControllerArgs {
   surface: {
     canvasRef: MutableRefObject<HTMLDivElement | null>;
     onCanvasElementChange: (element: HTMLDivElement | null) => void;
-    onCanvasInit: (instance: ReactFlowInstance) => void;
+    onCanvasInit: (instance: CanvasCamera) => void;
     onCanvasUnmount: () => void;
     showDebug: boolean;
     getCurrentCanvasSize: GetCurrentCanvasSize;
@@ -105,14 +85,6 @@ const FOCUS_SHELL_OUTER_INSET_X = 18;
 const FOCUS_SHELL_OUTER_INSET_Y = 18;
 const FOCUS_SHELL_STEP_X = 16;
 const FOCUS_SHELL_STEP_Y = 32;
-const toSingleSelectionSet = (id?: string) => (id ? new Set([id]) : new Set<string>());
-
-const formatDebugPoint = (point: { x: number; y: number }) =>
-  `${Math.round(point.x)},${Math.round(point.y)}`;
-
-const formatDebugRect = (rect: { x: number; y: number; width: number; height: number }) =>
-  `${Math.round(rect.x)},${Math.round(rect.y)} ${Math.round(rect.width)}x${Math.round(rect.height)}`;
-
 const EMPTY_OVERLAY_EDGES: CanvasOverlayEdgeView[] = [];
 
 export const resolveVisibleHostOverlayEdges = (params: {
@@ -139,19 +111,6 @@ export const buildAutoVisibleSelectionKey = (params: {
 
 export const shouldCommitAutoVisibleSelectionKey = (result: NavigationRequestResult) =>
   result.status === 'queued' || result.status === 'applied';
-
-export const shouldAcknowledgeDisplayGenerationImmediately = (params: {
-  hostRenderChanged: boolean;
-  requiredHostGeneration: number | null;
-  notifiedDisplayGeneration: number | null;
-}) => {
-  const { hostRenderChanged, requiredHostGeneration, notifiedDisplayGeneration } = params;
-  return (
-    !hostRenderChanged &&
-    requiredHostGeneration !== null &&
-    requiredHostGeneration !== notifiedDisplayGeneration
-  );
-};
 
 export const shouldSuppressHostInteractiveControls = (transitionLiteMode: boolean) =>
   transitionLiteMode;
@@ -270,9 +229,7 @@ export function useCanvasSurfaceController({
   const suppressPaneClickRef = useRef(false);
   const autoVisibleSelectionKeyRef = useRef<string | null>(null);
   const viewportGestureActiveRef = useRef(false);
-  const pendingDisplayGenerationRef = useRef<number | null>(null);
   const notifiedDisplayGenerationRef = useRef<number | null>(null);
-  const lastAppliedHostRenderStateRef = useRef<ReactFlowHostRenderState | null>(null);
   const suppressPaneClickOnce = useCallback(() => {
     // Ignore the immediate pane click after node/edge/popup interactions.
     suppressPaneClickRef.current = true;
@@ -380,7 +337,7 @@ export function useCanvasSurfaceController({
     [setSelectedEdge, setSelectedEntity, suppressPaneClickOnce],
   );
 
-  const onMove: OnMove = useCallback(
+  const onMove: CanvasMoveHandler = useCallback(
     (event, viewport) => {
       if (!viewportGestureActiveRef.current && !shouldHandleViewportGestureEvent(event)) {
         return;
@@ -394,7 +351,7 @@ export function useCanvasSurfaceController({
     [reportUserGestureMove, reportUserGestureStart],
   );
 
-  const onMoveEnd: OnMove = useCallback(
+  const onMoveEnd: CanvasMoveHandler = useCallback(
     (event, viewport) => {
       if (!viewportGestureActiveRef.current && !shouldHandleViewportGestureEvent(event)) {
         return;
@@ -443,85 +400,38 @@ export function useCanvasSurfaceController({
     ],
   );
 
-  const buildEdgeControlsById = useCallback(
-    (selectedIds?: Set<string>) => {
-      const controlsById = new Map<string, CanvasEdgeHostControls>();
-      for (const edge of decoratedPresentation.overlayEdges) {
-        const representedRelationIds = edge.relationIds ?? [edge.relationId];
-        controlsById.set(edge.id, {
-          selected: representedRelationIds.some((relationId) => selectedIds?.has(relationId)),
-          hideLabel: edge.kind === 'routed' && suppressHostEdgeChrome,
-        });
-      }
-      return controlsById;
-    },
-    [decoratedPresentation.overlayEdges, suppressHostEdgeChrome],
-  );
-
-  const buildNodeControlsById = useCallback(
-    (selectedIds?: Set<string>) => {
-      const controlsById = new Map<string, CanvasNodeHostControls>();
-      const suppressInteractiveControls = shouldSuppressHostInteractiveControls(transitionLiteMode);
-      for (const node of decoratedPresentation.nodes) {
-        controlsById.set(node.id, {
-          selected: selectedIds?.has(node.id) ?? false,
-          disableControlActions: suppressInteractiveControls,
-          hideLocalEdgeLabels: suppressHostEdgeChrome,
-        });
-      }
-      return controlsById;
-    },
-    [decoratedPresentation, suppressHostEdgeChrome, transitionLiteMode],
-  );
-
-  const buildHostRenderState = useCallback(
-    (selectedNodeIds?: Set<string>, selectedRelationIds?: Set<string>): ReactFlowHostRenderState =>
-      adaptPresentationToReactFlow({
-        presentation: decoratedPresentation,
-        bindings: interactionBindings,
-        nodeControlsById: buildNodeControlsById(selectedNodeIds),
-        edgeControlsById: buildEdgeControlsById(selectedRelationIds),
-      }),
-    [buildEdgeControlsById, buildNodeControlsById, decoratedPresentation, interactionBindings],
-  );
-
-  const initialFlowStateRef = useRef<ReactFlowHostRenderState | null>(null);
-  if (!initialFlowStateRef.current) {
-    initialFlowStateRef.current = buildHostRenderState();
-  }
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialFlowStateRef.current.nodes);
-  const [overlayEdges, setOverlayEdges] = useState(initialFlowStateRef.current.overlayEdges);
-  const [edgeGeometrySnapshot, setEdgeGeometrySnapshot] = useState(presentation);
   const hostRenderState = useMemo(
     () =>
-      buildHostRenderState(
-        toSingleSelectionSet(selectedEntityId),
-        toSingleSelectionSet(selectedEdgeId),
-      ),
-    [buildHostRenderState, selectedEdgeId, selectedEntityId],
+      buildCanvasRenderState({
+        presentation: decoratedPresentation,
+        bindings: interactionBindings,
+        selectedEntityId,
+        selectedEdgeId,
+        hideEdgeLabels: suppressHostEdgeChrome,
+        disableControlActions: shouldSuppressHostInteractiveControls(transitionLiteMode),
+      }),
+    [
+      decoratedPresentation,
+      interactionBindings,
+      selectedEntityId,
+      selectedEdgeId,
+      suppressHostEdgeChrome,
+      transitionLiteMode,
+    ],
   );
+  const { nodes, overlayEdges } = hostRenderState;
+  const edgeGeometrySnapshot = presentation;
+  // The node list is now rendered directly. A layout effect runs after its DOM commit;
+  // there is no React Flow dimension echo or second state synchronization to await.
   useLayoutEffect(() => {
-    const hostRenderChanged = lastAppliedHostRenderStateRef.current !== hostRenderState;
-    if (hostRenderChanged) {
-      setNodes(hostRenderState.nodes);
-      setOverlayEdges(hostRenderState.overlayEdges);
-      lastAppliedHostRenderStateRef.current = hostRenderState;
-    }
-    setEdgeGeometrySnapshot(presentation);
-    pendingDisplayGenerationRef.current = requiredHostGeneration;
-
     if (
-      shouldAcknowledgeDisplayGenerationImmediately({
-        hostRenderChanged,
-        requiredHostGeneration,
-        notifiedDisplayGeneration: notifiedDisplayGenerationRef.current,
-      })
+      requiredHostGeneration !== null &&
+      requiredHostGeneration !== notifiedDisplayGenerationRef.current
     ) {
-      notifyDisplayHostSettled(requiredHostGeneration);
       notifiedDisplayGenerationRef.current = requiredHostGeneration;
-      pendingDisplayGenerationRef.current = null;
+      notifyDisplayHostSettled(requiredHostGeneration);
     }
-  }, [hostRenderState, presentation, notifyDisplayHostSettled, requiredHostGeneration, setNodes]);
+  }, [requiredHostGeneration, notifyDisplayHostSettled]);
 
   const selectedNodeView = useMemo(
     () => decoratedPresentation.nodes.find((node) => node.id === selectedEntityId),
@@ -567,200 +477,8 @@ export function useCanvasSurfaceController({
     selectedNodeView,
   ]);
 
-  useEffect(() => {
-    void nodes;
-    void overlayEdges;
-    const generation = pendingDisplayGenerationRef.current;
-    if (generation !== null && generation !== notifiedDisplayGenerationRef.current) {
-      notifyDisplayHostSettled(generation);
-      notifiedDisplayGenerationRef.current = generation;
-    }
-  }, [nodes, notifyDisplayHostSettled, overlayEdges]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    const debugWindow = window as Window & {
-      __TARSKIA_EDGE_OVERLAY_DEBUG__?: unknown;
-    };
-    if (!showDebug) {
-      delete debugWindow.__TARSKIA_EDGE_OVERLAY_DEBUG__;
-      return;
-    }
-    const overlayRenderState = resolveCachedEdgeOverlayRenderState(
-      presentation,
-      hostRenderState.overlayEdges,
-    );
-    const selectedEdgeTrace =
-      selectedEdgeId === undefined
-        ? null
-        : (overlayRenderState.edges.find(
-            (edge) =>
-              edge.id === selectedEdgeId ||
-              edge.relationId === selectedEdgeId ||
-              (edge.relationIds ?? []).includes(selectedEdgeId),
-          ) ?? null);
-    debugWindow.__TARSKIA_EDGE_OVERLAY_DEBUG__ = {
-      selectedEdgeId,
-      overlayRenderState,
-      selectedEdgeTrace,
-    };
-    return () => {
-      delete debugWindow.__TARSKIA_EDGE_OVERLAY_DEBUG__;
-    };
-  }, [hostRenderState, selectedEdgeId, showDebug, presentation]);
-
-  const debugSummary = useMemo(() => {
-    // Keep debug geometry current without storing canvas dimensions in React state.
-    void canvasLayoutVersion;
-    if (!showDebug) return null;
-    const allIds = graph.entities.map((entity) => entity.id);
-    const layoutIds = compiled.visibleIds;
-    const renderedIds = new Set(hostRenderState.nodes.map((node) => node.id));
-    const overlayEdges = decoratedPresentation.overlayEdges.length;
-    const hiddenStateIds = nodes.filter((node) => node.hidden).map((node) => node.id);
-    const missingSizeIds = nodes
-      .filter((node) => !(node.width && node.height))
-      .map((node) => node.id);
-    const missingLayout = allIds.filter((id) => !layoutIds.has(id));
-    const missingVisible = missingLayout;
-    const missingRendered = allIds.filter((id) => !renderedIds.has(id));
-
-    const topLevelNodes = decoratedPresentation.nodes.filter((node) => !node.parentId);
-    const topLevelPositions = topLevelNodes.map((node) => {
-      const x = node.rect.x;
-      const y = node.rect.y;
-      const width = node.rect.width;
-      const height = node.rect.height;
-      return `${node.id}(${Math.round(x)},${Math.round(y)},${Math.round(width)}x${Math.round(height)})`;
-    });
-
-    let topBounds: { minX: number; minY: number; maxX: number; maxY: number } | null = null;
-    for (const node of topLevelNodes) {
-      const x = node.rect.x;
-      const y = node.rect.y;
-      const width = node.rect.width;
-      const height = node.rect.height;
-      if (!topBounds) {
-        topBounds = { minX: x, minY: y, maxX: x + width, maxY: y + height };
-      } else {
-        topBounds.minX = Math.min(topBounds.minX, x);
-        topBounds.minY = Math.min(topBounds.minY, y);
-        topBounds.maxX = Math.max(topBounds.maxX, x + width);
-        topBounds.maxY = Math.max(topBounds.maxY, y + height);
-      }
-    }
-
-    const viewRect = (() => {
-      const viewport = getCurrentViewport();
-      const canvasSize = getCurrentCanvasSize();
-      if (!canvasSize || !viewport) return null;
-      const minX = -viewport.x / viewport.zoom;
-      const minY = -viewport.y / viewport.zoom;
-      const maxX = (-viewport.x + canvasSize.width) / viewport.zoom;
-      const maxY = (-viewport.y + canvasSize.height) / viewport.zoom;
-      return { minX, minY, maxX, maxY };
-    })();
-
-    const overflowParents = new Set<string>();
-    const rectById = new Map(decoratedPresentation.nodes.map((node) => [node.id, node.rect]));
-    for (const node of decoratedPresentation.nodes) {
-      if (!node.parentId) continue;
-      const parentRect = rectById.get(node.parentId);
-      if (!parentRect) continue;
-      const x = node.rect.x - parentRect.x;
-      const y = node.rect.y - parentRect.y;
-      if (
-        x < 0 ||
-        y < 0 ||
-        x + node.rect.width > parentRect.width ||
-        y + node.rect.height > parentRect.height
-      ) {
-        overflowParents.add(node.parentId);
-      }
-    }
-
-    const transitionActive = isTransitionRunning || isTransitionQueued;
-    const overlayRenderState = resolveCachedEdgeOverlayRenderState(
-      presentation,
-      hostRenderState.overlayEdges,
-    );
-    const selectedResolvedEdge =
-      selectedEdgeId === undefined
-        ? null
-        : (overlayRenderState.edges.find(
-            (edge) =>
-              edge.id === selectedEdgeId ||
-              edge.relationId === selectedEdgeId ||
-              (edge.relationIds ?? []).includes(selectedEdgeId),
-          ) ?? null);
-    return {
-      total: graph.entities.length,
-      layout: layoutIds.size,
-      visible: layoutIds.size,
-      rendered: decoratedPresentation.nodes.length,
-      overlayEdges,
-      stateNodes: nodes.length,
-      hiddenStateIds,
-      hiddenStateCount: hiddenStateIds.length,
-      missingSizeIds,
-      missingSizeCount: missingSizeIds.length,
-      transitionActive,
-      missingLayout,
-      missingVisible,
-      missingRendered,
-      topLevelPositions,
-      topBounds,
-      viewRect,
-      overflowParents: Array.from(overflowParents),
-      selectedEdgeTrace: selectedResolvedEdge
-        ? {
-            id: selectedResolvedEdge.id,
-            relationId: selectedResolvedEdge.relationId,
-            relationIds: selectedResolvedEdge.relationIds,
-            kind: selectedResolvedEdge.kind,
-            sourceId: selectedResolvedEdge.sourceId,
-            targetId: selectedResolvedEdge.targetId,
-            scopeId: selectedResolvedEdge.scopeId,
-            opacity: selectedResolvedEdge.opacity,
-            sourceSide: selectedResolvedEdge.geometry.sourceSide,
-            targetSide: selectedResolvedEdge.geometry.targetSide,
-            sourcePoint: formatDebugPoint(selectedResolvedEdge.geometry.sourcePoint),
-            targetPoint: formatDebugPoint(selectedResolvedEdge.geometry.targetPoint),
-            solidOverNodeIds: selectedResolvedEdge.solidOverNodeIds,
-            shellOccluderCount: overlayRenderState.shellOccluders.length,
-            contentOccluderCount: overlayRenderState.contentOccluders.length,
-            blockerOccluderCount: selectedResolvedEdge.blockerOccluders.length,
-            blockerOccluders: selectedResolvedEdge.blockerOccluders.map(formatDebugRect),
-            passes: {
-              solid: true,
-              blocked: selectedResolvedEdge.blockerOccluders.length > 0,
-            },
-          }
-        : null,
-    };
-  }, [
-    showDebug,
-    graph.entities,
-    compiled.visibleIds,
-    hostRenderState.nodes,
-    decoratedPresentation.nodes,
-    decoratedPresentation.overlayEdges.length,
-    canvasLayoutVersion,
-
-    getCurrentCanvasSize,
-    isTransitionQueued,
-    isTransitionRunning,
-    nodes,
-    getCurrentViewport,
-    hostRenderState,
-    selectedEdgeId,
-    presentation,
-  ]);
-
   const onNodeClick = useCallback(
-    (_event: unknown, node: Node) => {
+    (_event: unknown, node: CanvasNode) => {
       setSelectedEntity(node.id);
       setSelectedEdge(undefined);
       suppressPaneClickOnce();
@@ -768,13 +486,16 @@ export function useCanvasSurfaceController({
     [setSelectedEdge, setSelectedEntity, suppressPaneClickOnce],
   );
 
-  const onCanvasPaneClick = useCallback(() => {
-    if (suppressPaneClickRef.current) {
-      return;
-    }
-    setSelectedEntity(undefined);
-    setSelectedEdge(undefined);
-  }, [setSelectedEdge, setSelectedEntity]);
+  const onCanvasPaneClick = useCallback(
+    (force = false) => {
+      if (!force && suppressPaneClickRef.current) {
+        return;
+      }
+      setSelectedEntity(undefined);
+      setSelectedEdge(undefined);
+    },
+    [setSelectedEdge, setSelectedEntity],
+  );
 
   const overlayInteractionBindings = useMemo<EdgeOverlayInteractionBindings>(
     () => ({ onSelectEdge: handleEdgeSelect, onEdgeLabelClick: handleEdgeLabelClick }),
@@ -786,7 +507,7 @@ export function useCanvasSurfaceController({
     onCanvasElementChange,
     nodeVisualMode,
     hideHostVisuals,
-    nodes: nodes as Node[],
+    nodes: nodes as CanvasNode[],
     edgeGeometrySnapshot,
     overlayEdges: resolveVisibleHostOverlayEdges({
       overlayEdges,
@@ -797,7 +518,6 @@ export function useCanvasSurfaceController({
     transitionOverlay: transitionOverlay ?? undefined,
     overlayFrameStore: overlayFrameStore ?? undefined,
     nodeTypes,
-    onNodesChange,
     onNodeClick,
     onInit: onCanvasInit,
     onUnmount: onCanvasUnmount,
@@ -807,7 +527,21 @@ export function useCanvasSurfaceController({
     minZoom,
     maxZoom,
     showDebug,
-    debugSummary,
+    debugInputs: showDebug
+      ? {
+          graph,
+          compiled,
+          hostRenderState,
+          decoratedPresentation,
+          presentation,
+          canvasLayoutVersion,
+          getCurrentCanvasSize,
+          getCurrentViewport,
+          isTransitionQueued,
+          isTransitionRunning,
+          selectedEdgeId,
+        }
+      : undefined,
     onSelectFocusShell: handleSelectFocusShell,
     focusShells: focusShellFrames,
   };

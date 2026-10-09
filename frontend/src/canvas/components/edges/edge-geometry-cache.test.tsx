@@ -1,18 +1,13 @@
 // @vitest-environment happy-dom
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { Node } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
 import { loadGallery } from '../../../test/curated-rendering';
-import type { ReactFlowHostNodeData } from '../../host/reactflow/types';
+import type { CanvasNode, CanvasNodeData } from '../../canvas-types';
 import { EdgeOverlay } from './EdgeOverlay';
 import { resolveCachedEdgeOverlayRenderState } from './edge-overlay-state';
 import * as occlusion from './occluder-geometry';
 
-vi.mock('reactflow', () => ({
-  useStore: (selector: (state: { transform: number[] }) => unknown) =>
-    selector({ transform: [0, 0, 1] }),
-}));
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
@@ -27,7 +22,7 @@ it('reuses geometry across host selection/search updates while rendering fresh d
     id: view.id,
     position: { x: 0, y: 0 },
     data: { view, controls: {} },
-  })) as Node<ReactFlowHostNodeData>[];
+  })) as CanvasNode<CanvasNodeData>[];
   const host = document.createElement('div');
   const root = createRoot(host);
   try {

@@ -1,4 +1,4 @@
-import { getViewportForBounds } from 'reactflow';
+import { getViewportForBounds } from './camera';
 
 type ViewportState = {
   x: number;

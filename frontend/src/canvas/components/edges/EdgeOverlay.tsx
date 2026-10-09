@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
-import type { Node } from 'reactflow';
-import { useStore } from 'reactflow';
-import type { CanvasNodeHostControls, ReactFlowHostNodeData } from '../../host/reactflow/types';
+import type { CanvasNode, CanvasNodeData, CanvasNodeHostControls } from '../../canvas-types';
 import type {
   CanvasNodeView,
   CanvasOverlayEdgeView,
@@ -25,7 +23,7 @@ export const resolveEdgeSelectionId = (edge: { relationId?: string; id: string }
   edge.relationId ?? edge.id;
 
 const resolveOverlayNodes = (
-  nodes: Node<ReactFlowHostNodeData>[],
+  nodes: CanvasNode<CanvasNodeData>[],
 ): Array<{ view: CanvasNodeView; controls: CanvasNodeHostControls }> =>
   nodes.flatMap((node) => {
     const data = node.data;
@@ -35,16 +33,15 @@ const resolveOverlayNodes = (
 export function EdgeOverlay({
   edges,
   nodes,
-  bindings,
   geometrySnapshot,
 }: {
   geometrySnapshot?: CanvasRenderSnapshot;
   edges: CanvasOverlayEdgeView[];
-  nodes: Node<ReactFlowHostNodeData>[];
-  bindings?: EdgeOverlayInteractionBindings;
+  nodes: CanvasNode<CanvasNodeData>[];
 }) {
-  const transform = useStore((state) => state.transform);
-  const [tx, ty, zoom] = transform;
+  const tx = 0,
+    ty = 0,
+    zoom = 1;
   const overlayNodes = useMemo(() => resolveOverlayNodes(nodes), [nodes]);
   const nodeViews = useMemo(() => overlayNodes.map((node) => node.view), [overlayNodes]);
   const overlayRenderState = useMemo(
@@ -58,14 +55,7 @@ export function EdgeOverlay({
     [edges, nodeViews, geometrySnapshot],
   );
   const resolvedEdges = overlayRenderState.edges;
-  const transformStyle = useMemo(
-    () =>
-      ({
-        transform: `translate(${tx}px, ${ty}px) scale(${zoom})`,
-        transformOrigin: '0 0',
-      }) as const,
-    [tx, ty, zoom],
-  );
+  const transformStyle = { transformOrigin: '0 0' } as const;
   const interactionScopeId = 'edge-overlay-interaction'.replace(/[^a-zA-Z0-9_-]/g, '_');
 
   return (
@@ -96,10 +86,10 @@ export function EdgeOverlay({
             ))}
           </defs>
           {resolvedEdges.map((edge) => (
-            /* biome-ignore lint/a11y/noStaticElementInteractions: SVG hit paths intentionally provide pointer-only edge selection without blocking the pane. */
             <path
               key={`${edge.id}-hit`}
               className="edge-hit-path"
+              data-relation-id={resolveEdgeSelectionId(edge)}
               d={edge.path}
               fill="none"
               stroke="transparent"
@@ -107,21 +97,13 @@ export function EdgeOverlay({
               strokeLinecap="round"
               clipPath={`url(#edge-overlay-clip-${interactionScopeId}-solid-${edge.id.replace(/[^a-zA-Z0-9_-]/g, '_')})`}
               pointerEvents={labelInteractivityEnabled(edge) ? 'stroke' : 'none'}
-              onClick={(event) => {
-                event.stopPropagation();
-                bindings?.onSelectEdge?.(resolveEdgeSelectionId(edge));
-              }}
             />
           ))}
         </svg>
         <div className="edge-overlay-world edge-overlay-world-labels" style={transformStyle}>
           {resolvedEdges.map((edge) =>
             edge.hideLabel ? null : (
-              <EdgeLabel
-                key={`${edge.id}-label`}
-                edge={edge}
-                onSelect={bindings?.onEdgeLabelClick}
-              />
+              <EdgeLabel key={`${edge.id}-label`} edge={edge} delegateClicks />
             ),
           )}
         </div>

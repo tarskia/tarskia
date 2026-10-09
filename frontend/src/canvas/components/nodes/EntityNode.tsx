@@ -1,7 +1,6 @@
-import type { NodeProps } from 'reactflow';
-import type { ReactFlowHostNodeData } from '../../host/reactflow/types';
+import type { CanvasNodeData, CanvasNodeProps } from '../../canvas-types';
 import { EntityNodeView } from './EntityNodeView';
 
-export function EntityNode({ id, data }: NodeProps<ReactFlowHostNodeData>) {
+export function EntityNode({ id, data }: CanvasNodeProps<CanvasNodeData>) {
   return <EntityNodeView id={id} view={data.view} />;
 }

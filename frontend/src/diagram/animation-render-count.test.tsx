@@ -4,8 +4,8 @@ import { buildSemanticIndex } from '@tarskia/diagram-semantics';
 import type { SemanticDocument } from '@tarskia/diagram-semantics';
 import { act, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { ReactFlowInstance } from 'reactflow';
 import { afterEach, expect, it, vi } from 'vitest';
+import type { CanvasCamera } from '../canvas/camera';
 import { resolveTransitionOverlayFrame } from '../canvas/rendering/transition/overlay';
 import { loadGallery } from '../test/curated-rendering';
 import { useDiagramEngine } from './useDiagramEngine';
@@ -98,7 +98,7 @@ it.each([
           viewport = next;
           return Promise.resolve(true);
         },
-      } as unknown as ReactFlowInstance);
+      } as unknown as CanvasCamera);
     });
     for (let i = 0; i < 30 && (callbacks.size || engine.requiredHostGeneration !== null); i++)
       await advance(now + 100);

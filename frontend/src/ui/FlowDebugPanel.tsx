@@ -4,11 +4,6 @@ export type DebugSummary = {
   visible: number;
   rendered: number;
   overlayEdges: number;
-  stateNodes: number;
-  hiddenStateIds: string[];
-  hiddenStateCount: number;
-  missingSizeIds: string[];
-  missingSizeCount: number;
   transitionActive: boolean;
   missingLayout: string[];
   missingVisible: string[];
@@ -50,13 +45,6 @@ export function FlowDebugPanel({ show, summary }: { show: boolean; summary: Debu
       <div>Visible ids: {summary.visible}</div>
       <div>Rendered nodes: {summary.rendered}</div>
       <div>Overlay edges: {summary.overlayEdges}</div>
-      <div>State nodes: {summary.stateNodes}</div>
-      <div>Hidden nodes: {summary.hiddenStateCount}</div>
-      {summary.hiddenStateCount > 0 && <div>Hidden ids: {summary.hiddenStateIds.join(', ')}</div>}
-      <div>Missing sizes: {summary.missingSizeCount}</div>
-      {summary.missingSizeCount > 0 && (
-        <div>Missing size ids: {summary.missingSizeIds.join(', ')}</div>
-      )}
       <div>Transition active: {summary.transitionActive ? 'yes' : 'no'}</div>
       <div>
         Missing (layout): {summary.missingLayout.length ? summary.missingLayout.join(', ') : 'none'}
