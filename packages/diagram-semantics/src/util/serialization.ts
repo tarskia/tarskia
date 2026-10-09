@@ -24,6 +24,7 @@ type RawEntity = {
   props?: unknown;
   provenance?: unknown;
   children?: unknown;
+  parent?: unknown;
 };
 
 type RawRelation = {
@@ -295,6 +296,7 @@ const normalizeEntities = (rawEntities: unknown[]): SemanticDocument['entities']
       props,
       provenance: normalizeProvenance(entry.provenance),
       children: normalizedChildren.length > 0 ? normalizedChildren : undefined,
+      parent: normalizeOptionalText(entry.parent),
     };
   };
 
@@ -377,6 +379,7 @@ const toNestedEntities = (entities: SemanticDocument['entities']) => {
     if (entity.provenance) {
       out.provenance = entity.provenance;
     }
+    if (entity.parent) out.parent = entity.parent;
     if (entity.children && entity.children.length > 0) {
       out.children = entity.children.map((child) => serializeEntity(child));
     }

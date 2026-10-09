@@ -1,6 +1,7 @@
 import { createYamlParseDiagnostic } from '../io/yaml';
 import { parseSourceDocument } from '../util/serialization';
 import { type Diagnostic, diagramDiagnostic } from './diagnostics';
+import { normalizeDocumentHierarchy } from './normalize-hierarchy';
 import { buildSchemaId, parseSchemaRef } from './schema-ref';
 import type {
   Entity,
@@ -324,6 +325,8 @@ export const compileSourceGraph = (
     return { diagnostics };
   }
 
+  const normalized = normalizeDocumentHierarchy({ entities: compiledEntities });
+  diagnostics.push(...normalized.diagnostics);
   return {
     result: {
       source: rootSource,
@@ -331,7 +334,7 @@ export const compileSourceGraph = (
       doc: {
         version: rootSource.version,
         schemaRefs: orderedSchemaRefs,
-        entities: compiledEntities,
+        entities: normalized.doc.entities,
         relations: compiledRelations,
         inputs: rootSource.inputs,
         metadata: rootSource.metadata,

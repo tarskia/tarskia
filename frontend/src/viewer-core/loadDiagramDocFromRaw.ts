@@ -42,7 +42,7 @@ export const loadDiagramDocFromRaw = (params: {
     path: params.sourceLabel,
     messagePrefix: params.sourceLabel,
   });
-  if (!parsedSourceResult.ok || !parsedSourceResult.value) {
+  if (!parsedSourceResult.value) {
     return {
       readable: false,
       doc: withDocumentName(createBlankDiagramDocument('0.1.0'), params.streamName),
@@ -57,7 +57,7 @@ export const loadDiagramDocFromRaw = (params: {
     return {
       readable: true,
       doc,
-      sourceDiagnostics: [],
+      sourceDiagnostics: parsedSourceResult.diagnostics,
     };
   }
 

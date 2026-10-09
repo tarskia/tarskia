@@ -61,7 +61,9 @@ export function getAncestors<TNode extends TreeNodeLike<TNode>>(
   let currentId: string | undefined = options?.includeSelf
     ? nodeId
     : tree.byId.get(nodeId)?.parentId;
-  while (currentId) {
+  const visited = new Set<string>(options?.includeSelf ? [] : [nodeId]);
+  while (currentId && !visited.has(currentId)) {
+    visited.add(currentId);
     ancestors.push(currentId);
     currentId = tree.byId.get(currentId)?.parentId;
   }
@@ -79,9 +81,11 @@ export function collectDescendantIds<TNode extends TreeNodeLike<TNode>>(
   if (!root) return ids;
 
   const stack: TNode[] = [root];
+  const visited = new Set<string>();
   while (stack.length > 0) {
     const node = stack.pop();
-    if (!node) continue;
+    if (!node || visited.has(node.id)) continue;
+    visited.add(node.id);
     if (includeRoot || node.id !== rootId) {
       ids.add(node.id);
     }
@@ -104,9 +108,11 @@ export function collectDescendantParentIds<TNode extends TreeNodeLike<TNode>>(
   if (!root) return ids;
 
   const stack: TNode[] = [root];
+  const visited = new Set<string>();
   while (stack.length > 0) {
     const node = stack.pop();
-    if (!node) continue;
+    if (!node || visited.has(node.id)) continue;
+    visited.add(node.id);
     if (node.children.length > 0 && (includeRoot || node.id !== rootId)) {
       ids.push(node.id);
     }
@@ -123,15 +129,17 @@ export function getSingleChildChainTop<TNode extends TreeNodeLike<TNode>>(
   startId: string,
 ): string {
   let current = startId;
+  const visited = new Set<string>([startId]);
   while (true) {
     const parentId = tree.byId.get(current)?.parentId;
-    if (!parentId || parentId === tree.rootId) {
+    if (!parentId || parentId === tree.rootId || visited.has(parentId)) {
       return current;
     }
     const siblings = getChildren(tree, parentId);
     if (siblings.length !== 1 || siblings[0]?.id !== current) {
       return current;
     }
+    visited.add(parentId);
     current = parentId;
   }
 }
@@ -142,15 +150,17 @@ export function collectSingleChildChainDown<TNode extends TreeNodeLike<TNode>>(
 ): string[] {
   const ids: string[] = [];
   let currentId = startId;
+  const visited = new Set<string>([startId]);
   while (true) {
     const children = getChildren(tree, currentId);
     if (children.length !== 1) {
       return ids;
     }
     const child = children[0];
-    if (!child) {
+    if (!child || visited.has(child.id)) {
       return ids;
     }
+    visited.add(child.id);
     ids.push(child.id);
     currentId = child.id;
   }
@@ -164,9 +174,11 @@ export function traverseTree<TNode extends TreeNodeLike<TNode>>(params: {
 }): void {
   const { tree, rootId, getChildren, visit } = params;
   const stack: string[] = [rootId];
+  const visited = new Set<string>();
   while (stack.length > 0) {
     const parentId = stack.pop();
-    if (!parentId) continue;
+    if (!parentId || visited.has(parentId)) continue;
+    visited.add(parentId);
     const children = getChildren(parentId);
     visit(parentId, children);
     for (const child of children) {
