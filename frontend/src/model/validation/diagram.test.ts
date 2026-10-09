@@ -7,7 +7,7 @@ import frontendRaw from '../../schemas/frontend.yaml?raw';
 import kubernetesRaw from '../../schemas/kubernetes.yaml?raw';
 import softwareRaw from '../../schemas/software.yaml?raw';
 import webAppRaw from '../../schemas/web-app.yaml?raw';
-import { sampleDiagramRaw } from '../../semantic/bundled-diagrams';
+import { starterDiagramRaw } from '../../semantic/bundled-diagrams';
 import { parseDocument, parseSchema } from '../../util/serialization';
 import { buildRawSchemaSet, buildSchemaRuntime, buildSchemaSelection } from '../schema-runtime';
 import type { SemanticDocument } from '../types';
@@ -29,14 +29,14 @@ const schema = buildSchemaRuntime({
 
 describe('diagram validation API', () => {
   it('parses and validates diagram raw text', () => {
-    const result = parseAndValidateDiagramDoc(sampleDiagramRaw, schema);
+    const result = parseAndValidateDiagramDoc(starterDiagramRaw, schema);
     expect(result.ok).toBe(true);
     expect(result.diagnostics).toEqual([]);
     expect(result.value?.entities.length).toBeGreaterThan(0);
   });
 
   it('sanitizes dangling relations', () => {
-    const doc = parseDocument(sampleDiagramRaw);
+    const doc = parseDocument(starterDiagramRaw);
     const withDangling: SemanticDocument = {
       ...doc,
       relations: [
