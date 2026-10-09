@@ -3,6 +3,7 @@ export * from './display-labels';
 export * from './node-controls';
 export * from './normalize-diagram-view';
 export * from './reveal-tree';
+export * from './saved-view';
 export * from './search';
 export * from './semantic-index';
 export * from './view-operations';
