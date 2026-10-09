@@ -1,11 +1,10 @@
+import type { EntityIndex, SchemaModule, SemanticDocument } from '@tarskia/diagram-semantics';
 import { useMemo } from 'react';
-
 import { EntityNode } from '../canvas/components/nodes/EntityNode';
 import { GroupNode } from '../canvas/components/nodes/GroupNode';
 import type { GraphModel } from '../canvas/rendering/graph/graph-model';
 import { useCanvasSurfaceController } from '../canvas/useCanvasSurfaceController';
 import type { NodeVisualMode } from '../node-visual-mode';
-import type { EntityIndex, SchemaModule, SemanticDocument } from '../semantic';
 import type { CanvasSemanticBindings } from '../viewer-core/view-models';
 import type { NavigationIntent } from './motion-types';
 import type { useDiagramEngine } from './useDiagramEngine';

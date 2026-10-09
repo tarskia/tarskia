@@ -2,14 +2,15 @@ import {
   appendChildEntity,
   buildEntityIndex,
   duplicateEntityById,
+  type Entity,
   insertSiblingEntity,
   moveEntityById,
   removeEntityPropById,
+  type SemanticDocument,
   setEntityPropById,
   updateEntityById,
   updateEntityNameById,
-} from './entity-tree';
-import type { Entity, SemanticDocument } from './types';
+} from '@tarskia/diagram-semantics';
 
 const normalizeTagIds = (tags?: string[]) => {
   const normalized = Array.from(new Set((tags ?? []).map((tag) => tag.trim()).filter(Boolean)));

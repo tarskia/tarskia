@@ -1,6 +1,9 @@
+import {
+  buildCompiledDiagramEdgeId,
+  buildEntityTree,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import type { SemanticDocument } from '../../../model/types';
-import { buildCompiledDiagramEdgeId, buildEntityTree } from '../../../semantic';
 import { buildSceneTree } from '../tree/scene-tree';
 import { buildLayoutEdgesForParent } from './layout-edges';
 

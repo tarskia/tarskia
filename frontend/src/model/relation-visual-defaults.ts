@@ -1,4 +1,4 @@
-import type { RelationFlowDirection, RelationTypeDef } from './types';
+import type { RelationFlowDirection, RelationTypeDef } from '@tarskia/diagram-semantics';
 
 export const DEFAULT_RELATION_FLOW_DIRECTION: RelationFlowDirection = 'forward';
 

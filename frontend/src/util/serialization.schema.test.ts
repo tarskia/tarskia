@@ -1,3 +1,4 @@
+import { parseSchema } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
 import baseRaw from '../schemas/base.yaml?raw';
 import clickhouseRaw from '../schemas/clickhouse.yaml?raw';
@@ -7,7 +8,6 @@ import frontendRaw from '../schemas/frontend.yaml?raw';
 import kubernetesRaw from '../schemas/kubernetes.yaml?raw';
 import softwareRaw from '../schemas/software.yaml?raw';
 import webAppRaw from '../schemas/web-app.yaml?raw';
-import { parseSchema } from './serialization';
 
 describe('parseSchema validation', () => {
   it('accepts current bundled schema modules', () => {

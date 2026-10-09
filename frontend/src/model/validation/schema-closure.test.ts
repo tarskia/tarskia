@@ -1,7 +1,9 @@
+import {
+  buildQualifiedSchemaObjectId,
+  buildSchemaActivation,
+  type SchemaModule,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { buildQualifiedSchemaObjectId } from '../schema-ids';
-import { buildSchemaActivation } from '../schema-ref';
-import type { SchemaModule } from '../types';
 import { buildSchemaRuntimeFromCatalog, buildSchemaVersionCatalog } from './schema-closure';
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);

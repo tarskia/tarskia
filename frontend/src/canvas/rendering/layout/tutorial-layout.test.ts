@@ -1,11 +1,10 @@
+import { parseDocument, type SemanticDocument } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import type { SemanticDocument } from '../../../model/types';
 import { buildSchemaVersionCatalog } from '../../../model/validation';
-import { buildSchemaRuntimeFromCatalog } from '../../../semantic';
+import { buildSchemaRuntimeFromCatalog } from '../../../model/validation/schema-closure';
 import { semanticBootstrap } from '../../../semantic/bootstrap';
 import { compileDiagramViewState } from '../../../semantic/view/compile-diagram-view-tree';
 import tutorialLayoutRaw from '../../../test-fixtures/tutorial-layout.yaml?raw';
-import { parseDocument } from '../../../util/serialization';
 import { computeViewportForBoundsInVisibleCanvas } from '../../viewport-visibility';
 import { buildGraphModel } from '../graph/graph-model';
 import { buildStaticCanvasPresentation } from '../presentation/presentation';

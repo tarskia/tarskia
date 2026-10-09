@@ -1,0 +1,1 @@
+These YAML fixtures were copied from the frontend schemas and starter when the semantic model tests moved into this package (TAR-15). They are fixed inputs for package regression tests and do not depend on frontend runtime loading.

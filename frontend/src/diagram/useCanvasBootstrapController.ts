@@ -1,6 +1,6 @@
+import type { ViewportState } from '@tarskia/diagram-semantics';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AnimationSettings } from '../canvas/rendering/transition/animation-constants';
-import type { ViewportState } from '../model/types';
 import { resolveNavigationPolicy, resolveNavigationViewport } from './camera-navigation';
 import type { CanvasSize, GetCurrentCanvasSize } from './canvas-size';
 import type {

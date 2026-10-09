@@ -1,17 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { diagnosticsToMessages } from './diagnostics';
-import { buildEntityIndex } from './entity-tree';
-import { buildQualifiedSchemaObjectId } from './schema-ids';
-import { buildSchemaActivation, getSchemaModuleRef } from './schema-ref';
 import {
+  buildEntityIndex,
   buildNextSchemaActivations,
+  buildQualifiedSchemaObjectId,
+  buildSchemaActivation,
   buildSchemaLockReasons,
   collectIntroducedValidationErrors,
+  diagnosticsToMessages,
+  getSchemaModuleRef,
   resolveSchemaModules,
   type SchemaCatalogEntry,
+  type SchemaModule,
+  type SemanticDocument,
   sanitizeDanglingRelations,
-} from './schema-selection';
-import type { SchemaModule, SemanticDocument } from './types';
+} from '../../index';
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
 

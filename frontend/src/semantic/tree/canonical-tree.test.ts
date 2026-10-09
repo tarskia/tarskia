@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import {
   collectDescendantIds,
   collectDescendantParentIds,
@@ -7,7 +6,8 @@ import {
   getSingleChildChainTop,
   indexTree,
   type TreeNodeLike,
-} from './canonical-tree';
+} from '@tarskia/diagram-semantics';
+import { describe, expect, it } from 'vitest';
 
 interface TestNode extends TreeNodeLike<TestNode> {
   id: string;

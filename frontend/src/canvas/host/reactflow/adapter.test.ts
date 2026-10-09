@@ -1,7 +1,11 @@
+import {
+  buildQualifiedSchemaObjectId,
+  CORE_GROUP_TYPE_ID,
+  compileDiagramViewState,
+  type SchemaModule,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import { buildQualifiedSchemaObjectId, CORE_GROUP_TYPE_ID } from '../../../model/schema-ids';
-import type { SchemaModule, SemanticDocument } from '../../../model/types';
-import { compileDiagramViewState } from '../../../semantic';
 import { buildGraphModel } from '../../rendering/graph/graph-model';
 import { buildLayoutResult } from '../../rendering/layout/layout-pipeline';
 import { buildStaticCanvasPresentation } from '../../rendering/presentation/presentation';

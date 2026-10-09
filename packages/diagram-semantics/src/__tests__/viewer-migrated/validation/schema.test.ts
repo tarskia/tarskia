@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import dataModelRaw from '../../schemas/data-model.yaml?raw';
-import { diagnosticsToMessages } from '../diagnostics';
-import { getSchemaModuleRef } from '../schema-ref';
-import { parseAndValidateSchemaModule, validateSchemaModuleObject } from './schema';
+import dataModelRaw from '../../../__tests__/fixtures/viewer/data-model.yaml?raw';
+import {
+  diagnosticsToMessages,
+  getSchemaModuleRef,
+  parseAndValidateSchemaModule,
+  validateSchemaModuleObject,
+} from '../../../index';
 
 describe('schema validation API', () => {
   it('parses and validates schema raw text', () => {

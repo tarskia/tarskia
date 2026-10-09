@@ -1,4 +1,9 @@
-import type { DisplayContentConfig, DisplayCount, EntityTypeDef, PropertySchema } from './types';
+import type {
+  DisplayContentConfig,
+  DisplayCount,
+  EntityTypeDef,
+  PropertySchema,
+} from '@tarskia/diagram-semantics';
 
 export const DEFAULT_PROPERTY_PROJECTION_SHOW_IN = 'card' as const;
 export const DEFAULT_PROPERTY_PROJECTION_PRIORITY = Number.POSITIVE_INFINITY;

@@ -1,11 +1,3 @@
-import { useCallback } from 'react';
-
-import type { CanonicalDiagramStructureQueries } from '../canvas/structure/queries';
-import type {
-  NavigationIntent,
-  NavigationRequestResult,
-  StructuralTransitionIntent,
-} from '../diagram/motion-types';
 import {
   buildEntityIndex,
   type DiagramViewNodeState,
@@ -14,7 +6,14 @@ import {
   hasCollapsibleDirectChildParents,
   hasExpandableDirectChildParents,
   type SemanticDocument,
-} from '../semantic';
+} from '@tarskia/diagram-semantics';
+import { useCallback } from 'react';
+import type { CanonicalDiagramStructureQueries } from '../canvas/structure/queries';
+import type {
+  NavigationIntent,
+  NavigationRequestResult,
+  StructuralTransitionIntent,
+} from '../diagram/motion-types';
 import type { CommitDoc, EnsureDiagramView } from './types';
 
 const normalizeNodesById = (

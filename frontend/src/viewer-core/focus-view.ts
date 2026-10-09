@@ -1,7 +1,7 @@
+import type { SemanticDocument } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SceneTree } from '../canvas/rendering/tree/scene-tree';
 import type { GetCurrentCanvasSize } from '../diagram/canvas-size';
-import type { SemanticDocument } from '../semantic';
 import { ensureDiagramView } from './diagram-view';
 import type { CommitDoc } from './types';
 

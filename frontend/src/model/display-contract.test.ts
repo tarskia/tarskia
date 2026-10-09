@@ -1,5 +1,5 @@
+import type { EntityTypeDef, PropertySchema } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-
 import {
   PROPERTY_DISPLAY_CAPABILITIES,
   resolvePropertyDisplayOptions,
@@ -7,7 +7,6 @@ import {
   shouldShowPropertyOnCard,
   TYPE_DISPLAY_CAPABILITIES,
 } from './display-contract';
-import type { EntityTypeDef, PropertySchema } from './types';
 
 describe('display contract', () => {
   it('documents the supported type and property display capabilities', () => {

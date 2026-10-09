@@ -1,3 +1,4 @@
+import type { CompiledDiagramEdge, ViewportState } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type {
   NavigationIntent,
@@ -6,8 +7,7 @@ import type {
   StructuralTransitionFocus,
   StructuralTransitionIntent,
 } from '../diagram/motion-types';
-import type { ViewportState } from '../model/types';
-import type { CompiledDiagramEdge, DeclarativeDiagramViewState } from '../semantic';
+import type { DeclarativeDiagramViewState } from '../semantic/view/declarative-view-state';
 import type { CompileResult } from './compiler/compile';
 import type { LayoutResult } from './rendering/layout/layout-pipeline';
 import type { CanvasRenderSnapshot } from './rendering/presentation/presentation';

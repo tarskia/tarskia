@@ -1,11 +1,11 @@
-import type { Entity } from '../../../model/types';
 import {
   type CanonicalTree,
   type DiagramViewNodeControls,
+  type Entity,
   indexTree,
   type RevealMetadata,
   type TreeNodeLike,
-} from '../../../semantic';
+} from '@tarskia/diagram-semantics';
 
 /**
  * Canvas owns scene/layout adaptation only.
