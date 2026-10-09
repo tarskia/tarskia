@@ -1,4 +1,4 @@
-import { collectDescendantParentIds, getChildren } from '../../../semantic';
+import { collectDescendantParentIds, getChildren } from '@tarskia/diagram-semantics';
 import type { LayoutResult } from '../layout/layout-pipeline';
 
 export interface DiagramViewQueries {

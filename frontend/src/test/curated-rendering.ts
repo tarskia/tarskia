@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { compileDiagramViewState, type SemanticDocument } from '@tarskia/diagram-semantics';
 import { buildGraphModel } from '../canvas/rendering/graph/graph-model';
 import { buildLayoutResult } from '../canvas/rendering/layout/layout-pipeline';
 import { buildStaticCanvasPresentation } from '../canvas/rendering/presentation/presentation';
@@ -9,9 +10,7 @@ import {
   buildTimedTransitionPlan,
   buildTimedTransitionSequence,
 } from '../canvas/rendering/transition/timed-plan';
-import type { SemanticDocument } from '../model/types';
 import { buildSchemaVersionCatalog } from '../model/validation/schema-closure';
-import { compileDiagramViewState } from '../semantic';
 import { semanticBootstrap } from '../semantic/bootstrap';
 import { buildDiagramSemanticRuntime } from '../semantic/runtime';
 import { loadDiagramDocFromRaw } from '../viewer-core/loadDiagramDocFromRaw';

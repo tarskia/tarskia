@@ -1,3 +1,4 @@
+import type { ViewportState } from '@tarskia/diagram-semantics';
 import type { LayoutResult } from '../canvas/rendering/layout/layout-pipeline';
 import type { LayoutTree } from '../canvas/rendering/layout/tree-traverser';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
@@ -6,7 +7,6 @@ import type {
   TimedTransitionPlan,
   TimedTransitionSequence,
 } from '../canvas/rendering/transition/timed-plan';
-import type { ViewportState } from '../model/types';
 
 export type DiagramCameraRect = {
   x: number;

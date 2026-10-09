@@ -1,4 +1,4 @@
-import type { DiagramViewNodeControls } from '../../../semantic';
+import type { DiagramViewNodeControls } from '@tarskia/diagram-semantics';
 import type { CanvasEdgeGeometry, CanvasPoint, CanvasRect } from '../presentation/geometry';
 import { buildBezierEdgeGeometry, buildBezierPath } from '../presentation/geometry';
 import type {

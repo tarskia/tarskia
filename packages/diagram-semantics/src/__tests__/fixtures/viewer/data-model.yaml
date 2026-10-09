@@ -1,0 +1,88 @@
+owner: core
+name: data-model
+version: "0.3"
+use:
+  - schema: core/software@0.1
+    alias: sw
+
+traits:
+  - id: column-like
+    label: Column
+    extends: core/base.traits.containable
+
+types:
+  - id: table
+    label: Table
+    traits: [core/software.traits.table-like, core/base.traits.container]
+    defaultTags: [core/software.tags.data]
+    naming:
+      required: true
+    containment:
+      allowedChildTraits: [core/data-model.traits.column-like]
+    display:
+      primaryTag: core/software.tags.data
+      defaultSize:
+        width: 170
+        height: 84
+      style:
+        hue: 160
+      count:
+        childTypes: [column]
+        label: columns
+
+  - id: column
+    label: Column
+    traits: [column-like]
+    defaultTags: [core/software.tags.data]
+    naming:
+      required: true
+    display:
+      primaryTag: core/software.tags.data
+      defaultSize:
+        width: 150
+        height: 80
+      style:
+        hue: 165
+    properties:
+      - id: type
+        type: enum
+        values: [uuid, text, int, decimal, boolean, timestamp]
+        allowOther: true
+
+relations:
+  - id: one-to-one
+    label: one-to-one
+    shortLabel: 1:1
+    priority: 1
+    defaultTags: [data]
+
+  - id: one-to-many
+    label: one-to-many
+    shortLabel: 1:n
+    priority: 2
+    defaultTags: [data]
+
+  - id: many-to-one
+    label: many-to-one
+    shortLabel: n:1
+    priority: 2
+    defaultTags: [data]
+
+  - id: many-to-many
+    label: many-to-many
+    shortLabel: n:n
+    priority: 3
+    defaultTags: [data]
+
+update:
+  sw.traits.table-like:
+    add:
+      relationParticipation:
+        - relation: core/data-model.relations.one-to-one
+          endpoint: both
+        - relation: core/data-model.relations.one-to-many
+          endpoint: both
+        - relation: core/data-model.relations.many-to-one
+          endpoint: both
+        - relation: core/data-model.relations.many-to-many
+          endpoint: both

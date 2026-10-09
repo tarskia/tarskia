@@ -1,8 +1,10 @@
+import {
+  buildCompiledDiagramEdgeId,
+  buildQualifiedSchemaObjectId,
+  type CompiledDiagramEdge,
+  type SchemaModule,
+} from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-
-import { buildQualifiedSchemaObjectId } from '../../../model/schema-ids';
-import type { SchemaModule } from '../../../model/types';
-import { buildCompiledDiagramEdgeId, type CompiledDiagramEdge } from '../../../semantic';
 import { buildEdgeVisuals } from './edge-visuals';
 
 const READS_RELATION_ID = buildQualifiedSchemaObjectId('user/test', 'relations', 'reads');

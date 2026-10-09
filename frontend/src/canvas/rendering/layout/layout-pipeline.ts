@@ -1,4 +1,4 @@
-import type { CompiledDiagramViewState } from '../../../semantic';
+import type { CompiledDiagramViewState } from '@tarskia/diagram-semantics';
 import type { GraphModel } from '../graph/graph-model';
 import { buildAbsolutePositions, buildSceneZIndex, type CanvasScene } from '../scene/scene';
 import { buildSceneTree } from '../tree/scene-tree';

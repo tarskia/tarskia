@@ -1,3 +1,4 @@
+import type { Entity, SchemaModule, SemanticDocument } from '@tarskia/diagram-semantics';
 import {
   type MutableRefObject,
   useCallback,
@@ -14,7 +15,6 @@ import {
   type ReactFlowInstance,
   useNodesState,
 } from 'reactflow';
-
 import type { GetCurrentCanvasSize } from '../diagram/canvas-size';
 import type {
   MotionPhase,
@@ -22,7 +22,6 @@ import type {
   NavigationRequestResult,
 } from '../diagram/motion-types';
 import type { NodeVisualMode } from '../node-visual-mode';
-import type { Entity, SchemaModule, SemanticDocument } from '../semantic';
 import type { CanvasSemanticBindings } from '../viewer-core/view-models';
 import type { CompileResult } from './compiler/compile';
 import type { EdgeOverlayInteractionBindings } from './components/edges/EdgeOverlay';

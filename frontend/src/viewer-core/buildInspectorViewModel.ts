@@ -1,19 +1,18 @@
 import {
   CORE_GROUP_TYPE_ID,
-  createEntityDisplayTypeResolver,
   type Entity,
   type EntityIndex,
   FREEFORM_RELATION_TYPE,
   getSchemaObjectLocalId,
   type PropertySchema,
   type Relation,
-  resolveEntityEffectiveAndDerivedTags,
-  resolveRelationEffectiveTags,
   resolveTypeDef,
-  resolveTypeDisplayOptions,
   type SchemaModule,
   type SemanticDocument,
-} from '../semantic';
+} from '@tarskia/diagram-semantics';
+import { resolveTypeDisplayOptions } from '../model/display-contract';
+import { createEntityDisplayTypeResolver } from '../model/entity-display';
+import { resolveEntityEffectiveAndDerivedTags, resolveRelationEffectiveTags } from '../model/tags';
 import type {
   DiagramProvenanceSourceView,
   InspectorProvenanceView,

@@ -1,5 +1,10 @@
-import { buildEntityIndex } from '../../../model/entity-tree';
-import type { Entity, RelationTypeDef, SchemaModule, SemanticDocument } from '../../../model/types';
+import {
+  buildEntityIndex,
+  type Entity,
+  type RelationTypeDef,
+  type SchemaModule,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 
 export interface GraphModel {
   doc: SemanticDocument;

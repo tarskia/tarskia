@@ -1,5 +1,4 @@
-import { CORE_GROUP_TYPE_ID } from './schema-ids';
-import type { Entity } from './types';
+import { CORE_GROUP_TYPE_ID, type Entity } from '@tarskia/diagram-semantics';
 
 export interface EntityDisplayTypeResolverContext {
   byId?: Map<string, Entity>;

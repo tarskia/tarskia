@@ -1,6 +1,5 @@
+import type { CompiledDiagramEdge, SchemaModule } from '@tarskia/diagram-semantics';
 import { resolveRelationVisualDefaults } from '../../../model/relation-visual-defaults';
-import type { SchemaModule } from '../../../model/types';
-import type { CompiledDiagramEdge } from '../../../semantic';
 
 export interface ResolvedVisualEdge extends CompiledDiagramEdge {
   semanticSourceId: string;

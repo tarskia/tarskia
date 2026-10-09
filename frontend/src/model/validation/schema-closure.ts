@@ -1,21 +1,23 @@
 import {
-  type Diagnostic,
-  diagnosticFingerprint,
-  schemaDiagnostic,
-  sortDiagnostics,
-} from '../diagnostics';
-import { buildSchemaId, getSchemaModuleRef, parseSchemaRef } from '../schema-ref';
-import {
   buildDefaultSchemaActivation,
   buildRawSchemaSet,
   buildSchemaActivationMap,
+  buildSchemaId,
   buildSchemaRuntime,
+  type Diagnostic,
+  diagnosticFingerprint,
+  getSchemaModuleRef,
+  parseSchemaId,
+  parseSchemaRef,
   type RawSchemaSet,
+  resolveSchemaModules,
+  type SchemaActivation,
+  type SchemaModule,
   type SchemaRuntime,
   type SchemaSelection,
-} from '../schema-runtime';
-import { parseSchemaId, resolveSchemaModules } from '../schema-selection';
-import type { SchemaActivation, SchemaModule } from '../types';
+  schemaDiagnostic,
+  sortDiagnostics,
+} from '@tarskia/diagram-semantics';
 
 export interface SchemaVersionCatalogEntry {
   schemaId: string;

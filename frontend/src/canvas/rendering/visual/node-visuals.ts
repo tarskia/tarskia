@@ -1,3 +1,10 @@
+import {
+  CORE_GROUP_TYPE_ID,
+  type Entity,
+  getSchemaObjectLocalId,
+  resolveTypeDef,
+  type SchemaModule,
+} from '@tarskia/diagram-semantics';
 import { createEntityDisplayTypeResolver } from '../../../model/entity-display';
 import { resolveTypeLayoutDefaults } from '../../../model/layout-defaults';
 import {
@@ -5,9 +12,6 @@ import {
   resolveTypeProjectionOptions,
   shouldProjectPropertyOnCard,
 } from '../../../model/projection-contract';
-import { resolveTypeDef } from '../../../model/schema';
-import { CORE_GROUP_TYPE_ID, getSchemaObjectLocalId } from '../../../model/schema-ids';
-import type { Entity, SchemaModule } from '../../../model/types';
 import { resolveTypeVisualDefaults } from '../../../model/visual-defaults';
 import { DEFAULT_NODE_SIZE } from '../layout/defaults';
 import type { SceneNode, SceneTree } from '../tree/scene-tree';

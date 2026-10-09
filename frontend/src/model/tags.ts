@@ -1,6 +1,12 @@
-import { resolveTypeDef } from './schema';
-import { CORE_GROUP_TYPE_ID, FREEFORM_RELATION_TYPE } from './schema-ids';
-import type { Entity, Relation, RelationTypeDef, SchemaModule } from './types';
+import {
+  CORE_GROUP_TYPE_ID,
+  type Entity,
+  FREEFORM_RELATION_TYPE,
+  type Relation,
+  type RelationTypeDef,
+  resolveTypeDef,
+  type SchemaModule,
+} from '@tarskia/diagram-semantics';
 
 export function normalizeTagList(tags?: string[]) {
   return Array.from(new Set((tags ?? []).map((tag) => tag.trim()).filter((tag) => tag.length > 0)));

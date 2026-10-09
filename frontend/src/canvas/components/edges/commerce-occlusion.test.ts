@@ -1,13 +1,12 @@
+import { parseDocument, type SemanticDocument } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
 import {
   buildSchemaRuntimeFromCatalog,
   buildSchemaVersionCatalog,
-  type SemanticDocument,
-} from '../../../semantic';
+} from '../../../model/validation/schema-closure';
 import { semanticBootstrap } from '../../../semantic/bootstrap';
 import { compileDiagramViewState } from '../../../semantic/view/compile-diagram-view-tree';
 import occlusionFixtureRaw from '../../../test-fixtures/commerce-occlusion.yaml?raw';
-import { parseDocument } from '../../../util/serialization';
 import { buildGraphModel } from '../../rendering/graph/graph-model';
 import { buildLayoutResult } from '../../rendering/layout/layout-pipeline';
 import { buildStaticCanvasPresentation } from '../../rendering/presentation/presentation';

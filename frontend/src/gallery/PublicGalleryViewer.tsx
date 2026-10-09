@@ -1,3 +1,4 @@
+import { getDiagramViewExpandedMap } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import type { DtoGalleryDiagramDetailResponse } from '../api/generated/model';
@@ -7,15 +8,11 @@ import { cloneAnimationSettings } from '../diagram/animation-settings';
 import { useDiagramEngine } from '../diagram/useDiagramEngine';
 import { useDiagramSurface } from '../diagram/useDiagramSurface';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { buildSchemaVersionCatalog } from '../model/validation/schema-closure';
 import type { PublicGalleryShellContext } from '../PublicGalleryShell';
-import {
-  buildDiagramViewForSearchReveal,
-  buildSchemaVersionCatalog,
-  getDiagramViewExpandedMap,
-  searchDiagramText,
-  useDiagramSemanticRuntime,
-} from '../semantic';
 import { semanticBootstrap } from '../semantic/bootstrap';
+import { useDiagramSemanticRuntime } from '../semantic/runtime';
+import { buildDiagramViewForSearchReveal, searchDiagramText } from '../semantic/view/search';
 import { CanvasToolbar } from '../ui/CanvasToolbar';
 import { GalleryInspector } from '../ui/GalleryInspector';
 import { buildCanvasSemanticBindings } from '../viewer-core/buildCanvasSemanticBindings';

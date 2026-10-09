@@ -1,4 +1,6 @@
 // @vitest-environment happy-dom
+
+import type { SemanticDocument } from '@tarskia/diagram-semantics';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { ReactFlowInstance } from 'reactflow';
@@ -6,7 +8,6 @@ import { afterEach, expect, it, vi } from 'vitest';
 import type { CanvasRenderSnapshot } from '../canvas/rendering/presentation/presentation';
 import { DEFAULT_ANIMATION_SETTINGS } from '../canvas/rendering/transition/animation-constants';
 import { captureTransitionOverlaySnapshot } from '../canvas/rendering/transition/overlay';
-import type { SemanticDocument } from '../model/types';
 import { loadGallery } from '../test/curated-rendering';
 import { useDiagramEngine } from './useDiagramEngine';
 

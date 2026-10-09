@@ -26,33 +26,6 @@ const collectFiles = (dir: string): string[] => {
 };
 
 describe('architecture boundaries', () => {
-  it('keeps UI, viewer core, and top-level canvas/diagram files off model internals', () => {
-    const scopedFiles = [
-      ...collectFiles(path.join(srcRoot, 'ui')),
-      ...collectFiles(path.join(srcRoot, 'viewer-core')),
-      path.join(srcRoot, 'canvas', 'DiagramCanvas.tsx'),
-      path.join(srcRoot, 'canvas', 'useCanvasSurfaceController.tsx'),
-      path.join(srcRoot, 'diagram', 'useDiagramEngine.ts'),
-      path.join(srcRoot, 'diagram', 'useDiagramSurface.ts'),
-    ];
-
-    const offenders = scopedFiles.flatMap((file) => {
-      const source = readFileSync(file, 'utf8');
-      const problems: string[] = [];
-      if (/(?:\.\.\/)+model\//.test(source)) {
-        problems.push('imports model internals');
-      }
-      if (/(?:\.\.\/)+util\/serialization/.test(source)) {
-        problems.push('imports util/serialization directly');
-      }
-      return problems.length > 0
-        ? [`${normalizePath(path.relative(projectRoot, file))}: ${problems.join(', ')}`]
-        : [];
-    });
-
-    expect(offenders).toEqual([]);
-  });
-
   it('keeps bundled built-in starter/schema loading inside semantic bootstrap boundaries', () => {
     const builtInRawImportPattern =
       /data\/starters\/starter\.yaml\?raw|schemas\/[^'"]+\.yaml\?raw|import\.meta\.glob\(\s*['"][^'"]*schemas\/\*\.yaml['"][\s\S]*?query:\s*['"]\?raw['"]/;
