@@ -47,8 +47,10 @@ const buildDetailControlStateIndex = <TNode extends SemanticViewNodeLike<TNode>>
   const detailStateById = new Map<string, DetailControlState>();
 
   const visit = (node: TNode): DetailControlState => {
-    let canExpandDetails = node.hasChildren && !node.view.expanded;
-    let canCollapseDetails = node.hasChildren && node.view.expanded;
+    let canExpandDetails =
+      node.view.includedInProjection && node.hasChildren && !node.view.expanded;
+    let canCollapseDetails =
+      node.view.includedInProjection && node.hasChildren && node.view.expanded;
 
     for (const child of node.children) {
       const childState = visit(child);

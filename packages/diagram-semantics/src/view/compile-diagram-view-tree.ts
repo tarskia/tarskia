@@ -1,8 +1,4 @@
-import {
-  CORE_CONTAINS_RELATION_ID,
-  FREEFORM_RELATION_TYPE,
-  getSchemaObjectLocalId,
-} from '../model/schema-ids';
+import { CORE_CONTAINS_RELATION_ID } from '../model/schema-ids';
 import type { Entity, Relation, SchemaModule, SemanticDocument } from '../model/types';
 import {
   type CanonicalTree,
@@ -11,6 +7,7 @@ import {
   indexTree,
 } from '../tree/canonical-tree';
 import { buildEntityTree, type SemanticEntityTree } from '../tree/entity-tree';
+import { resolveRelationDisplayLabel } from './display-labels';
 import { buildDiagramViewNodeControls, type DiagramViewNodeControls } from './node-controls';
 import {
   type NormalizedDiagramViewState,
@@ -94,25 +91,6 @@ export interface RevealAndVisibilityResult extends RevealAnnotations {}
 
 const isRenderableRelationType = (relationTypeId: string | undefined) =>
   relationTypeId !== CORE_CONTAINS_RELATION_ID;
-
-const resolveRelationDisplayLabel = (
-  relation: Relation,
-  relationTypeById: Map<string, SchemaModule['relations'][number]>,
-) => {
-  if (!relation.type) {
-    return relation.label;
-  }
-  if (relation.type === FREEFORM_RELATION_TYPE) {
-    return relation.label ?? FREEFORM_RELATION_TYPE;
-  }
-  const relationType = relationTypeById.get(relation.type);
-  return (
-    relation.label ??
-    relationType?.shortLabel ??
-    relationType?.label ??
-    getSchemaObjectLocalId(relation.type)
-  );
-};
 
 export const buildCompiledDiagramEdgeId = (
   relationId: string,
