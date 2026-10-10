@@ -48,6 +48,7 @@ export interface CompiledDiagramEdge {
   relationId: string;
   sourceId: string;
   targetId: string;
+  external?: { end: 'source' | 'target'; entityId: string; displayId: string };
   semanticSourceId?: string;
   semanticTargetId?: string;
   type?: string;
@@ -71,6 +72,7 @@ export interface CompiledDiagramViewState {
    * Rendering hosts can materialize this into concrete z-index values without re-deriving structure.
    */
   nodePaintOrder: string[];
+  scopeRootId?: string;
 }
 
 export interface EffectiveExpansionResult {
@@ -316,6 +318,7 @@ const projectCompiledDiagramEdges = (params: {
   scopeBoundaryId: string;
   relations: Relation[];
   relationDisplayById: ReadonlyMap<string, string | undefined>;
+  outsideVisibleIds: Set<string>;
 }) => {
   const { tree, scopeBoundaryId, relations, relationDisplayById } = params;
   const resolveVisibleNodeId = (entityId: string): string | null => {
@@ -339,19 +342,47 @@ const projectCompiledDiagramEdges = (params: {
     return null;
   };
 
+  const isInside = (entityId: string) => {
+    let node = tree.byId.get(entityId);
+    while (node) {
+      if (node.id === scopeBoundaryId) return true;
+      node = node.parentId ? tree.byId.get(node.parentId) : undefined;
+    }
+    return false;
+  };
+  const resolveOutside = (entityId: string): string | undefined => {
+    let node = tree.byId.get(entityId);
+    while (node && node.id !== tree.rootId) {
+      if (params.outsideVisibleIds.has(node.id)) return node.id;
+      node = node.parentId ? tree.byId.get(node.parentId) : undefined;
+    }
+    return undefined;
+  };
   const edges: CompiledDiagramEdge[] = [];
   for (const relation of relations) {
     if (!isRenderableRelationType(relation.type)) {
       continue;
     }
-    const sourceId = resolveVisibleNodeId(relation.from);
-    const targetId = resolveVisibleNodeId(relation.to);
+    const focused = scopeBoundaryId !== tree.rootId;
+    const sourceInside = focused && isInside(relation.from);
+    const targetInside = focused && isInside(relation.to);
+    const crossing = focused && sourceInside !== targetInside;
+    const outsideEntityId = sourceInside ? relation.to : relation.from;
+    const displayId = crossing ? resolveOutside(outsideEntityId) : undefined;
+    const external: CompiledDiagramEdge['external'] = displayId
+      ? { end: sourceInside ? 'target' : 'source', entityId: outsideEntityId, displayId }
+      : undefined;
+    const resolveInside = (id: string) =>
+      crossing && id === scopeBoundaryId ? id : resolveVisibleNodeId(id);
+    const sourceId = external?.end === 'source' ? displayId : resolveInside(relation.from);
+    const targetId = external?.end === 'target' ? displayId : resolveInside(relation.to);
     if (!sourceId || !targetId || sourceId === targetId) {
       continue;
     }
     edges.push({
       id: buildCompiledDiagramEdgeId(relation.id, sourceId, targetId),
       relationId: relation.id,
+      ...(external ? { external } : {}),
       sourceId,
       targetId,
       semanticSourceId: relation.from,
@@ -408,13 +439,21 @@ export function compileView(
     scopeBoundaryId: revealAndVisibility.scopeBoundaryId,
   });
 
+  const outsideVisibleIds = effectiveExpansion.scopeRootId
+    ? resolveRevealAnnotations({
+        tree: index.tree,
+        expanded: normalizedViewState.expanded,
+      }).includedNodeIds
+    : new Set<string>();
   const result = {
+    ...(effectiveExpansion.scopeRootId ? { scopeRootId: effectiveExpansion.scopeRootId } : {}),
     tree: projectedTree,
     edges: projectCompiledDiagramEdges({
       tree: workingTree,
       scopeBoundaryId: revealAndVisibility.scopeBoundaryId,
       relations: index.renderableRelations,
       relationDisplayById: index.relationDisplayById,
+      outsideVisibleIds,
     }),
     nodePaintOrder: buildCompiledDiagramNodePaintOrder(projectedTree),
   };
@@ -430,6 +469,7 @@ export function compileView(
   Object.freeze(projectedTree);
   for (const edge of result.edges) {
     if (edge.solidOverNodeIds) Object.freeze(edge.solidOverNodeIds);
+    if (edge.external) Object.freeze(edge.external);
     Object.freeze(edge);
   }
   Object.freeze(result.edges);

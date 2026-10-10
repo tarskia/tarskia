@@ -248,7 +248,7 @@ export function useCanvasSurfaceController({
     );
   }, [entityIndex.byId, focusRootId, focusShellViews, semantic]);
   const focusShellFrames = useMemo(() => {
-    if (!focusRootId) {
+    if (!focusRootId || presentation.nodes.some((node) => node.content.focusBoundary)) {
       return [];
     }
     const focusRootEntity = entityIndex.byId.get(focusRootId);
@@ -282,7 +282,7 @@ export function useCanvasSurfaceController({
         bottom: FOCUS_SHELL_OUTER_INSET_Y + index * FOCUS_SHELL_STEP_Y,
       },
     }));
-  }, [entityIndex.byId, focusRootId, focusShellHue, focusShellViews, semantic]);
+  }, [entityIndex.byId, focusRootId, focusShellHue, focusShellViews, semantic, presentation.nodes]);
   const handleEdgeSelect = useCallback(
     (edgeId: string) => {
       setSelectedEntity(undefined);

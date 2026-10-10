@@ -183,7 +183,7 @@ export function useDiagramEngine({
 
   const { sceneBounds, nodeRectsById } = useMemo(() => {
     const cameraBoundsNodes = stableSnapshot.nodes.filter(
-      (node) => !node.style.focusShell && node.opacity > 0.01,
+      (node) => !node.content.focusShell && node.opacity > 0.01,
     );
     const bounds = collectRectBounds(cameraBoundsNodes.map((node) => node.rect));
     return {

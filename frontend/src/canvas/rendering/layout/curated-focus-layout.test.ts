@@ -23,7 +23,12 @@ test.each(galleryFiles)('$file focuses every container with full-size, nonoverla
       expect(scene.tree.byId.get(container.id)?.isListContainer).toBe(container.isListContainer);
     }
     const focused = gallery.render([], container.id);
-    const cards = focused.presentation.nodes.filter((node) => !node.parentId);
+    const cards = focused.presentation.nodes.filter(
+      (node) =>
+        (!node.parentId || node.parentId === container.id) &&
+        !node.content.externalContext &&
+        !node.content.focusBoundary,
+    );
     expect(cards.length, container.id).toBeGreaterThan(0);
     for (const card of cards) {
       expect(card.content.listMode, card.id).toBe(false);

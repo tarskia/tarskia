@@ -100,6 +100,10 @@ describe('pure view operations', () => {
     expect(expanded(cleared)).toEqual(['platform']);
     expect(apply({ kind: 'clear-focus' }, cleared)).toBe(cleared);
     expect(apply({ kind: 'enter-focus', entityId: 'leaf' })).toBe(initial);
+    expect(apply({ kind: 'enter-focus', entityId: 'leaf', allowLeaf: true })?.scopeRootId).toBe(
+      'leaf',
+    );
+    expect(apply({ kind: 'enter-focus', entityId: 'missing', allowLeaf: true })).toBe(initial);
   });
   it('reveals entity and relation matches with the package reveal closure, clearing focus', () => {
     const next = apply(

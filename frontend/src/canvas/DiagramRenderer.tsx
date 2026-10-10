@@ -127,7 +127,7 @@ export const DiagramRenderer = memo(function DiagramRenderer({
           opacity: String(node.opacity),
           display: '',
           zIndex: String(node.zIndex),
-          pointerEvents: node.style.focusShell || node.opacity <= 0.001 ? 'none' : 'auto',
+          pointerEvents: node.content.focusShell || node.opacity <= 0.001 ? 'none' : 'auto',
         });
         const body = element.querySelector<HTMLElement>('.entity-node > .node-body');
         if (body) body.style.transform = `scale(${node.contentScale})`;

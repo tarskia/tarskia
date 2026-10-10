@@ -19,6 +19,7 @@ afterEach(() => {
 });
 
 it.each([
+  'completed',
   'gesture',
   'superseded',
   'replaced-document',
@@ -33,7 +34,8 @@ it.each([
     return nextId;
   });
   vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
-  const gallery = loadGallery('n8n.yaml');
+  const gallery = loadGallery(interruption === 'completed' ? 'chatwoot.yaml' : 'n8n.yaml');
+  const target = interruption === 'completed' ? 'rails-control-plane' : 'browser-editor-shell';
   const initial = gallery.render([]);
   let engine!: ReturnType<typeof useDiagramEngine>;
   let focus!: ReturnType<typeof useFocusViewController>;
@@ -126,39 +128,63 @@ it.each([
       } as unknown as CanvasCamera);
     });
     await settle();
-    const sourceEntity = engine.compiled.tree.byId.get('browser-editor-shell')?.entity;
+    const sourceEntity = engine.compiled.tree.byId.get(target)?.entity;
     expect(sourceEntity).toBeDefined();
     await act(async () => {
-      expect(focus.focusViewOnEntity('browser-editor-shell')).toBe(true);
+      expect(focus.focusViewOnEntity(target)).toBe(true);
     });
     for (let i = 0; i < 40 && !engine.transitionFrame; i++) await advance(now + 50);
     const overlay = engine.transitionFrame;
     if (!overlay) throw new Error('Expected focus expansion animation');
     await advance(overlay.startedAt + overlay.duration * 0.4);
     expect(doc.view?.scopeRootId).toBeUndefined();
-    expect(engine.compiled.tree.byId.get('browser-editor-shell')?.entity).toBe(sourceEntity);
+    expect(engine.compiled.tree.byId.get(target)?.entity).toBe(sourceEntity);
     expect(engine.motionPhase).not.toBe('idle');
     await act(async () => {
+      if (interruption === 'completed') return;
       if (interruption === 'replaced-document') {
         replaceDocument(structuredClone(initial.doc));
         setDocumentKey('replacement');
       } else if (interruption === 'gesture') engine.reportUserGestureStart();
       else engine.requestNavigation({ kind: 'fit-scene', preset: 'layout' });
     });
-    expect(doc.view?.scopeRootId).toBe(
-      interruption === 'replaced-document' ? undefined : 'browser-editor-shell',
-    );
+    if (interruption === 'completed') await settle();
+    expect(doc.view?.scopeRootId).toBe(interruption === 'replaced-document' ? undefined : target);
     if (interruption === 'replaced-document') {
-      expect(engine.compiled.tree.byId.get('browser-editor-shell')?.entity).toBeDefined();
-      expect(engine.compiled.tree.byId.get('browser-editor-shell')?.entity).not.toBe(sourceEntity);
+      expect(engine.compiled.tree.byId.get(target)?.entity).toBeDefined();
+      expect(engine.compiled.tree.byId.get(target)?.entity).not.toBe(sourceEntity);
     }
     if (interruption === 'gesture') await act(async () => engine.reportUserGestureEnd(viewport));
     await settle();
-    expect(doc.view?.scopeRootId).toBe(
-      interruption === 'replaced-document' ? undefined : 'browser-editor-shell',
-    );
+    expect(doc.view?.scopeRootId).toBe(interruption === 'replaced-document' ? undefined : target);
     expect(engine.motionPhase).toBe('idle');
     expect(engine.transitionFrame).toBeNull();
+    if (interruption === 'completed') {
+      const context = engine.presentation.nodes.filter(
+        (node) => node.content.externalContext || node.content.focusBoundary,
+      );
+      expect(context.length).toBe(5);
+      for (const node of context) {
+        expect(node.rect.x * viewport.zoom + viewport.x).toBeGreaterThanOrEqual(0);
+        expect(node.rect.y * viewport.zoom + viewport.y).toBeGreaterThanOrEqual(0);
+        expect((node.rect.x + node.rect.width) * viewport.zoom + viewport.x).toBeLessThanOrEqual(
+          1280,
+        );
+        expect((node.rect.y + node.rect.height) * viewport.zoom + viewport.y).toBeLessThanOrEqual(
+          720,
+        );
+      }
+      await act(async () => {
+        expect(focus.focusViewOnEntity('channel-providers')).toBe(true);
+      });
+      await settle();
+      expect(doc.view?.scopeRootId).toBe('channel-providers');
+      expect(
+        engine.presentation.nodes.find((node) => node.id === 'channel-providers')?.content
+          .focusBoundary,
+      ).toBe(true);
+      expect(engine.presentation.overlayEdges.length).toBeGreaterThan(0);
+    }
   } finally {
     await act(async () => root.unmount());
   }

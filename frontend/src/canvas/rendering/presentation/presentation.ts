@@ -3,6 +3,7 @@ import type { CanvasScene } from '../scene/scene';
 import type { DirectionalEdgeLabel } from '../visual/edge-labels';
 import type { ResolvedNodeRichContent, ResolvedNodeVisual } from '../visual/node-visuals';
 import { routeCanvasEdges } from './edge-routing';
+import { addFocusContextNodes } from './focus-context';
 import {
   buildBezierEdgeGeometry,
   type CanvasEdgeGeometry,
@@ -140,6 +141,8 @@ export interface CanvasNodeView {
     listShowType: boolean;
     focusShell?: boolean;
     focusShellDepth?: number;
+    externalContext?: boolean;
+    focusBoundary?: boolean;
     childOpacity?: number;
     debug?: {
       id: string;
@@ -381,6 +384,7 @@ const buildStaticCanvasPresentationUncached = ({
     ];
   });
 
+  addFocusContextNodes(scene, nodes);
   const nodeRects = new Map(nodes.map((node) => [node.id, node.rect]));
   const rawOverlayEdges: RawOverlayEdgeSpec[] = scene.edges.flatMap((edge) => {
     const sourceRect = nodeRects.get(edge.sourceId);

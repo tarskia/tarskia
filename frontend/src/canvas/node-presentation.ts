@@ -48,7 +48,10 @@ export const buildCanvasRenderState = ({
       width: node.rect.width,
       height: node.rect.height,
       opacity: node.opacity,
-      pointerEvents: node.style.focusShell || node.opacity <= 0.2 ? 'none' : 'auto',
+      pointerEvents: node.content.focusShell || node.opacity <= 0.2 ? 'none' : 'auto',
+      ...(node.content.externalContext || node.content.focusBoundary
+        ? { ['--node-fill' as string]: node.style.background }
+        : {}),
       ['--node-selection-ring' as string]: node.style.selectionRing,
       ['--node-selection-glow' as string]: node.style.selectionGlow,
       ['--node-selection-fill' as string]: node.style.selectionFill,
@@ -80,10 +83,10 @@ export const buildCanvasRenderState = ({
       type: node.kind === 'group' ? 'groupNode' : 'entityNode',
       position,
       zIndex: node.zIndex,
-      selected: node.style.focusShell ? false : controls.selected,
+      selected: node.content.focusShell ? false : controls.selected,
       width: node.rect.width,
       height: node.rect.height,
-      selectable: !node.style.focusShell,
+      selectable: !node.content.focusShell,
       data: {
         view: node,
         bindings,

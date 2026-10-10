@@ -86,10 +86,16 @@ export const buildClearFocusScopeDocument = (previous: SemanticDocument): Semant
   return view === previous.view ? previous : { ...previous, view };
 };
 
-export const canFocusLayoutNode = (params: { sceneTree: LayoutTree; entityId: string }) => {
+export const canFocusLayoutNode = (params: {
+  sceneTree: LayoutTree;
+  entityId: string;
+  index?: SemanticIndex;
+}) => {
   const sceneNode = params.sceneTree.byId.get(params.entityId);
   // List containers also support focus; capability must not depend on expanded layout.
-  return Boolean(sceneNode?.hasChildren);
+  return Boolean(
+    sceneNode?.hasChildren || (!sceneNode && params.index?.entityIndex.byId.has(params.entityId)),
+  );
 };
 
 export function useFocusViewController({
@@ -146,6 +152,7 @@ export function useFocusViewController({
         applyDiagramViewOperation(index.tree, previous, {
           kind: 'enter-focus',
           entityId,
+          allowLeaf: true,
           expandTarget,
         }),
       );
@@ -158,6 +165,10 @@ export function useFocusViewController({
     (entityId: string) => {
       flushUserGesture();
       if (skipTransitions) {
+        enterFocusScope(entityId, true);
+        return;
+      }
+      if (!sceneTree.byId.has(entityId)) {
         enterFocusScope(entityId, true);
         return;
       }
@@ -237,7 +248,7 @@ export function useFocusViewController({
 
   const focusViewOnEntity = useCallback(
     (entityId: string) => {
-      if (!canFocusLayoutNode({ sceneTree, entityId })) {
+      if (!canFocusLayoutNode({ sceneTree, entityId, index })) {
         return false;
       }
       clearPendingFocusRequest();
@@ -258,6 +269,7 @@ export function useFocusViewController({
     },
     [
       clearPendingFocusRequest,
+      index,
       getCurrentCanvasSize,
       onClearTransientFocusChrome,
       runFocusViewOnEntity,
