@@ -210,16 +210,6 @@ export interface GraphCollator {
   collateGraph(input: GraphCollatorInput): Promise<GraphCollatorResult>;
 }
 
-export interface GraphCollatorRepairInput extends GraphCollatorInput {
-  previousYaml: string;
-  diagnostics: Diagnostic[];
-  attempt: number;
-}
-
-export interface GraphCollatorRepairer {
-  repairGraph(input: GraphCollatorRepairInput): Promise<GraphCollatorResult>;
-}
-
 export interface FinalGraphReviewerInput extends GraphCollatorInput {
   currentFinalGraphYaml: string;
   finalReviewSummary: FinalGraphReviewSummary;

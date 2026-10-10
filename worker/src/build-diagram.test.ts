@@ -384,14 +384,6 @@ relations:
       return { rawYaml: serializeDocument(doc), doc, rawResponse: 'ok', threadId: 'thread-graph' };
     }),
   };
-  const graphCollatorRepairer = {
-    repairGraph: vi.fn().mockImplementation(async ({ previousYaml }) => ({
-      rawYaml: previousYaml,
-      doc: parseDocument(previousYaml),
-      rawResponse: 'ok',
-      threadId: 'thread-graph-repair',
-    })),
-  };
   return {
     areaPlanner,
     graphifyHintsBuilder,
@@ -406,7 +398,6 @@ relations:
     nodeRefiner,
     nodeRefinerRepairer: nodeRefiner,
     graphCollator,
-    graphCollatorRepairer,
   };
 }
 
@@ -691,14 +682,6 @@ relations:
       threadId: 'thread-graph',
     }),
   };
-  const graphCollatorRepairer = {
-    repairGraph: vi.fn().mockImplementation(async ({ previousYaml }) => ({
-      rawYaml: previousYaml,
-      doc: parseDocument(previousYaml),
-      rawResponse: 'ok',
-      threadId: 'thread-graph-repair',
-    })),
-  };
   const finalReviewDependencies = createPassthroughFinalReviewers();
 
   return {
@@ -711,7 +694,6 @@ relations:
     nodeRefiner,
     nodeRefinerRepairer: nodeRefiner,
     graphCollator,
-    graphCollatorRepairer,
   };
 }
 
@@ -970,9 +952,6 @@ relations:
           threadId: turn.threadId,
         };
       }),
-    },
-    graphCollatorRepairer: {
-      repairGraph: vi.fn(),
     },
   };
 }
@@ -1868,7 +1847,6 @@ relations:
         }),
       }),
     );
-    expect(dependencies.graphCollatorRepairer.repairGraph).not.toHaveBeenCalled();
     expect(result.repaired).toBe(true);
     expect(result.diagnostics).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: 'diagram.review.reverted_edit' })]),
@@ -2331,9 +2309,6 @@ relations:
     const graphCollator = {
       collateGraph: vi.fn(),
     };
-    const graphCollatorRepairer = {
-      repairGraph: vi.fn(),
-    };
     const finalReviewDependencies = createPassthroughFinalReviewers();
 
     const result = await buildDiagram(
@@ -2353,7 +2328,6 @@ relations:
         nodeRefiner,
         nodeRefinerRepairer: nodeRefiner,
         graphCollator,
-        graphCollatorRepairer,
         logger: quietLogger(),
       },
     );
@@ -2488,9 +2462,6 @@ relations:
         threadId: 'thread-graph',
       }),
     };
-    const graphCollatorRepairer = {
-      repairGraph: vi.fn(),
-    };
     const finalReviewDependencies = createPassthroughFinalReviewers();
 
     const result = buildDiagram(
@@ -2509,7 +2480,6 @@ relations:
         nodeRefiner,
         nodeRefinerRepairer: nodeRefiner,
         graphCollator,
-        graphCollatorRepairer,
         logger: quietLogger(),
       },
     );
@@ -4995,13 +4965,20 @@ describe('pipeline repair-loop characterization', () => {
   it.each([
     'malformed',
     'runtime-error',
-  ] as const)('preserves graph collation %s behavior without invoking its unused repair adapter', async (failure) => {
+  ] as const)('preserves graph collation %s fallback and failure behavior', async (failure) => {
     const repo = await createGitRepo({ 'src/index.ts': 'export const app = true;' });
     const out = path.join(await createTempDir('characterize-graph-'), 'diagram.yaml');
     const dependencies = createAdvancedDependencies();
     dependencies.graphCollator.collateGraph.mockRejectedValue(
       failure === 'malformed' ? malformed('graph') : new Error('graph runtime failed'),
     );
+    let reviewHandoff = '';
+    const review = dependencies.finalGraphReviewer.reviewFinalGraph.getMockImplementation()!;
+    dependencies.finalGraphReviewer.reviewFinalGraph.mockImplementation(async (input) => {
+      reviewHandoff = await fs.readFile(input.handoffArtifactPath!, 'utf8');
+      expect(parseDocument(input.currentFinalGraphYaml)).toEqual(input.assembledDoc);
+      return review(input);
+    });
     const build = buildDiagram(
       { repo, out, schemaSource: fixturePath('schema-repo'), mode: 'advanced' },
       { ...dependencies, logger: quietLogger() },
@@ -5009,6 +4986,7 @@ describe('pipeline repair-loop characterization', () => {
     if (failure === 'malformed') {
       const result = await build;
       expect(result.outputPath).toBe(out);
+      expect(reviewHandoff).toContain('diagram.document.invalid_graph_output');
       expect(dependencies.finalGraphReviewer.reviewFinalGraph).toHaveBeenCalledTimes(1);
       expect(
         parseDocument(await fs.readFile(out, 'utf8')).entities.some(
@@ -5023,6 +5001,5 @@ describe('pipeline repair-loop characterization', () => {
       await expect(fs.stat(out)).rejects.toMatchObject({ code: 'ENOENT' });
     }
     expect(dependencies.graphCollator.collateGraph).toHaveBeenCalledTimes(1);
-    expect(dependencies.graphCollatorRepairer.repairGraph).not.toHaveBeenCalled();
   });
 });

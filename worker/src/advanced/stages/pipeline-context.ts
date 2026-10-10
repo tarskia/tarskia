@@ -15,7 +15,6 @@ import type {
   FinalGraphReviewer,
   FinalGraphReviewerRepairer,
   GraphCollator,
-  GraphCollatorRepairer,
   Level0BackboneBuilder,
   Level0BackboneRepairer,
   Level0BackboneReviewer,
@@ -39,7 +38,6 @@ export type AdvancedPipelineDependencies = {
   nodeRefiner?: NodeRefiner;
   nodeRefinerRepairer?: NodeRefinerRepairer;
   graphCollator?: GraphCollator;
-  graphCollatorRepairer?: GraphCollatorRepairer;
   finalGraphReviewer?: FinalGraphReviewer;
   finalGraphReviewerRepairer?: FinalGraphReviewerRepairer;
   graphifyHintsBuilder?: GraphifyHintsBuilder;

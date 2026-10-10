@@ -154,7 +154,6 @@ function dependencies(nodeCount: number) {
     },
     finalGraphReviewerRepairer: { repairFinalGraphReview: unexpected },
     graphCollator: { collateGraph: async ({ assembledDoc }) => turn(assembledDoc) },
-    graphCollatorRepairer: { repairGraph: unexpected },
     nodeRefiner: {
       refineNode: async ({ task }: NodeRefinerInput) => {
         tasks++;
