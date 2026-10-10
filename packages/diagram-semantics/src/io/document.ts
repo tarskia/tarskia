@@ -1,7 +1,10 @@
+import type { Diagnostic } from '../model/diagnostics';
 import { normalizeDocumentHierarchy } from '../model/normalize-hierarchy';
 import type { SchemaModule, SemanticDocument, SemanticSourceDocument } from '../model/types';
 import type { DiagramValidationOptions } from '../model/validate';
 import {
+  DocumentStructureError,
+  type ParseDocumentOptions,
   parseDocument,
   parseSourceDocument,
   serializeDocument,
@@ -32,33 +35,47 @@ export const serializeSemanticSourceDocument = serializeSourceDocument;
 
 const ingestWithParse = <T extends SemanticDocument>(params: {
   raw: string;
-  parser: (raw: string) => T;
+  parser: (raw: string, options?: ParseDocumentOptions) => T;
   path?: string;
   messagePrefix?: string;
 }): ValidationResult<T> => {
   try {
-    const parsed = params.parser(params.raw);
+    const parseDiagnostics: Diagnostic[] = [];
+    const parsed = params.parser(params.raw, {
+      onDiagnostic: (diagnostic) =>
+        parseDiagnostics.push({
+          ...diagnostic,
+          path: params.path,
+          message: params.messagePrefix
+            ? `${params.messagePrefix}: ${diagnostic.message}`
+            : diagnostic.message,
+        }),
+    });
     // Imported parent references cannot be resolved until all source namespaces
     // have been compiled. Normalize those documents at the source-graph boundary.
     if ('imports' in parsed && Array.isArray(parsed.imports) && parsed.imports.length > 0) {
-      return { ok: true, value: parsed, diagnostics: [] };
+      return { ok: true, value: parsed, diagnostics: parseDiagnostics };
     }
     const normalized = normalizeDocumentHierarchy(parsed);
+    const diagnostics = [...parseDiagnostics, ...normalized.diagnostics];
     return {
-      ok: normalized.diagnostics.length === 0,
+      ok: diagnostics.every((diagnostic) => diagnostic.severity !== 'error'),
       value: normalized.doc,
-      diagnostics: normalized.diagnostics,
+      diagnostics,
     };
   } catch (error) {
     return {
       ok: false,
       diagnostics: [
-        createYamlParseDiagnostic({
-          domain: 'diagram',
-          error,
-          path: params.path,
-          messagePrefix: params.messagePrefix,
-        }),
+        {
+          ...createYamlParseDiagnostic({
+            domain: 'diagram',
+            error,
+            path: params.path,
+            messagePrefix: params.messagePrefix,
+          }),
+          ...(error instanceof DocumentStructureError ? { code: error.code } : {}),
+        },
       ],
     };
   }
@@ -71,7 +88,11 @@ export function ingestSemanticDocument(
   if (!parsed.value) return parsed;
   const validation = validateDiagramDoc(parsed.value, params.schema, params.validationOptions);
   const diagnostics = [...parsed.diagnostics, ...validation.diagnostics];
-  return { ok: diagnostics.length === 0, value: parsed.value, diagnostics };
+  return {
+    ok: diagnostics.every((diagnostic) => diagnostic.severity !== 'error'),
+    value: parsed.value,
+    diagnostics,
+  };
 }
 
 export function ingestTrustedSemanticDocument(params: {

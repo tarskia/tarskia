@@ -1,5 +1,5 @@
 import { dump, JSON_SCHEMA, load } from 'js-yaml';
-import { diagnosticsToMessages } from '../model/diagnostics';
+import { type Diagnostic, diagnosticsToMessages, diagramDiagnostic } from '../model/diagnostics';
 import type {
   DiagramView,
   DocumentInput,
@@ -441,20 +441,68 @@ export function serializeSourceDocument(doc: SemanticSourceDocument): string {
   });
 }
 
-export function parseDocument(raw: string): SemanticDocument {
-  const parsed = parseSourceDocument(raw);
+export interface ParseDocumentOptions {
+  onDiagnostic?: (diagnostic: Diagnostic) => void;
+}
+
+export class DocumentStructureError extends Error {
+  readonly code = 'semantic.document.invalid_structure';
+}
+
+const DOCUMENT_KEYS = new Set([
+  'version',
+  'schemaRefs',
+  'entities',
+  'relations',
+  'inputs',
+  'imports',
+  'metadata',
+  'view',
+  'layout',
+]);
+const describeValue = (value: unknown): string => {
+  if (value === undefined) return 'empty input';
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'a list';
+  if (typeof value === 'object') return 'a mapping';
+  return `a ${typeof value}`;
+};
+
+export function parseDocument(raw: string, options?: ParseDocumentOptions): SemanticDocument {
+  const parsed = parseSourceDocument(raw, options);
   if (parsed.imports && parsed.imports.length > 0) {
     throw new Error('Document imports require source compilation');
   }
   return parsed;
 }
 
-export function parseSourceDocument(raw: string): SemanticSourceDocument {
+export function parseSourceDocument(
+  raw: string,
+  options?: ParseDocumentOptions,
+): SemanticSourceDocument {
   const parsed = load(raw, { schema: JSON_SCHEMA });
-  if (!parsed || typeof parsed !== 'object') {
-    throw new Error('Invalid document');
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new DocumentStructureError(`Document must be a mapping, found ${describeValue(parsed)}`);
   }
   const record = parsed as Record<string, unknown>;
+  for (const key of ['entities', 'relations', 'schemaRefs']) {
+    if (Object.hasOwn(record, key) && !Array.isArray(record[key])) {
+      throw new DocumentStructureError(
+        `"${key}" must be a list, found ${describeValue(record[key])}`,
+      );
+    }
+  }
+  for (const key of Object.keys(record)) {
+    if (!DOCUMENT_KEYS.has(key))
+      options?.onDiagnostic?.(
+        diagramDiagnostic({
+          phase: 'shape',
+          severity: 'warning',
+          code: 'semantic.document.unknown_key',
+          message: `Unknown top-level key "${key}"`,
+        }),
+      );
+  }
   const entities = Array.isArray(record.entities) ? normalizeEntities(record.entities) : [];
   const relations = Array.isArray(record.relations) ? normalizeRelations(record.relations) : [];
   const schemaRefs = normalizeSchemaActivations(record.schemaRefs);
