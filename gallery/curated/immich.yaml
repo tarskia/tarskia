@@ -5,13 +5,11 @@ schemaRefs:
   - schema: core/frontend@0.3
     layer: 0
   - schema: core/code@0.1
-    layer: 0
+    layer: 1
   - schema: core/software@0.1
     layer: 0
   - schema: core/web-app@0.3
     layer: 0
-  - schema: core/code@0.1
-    layer: 1
 entities:
   - id: web-gallery-app
     type: gallery/immich.types.portal-app
