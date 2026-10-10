@@ -1,20 +1,18 @@
 import type { SchemaSemantics } from '@tarskia/diagram-semantics';
 import {
+  buildSchemaRuntimeFromCatalog,
   buildSemanticIndex,
   type DiagramContent,
   type EntityIndex,
   type SchemaModule,
   type SchemaRuntime,
+  type SchemaVersionCatalog,
   type SemanticDocument,
   type SemanticIndex,
   type Diagnostic as ValidationDiagnostic,
 } from '@tarskia/diagram-semantics';
 import { useMemo } from 'react';
 import { validateDiagramDoc } from '../model/validation';
-import {
-  buildSchemaRuntimeFromCatalog,
-  type SchemaVersionCatalog,
-} from '../model/validation/schema-closure';
 
 type SchemaRuntimeResult = ReturnType<typeof buildSchemaRuntimeFromCatalog>;
 

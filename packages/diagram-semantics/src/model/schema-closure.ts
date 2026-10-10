@@ -1,23 +1,25 @@
 import {
-  buildDefaultSchemaActivation,
-  buildRawSchemaSet,
-  buildSchemaActivationMap,
-  buildSchemaId,
-  buildSchemaRuntime,
   type Diagnostic,
   diagnosticFingerprint,
-  getSchemaModuleRef,
-  parseSchemaId,
-  parseSchemaRef,
-  type RawSchemaSet,
-  resolveSchemaModules,
-  type SchemaActivation,
-  type SchemaModule,
-  type SchemaRuntime,
-  type SchemaSelection,
   schemaDiagnostic,
   sortDiagnostics,
-} from '@tarskia/diagram-semantics';
+} from './diagnostics';
+import {
+  buildDefaultSchemaActivation,
+  buildSchemaActivationMap,
+  buildSchemaId,
+  getSchemaModuleRef,
+  parseSchemaRef,
+} from './schema-ref';
+import {
+  buildRawSchemaSet,
+  buildSchemaRuntime,
+  type RawSchemaSet,
+  type SchemaRuntime,
+  type SchemaSelection,
+} from './schema-runtime';
+import { parseSchemaId, resolveSchemaModules } from './schema-selection';
+import type { SchemaActivation, SchemaModule } from './types';
 
 export interface SchemaVersionCatalogEntry {
   schemaId: string;
@@ -113,6 +115,20 @@ const buildLatestEntriesBySchemaId = (catalog: SchemaVersionCatalog) => {
 };
 
 const closureCache = new Map<string, SchemaClosureResult>();
+
+/** Build a catalog from the concrete versions available in a schema registry. */
+export function buildSchemaVersionCatalogFromRegistry(
+  registry: ReadonlyMap<string, SchemaModule>,
+): SchemaVersionCatalog {
+  return buildSchemaVersionCatalog(
+    Array.from(registry.values(), (module) => ({
+      schemaId: getSchemaModuleRef(module),
+      version: module.version,
+      raw: JSON.stringify(module),
+      module,
+    })),
+  );
+}
 
 export function buildSchemaVersionCatalog(
   entries: SchemaVersionCatalogEntry[],

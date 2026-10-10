@@ -1,11 +1,11 @@
 import {
+  buildSchemaRuntimeFromCatalog,
   buildSemanticIndex,
   parseDocument,
   type SemanticDocument,
 } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
 import { buildSchemaVersionCatalog } from '../../../model/validation';
-import { buildSchemaRuntimeFromCatalog } from '../../../model/validation/schema-closure';
 import { semanticBootstrap } from '../../../semantic/bootstrap';
 import { compileDiagramViewState } from '../../../semantic/view/compile-diagram-view-tree';
 import tutorialLayoutRaw from '../../../test-fixtures/tutorial-layout.yaml?raw';

@@ -1,10 +1,14 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { buildSemanticIndex, compileView, type SemanticDocument } from '@tarskia/diagram-semantics';
+import {
+  buildSchemaVersionCatalog,
+  buildSemanticIndex,
+  compileView,
+  type SemanticDocument,
+} from '@tarskia/diagram-semantics';
 import { buildLayoutResult } from '../canvas/rendering/layout/layout-pipeline';
 import { buildStaticCanvasPresentation } from '../canvas/rendering/presentation/presentation';
 import { buildTransitionFrameState } from '../canvas/rendering/transition/overlay';
-import { buildSchemaVersionCatalog } from '../model/validation/schema-closure';
 import { semanticBootstrap } from '../semantic/bootstrap';
 import { buildDiagramSemanticRuntime } from '../semantic/runtime';
 import { loadDiagramDocFromRaw } from '../viewer-core/loadDiagramDocFromRaw';
