@@ -43,4 +43,18 @@ describe('loadDiagramDocFromRaw', () => {
       true,
     );
   });
+  it('marks structurally broken documents unreadable but accepts unknown-key warnings', () => {
+    for (const raw of ['entities: {a: 1}', 'relations: "x"', 'schemaRefs: "x"', '[]', '']) {
+      const result = loadDiagramDocFromRaw({ raw, streamName: 'Test', sourceLabel: 'fixture' });
+      expect(result.readable).toBe(false);
+      expect(result.sourceDiagnostics[0]?.code).toBe('semantic.document.invalid_structure');
+    }
+    const result = loadDiagramDocFromRaw({
+      raw: 'entitites: []',
+      streamName: 'Test',
+      sourceLabel: 'fixture',
+    });
+    expect(result.readable).toBe(true);
+    expect(result.sourceDiagnostics[0]?.severity).toBe('warning');
+  });
 });
