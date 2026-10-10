@@ -42,7 +42,7 @@ export const schemaReferenceSections: SchemaReferenceSection[] = [
         key: 'owner',
         summary: 'Namespace for the schema.',
         details:
-          'Use core for bundled read-only schemas and user for editable local schemas in this version of the app.',
+          'Use core for bundled schemas, gallery for curated gallery schemas, repo for repository-generated schemas, and user for local schemas.',
         example: 'owner: user',
       },
       {

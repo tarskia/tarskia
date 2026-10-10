@@ -9,7 +9,7 @@
   "properties": {
     "owner": {
       "type": "string",
-      "enum": ["core", "gallery", "user"],
+      "enum": ["core", "gallery", "repo", "user"],
       "description": "Owning namespace for the schema."
     },
     "name": {

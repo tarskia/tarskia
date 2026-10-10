@@ -9,10 +9,10 @@ export interface SchemaRefParts extends SchemaIdentity {
   version?: string;
 }
 
-const SCHEMA_REF_PATTERN = /^(core|gallery|user)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?:@(.+))?$/;
+const SCHEMA_REF_PATTERN = /^(core|gallery|repo|user)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?:@(.+))?$/;
 
 export const isSchemaOwner = (value: string): value is SchemaOwner =>
-  value === 'core' || value === 'gallery' || value === 'user';
+  value === 'core' || value === 'gallery' || value === 'repo' || value === 'user';
 
 export const isSchemaNameSlug = (value: string) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
 

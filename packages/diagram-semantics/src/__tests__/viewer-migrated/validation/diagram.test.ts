@@ -35,6 +35,34 @@ const schema = buildSchemaRuntime({
 }).resolved.effectiveSchema;
 
 describe('diagram validation API', () => {
+  it('resolves and validates a diagram activating a supplied repo schema', () => {
+    const module = parseSchema(`owner: repo
+name: x
+version: "0.1"
+types:
+  - id: service
+relations: []
+`);
+    const doc = parseDocument(`version: "1"
+schemaRefs:
+  - schema: repo/x@0.1
+    layer: 0
+entities:
+  - id: service
+    type: repo/x.types.service
+relations: []
+`);
+    const raw = buildRawSchemaSet([module]);
+    const runtime = buildSchemaRuntime({
+      raw,
+      selection: buildSchemaSelection({ raw, activations: doc.schemaRefs }),
+    });
+    expect(runtime.resolved.resolvedModuleIds).toEqual(['repo/x']);
+    expect(runtime.resolved.diagnostics).toEqual([]);
+    expect(validateDiagramDoc(doc, runtime.resolved.effectiveSchema).ok).toBe(true);
+    expect(doc.schemaRefs[0].schema).toBe('repo/x@0.1');
+  });
+
   it('parses and validates diagram raw text', () => {
     const result = parseAndValidateDiagramDoc(starterDiagramRaw, schema);
     expect(result.ok).toBe(true);
