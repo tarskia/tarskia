@@ -24,6 +24,7 @@ it('reports a failed Codex probe and optional uv warning', async () => {
   const probes = createSetupProbes(vi.fn().mockRejectedValue(new Error('missing')));
   const checks = await checkSetup(probes);
   expect(checks).toEqual([
+    { name: 'platform', ok: true, detail: process.platform },
     { name: 'Codex', ok: false, detail: CODEX_LOGIN_MESSAGE },
     { name: 'uv', ok: false, warning: true, detail: expect.any(String) },
   ]);

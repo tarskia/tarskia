@@ -7,6 +7,11 @@ const exec = promisify(execFile);
 
 import { currentCancellationSignal, throwIfCancelled } from './cancellation';
 import { ConfigError } from './cli-errors';
+export const WINDOWS_UNSUPPORTED_MESSAGE =
+  "Windows isn't supported yet. Run tarskia in WSL (Windows Subsystem for Linux).";
+export function assertBuildPlatform(): void {
+  if (process.platform === 'win32') throw new ConfigError(WINDOWS_UNSUPPORTED_MESSAGE);
+}
 export const CODEX_LOGIN_MESSAGE = "Codex isn't signed in. Run 'codex login' and try again.";
 export const REQUIRED_UV_MESSAGE =
   '--graphify-hints required needs uv (https://docs.astral.sh/uv/).';
@@ -68,6 +73,11 @@ export function createSetupProbes(
 export async function checkSetup(probes: SetupProbes = createSetupProbes()): Promise<SetupCheck[]> {
   const [codex, uv] = await Promise.all([probes.codex(), probes.uv()]);
   return [
+    {
+      name: 'platform',
+      ok: process.platform !== 'win32',
+      detail: process.platform === 'win32' ? WINDOWS_UNSUPPORTED_MESSAGE : process.platform,
+    },
     {
       name: 'Codex',
       ok: codex,

@@ -8,6 +8,8 @@ The worker is intentionally opinionated. It models software architecture with sc
 
 ## Requirements
 
+- macOS or Linux. On Windows, run it in WSL.
+
 - Node.js 22 or newer
 - npm
 - git

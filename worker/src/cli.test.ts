@@ -18,6 +18,7 @@ async function run(
   debug = false,
   missing: 'codex' | 'uv' | '' = '',
   codexYaml = '',
+  platform = process.platform,
 ) {
   return new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve, reject) => {
     const child = spawn(process.execPath, [cli, ...args], {
@@ -27,6 +28,7 @@ async function run(
         TARSKIA_DEBUG: debug ? '1' : '',
         NODE_OPTIONS: `--import=${probePreload}`,
         TARSKIA_TEST_MISSING: missing,
+        TARSKIA_TEST_PLATFORM: platform,
         TARSKIA_TEST_CODEX_YAML: codexYaml,
       },
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -51,6 +53,7 @@ beforeAll(async () => {
     `
     import childProcess from 'node:child_process';
     import { syncBuiltinESMExports } from 'node:module';
+    Object.defineProperty(process, 'platform', { value: process.env.TARSKIA_TEST_PLATFORM || process.platform });
     const original = childProcess.execFile;
     childProcess.execFile = function(file, args, options, callback) {
       const codex = args?.includes('login') && args?.includes('status');
@@ -659,3 +662,23 @@ it('built CLI exits zero on budget exhaustion and resumes repair with the same l
   expect(clean.stderr).not.toContain('Warning: found');
   expect(clean.stderr).not.toContain('Consider rotating');
 }, 30000);
+
+it('rejects Windows builds before argument validation or setup and reports platform in check', async () => {
+  const message = "Windows isn't supported yet. Run tarskia in WSL (Windows Subsystem for Linux).";
+  const result = await run(['build'], false, 'codex', '', 'win32');
+  expect(result.code).toBe(2);
+  expect(result.stderr).toBe(`tarskia: ${message}\nRun 'tarskia build --help' for usage.\n`);
+  const check = await run(['check', '--json'], false, '', '', 'win32');
+  expect(check.code).toBe(2);
+  expect(JSON.parse(check.stdout).checks).toContainEqual({
+    name: 'platform',
+    ok: false,
+    detail: message,
+  });
+  const supported = await run(['check', '--json']);
+  expect(JSON.parse(supported.stdout).checks).toContainEqual({
+    name: 'platform',
+    ok: true,
+    detail: process.platform,
+  });
+});
