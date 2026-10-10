@@ -6,6 +6,7 @@ import { useListGalleryDiagrams } from './api/generated/gallery/gallery';
 import type { DtoGalleryDiagramDetailResponse } from './api/generated/model';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
+import { CopyViewLinkButton } from './gallery/CopyViewLinkButton';
 import {
   GALLERY_QUERY_STALE_TIME_MS,
   galleryRetryDelay,
@@ -38,12 +39,18 @@ export interface PublicGalleryViewerSearchChrome {
 
 export interface PublicGalleryShellContext {
   setViewerSearchChrome: (chrome: PublicGalleryViewerSearchChrome) => void;
+  setViewerShareAction?: (action: (() => Promise<string>) | undefined) => void;
 }
 
 export default function PublicGalleryShell() {
   const { namespace = '', slug = '' } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const inViewer = Boolean(namespace && slug);
+  const [shareAction, setShareAction] = useState<(() => Promise<string>) | undefined>();
+  const setViewerShareAction = useCallback(
+    (action: (() => Promise<string>) | undefined) => setShareAction(() => action),
+    [],
+  );
   const [viewerSearchChrome, setViewerSearchChrome] = useState<PublicGalleryViewerSearchChrome>({
     searchTotalMatches: 0,
     searchHiddenMatches: 0,
@@ -306,6 +313,9 @@ export default function PublicGalleryShell() {
             </div>
           ) : null}
           <div className="ml-auto flex shrink-0 items-center gap-1">
+            {inViewer && shareAction ? (
+              <CopyViewLinkButton key={viewerRouteKey} createLink={shareAction} />
+            ) : null}
             <GalleryFeedbackMenu />
             <GitHubLink />
             <ThemeToggle />
@@ -313,7 +323,7 @@ export default function PublicGalleryShell() {
         </div>
       </header>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <Outlet context={{ setViewerSearchChrome: syncViewerSearchChrome }} />
+        <Outlet context={{ setViewerSearchChrome: syncViewerSearchChrome, setViewerShareAction }} />
       </div>
     </div>
   );
