@@ -3,8 +3,6 @@ import { Codex, type CodexOptions, type ThreadOptions } from '@openai/codex-sdk'
 import type {
   GraphCollator,
   GraphCollatorInput,
-  GraphCollatorRepairer,
-  GraphCollatorRepairInput,
   GraphCollatorResult,
 } from '../advanced/graph-builders';
 import { renderSchemaFlowCatalogForPrompt } from '../advanced/schema-flow-catalog';
@@ -180,34 +178,7 @@ export function buildGraphCollationPrompt(
   ].join('\n');
 }
 
-export function buildGraphCollationRepairPrompt(
-  input: GraphCollatorRepairInput,
-  options: { compact?: boolean } = {},
-): string {
-  const compact = options.compact ?? false;
-  return [
-    'Repair the final advanced graph collation YAML.',
-    '',
-    ...(compact
-      ? [
-          'Continue the existing graph-collation conversation.',
-          'Reuse the previously established schema contract and collation rules. Focus on the deterministic diagnostics and candidate graph below.',
-          '',
-        ]
-      : []),
-    `- Repair attempt: ${input.attempt}`,
-    '',
-    'Validation diagnostics to fix:',
-    JSON.stringify(input.diagnostics, null, 2),
-    '',
-    'Previous graph YAML:',
-    input.previousYaml,
-    '',
-    buildGraphCollationPrompt(input, { compact }),
-  ].join('\n');
-}
-
-export class CodexGraphCollator implements GraphCollator, GraphCollatorRepairer {
+export class CodexGraphCollator implements GraphCollator {
   private readonly client: CodexClientLike;
   private readonly options: CodexGraphCollatorOptions;
 
@@ -229,17 +200,6 @@ export class CodexGraphCollator implements GraphCollator, GraphCollatorRepairer 
       compact: input.promptRunner?.isScopePrimed('graph-collation') ?? false,
     });
     return this.runGraphTurn(input, prompt, 'advanced graph collation');
-  }
-
-  async repairGraph(input: GraphCollatorRepairInput): Promise<GraphCollatorResult> {
-    const prompt = buildGraphCollationRepairPrompt(input, {
-      compact: input.promptRunner?.isScopePrimed('graph-collation') ?? false,
-    });
-    return this.runGraphTurn(
-      input,
-      prompt,
-      `advanced graph collation repair attempt ${input.attempt}`,
-    );
   }
 
   private async runGraphTurn(

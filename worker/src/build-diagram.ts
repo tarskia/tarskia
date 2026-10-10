@@ -8,7 +8,6 @@ import type {
   FinalGraphReviewer,
   FinalGraphReviewerRepairer,
   GraphCollator,
-  GraphCollatorRepairer,
   Level0BackboneBuilder,
   Level0BackboneRepairer,
   Level0BackboneReviewer,
@@ -220,7 +219,6 @@ async function runBuildDiagram(
     nodeRefiner?: NodeRefiner;
     nodeRefinerRepairer?: NodeRefinerRepairer;
     graphCollator?: GraphCollator;
-    graphCollatorRepairer?: GraphCollatorRepairer;
     finalGraphReviewer?: FinalGraphReviewer;
     finalGraphReviewerRepairer?: FinalGraphReviewerRepairer;
     graphifyHintsBuilder?: GraphifyHintsBuilder;
@@ -283,7 +281,6 @@ async function runBuildDiagram(
           nodeRefiner: dependencies.nodeRefiner,
           nodeRefinerRepairer: dependencies.nodeRefinerRepairer,
           graphCollator: dependencies.graphCollator,
-          graphCollatorRepairer: dependencies.graphCollatorRepairer,
           finalGraphReviewer: dependencies.finalGraphReviewer,
           finalGraphReviewerRepairer: dependencies.finalGraphReviewerRepairer,
           graphifyHintsBuilder: dependencies.graphifyHintsBuilder,

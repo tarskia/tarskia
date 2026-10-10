@@ -15,7 +15,6 @@ import type {
   FinalGraphReviewer,
   FinalGraphReviewerRepairer,
   GraphCollator,
-  GraphCollatorRepairer,
   Level0BackboneBuilder,
   Level0BackboneRepairer,
   Level0BackboneReviewer,
@@ -79,7 +78,6 @@ export class AdvancedAiDiagramService implements AiDiagramService {
   private readonly nodeRefiner?: NodeRefiner;
   private readonly nodeRefinerRepairer?: NodeRefinerRepairer;
   private readonly graphCollator?: GraphCollator;
-  private readonly graphCollatorRepairer?: GraphCollatorRepairer;
   private readonly finalGraphReviewer?: FinalGraphReviewer;
   private readonly finalGraphReviewerRepairer?: FinalGraphReviewerRepairer;
   private readonly graphifyHintsBuilder?: GraphifyHintsBuilder;
@@ -96,7 +94,6 @@ export class AdvancedAiDiagramService implements AiDiagramService {
     this.nodeRefiner = dependencies.nodeRefiner;
     this.nodeRefinerRepairer = dependencies.nodeRefinerRepairer;
     this.graphCollator = dependencies.graphCollator;
-    this.graphCollatorRepairer = dependencies.graphCollatorRepairer;
     this.finalGraphReviewer = dependencies.finalGraphReviewer;
     this.finalGraphReviewerRepairer = dependencies.finalGraphReviewerRepairer;
     this.graphifyHintsBuilder = dependencies.graphifyHintsBuilder;
@@ -117,7 +114,6 @@ export class AdvancedAiDiagramService implements AiDiagramService {
         nodeRefiner: this.nodeRefiner,
         nodeRefinerRepairer: this.nodeRefinerRepairer,
         graphCollator: this.graphCollator,
-        graphCollatorRepairer: this.graphCollatorRepairer,
         finalGraphReviewer: this.finalGraphReviewer,
         finalGraphReviewerRepairer: this.finalGraphReviewerRepairer,
         graphifyHintsBuilder: this.graphifyHintsBuilder,

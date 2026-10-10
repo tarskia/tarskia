@@ -107,6 +107,7 @@ export async function runFinalReview(context: Awaited<ReturnType<typeof runGraph
           async () => {
             const handoffArtifactPath = await writeFinalReviewHandoff(
               'A collated candidate final graph exists. Review it as a whole diagram and return the final graph that bundle compile should accept.',
+              graph.pendingGraphModelOutputDiagnostics,
             );
             run.graphTurnCount += 1;
             const result = await finalGraphReviewer.reviewFinalGraph({
