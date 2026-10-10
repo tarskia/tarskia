@@ -1,8 +1,4 @@
-import {
-  applyDiagramViewOperation,
-  type DiagramView,
-  searchDiagramText,
-} from '@tarskia/diagram-semantics';
+import { applyDiagramViewOperation, searchDiagramText } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import type { DtoGalleryDiagramDetailResponse } from '../api/generated/model';
@@ -29,8 +25,9 @@ import {
 } from '../viewer-core/loadDiagramDocFromRaw';
 import { useDiagramActions } from '../viewer-core/useDiagramActions';
 import { coerceSuccessfulResponseBody } from './gallery-response';
-
+import { createSharedViewUrl } from './shared-view-link';
 import { useGalleryDiagramQuery } from './useGalleryDiagramQuery';
+import { useSharedGalleryView } from './useSharedGalleryView';
 import { useViewerViewport } from './useViewerViewport';
 
 const MIN_VIEW_ZOOM = 0.05;
@@ -54,7 +51,8 @@ export default function PublicGalleryViewer() {
   const reducedMotion = useReducedMotion();
   const { namespace = '', slug = '' } = useParams();
   const [searchParams] = useSearchParams();
-  const { setViewerSearchChrome } = useOutletContext<PublicGalleryShellContext>();
+  const { setViewerSearchChrome, setViewerShareAction } =
+    useOutletContext<PublicGalleryShellContext>();
   const detailQuery = useGalleryDiagramQuery(namespace, slug);
 
   const schemaVersionCatalog = useMemo(
@@ -62,19 +60,11 @@ export default function PublicGalleryViewer() {
     [],
   );
   const fallbackSchema = semanticBootstrap.schemaModules[0];
-  const [content, setContent] = useState(() => createBlankDiagramDocument('0.1.0'));
-  const [view, setView] = useState<DiagramView | undefined>();
-  const [validationDocument, setValidationDocument] = useState(content);
-  const [sourceDiagnostics, setSourceDiagnostics] = useState<
-    ReturnType<typeof loadDiagramDocFromRaw>['sourceDiagnostics']
-  >([]);
   const [selectedEntityId, setSelectedEntity] = useState<string | undefined>();
   const [selectedEdgeId, setSelectedEdge] = useState<string | undefined>();
   const revealFrameRef = useRef<number | null>(null);
-  const viewerCanvasKey = `${namespace}/${slug}`;
-  const [loadedViewerCanvasKey, setLoadedViewerCanvasKey] = useState<string | undefined>();
+  const viewerCanvasKey = `${namespace}/${slug}?view=${JSON.stringify(searchParams.get('view'))}`;
   const [visibleCanvasKey, setVisibleCanvasKey] = useState<string | undefined>();
-  const viewerDocumentReady = loadedViewerCanvasKey === viewerCanvasKey;
   const isLiveCanvasVisible = visibleCanvasKey === viewerCanvasKey;
 
   const detail = coerceSuccessfulResponseBody<DtoGalleryDiagramDetailResponse>(detailQuery.data);
@@ -87,19 +77,16 @@ export default function PublicGalleryViewer() {
     });
   }, [detail, namespace, slug]);
 
+  const content = useMemo(() => {
+    const { view: _view, ...content } = loadedDiagram?.doc ?? createBlankDiagramDocument('0.1.0');
+    return content;
+  }, [loadedDiagram]);
+
   useEffect(() => {
-    if (!loadedDiagram) {
-      return;
-    }
-    const { view: loadedView, ...loadedContent } = loadedDiagram.doc;
-    setContent(loadedContent);
-    setView(loadedView);
-    setValidationDocument(loadedDiagram.doc);
-    setSourceDiagnostics(loadedDiagram.sourceDiagnostics);
+    if (!loadedDiagram || !viewerCanvasKey) return;
     setSelectedEntity(undefined);
     setSelectedEdge(undefined);
     setVisibleCanvasKey(undefined);
-    setLoadedViewerCanvasKey(viewerCanvasKey);
   }, [loadedDiagram, viewerCanvasKey]);
 
   useEffect(
@@ -111,16 +98,25 @@ export default function PublicGalleryViewer() {
     [],
   );
 
-  const { persistViewport, savedCamera } = useViewerViewport(loadedDiagram?.doc);
+  const { persistViewport } = useViewerViewport(loadedDiagram?.doc);
 
   const semanticRuntime = useDiagramSemanticRuntime({
     doc: content,
-    validationDocument,
+    validationDocument: loadedDiagram?.doc,
     schemaVersionCatalog,
     fallbackSchema,
-    sourceDiagnostics,
+    sourceDiagnostics: loadedDiagram?.sourceDiagnostics,
   });
   const { schema, entityIndex, index } = semanticRuntime;
+  const shared = useSharedGalleryView({
+    index,
+    defaultView: loadedDiagram?.doc.view,
+    encoded: searchParams.get('view'),
+    namespace,
+    slug,
+    enabled: Boolean(loadedDiagram?.readable),
+  });
+  const { view, setView, savedCamera, ready: viewerDocumentReady } = shared;
   const focusRootId = view?.scopeRootId;
   const diagramSearchQuery = searchParams.get('q') ?? '';
   const diagramSearchMatches = useMemo(
@@ -135,10 +131,31 @@ export default function PublicGalleryViewer() {
     showDebug: false,
     persistViewport,
     savedCamera,
-    initialViewportKey: `${namespace}/${slug}`,
+    initialViewportKey: viewerDocumentReady ? viewerCanvasKey : undefined,
     minZoom: MIN_VIEW_ZOOM,
     maxZoom: MAX_VIEW_ZOOM,
   });
+  const shareRef = useRef<() => Promise<string>>(undefined);
+  shareRef.current = () =>
+    createSharedViewUrl(
+      {
+        kind: 'semantic-diagram-saved-view',
+        version: 1,
+        diagram: { namespace, slug },
+        revision: shared.revision,
+        view: {
+          ...(view ?? { kind: 'semantic-diagram-view', version: 3 }),
+          camera: diagramEngine.captureSavedCamera(),
+        },
+      },
+      window.location.href,
+    );
+  useEffect(() => {
+    setViewerShareAction?.(
+      viewerDocumentReady && isLiveCanvasVisible ? () => shareRef.current!() : undefined,
+    );
+    return () => setViewerShareAction?.(undefined);
+  }, [viewerDocumentReady, isLiveCanvasVisible, setViewerShareAction]);
   const {
     graph,
     compiled,
@@ -319,6 +336,7 @@ export default function PublicGalleryViewer() {
     flushUserGesture,
     searchTotalMatches,
     setPendingStructuralTransitionIntent,
+    setView,
   ]);
   useEffect(() => {
     setViewerSearchChrome({
@@ -401,6 +419,10 @@ export default function PublicGalleryViewer() {
     );
   }
 
+  if (!viewerDocumentReady) {
+    return <LoadingState fullscreen label="Loading gallery diagram" hint="Preparing the viewer." />;
+  }
+
   return (
     <div className="flex h-full min-w-0 min-h-0 flex-1 flex-col">
       <div className="flex h-full flex-1 min-w-0 min-h-0">
@@ -422,6 +444,25 @@ export default function PublicGalleryViewer() {
               />
             )}
           </div>
+          {shared.notice ? (
+            <div
+              role="status"
+              className="absolute left-4 right-4 top-3 z-30 flex items-center justify-center gap-2 text-xs text-muted-foreground"
+            >
+              <span>
+                This link was made for an earlier version of this diagram, so some of it couldn't be
+                shown.
+              </span>
+              <button
+                type="button"
+                onClick={shared.dismissNotice}
+                aria-label="Dismiss notice"
+                className="px-1 hover:text-foreground"
+              >
+                ×
+              </button>
+            </div>
+          ) : null}
           <CanvasToolbar
             onCenter={centerScene}
             onExpandAll={expandAll}
