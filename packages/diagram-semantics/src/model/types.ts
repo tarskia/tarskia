@@ -1,5 +1,5 @@
 export type SemanticVersion = string;
-export type SchemaOwner = 'core' | 'gallery' | 'user';
+export type SchemaOwner = 'core' | 'gallery' | 'repo' | 'user';
 
 export interface SchemaActivation {
   schema: string;

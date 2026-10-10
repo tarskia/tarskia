@@ -22,6 +22,16 @@ relations:
 `;
 
 describe('schema io', () => {
+  it('parses and round-trips repository-generated schema modules', () => {
+    const raw = validRaw.replace('owner: user', 'owner: repo');
+    const result = parseAndValidateSchemaModule(raw);
+    expect(result.ok).toBe(true);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.value?.owner).toBe('repo');
+    const parsed = parseSchemaModule(raw);
+    expect(parseSchemaModule(serializeSchemaModule(parsed))).toEqual(parsed);
+  });
+
   it('accepts relation display flowDirection metadata', () => {
     const parsed = parseAndValidateSchemaModule(`owner: user
 name: billing
