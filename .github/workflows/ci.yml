@@ -40,3 +40,56 @@ jobs:
 
       - name: Build frontend
         run: npm run build -w @tarskia/frontend
+
+  worker:
+    name: Worker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          codex_version=$(node -p "require('./node_modules/@openai/codex/package.json').version")
+          npm install --no-save @biomejs/cli-linux-x64@2.4.10 "@openai/codex-linux-x64@npm:@openai/codex@${codex_version}-linux-x64"
+
+      - name: Lint
+        run: npx biome check worker
+
+      - name: Typecheck
+        run: npm run typecheck -w @tarskia/diagram-worker
+
+      - name: Run tests
+        run: npm run test -w @tarskia/diagram-worker
+
+      - name: Build
+        run: npm run build -w @tarskia/diagram-worker
+
+      - name: Validate bundled schemas
+        run: node worker/dist/cli.js validate worker/assets/schemas --kind schema-registry
+
+      - name: Validate curated gallery
+        run: |
+          for f in gallery/curated/*.yaml; do
+            node worker/dist/cli.js validate "$f" --kind diagram --schema-source frontend/src/schemas || exit 1
+          done
+
+      - name: Smoke test installed package
+        run: |
+          pack_dir=$(mktemp -d "$RUNNER_TEMP/tarskia-pack.XXXXXX")
+          install_prefix=$(mktemp -d "$RUNNER_TEMP/tarskia-install.XXXXXX")
+          package_name=$(node -p "require('./worker/package.json').name")
+          npm pack -w @tarskia/diagram-worker --pack-destination "$pack_dir" --json > "$pack_dir/pack.json"
+          tarball=$(node -p "require(process.argv[1])[0].filename" "$pack_dir/pack.json")
+          npm install -g --prefix "$install_prefix" "$pack_dir/$tarball"
+          cd "$RUNNER_TEMP"
+          "$install_prefix/bin/tarskia" --help
+          "$install_prefix/bin/tarskia" validate "$install_prefix/lib/node_modules/$package_name/assets/schemas" --kind schema-registry
