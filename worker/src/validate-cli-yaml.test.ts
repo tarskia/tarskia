@@ -70,3 +70,17 @@ it.each([
     await validateCli({ path: kind === 'schema-registry' ? root : target, kind, schemaSource }),
   ).toMatchObject({ ok: false, diagnostics: [{ code: 'diagram.parse.alias_not_allowed' }] });
 });
+
+it.each([
+  ['schemaRefs: [', 'semantic.parse.invalid_yaml'],
+  ['entities: nope', 'semantic.document.invalid_structure'],
+])('versions document parse diagnostics for %s', async (raw, code) => {
+  const target = await file('invalid.yaml', raw);
+  expect(await validateCli({ path: target, kind: 'diagram', schemaSource })).toMatchObject({
+    version: 1,
+    ok: false,
+    kind: 'diagram',
+    path: target,
+    diagnostics: [{ code }],
+  });
+});

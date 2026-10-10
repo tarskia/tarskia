@@ -682,3 +682,29 @@ it('rejects Windows builds before argument validation or setup and reports platf
     detail: process.platform,
   });
 });
+
+it('versions valid and invalid validate JSON documents', async () => {
+  await fs.writeFile(
+    path.join(tmp, 'valid-versioned.yaml'),
+    'schemaRefs: [{schema: core/base@0.1, layer: 0}]\nentities: []\nrelations: []\n',
+  );
+  for (const [file, code, ok] of [
+    ['valid-versioned.yaml', 0, true],
+    ['broken.yaml', 1, false],
+  ] as const) {
+    const result = await run(['validate', file, '--json']);
+    expect(result.code).toBe(code);
+    const output = JSON.parse(result.stdout);
+    expect(Object.keys(output)[0]).toBe('version');
+    expect(output).toMatchObject({
+      version: 1,
+      ok,
+      kind: 'diagram',
+      path: path.join(await fs.realpath(tmp), file),
+    });
+    if (!ok)
+      expect(output.diagnostics).toContainEqual(
+        expect.objectContaining({ code: 'semantic.parse.invalid_yaml' }),
+      );
+  }
+});
