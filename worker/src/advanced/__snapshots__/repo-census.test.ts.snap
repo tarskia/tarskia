@@ -1,0 +1,157 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildRepoCensus > preserves the complete census for byte boundaries, invalid UTF-8 and ignored entries 1`] = `
+"{
+  "repoUrl": "fixture",
+  "repoRevision": "fixed",
+  "repoRoot": "<fixture>",
+  "generatedAt": "<fixed>",
+  "summary": {
+    "totalFiles": 5,
+    "totalDirectories": 4,
+    "totalLines": 10,
+    "languages": {
+      "other": 5,
+      "typescript": 3,
+      "json": 2
+    },
+    "topLevelPaths": [
+      {
+        "path": "boundary.txt",
+        "fileCount": 1,
+        "lineCount": 4,
+        "languages": {
+          "other": 4
+        }
+      },
+      {
+        "path": "app",
+        "fileCount": 1,
+        "lineCount": 3,
+        "languages": {
+          "typescript": 3
+        }
+      },
+      {
+        "path": "package.json",
+        "fileCount": 1,
+        "lineCount": 2,
+        "languages": {
+          "json": 2
+        }
+      },
+      {
+        "path": "only-cr.txt",
+        "fileCount": 1,
+        "lineCount": 1,
+        "languages": {
+          "other": 1
+        }
+      },
+      {
+        "path": "empty.txt",
+        "fileCount": 1,
+        "lineCount": 0,
+        "languages": {
+          "other": 0
+        }
+      }
+    ]
+  },
+  "directories": [
+    {
+      "path": ".",
+      "fileCount": 5,
+      "lineCount": 10,
+      "languages": {
+        "other": 5,
+        "typescript": 3,
+        "json": 2
+      }
+    },
+    {
+      "path": "app",
+      "fileCount": 1,
+      "lineCount": 3,
+      "languages": {
+        "typescript": 3
+      }
+    },
+    {
+      "path": "app/routes",
+      "fileCount": 1,
+      "lineCount": 3,
+      "languages": {
+        "typescript": 3
+      }
+    },
+    {
+      "path": "empty-dir",
+      "fileCount": 0,
+      "lineCount": 0,
+      "languages": {}
+    }
+  ],
+  "manifests": [
+    {
+      "path": "package.json",
+      "kind": "node-package"
+    }
+  ],
+  "signals": [
+    {
+      "path": "app/routes/index.ts",
+      "kind": "route-surface",
+      "confidence": "medium",
+      "reason": "Common route directory heuristic matched"
+    }
+  ],
+  "files": [
+    {
+      "path": "app/routes/index.ts",
+      "directory": "app/routes",
+      "fileName": "index.ts",
+      "extension": ".ts",
+      "language": "typescript",
+      "lineCount": 3,
+      "byteCount": 20
+    },
+    {
+      "path": "boundary.txt",
+      "directory": ".",
+      "fileName": "boundary.txt",
+      "extension": ".txt",
+      "language": "other",
+      "lineCount": 4,
+      "byteCount": 65542
+    },
+    {
+      "path": "empty.txt",
+      "directory": ".",
+      "fileName": "empty.txt",
+      "extension": ".txt",
+      "language": "other",
+      "lineCount": 0,
+      "byteCount": 0
+    },
+    {
+      "path": "only-cr.txt",
+      "directory": ".",
+      "fileName": "only-cr.txt",
+      "extension": ".txt",
+      "language": "other",
+      "lineCount": 1,
+      "byteCount": 1
+    },
+    {
+      "path": "package.json",
+      "directory": ".",
+      "fileName": "package.json",
+      "extension": ".json",
+      "language": "json",
+      "lineCount": 2,
+      "byteCount": 19
+    }
+  ]
+}"
+`;
