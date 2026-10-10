@@ -31,7 +31,7 @@ types:
         - edge-functions
         - self-hosted-stack
         - module
-        - group
+        - core/web-app.types.group
     display:
       primaryTag: core/software.tags.service
       defaultSize:
@@ -46,7 +46,7 @@ types:
           - edge-functions
           - self-hosted-stack
           - module
-          - group
+          - core/web-app.types.group
         label: components
   - id: control-plane
     label: Control Plane
@@ -65,7 +65,7 @@ types:
         - api
         - service
         - module
-        - group
+        - core/web-app.types.group
     display:
       primaryTag: core/software.tags.service
       defaultSize:
@@ -78,7 +78,7 @@ types:
           - api
           - service
           - module
-          - group
+          - core/web-app.types.group
         label: components
   - id: edge-functions
     label: Edge Functions
@@ -94,7 +94,7 @@ types:
       allowedChildTypes:
         - api
         - module
-        - group
+        - core/web-app.types.group
     display:
       primaryTag: core/software.tags.service
       defaultSize:
@@ -106,7 +106,7 @@ types:
         childTypes:
           - api
           - module
-          - group
+          - core/web-app.types.group
         label: functions
   - id: self-hosted-stack
     label: Self-Hosted Stack
@@ -125,7 +125,7 @@ types:
         - object-store
         - queue
         - module
-        - group
+        - core/web-app.types.group
     display:
       primaryTag: core/software.tags.deployment
       defaultSize:
@@ -140,6 +140,6 @@ types:
           - object-store
           - queue
           - module
-          - group
+          - core/web-app.types.group
         label: components
 relations: []

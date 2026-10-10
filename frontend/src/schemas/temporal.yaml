@@ -85,7 +85,7 @@ types:
       count:
         childTypes:
           - module
-          - group
+          - core/web-app.types.group
           - service
         label: components
 relations: []

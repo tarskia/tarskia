@@ -7,7 +7,6 @@
     "tarskia": "./dist/cli.js"
   },
   "files": [
-    "assets",
     "dist",
     "README.md"
   ],
@@ -17,7 +16,7 @@
   "scripts": {
     "build": "npm run build -w @tarskia/diagram-semantics && rm -rf dist && tsup src/cli.ts --format esm --platform node --target node22 --out-dir dist && node scripts/copy-cli-assets.mjs",
     "typecheck": "npm run build -w @tarskia/diagram-semantics && tsc -p tsconfig.json --noEmit",
-    "test": "npm run build -w @tarskia/diagram-semantics && vitest run",
+    "test": "npm run build && vitest run",
     "build-diagram": "node dist/cli.js build"
   },
   "dependencies": {

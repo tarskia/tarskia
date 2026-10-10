@@ -118,7 +118,7 @@ tasks:
 
         out_path='{{.OUTPUT_DIR}}/'"$safe_stem"'.diagram.yaml'
         schema_out_path='{{.OUTPUT_DIR}}/'"$safe_stem"'.schema.yaml'
-        schema_source='{{if .SCHEMA_SOURCE}}{{.SCHEMA_SOURCE}}{{else}}{{.WORKER_DIR}}/assets/schemas{{end}}'
+        schema_source='{{if .SCHEMA_SOURCE}}{{.SCHEMA_SOURCE}}{{else}}{{.WORKER_DIR}}/dist/schemas{{end}}'
 
         mkdir -p '{{.OUTPUT_DIR}}'
 

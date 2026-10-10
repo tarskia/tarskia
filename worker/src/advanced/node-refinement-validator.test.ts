@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { resolveDefaultSchemaSource } from '../default-assets';
 import { buildSchemaActivation, compileSchemaSemantics, validateDiagramYaml } from '../semantic';
 import { loadSchemaRegistry } from '../semantic/schema-loader';
 import { emptyTokenUsageTotals } from '../token-usage';
@@ -16,8 +17,6 @@ function evidence(path: string, reason = 'Evidence') {
 }
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
-
-const repoPath = (...segments: string[]) => path.resolve(process.cwd(), '..', ...segments);
 
 function createDatastoreStateAndTask(): {
   state: NodeRefinementState;
@@ -70,7 +69,7 @@ function createDatastoreStateAndTask(): {
 
 describe('validateAppliedNodeRefinement', () => {
   it('allows an empty group child while it is still queued for future expansion', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const primaryDocumentInput = {
       id: 'primary',
       kind: 'git' as const,
@@ -141,7 +140,7 @@ relations: []
   });
 
   it('reports an empty group once it is no longer pending expansion', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const primaryDocumentInput = {
       id: 'primary',
       kind: 'git' as const,

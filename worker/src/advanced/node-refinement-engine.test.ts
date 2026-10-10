@@ -6,6 +6,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { ModelOutputParseError } from '../codex/model-output-error';
 import { runCodexPrompt } from '../codex/run-codex-prompt';
 import { TurnPolicy, withTurnPolicy } from '../codex/turn-policy';
+import { resolveDefaultSchemaSource } from '../default-assets';
+import { schemaRepoFixture } from '../schema-repo-fixture';
 import { buildSchemaActivation, compileSchemaSemantics, validateDiagramYaml } from '../semantic';
 import { loadSchemaRegistry } from '../semantic/schema-loader';
 import { emptyTokenUsageTotals } from '../token-usage';
@@ -31,8 +33,6 @@ function evidence(path: string, reason = 'Evidence') {
 }
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
-
-const repoPath = (...segments: string[]) => path.resolve(process.cwd(), '..', ...segments);
 
 function createBaseState(): NodeRefinementState {
   return {
@@ -189,7 +189,7 @@ function createStorageRootRefinementResult(
 }
 
 async function createStorageRootRefinementContext() {
-  const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+  const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
   const validation = validateDiagramYaml({
     yaml: `version: 0.1.0
 schemaRefs:
@@ -1295,7 +1295,7 @@ describe('applyNodeRefinementResult', () => {
   });
 
   it('repairs empty and degenerate grouping refinements', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -1385,7 +1385,7 @@ relations: []
   });
 
   it('treats one-sided edge proposals as provisional when the opposite endpoint is unresolved', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -1505,7 +1505,7 @@ relations:
   });
 
   it('repairs leaf group children that would become empty wrappers', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -1577,7 +1577,7 @@ relations: []
   });
 
   it('repairs disconnected expandable group children before queuing them', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -1711,7 +1711,7 @@ relations: []
   });
 
   it('marks explicit leaf group children expandable before accepting a refinement', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -1917,7 +1917,7 @@ relations:
   });
 
   it('allows structural groups under code nodes', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -1983,7 +1983,7 @@ relations: []
   });
 
   it('allows subgroup wrappers inside typed groups', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -2055,7 +2055,7 @@ relations: []
   });
 
   it('rejects invalid overridden relation types on inherited edge refinements', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -2150,7 +2150,7 @@ relations: []
   });
 
   it('suggests deferred containment when a runtime child tries to call a code sibling it could contain', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -2258,7 +2258,7 @@ relations: []
   });
 
   it('can prune unsupported local relations while preserving their child nodes', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -2375,7 +2375,7 @@ relations: []
   });
 
   it('converts invalid inherited edge refinements to generic groups into proposals', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -2502,7 +2502,7 @@ relations:
   });
 
   it('preserves relation type overrides when an active proposal supplies the opposite endpoint', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -2693,7 +2693,7 @@ relations:
   });
 
   it('preserves valid inherited storage edge refinements to storage children', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -3017,7 +3017,7 @@ relations:
   });
 
   it('repairs a node using newly introduced global diagnostics from the assembled document', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -3239,7 +3239,7 @@ relations:
   });
 
   it('does not fail node refinement when only advisory flow diagnostics remain after repair', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -3400,7 +3400,7 @@ relations:
   });
 
   it('salvages invalid local relations after repair attempts instead of aborting the node', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -3571,7 +3571,7 @@ relations: []
   });
 
   it('repairs malformed node-refinement model output instead of aborting immediately', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -3735,7 +3735,7 @@ inputs:
     'no-acceptable',
     'checkpoint-failure',
   ] as const)('retains the last acceptable refinement on %s repair failures', async (mode) => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -3926,7 +3926,7 @@ inputs:
   });
 
   it('replays a cached node refinement without consuming a model turn', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -4086,7 +4086,7 @@ relations:
   });
 
   it('recomputes a node when its cached refinement no longer validates', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -4258,7 +4258,7 @@ relations:
   });
 
   it('passes surrounding modeled context into each node refinement turn', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -4553,9 +4553,7 @@ relations:
   });
 
   it('stops before processing the next BFS depth when stopBeforeDepth is set', async () => {
-    const schemaRegistry = await loadSchemaRegistry(
-      path.resolve(process.cwd(), 'test/fixtures/schema-repo'),
-    );
+    const schemaRegistry = await loadSchemaRegistry(schemaRepoFixture());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -4988,7 +4986,7 @@ describe('type-aware cross-boundary relation inference', () => {
     });
     expect(normalized.edgeRefinements).toEqual([]);
     expect(normalized.relations).toHaveLength(1);
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validated = validateDiagramYaml({
       yaml: 'version: 0.1.0\nschemaRefs:\n  - schema: core/web-app@0.3\n    layer: 0\nentities: []\nrelations: []\n',
       schemaRegistry,
@@ -5012,7 +5010,7 @@ describe('type-aware cross-boundary relation inference', () => {
 });
 
 it('resumes pending node repairs with the same one-turn allowance without redrafting', async () => {
-  const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+  const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
   const validation = validateDiagramYaml({
     yaml: `version: 0.1.0
 schemaRefs:

@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { dump, load } from 'js-yaml';
 import { describe, expect, it } from 'vitest';
+import { schemaRepoFixture } from '../schema-repo-fixture';
 import { CANONICAL_EXAMPLE_YAML } from './diagram-synthesis-contract';
 import { buildSchemaActivation } from './model/schema-ref';
 import { compileSchemaSemantics, getResolvedTypeSemantics } from './model/schema-runtime';
@@ -10,7 +11,9 @@ import { loadSchemaRegistry, validateDiagramYaml } from './schema-loader';
 import { parseDocument, serializeDocument } from './util/serialization';
 
 const fixturePath = (...segments: string[]) =>
-  path.resolve(process.cwd(), 'test', 'fixtures', ...segments);
+  segments[0] === 'schema-repo'
+    ? path.join(schemaRepoFixture(), ...segments.slice(1))
+    : path.resolve(process.cwd(), 'test', 'fixtures', ...segments);
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
 

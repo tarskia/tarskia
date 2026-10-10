@@ -3,13 +3,18 @@ import { describe, expect, it } from 'vitest';
 import { semanticBootstrap } from './bootstrap';
 import { parseTrustedBundledSchemaModule } from './trusted-bundled-assets';
 
-const bundledSchemaRaws = Object.values(
-  import.meta.glob('../schemas/*.yaml', {
+const bundledSchemaRaws = Object.values({
+  ...import.meta.glob('../../../packages/diagram-semantics/core-schemas/*.yaml', {
     eager: true,
     import: 'default',
     query: '?raw',
-  }) as Record<string, string>,
-);
+  }),
+  ...import.meta.glob('../schemas/*.yaml', {
+    eager: true,
+    import: 'default',
+    query: '?raw',
+  }),
+} as Record<string, string>);
 
 describe('semanticBootstrap', () => {
   it('reproduces the built-in schema catalog', () => {

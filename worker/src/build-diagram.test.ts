@@ -12,6 +12,7 @@ import { ModelOutputParseError } from './codex/model-output-error';
 import { runCodexPrompt } from './codex/run-codex-prompt';
 import { retainPartialDocument, TurnBudgetExhaustedError } from './codex/turn-policy';
 import { readJobMetadata, writeJobMetadata } from './job-metadata';
+import { schemaRepoFixture } from './schema-repo-fixture';
 import {
   loadSchemaRegistry,
   parseDocument,
@@ -22,7 +23,9 @@ import { CANONICAL_EXAMPLE_YAML } from './semantic/diagram-synthesis-contract';
 import { emptyTokenUsageTotals } from './token-usage';
 
 const fixturePath = (...segments: string[]) =>
-  path.resolve(process.cwd(), 'test', 'fixtures', ...segments);
+  segments[0] === 'schema-repo'
+    ? path.join(schemaRepoFixture(), ...segments.slice(1))
+    : path.resolve(process.cwd(), 'test', 'fixtures', ...segments);
 
 async function createTempDir(prefix: string): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), prefix));

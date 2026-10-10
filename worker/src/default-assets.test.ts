@@ -19,7 +19,7 @@ let hostile: string;
 beforeAll(async () => {
   root = await fs.mkdtemp(path.join(os.tmpdir(), 'tarskia-assets-'));
   const packageRoot = path.join(root, 'node_modules/worker');
-  bundled = path.join(packageRoot, 'assets/schemas');
+  bundled = path.join(packageRoot, 'dist/schemas');
   modulePath = path.join(packageRoot, 'dist/assets.mjs');
   hostile = path.join(root, 'hostile');
   for (const directory of [bundled, path.dirname(modulePath), hostile])
@@ -35,7 +35,7 @@ beforeAll(async () => {
     format: 'esm',
     outfile: modulePath,
   });
-  for (const relative of ['assets/schemas', 'worker/assets/schemas']) {
+  for (const relative of ['dist/schemas', 'packages/diagram-semantics/core-schemas']) {
     await fs.mkdir(path.join(hostile, relative), { recursive: true });
     await fs.writeFile(path.join(hostile, relative, 'evil.yaml'), 'untrusted: true');
   }
@@ -61,7 +61,9 @@ async function call(expression: string) {
 
 describe('bundled asset boundary', () => {
   it('loads the source layout independently of cwd', () => {
-    expect(resolveDefaultSchemaSource()).toBe(path.resolve('assets/schemas'));
+    expect(resolveDefaultSchemaSource()).toBe(
+      path.resolve('../packages/diagram-semantics/core-schemas'),
+    );
     expect(loadDiagramMetaOntology()).toContain('diagram');
   });
   it('uses packaged assets, and fails closed when either is missing despite both cwd fallbacks', async () => {

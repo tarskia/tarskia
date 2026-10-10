@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { validateNodeRefinementCandidateCommand } from '../node-refinement-validator-cli';
+import { schemaRepoFixture } from '../schema-repo-fixture';
 import {
   compileSchemaSemantics,
   diagnosticFingerprint,
@@ -39,9 +40,7 @@ const child = (group: boolean): NodeRefinementResult => ({
   edgeRefinements: [],
 });
 async function fixture() {
-  const registry = await loadSchemaRegistry(
-    path.resolve(process.cwd(), 'test/fixtures/schema-repo'),
-  );
+  const registry = await loadSchemaRegistry(schemaRepoFixture());
   const validated = validateDiagramYaml({
     schemaRegistry: registry,
     documentInputs: [input],
@@ -254,11 +253,7 @@ describe('final-depth policy and legacy checkpoint budgets', () => {
     ).toBe(true);
     const jobRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'tar65-validator-'));
     try {
-      await fs.cp(
-        path.resolve(process.cwd(), 'test/fixtures/schema-repo'),
-        path.join(jobRoot, 'schema-repo'),
-        { recursive: true },
-      );
+      await fs.cp(schemaRepoFixture(), path.join(jobRoot, 'schema-repo'), { recursive: true });
       await fs.writeFile(
         path.join(jobRoot, 'context.json'),
         JSON.stringify({

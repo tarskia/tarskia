@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ConfigError } from './cli-errors';
 import { runCodexPrompt } from './codex/run-codex-prompt';
 import { TurnPolicy, withTurnPolicy } from './codex/turn-policy';
+import { resolveDefaultSchemaSource } from './default-assets';
 import { deriveGeneratedSchemaId, GeneratedSchemaService } from './generated-schema';
 
 describe('deriveGeneratedSchemaId', () => {
@@ -59,7 +60,7 @@ it.each([
       repoRevision: 'rev-one',
       schemaSourceRevision: 'schemas-one',
     };
-    await fs.cp(path.resolve('assets/schemas'), workspace.schemaRepoPath, { recursive: true });
+    await fs.cp(resolveDefaultSchemaSource(), workspace.schemaRepoPath, { recursive: true });
     const goodYaml =
       'owner: repo\nname: application\nversion: "0.1"\nuse:\n  - schema: core/code@0.1\ntypes: []\nrelations: []\n';
     const calls: string[] = [];

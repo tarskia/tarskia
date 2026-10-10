@@ -1,15 +1,15 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { resolveDefaultSchemaSource } from '../default-assets';
 import { buildSchemaActivation, compileSchemaSemantics, validateDiagramYaml } from '../semantic';
 import { loadSchemaRegistry } from '../semantic/schema-loader';
 import { buildSchemaFlowCatalog, renderSchemaFlowCatalogForPrompt } from './schema-flow-catalog';
 
-const repoPath = (...segments: string[]) => path.resolve(process.cwd(), '..', ...segments);
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
 
 describe('schema flow catalog', () => {
   it('groups active effective schema types by deterministic flow role', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:
@@ -73,7 +73,7 @@ relations: []
   });
 
   it('renders a compact prompt summary with role buckets', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const validation = validateDiagramYaml({
       yaml: `version: 0.1.0
 schemaRefs:

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import dataModelRaw from '../../../__tests__/fixtures/viewer/data-model.yaml?raw';
+import dataModelRaw from '../../../../core-schemas/data-model.yaml?raw';
 import {
   diagnosticsToMessages,
   getSchemaModuleRef,

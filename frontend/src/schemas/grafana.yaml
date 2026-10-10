@@ -81,7 +81,7 @@ types:
       allowedChildTypes:
         - portal-app
         - control-plane
-        - group
+        - core/web-app.types.group
     display:
       primaryTag: core/software.tags.service
       defaultSize:
@@ -93,7 +93,7 @@ types:
         childTypes:
           - portal-app
           - control-plane
-          - group
+          - core/web-app.types.group
         label: components
   - id: portal-app
     label: Portal App
@@ -119,7 +119,7 @@ types:
       count:
         childTypes:
           - module
-          - group
+          - core/web-app.types.group
         label: components
   - id: control-plane
     label: Control Plane
@@ -137,7 +137,7 @@ types:
       allowedChildTypes:
         - api
         - module
-        - group
+        - core/web-app.types.group
       allowedChildTraits:
         - core/base.traits.group-like
         - core/code.traits.code-like
@@ -153,6 +153,6 @@ types:
         childTypes:
           - api
           - module
-          - group
+          - core/web-app.types.group
         label: components
 relations: []

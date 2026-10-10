@@ -5,6 +5,7 @@ import path from 'node:path';
 import { simpleGit } from 'simple-git';
 import { describe, expect, it, vi } from 'vitest';
 import { buildDiagram } from '../build-diagram';
+import { schemaRepoFixture } from '../schema-repo-fixture';
 import { parseDocument, type SemanticDocument, serializeDocument } from '../semantic';
 import type { NodeRefinerInput } from './graph-builders';
 import { buildRepoCensus } from './repo-census';
@@ -219,7 +220,7 @@ describe.skipIf(!enabled)('opt-in worker performance benchmarks (no models)', ()
       const result = await buildDiagram(
         {
           repo,
-          schemaSource: path.resolve('test/fixtures/schema-repo'),
+          schemaSource: schemaRepoFixture(),
           out: path.join(root, 'diagram.yaml'),
 
           graphifyHintsMode: 'off',

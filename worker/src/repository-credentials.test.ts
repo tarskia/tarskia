@@ -4,6 +4,7 @@ import path from 'node:path';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { buildDiagram } from './build-diagram';
 import { DefaultRepositoryService } from './repository-service';
+import { schemaRepoFixture } from './schema-repo-fixture';
 import { parseDocument } from './semantic';
 import { CANONICAL_EXAMPLE_YAML } from './semantic/diagram-synthesis-contract';
 import { emptyTokenUsageTotals } from './token-usage';
@@ -57,7 +58,7 @@ vi.mock('simple-git', () => ({
 }));
 
 const repo = 'https://x-access-token:SECRET123@github.com/acme/repo';
-const schemaSource = path.resolve('test/fixtures/schema-repo');
+const schemaSource = schemaRepoFixture();
 const logger = () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() });
 beforeEach(() => {
   state.clones = [];

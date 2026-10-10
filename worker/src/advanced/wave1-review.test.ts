@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { resolveDefaultSchemaSource } from '../default-assets';
 import {
   compileSchemaSemantics,
   parseDocument,
@@ -63,10 +64,8 @@ function createAreaPlan() {
   };
 }
 
-const repoPath = (...segments: string[]) => path.resolve(process.cwd(), '..', ...segments);
-
 async function loadSchemaContextFor(level0Doc: ReturnType<typeof createLevel0Doc>) {
-  const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+  const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
   const validation = validateDiagramYaml({
     yaml: serializeDocument(level0Doc),
     schemaRegistry,

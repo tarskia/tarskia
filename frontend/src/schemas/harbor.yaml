@@ -141,7 +141,7 @@ types:
         hue: 188
       count:
         childTypes:
-          - group
+          - core/web-app.types.group
         label: components
   - id: core-service
     label: Core Service
@@ -214,6 +214,6 @@ types:
           - api
           - service
           - datastore
-          - group
+          - core/web-app.types.group
         label: components
 relations: []

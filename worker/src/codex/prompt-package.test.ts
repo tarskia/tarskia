@@ -1,11 +1,14 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { schemaRepoFixture } from '../schema-repo-fixture';
 import { loadSchemaRegistry } from '../semantic';
 import { buildDiagramSynthesisContract } from '../semantic/diagram-synthesis-contract';
 import { buildDiagramPromptPackage } from './prompt-package';
 
 const fixturePath = (...segments: string[]) =>
-  path.resolve(process.cwd(), 'test', 'fixtures', ...segments);
+  segments[0] === 'schema-repo'
+    ? path.join(schemaRepoFixture(), ...segments.slice(1))
+    : path.resolve(process.cwd(), 'test', 'fixtures', ...segments);
 
 describe('buildDiagramPromptPackage', () => {
   it('renders a compact contract and schema catalog without dumping source code', async () => {

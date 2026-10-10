@@ -1,13 +1,13 @@
 import { parseSchema } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import baseRaw from '../schemas/base.yaml?raw';
+import baseRaw from '../../../packages/diagram-semantics/core-schemas/base.yaml?raw';
+import codeRaw from '../../../packages/diagram-semantics/core-schemas/code.yaml?raw';
+import dataModelRaw from '../../../packages/diagram-semantics/core-schemas/data-model.yaml?raw';
+import frontendRaw from '../../../packages/diagram-semantics/core-schemas/frontend.yaml?raw';
+import kubernetesRaw from '../../../packages/diagram-semantics/core-schemas/kubernetes.yaml?raw';
+import softwareRaw from '../../../packages/diagram-semantics/core-schemas/software.yaml?raw';
+import webAppRaw from '../../../packages/diagram-semantics/core-schemas/web-app.yaml?raw';
 import clickhouseRaw from '../schemas/clickhouse.yaml?raw';
-import codeRaw from '../schemas/code.yaml?raw';
-import dataModelRaw from '../schemas/data-model.yaml?raw';
-import frontendRaw from '../schemas/frontend.yaml?raw';
-import kubernetesRaw from '../schemas/kubernetes.yaml?raw';
-import softwareRaw from '../schemas/software.yaml?raw';
-import webAppRaw from '../schemas/web-app.yaml?raw';
 
 describe('parseSchema validation', () => {
   it('accepts current bundled schema modules', () => {
