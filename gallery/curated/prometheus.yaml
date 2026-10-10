@@ -12,14 +12,6 @@ schemaRefs:
     layer: 1
   - schema: core/code@0.1
     layer: 1
-  - schema: core/base@0.1
-    layer: 0
-  - schema: core/software@0.1
-    layer: 0
-  - schema: core/web-app@0.3
-    layer: 0
-  - schema: core/frontend@0.3
-    layer: 0
 entities:
   - id: browser-ui-surface
     type: gallery/prometheus.types.portal-app

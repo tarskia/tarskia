@@ -3,13 +3,9 @@ schemaRefs:
   - schema: gallery/tarskia@0.1
     layer: 0
   - schema: core/frontend@0.3
-    layer: 1
+    layer: 0
   - schema: core/code@0.1
     layer: 1
-  - schema: core/web-app@0.3
-    layer: 1
-  - schema: core/frontend@0.3
-    layer: 0
   - schema: core/web-app@0.3
     layer: 0
   - schema: core/base@0.1

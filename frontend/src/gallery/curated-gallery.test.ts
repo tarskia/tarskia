@@ -1,5 +1,9 @@
 import { readFileSync } from 'node:fs';
-import { buildSchemaVersionCatalog } from '@tarskia/diagram-semantics';
+import {
+  buildSchemaVersionCatalog,
+  getSchemaActivationId,
+  parseDocument,
+} from '@tarskia/diagram-semantics';
 import { expect, test } from 'vitest';
 import { semanticBootstrap } from '../semantic/bootstrap';
 import { buildDiagramSemanticRuntime } from '../semantic/runtime';
@@ -14,8 +18,11 @@ const schemaVersionCatalog = buildSchemaVersionCatalog(
 );
 
 test.each(manifest)('$file has no error diagnostics', ({ file, title }) => {
+  const raw = readFileSync(new URL(file, curatedDirectory), 'utf8');
+  const ids = parseDocument(raw).schemaRefs.map(getSchemaActivationId);
+  expect(new Set(ids).size).toBe(ids.length);
   const loaded = loadDiagramDocFromRaw({
-    raw: readFileSync(new URL(file, curatedDirectory), 'utf8'),
+    raw,
     streamName: title,
     sourceLabel: file,
   });
