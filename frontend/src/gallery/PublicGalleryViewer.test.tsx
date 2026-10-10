@@ -1,3 +1,6 @@
+// @vitest-environment happy-dom
+import { act } from 'react';
+import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter, Outlet, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -104,4 +107,54 @@ describe('PublicGalleryViewer', () => {
       }),
     ).toBe(false);
   });
+});
+
+it('registers Share for the hosted viewer after the canvas is ready', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+    x: 0,
+    y: 0,
+    width: 1000,
+    height: 700,
+    top: 0,
+    left: 0,
+    right: 1000,
+    bottom: 700,
+    toJSON: () => ({}),
+  });
+  vi.mocked(useGetGalleryDiagram).mockReturnValue({
+    data: {
+      status: 200,
+      data: { raw: 'version: 0.1.0\nschemaRefs: []\nentities: []\nrelations: []', title: 'Hosted' },
+    },
+  } as never);
+  const setViewerShareAction = vi.fn();
+  const setViewerSearchChrome = vi.fn();
+  const host = document.createElement('div');
+  document.body.append(host);
+  const root = createRoot(host);
+  try {
+    await act(async () =>
+      root.render(
+        <MemoryRouter initialEntries={['/gallery/tarskia/example']}>
+          <Routes>
+            <Route element={<Outlet context={{ setViewerShareAction, setViewerSearchChrome }} />}>
+              <Route path="/gallery/:namespace/:slug" element={<PublicGalleryViewer />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>,
+      ),
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    expect(setViewerShareAction.mock.calls.some(([action]) => typeof action === 'function')).toBe(
+      true,
+    );
+  } finally {
+    await act(async () => root.unmount());
+    host.remove();
+    rect.mockRestore();
+    vi.unstubAllGlobals();
+  }
 });

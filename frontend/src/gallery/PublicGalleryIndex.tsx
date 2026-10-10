@@ -11,6 +11,7 @@ import {
   retryGalleryQuery,
 } from './gallery-query';
 import { coerceGallerySummaryArray, coerceSuccessfulResponseBody } from './gallery-response';
+import { OpenLocalFileButton, useLocalFileOpening } from './OpenLocalFile';
 import { describePublicGalleryRepository } from './public-gallery-repository';
 import { formatCompactNumber } from './worker-build-summary';
 
@@ -131,6 +132,7 @@ export function sortPublicGalleryRows(
 }
 
 export default function PublicGalleryIndex() {
+  const localFiles = useLocalFileOpening();
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.sortKey);
   const [sortDirection, setSortDirection] = useState<SortDirection>(DEFAULT_SORT.sortDirection);
@@ -179,10 +181,6 @@ export default function PublicGalleryIndex() {
   const getAriaSort = (headerKey: SortKey): 'ascending' | 'descending' | 'none' =>
     sortKey !== headerKey ? 'none' : sortDirection === 'asc' ? 'ascending' : 'descending';
 
-  if (galleryQuery.isPending) {
-    return <LoadingState fullscreen label="Loading gallery" hint="Fetching curated diagrams." />;
-  }
-
   return (
     <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col px-5 py-6">
       <div className="flex flex-col gap-5 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">
@@ -192,6 +190,7 @@ export default function PublicGalleryIndex() {
           implementation details.
         </p>
 
+        <OpenLocalFileButton open={localFiles.open} />
         <div className="w-full max-w-sm md:w-[320px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -207,7 +206,22 @@ export default function PublicGalleryIndex() {
         </div>
       </div>
 
-      {galleryQuery.isError || galleryQuery.data?.status !== 200 ? (
+      {localFiles.dragging ? (
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center border-2 border-accent bg-background/95 p-8 text-center text-lg">
+          Drop a diagram file, and its schema file if it has one, to open it here
+        </div>
+      ) : null}
+      {localFiles.error ? (
+        <div
+          role="alert"
+          className="mt-6 rounded-lg border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+        >
+          {localFiles.error}
+        </div>
+      ) : null}
+      {galleryQuery.isPending ? (
+        <LoadingState label="Loading gallery" hint="Fetching curated diagrams." />
+      ) : galleryQuery.isError || galleryQuery.data?.status !== 200 ? (
         <div className="mt-6 rounded-lg border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           <p>Couldn't load the gallery.</p>
           <button

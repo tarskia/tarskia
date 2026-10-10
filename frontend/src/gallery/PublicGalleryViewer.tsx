@@ -1,6 +1,7 @@
 import {
   applyDiagramViewOperation,
   buildSchemaVersionCatalog,
+  type SchemaVersionCatalog,
   searchDiagramText,
 } from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -51,17 +52,86 @@ export const shouldDelayGalleryCanvasMount = (params: {
   (params.hasSceneContent && !params.defaultViewport && !params.isLiveCanvasVisible);
 
 export default function PublicGalleryViewer() {
-  const reducedMotion = useReducedMotion();
   const { namespace = '', slug = '' } = useParams();
-  const [searchParams] = useSearchParams();
-  const { setViewerSearchChrome, setViewerShareAction } =
-    useOutletContext<PublicGalleryShellContext>();
   const detailQuery = useGalleryDiagramQuery(namespace, slug);
-
-  const schemaVersionCatalog = useMemo(
+  const detail = coerceSuccessfulResponseBody<DtoGalleryDiagramDetailResponse>(detailQuery.data);
+  const catalog = useMemo(
     () => buildSchemaVersionCatalog(semanticBootstrap.builtInSchemaCatalogEntries),
     [],
   );
+  if (!detail && (detailQuery.isPending || detailQuery.isFetching)) {
+    return <LoadingState fullscreen label="Loading gallery diagram" hint="Preparing the viewer." />;
+  }
+
+  if (detailQuery.data?.status === 404) {
+    return (
+      <div className="mx-auto flex w-full max-w-[1600px] flex-1 items-center px-5 py-10">
+        <div className="rounded-xl border border-border bg-surface px-6 py-6">
+          <h1 className="text-xl font-semibold text-foreground">Gallery diagram not found</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            The requested gallery entry could not be loaded.
+          </p>
+          <Link
+            to="/gallery"
+            className="mt-4 inline-block text-sm font-medium text-accent hover:underline"
+          >
+            Back to gallery
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (detailQuery.isError) {
+    return (
+      <div className="mx-auto flex w-full max-w-[1600px] flex-1 items-center px-5 py-10">
+        <div className="rounded-xl border border-destructive/25 bg-destructive/5 px-6 py-6 text-sm text-destructive">
+          <p>Couldn't load this diagram.</p>
+          <div className="mt-4 flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => void detailQuery.refetch()}
+              className="border border-current px-3 py-1 font-medium hover:bg-destructive/10"
+            >
+              Retry
+            </button>
+            <Link to="/gallery" className="font-medium text-accent hover:underline">
+              Back to gallery
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <GalleryDiagramViewer
+      raw={detail?.raw ?? ''}
+      title={buildViewerTitle(detail ?? { namespace, slug })}
+      schemaVersionCatalog={catalog}
+      shareIdentity={{ namespace, slug }}
+    />
+  );
+}
+
+export function GalleryDiagramViewer({
+  raw,
+  title,
+  schemaVersionCatalog,
+  shareIdentity,
+}: {
+  raw: string;
+  title: string;
+  schemaVersionCatalog: SchemaVersionCatalog;
+  shareIdentity?: { namespace: string; slug: string };
+}) {
+  const reducedMotion = useReducedMotion();
+  const canShare = Boolean(shareIdentity);
+  const { namespace = '', slug = '' } = shareIdentity ?? {};
+  const [searchParams] = useSearchParams();
+  const { setViewerSearchChrome, setViewerShareAction } =
+    useOutletContext<PublicGalleryShellContext>();
+
   const fallbackSchema = semanticBootstrap.schemaModules[0];
   const [selectedEntityId, setSelectedEntity] = useState<string | undefined>();
   const [selectedEdgeId, setSelectedEdge] = useState<string | undefined>();
@@ -70,15 +140,15 @@ export default function PublicGalleryViewer() {
   const [visibleCanvasKey, setVisibleCanvasKey] = useState<string | undefined>();
   const isLiveCanvasVisible = visibleCanvasKey === viewerCanvasKey;
 
-  const detail = coerceSuccessfulResponseBody<DtoGalleryDiagramDetailResponse>(detailQuery.data);
-  const loadedDiagram = useMemo(() => {
-    if (!detail?.raw) return undefined;
-    return loadDiagramDocFromRaw({
-      raw: detail.raw,
-      streamName: buildViewerTitle(detail),
-      sourceLabel: `${detail.namespace ?? namespace}/${detail.slug ?? slug}`,
-    });
-  }, [detail, namespace, slug]);
+  const loadedDiagram = useMemo(
+    () =>
+      loadDiagramDocFromRaw({
+        raw,
+        streamName: title,
+        sourceLabel: canShare ? `${namespace}/${slug}` : title,
+      }),
+    [raw, title, namespace, slug, canShare],
+  );
 
   const content = useMemo(() => {
     const { view: _view, ...content } = loadedDiagram?.doc ?? createBlankDiagramDocument('0.1.0');
@@ -114,7 +184,7 @@ export default function PublicGalleryViewer() {
   const shared = useSharedGalleryView({
     index,
     defaultView: loadedDiagram?.doc.view,
-    encoded: searchParams.get('view'),
+    encoded: shareIdentity ? searchParams.get('view') : null,
     namespace,
     slug,
     enabled: Boolean(loadedDiagram?.readable),
@@ -155,10 +225,12 @@ export default function PublicGalleryViewer() {
     );
   useEffect(() => {
     setViewerShareAction?.(
-      viewerDocumentReady && isLiveCanvasVisible ? () => shareRef.current!() : undefined,
+      canShare && viewerDocumentReady && isLiveCanvasVisible
+        ? () => shareRef.current!()
+        : undefined,
     );
     return () => setViewerShareAction?.(undefined);
-  }, [viewerDocumentReady, isLiveCanvasVisible, setViewerShareAction]);
+  }, [viewerDocumentReady, isLiveCanvasVisible, setViewerShareAction, canShare]);
   const {
     graph,
     compiled,
@@ -364,52 +436,7 @@ export default function PublicGalleryViewer() {
     [setViewerSearchChrome],
   );
 
-  if (!detail && (detailQuery.isPending || detailQuery.isFetching)) {
-    return <LoadingState fullscreen label="Loading gallery diagram" hint="Preparing the viewer." />;
-  }
-
-  if (detailQuery.data?.status === 404) {
-    return (
-      <div className="mx-auto flex w-full max-w-[1600px] flex-1 items-center px-5 py-10">
-        <div className="rounded-xl border border-border bg-surface px-6 py-6">
-          <h1 className="text-xl font-semibold text-foreground">Gallery diagram not found</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            The requested gallery entry could not be loaded.
-          </p>
-          <Link
-            to="/gallery"
-            className="mt-4 inline-block text-sm font-medium text-accent hover:underline"
-          >
-            Back to gallery
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (detailQuery.isError) {
-    return (
-      <div className="mx-auto flex w-full max-w-[1600px] flex-1 items-center px-5 py-10">
-        <div className="rounded-xl border border-destructive/25 bg-destructive/5 px-6 py-6 text-sm text-destructive">
-          <p>Couldn't load this diagram.</p>
-          <div className="mt-4 flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => void detailQuery.refetch()}
-              className="border border-current px-3 py-1 font-medium hover:bg-destructive/10"
-            >
-              Retry
-            </button>
-            <Link to="/gallery" className="font-medium text-accent hover:underline">
-              Back to gallery
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!detail || !loadedDiagram || !loadedDiagram.readable) {
+  if (!loadedDiagram || !loadedDiagram.readable) {
     return (
       <div className="mx-auto flex w-full max-w-[1600px] flex-1 items-center px-5 py-10">
         <div className="rounded-xl border border-border bg-surface px-6 py-6">

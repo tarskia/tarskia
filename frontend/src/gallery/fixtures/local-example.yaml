@@ -1,0 +1,11 @@
+version: 0.1.0
+schemaRefs:
+  - schema: repo/example@0.1
+    layer: 0
+metadata:
+  name: Local example
+entities:
+  - id: app
+    type: repo/example.types.service
+    name: Example service
+relations: []

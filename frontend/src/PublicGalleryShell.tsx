@@ -1,7 +1,6 @@
 import { ExternalLink, Search, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, Outlet, useParams, useSearchParams } from 'react-router-dom';
-
+import { Link, Outlet, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { useListGalleryDiagrams } from './api/generated/gallery/gallery';
 import type { DtoGalleryDiagramDetailResponse } from './api/generated/model';
 import { Button } from './components/ui/button';
@@ -17,6 +16,7 @@ import {
   coerceGallerySummaryArray,
   coerceSuccessfulResponseBody,
 } from './gallery/gallery-response';
+import type { LocalDiagram } from './gallery/local-diagram';
 import {
   describePublicGalleryRepository,
   formatPublicGalleryCommit,
@@ -38,6 +38,8 @@ export interface PublicGalleryViewerSearchChrome {
 }
 
 export interface PublicGalleryShellContext {
+  localDiagram?: LocalDiagram;
+  setLocalDiagram?: (diagram: LocalDiagram) => void;
   setViewerSearchChrome: (chrome: PublicGalleryViewerSearchChrome) => void;
   setViewerShareAction?: (action: (() => Promise<string>) | undefined) => void;
 }
@@ -45,7 +47,9 @@ export interface PublicGalleryShellContext {
 export default function PublicGalleryShell() {
   const { namespace = '', slug = '' } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const inViewer = Boolean(namespace && slug);
+  const isLocal = useLocation().pathname.replace(/\/+$/, '') === '/gallery/open';
+  const [localDiagram, setLocalDiagram] = useState<LocalDiagram>();
+  const inViewer = isLocal || Boolean(namespace && slug);
   const [shareAction, setShareAction] = useState<(() => Promise<string>) | undefined>();
   const setViewerShareAction = useCallback(
     (action: (() => Promise<string>) | undefined) => setShareAction(() => action),
@@ -63,7 +67,7 @@ export default function PublicGalleryShell() {
   const detailQuery = useGalleryDiagramQuery(namespace, slug);
   const galleryQuery = useListGalleryDiagrams({
     query: {
-      enabled: inViewer,
+      enabled: Boolean(namespace && slug),
       staleTime: GALLERY_QUERY_STALE_TIME_MS,
       retry: retryGalleryQuery,
       retryDelay: galleryRetryDelay,
@@ -109,7 +113,11 @@ export default function PublicGalleryShell() {
     stableViewerRepositoryLabel?.key === viewerRouteKey
       ? stableViewerRepositoryLabel.label
       : buildViewerRouteLabel({ namespace, slug });
-  const viewerTitle = inViewer ? viewerRepository?.label || fallbackViewerTitle : undefined;
+  const viewerTitle = isLocal
+    ? localDiagram?.title
+    : inViewer
+      ? viewerRepository?.label || fallbackViewerTitle
+      : undefined;
   const viewerCommit = formatPublicGalleryCommit(viewerSourceRepository?.commit);
   const viewerMeta = useMemo(() => {
     if (!currentSummary) {
@@ -205,7 +213,11 @@ export default function PublicGalleryShell() {
                 <span className="min-w-0 shrink truncate text-sm font-medium text-foreground">
                   {viewerTitle}
                 </span>
-                {viewerRepository?.href || viewerCommit || viewerMeta ? (
+                {isLocal && localDiagram ? (
+                  <p className="text-xs text-muted-foreground">
+                    Opened from {localDiagram.filename}. Nothing was uploaded.
+                  </p>
+                ) : viewerRepository?.href || viewerCommit || viewerMeta ? (
                   <div className="flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap text-[11px] text-muted-foreground">
                     {viewerCommit ? (
                       <div className="inline-flex min-w-0 items-center gap-2">
@@ -313,7 +325,7 @@ export default function PublicGalleryShell() {
             </div>
           ) : null}
           <div className="ml-auto flex shrink-0 items-center gap-1">
-            {inViewer && shareAction ? (
+            {inViewer && !isLocal && shareAction ? (
               <CopyViewLinkButton key={viewerRouteKey} createLink={shareAction} />
             ) : null}
             <GalleryFeedbackMenu />
@@ -323,7 +335,14 @@ export default function PublicGalleryShell() {
         </div>
       </header>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <Outlet context={{ setViewerSearchChrome: syncViewerSearchChrome, setViewerShareAction }} />
+        <Outlet
+          context={{
+            localDiagram,
+            setLocalDiagram,
+            setViewerSearchChrome: syncViewerSearchChrome,
+            setViewerShareAction,
+          }}
+        />
       </div>
     </div>
   );
