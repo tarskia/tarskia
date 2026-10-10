@@ -138,6 +138,10 @@ export function resolveAnimationFrame(state: TransitionFrameState, now: number):
   const progress = state.duration <= 0 ? 1 : clamp(elapsed / state.duration);
   const amount = easeMotion(structureDuration <= 0 ? 1 : elapsed / structureDuration);
   const nodes: TransitionFrameNodeFrame[] = state.nodes.flatMap((track) => {
+    const context = [track.fromView, track.toView].some(
+      (node) => node?.content.externalContext || node?.content.focusBoundary,
+    );
+    if (context && progress > 0 && progress < 1) return [];
     const view = (
       amount === 0 ? (track.fromView ?? track.toView) : (track.toView ?? track.fromView)
     )!;

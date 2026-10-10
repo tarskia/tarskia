@@ -203,7 +203,8 @@ export default function PublicGalleryViewer() {
     [content.relations, selectedEdgeId],
   );
   const selectedEntityCanFocus = Boolean(
-    selectedEntity && canFocusLayoutNode({ sceneTree: compiled.tree, entityId: selectedEntity.id }),
+    selectedEntity &&
+      canFocusLayoutNode({ sceneTree: compiled.tree, entityId: selectedEntity.id, index }),
   );
   const diagramProvenance = useMemo(() => buildDiagramProvenanceSource(content), [content]);
   const inspectorViewModel = useMemo(
@@ -472,7 +473,6 @@ export default function PublicGalleryViewer() {
             onCollapseAll={collapseAll}
             onFocusView={
               inspectorViewModel.kind === 'entity' &&
-              inspectorViewModel.selectedChildCount > 0 &&
               inspectorViewModel.canFocusView &&
               !inspectorViewModel.isFocusedEntity
                 ? () => focusViewOnEntity(inspectorViewModel.entityId)

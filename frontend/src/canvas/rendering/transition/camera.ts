@@ -41,7 +41,7 @@ export function resolveStructuralCamera({
   }
   const ids = new Set(endPointOfInterestNodeIds);
   const nodes = endSnapshot.nodes.filter(
-    (node) => !node.style.focusShell && node.opacity > 0.001 && (wholeScene || ids.has(node.id)),
+    (node) => !node.content?.focusShell && node.opacity > 0.001 && (wholeScene || ids.has(node.id)),
   );
   if (!nodes.length) return null;
   const x = Math.min(...nodes.map((node) => node.rect.x));

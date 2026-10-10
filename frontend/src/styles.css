@@ -1311,3 +1311,16 @@ button.node-meta-cell:disabled {
 :root.light .canvas-grid {
   --canvas-grid-color: rgba(20, 35, 55, 0.17);
 }
+
+/* Outside Focus context cards are smaller, neutral counterparts of ordinary entities. */
+.node[data-external-context] .node-body {
+  padding: 8px;
+}
+.node[data-external-context] .node-title {
+  font-size: 12px;
+  line-height: 14px;
+}
+.node[data-external-context] .node-subtitle {
+  font-size: 9px;
+  line-height: 11px;
+}

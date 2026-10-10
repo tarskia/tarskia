@@ -1,10 +1,11 @@
-import type { SchemaModule } from '@tarskia/diagram-semantics';
+import type { CompiledDiagramEdge, SchemaModule, SemanticIndex } from '@tarskia/diagram-semantics';
 import type { LayoutTree } from '../layout/layout-geometry';
 import type { ResolvedVisualEdge } from '../visual/edge-visuals';
 import type { ResolvedNodeVisual } from '../visual/node-visuals';
 
 export interface CanvasScene {
   schema: SchemaModule;
+  focusContext?: { scopeRootId: string; index: SemanticIndex; edges: CompiledDiagramEdge[] };
   tree: LayoutTree;
   edges: ResolvedVisualEdge[];
   nodeVisuals: Map<string, ResolvedNodeVisual>;

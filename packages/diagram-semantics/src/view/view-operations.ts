@@ -13,7 +13,7 @@ export type DiagramViewOperation =
       kind: 'expand-within' | 'collapse-within' | 'expand-child-groups' | 'collapse-child-groups';
       entityId: string;
     }
-  | { kind: 'enter-focus'; entityId: string; expandTarget?: boolean }
+  | { kind: 'enter-focus'; entityId: string; expandTarget?: boolean; allowLeaf?: boolean }
   | { kind: 'clear-focus' }
   | {
       kind: 'search-reveal';
@@ -89,7 +89,11 @@ export function applyDiagramViewOperation(
       break;
     }
     case 'enter-focus':
-      if (!tree.byId.get(operation.entityId)?.hasChildren) break;
+      if (
+        !tree.byId.has(operation.entityId) ||
+        (!operation.allowLeaf && !tree.byId.get(operation.entityId)?.hasChildren)
+      )
+        break;
       scopeRootId = operation.entityId;
       if (operation.expandTarget) setExpanded(operation.entityId, true);
       break;

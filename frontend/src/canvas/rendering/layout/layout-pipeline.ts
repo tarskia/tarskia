@@ -57,10 +57,29 @@ export function buildLayoutResult(params: {
   for (const position of Object.values(absolutePositions)) Object.freeze(position);
   Object.freeze(absolutePositions);
   const visibleIds = (() => {
-    return new Set([...tree.byId.keys()].filter((id) => id !== tree.rootId));
+    return new Set([
+      ...[...tree.byId.keys()].filter((id) => id !== tree.rootId),
+      ...(viewState.scopeRootId &&
+      (viewState.edges.some((edge) => edge.external) ||
+        !graph.tree.byId.get(viewState.scopeRootId)?.children.length)
+        ? [viewState.scopeRootId]
+        : []),
+      ...viewState.edges.flatMap((edge) => (edge.external ? [edge.external.displayId] : [])),
+    ]);
   })();
   const result = Object.freeze({
     schema: graph.schema,
+    ...(viewState.scopeRootId &&
+    (viewState.edges.some((edge) => edge.external) ||
+      !graph.tree.byId.get(viewState.scopeRootId)?.children.length)
+      ? {
+          focusContext: {
+            scopeRootId: viewState.scopeRootId,
+            index: graph,
+            edges: viewState.edges,
+          },
+        }
+      : {}),
     tree,
     edges,
     nodeVisuals: new ImmutableMap(nodeVisuals),
