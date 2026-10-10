@@ -12,7 +12,6 @@ import {
   parseSchemaModuleYaml,
   parseSourceDocument,
   type SchemaModule,
-  STRICT_WORKER_GENERATED_DIAGRAM_VALIDATION_OPTIONS,
   serializeDocument,
   serializeSourceDocument,
   validateDiagramYaml,
@@ -33,7 +32,6 @@ export interface ValidateCliOptions {
   schemaSource?: string;
   schemas?: string[];
   json?: boolean;
-  strict?: boolean;
 }
 
 export interface ValidateDiagnostic {
@@ -223,7 +221,6 @@ async function validateDiagramFile(params: {
   raw: string;
   schemaSource?: string;
   schemas?: string[];
-  strict?: boolean;
 }): Promise<ValidateCliResult> {
   const [raw, schemaRegistry] = await Promise.all([
     Promise.resolve(params.raw),
@@ -291,9 +288,6 @@ async function validateDiagramFile(params: {
   const validation = validateDiagramYaml({
     yaml: compiled?.result ? serializeDocument(compiled.result.doc) : raw,
     schemaRegistry,
-    validationOptions: params.strict
-      ? STRICT_WORKER_GENERATED_DIAGRAM_VALIDATION_OPTIONS
-      : undefined,
   });
   return {
     version: 1,
@@ -372,7 +366,6 @@ export async function validateCli(options: ValidateCliOptions): Promise<Validate
         raw: raw ?? '',
         schemaSource: options.schemaSource,
         schemas: options.schemas,
-        strict: options.strict,
       });
     else if (kind === 'schema')
       result = await validateSchemaFile({

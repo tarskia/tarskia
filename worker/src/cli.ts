@@ -47,7 +47,7 @@ function printUsage(command?: string, json = false): void {
       '  --restart-from requires an existing advanced job and allows replacing its output.',
     ],
     validate: [
-      'tarskia validate <path> [--kind <auto|diagram|schema|schema-registry>] [--schema <file>...] [--schema-source <dir>] [--json] [--strict]',
+      'tarskia validate <path> [--kind <auto|diagram|schema|schema-registry>] [--schema <file>...] [--schema-source <dir>] [--json]',
     ],
     check: ['tarskia check'],
     internal: [
@@ -230,7 +230,6 @@ type ParsedValues = {
   context?: string;
   kind?: string;
   json?: boolean;
-  strict?: boolean;
   help?: boolean;
   version?: boolean;
 };
@@ -264,7 +263,6 @@ async function main(): Promise<void> {
         context: { type: 'string' },
         kind: { type: 'string' },
         json: { type: 'boolean' },
-        strict: { type: 'boolean' },
         help: { type: 'boolean', short: 'h' },
         version: { type: 'boolean' },
       },
@@ -309,7 +307,6 @@ async function main(): Promise<void> {
       schemaSource: parsedValues['schema-source']?.trim() || undefined,
       schemas: parsedValues.schema,
       json: Boolean(parsedValues.json),
-      strict: Boolean(parsedValues.strict),
     });
     return;
   }

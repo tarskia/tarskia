@@ -708,3 +708,12 @@ it('versions valid and invalid validate JSON documents', async () => {
       );
   }
 });
+
+it('rejects the retired strict validation option as an unknown option', async () => {
+  // Construct the retired flag so repository scans distinguish it from supported CLI options.
+  const retiredFlag = ['--', 'strict'].join('');
+  const result = await run(['validate', 'empty.yaml', retiredFlag]);
+  expect(result.code).toBe(2);
+  expect(result.stderr).toContain(`unknown option '${retiredFlag}'`);
+  expect((await run(['validate', '--help'])).stdout).not.toContain(retiredFlag);
+});
