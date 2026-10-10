@@ -82,7 +82,6 @@ beforeAll(async () => {
     syncBuiltinESMExports();
   `,
   );
-  await exec('npm', ['run', 'build'], { cwd: process.cwd(), maxBuffer: 8 * 1024 * 1024 });
   await fs.writeFile(path.join(tmp, 'empty.yaml'), '');
   await fs.writeFile(path.join(tmp, 'broken.yaml'), 'schemaRefs: [\n');
 }, 60000);
