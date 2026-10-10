@@ -179,6 +179,8 @@ export default function PublicGalleryViewer() {
     centerScene,
     expandAll,
     collapseAll,
+    toggleHighlight,
+    clearHighlights,
     triggerEntityZoom,
     expandAllDetailsWithin,
     collapseAllDetailsWithin,
@@ -210,6 +212,7 @@ export default function PublicGalleryViewer() {
   const inspectorViewModel = useMemo(
     () =>
       buildInspectorViewModel({
+        view,
         selectedEntity,
         selectedEdge,
         entityIndex,
@@ -226,6 +229,7 @@ export default function PublicGalleryViewer() {
       selectedEdge,
       selectedEntity,
       selectedEntityCanFocus,
+      view,
     ],
   );
   const showInspector = inspectorViewModel.kind !== 'empty';
@@ -484,7 +488,11 @@ export default function PublicGalleryViewer() {
         </div>
         {showInspector ? (
           <aside className="w-[420px] shrink-0 border-l border-border overflow-hidden flex flex-col">
-            <GalleryInspector viewModel={inspectorViewModel} />
+            <GalleryInspector
+              viewModel={inspectorViewModel}
+              onToggleHighlight={toggleHighlight}
+              onClearHighlights={clearHighlights}
+            />
           </aside>
         ) : null}
       </div>

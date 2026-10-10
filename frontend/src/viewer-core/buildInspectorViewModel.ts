@@ -1,5 +1,6 @@
 import {
   CORE_GROUP_TYPE_ID,
+  type DiagramView,
   type Entity,
   type EntityIndex,
   FREEFORM_RELATION_TYPE,
@@ -208,6 +209,7 @@ const buildInspectorProvenance = (
 };
 
 export const buildInspectorViewModel = (params: {
+  view?: DiagramView;
   selectedEntity?: Entity;
   selectedEdge?: Relation;
   entityIndex: EntityIndex;
@@ -290,6 +292,8 @@ export const buildInspectorViewModel = (params: {
 
   return {
     kind: 'entity',
+    highlighted: params.view?.nodesById?.[selectedEntity.id]?.highlighted === true,
+    hasHighlights: Object.values(params.view?.nodesById ?? {}).some((node) => node.highlighted),
     entityId: selectedEntity.id,
     name: selectedEntity.name,
     description: selectedEntity.description,

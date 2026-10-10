@@ -67,6 +67,8 @@ export interface InspectorEntityViewModel {
   selectedChildCount: number;
   canFocusView: boolean;
   isFocusedEntity: boolean;
+  highlighted?: boolean;
+  hasHighlights?: boolean;
 }
 
 export interface InspectorRelationViewModel {

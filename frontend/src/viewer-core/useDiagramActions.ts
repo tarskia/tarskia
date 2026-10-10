@@ -104,7 +104,23 @@ export function useDiagramActions({
       ),
     [dispatch],
   );
+  const toggleHighlight = useCallback(
+    (entityId: string) =>
+      commitView((previous) =>
+        applyDiagramViewOperation(tree, previous, { kind: 'toggle-highlight', entityId }),
+      ),
+    [tree, commitView],
+  );
+  const clearHighlights = useCallback(
+    () =>
+      commitView((previous) =>
+        applyDiagramViewOperation(tree, previous, { kind: 'clear-highlights' }),
+      ),
+    [tree, commitView],
+  );
   return {
+    toggleHighlight,
+    clearHighlights,
     centerScene,
     expandAll,
     collapseAll,
