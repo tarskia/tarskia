@@ -1,0 +1,149 @@
+version: "3"
+
+vars:
+  WORKER_DIR: '{{.TASKFILE_DIR}}'
+  REPO_ROOT: '{{.TASKFILE_DIR}}/..'
+  OUTPUT_DIR: '{{.TASKFILE_DIR}}/.tmp'
+  DEFAULT_MODEL: 'gpt-6-luna'
+  DEFAULT_MODE: 'advanced'
+  DEFAULT_REASONING_EFFORT: 'medium'
+
+tasks:
+  build:
+    desc: Build the Tarskia CLI
+    dir: '{{.WORKER_DIR}}'
+    cmds:
+      - npm run build
+
+  test:
+    desc: Run the Tarskia CLI test suite
+    dir: '{{.WORKER_DIR}}'
+    cmds:
+      - npm run test
+
+  overwrite:
+    desc: "Start a fresh advanced repo build. Usage: task overwrite REPO=outline/outline"
+    deps: [build]
+    dir: '{{.WORKER_DIR}}'
+    requires:
+      vars: [REPO]
+    vars:
+      MODE_VALUE: '{{if .MODE}}{{.MODE}}{{else}}{{.DEFAULT_MODE}}{{end}}'
+      MODEL_VALUE: '{{if .MODEL}}{{.MODEL}}{{else}}{{.DEFAULT_MODEL}}{{end}}'
+      REASONING_EFFORT_VALUE: '{{if .REASONING_EFFORT}}{{.REASONING_EFFORT}}{{else}}{{.DEFAULT_REASONING_EFFORT}}{{end}}'
+    cmds:
+      - task: _repo-build
+        vars:
+          REPO_HANDLE: '{{.REPO}}'
+          REF_VALUE: '{{if .REF}}{{.REF}}{{else}}{{end}}'
+          MODE_VALUE: '{{.MODE_VALUE}}'
+          MODEL_VALUE: '{{.MODEL_VALUE}}'
+          REASONING_EFFORT_VALUE: '{{.REASONING_EFFORT_VALUE}}'
+          BUILD_ACTION: 'overwrite'
+
+  continue:
+    desc: "Continue an existing advanced repo build. Usage: task continue REPO=outline/outline"
+    deps: [build]
+    dir: '{{.WORKER_DIR}}'
+    requires:
+      vars: [REPO]
+    vars:
+      MODE_VALUE: '{{if .MODE}}{{.MODE}}{{else}}{{.DEFAULT_MODE}}{{end}}'
+      MODEL_VALUE: '{{if .MODEL}}{{.MODEL}}{{else}}{{.DEFAULT_MODEL}}{{end}}'
+      REASONING_EFFORT_VALUE: '{{if .REASONING_EFFORT}}{{.REASONING_EFFORT}}{{else}}{{.DEFAULT_REASONING_EFFORT}}{{end}}'
+    cmds:
+      - task: _repo-build
+        vars:
+          REPO_HANDLE: '{{.REPO}}'
+          REF_VALUE: '{{if .REF}}{{.REF}}{{else}}{{end}}'
+          MODE_VALUE: '{{.MODE_VALUE}}'
+          MODEL_VALUE: '{{.MODEL_VALUE}}'
+          REASONING_EFFORT_VALUE: '{{.REASONING_EFFORT_VALUE}}'
+          BUILD_ACTION: 'continue'
+
+  diagram:repo:
+    desc: Build a semantic diagram for a repo path or git URL
+    dir: '{{.WORKER_DIR}}'
+    deps: [build]
+    vars:
+      MODE_VALUE: '{{if .MODE}}{{.MODE}}{{else}}advanced{{end}}'
+      MODEL_VALUE: '{{if .MODEL}}{{.MODEL}}{{else}}{{.DEFAULT_MODEL}}{{end}}'
+      REASONING_EFFORT_VALUE: '{{if .REASONING_EFFORT}}{{.REASONING_EFFORT}}{{else}}{{.DEFAULT_REASONING_EFFORT}}{{end}}'
+    requires:
+      vars: [REPO, SCHEMA_SOURCE, OUT]
+    cmds:
+      - >-
+        npm run build-diagram --
+        --repo '{{.REPO}}'
+        --schema-source '{{.SCHEMA_SOURCE}}'
+        --out '{{.OUT}}'
+        --mode '{{.MODE_VALUE}}'
+        --model '{{.MODEL_VALUE}}'
+        --reasoning-effort '{{.REASONING_EFFORT_VALUE}}'
+
+  _repo-build:
+    internal: true
+    dir: '{{.WORKER_DIR}}'
+    cmds:
+      - |-
+        set -eu
+        repo_handle='{{.REPO_HANDLE}}'
+        ref_value='{{.REF_VALUE}}'
+        if [ -z "$repo_handle" ]; then
+          echo "Missing repo handle." >&2
+          exit 1
+        fi
+
+        case "$repo_handle" in
+          https://*|http://*|git@*)
+            repo="$repo_handle"
+            ;;
+          /*|./*|../*)
+            repo="$repo_handle"
+            ;;
+          */*)
+            repo="https://github.com/$repo_handle"
+            ;;
+          *)
+            echo "Repo handle '$repo_handle' is not recognized. Use owner/repo, a git URL, or a local path." >&2
+            exit 1
+            ;;
+        esac
+
+        repo_name="${repo_handle%/}"
+        repo_name="${repo_name##*/}"
+        repo_name="${repo_name%.git}"
+        if [ -z "$repo_name" ]; then
+          echo "Could not derive a repo name from '$repo_handle'." >&2
+          exit 1
+        fi
+
+        safe_stem=$(printf '%s' "$repo_handle" | sed 's#^https\?://##; s#^git@##; s#[:/]#--#g; s#[^A-Za-z0-9._-]#-#g')
+        if [ -z "$safe_stem" ]; then
+          safe_stem="$repo_name"
+        fi
+
+        out_path='{{.OUTPUT_DIR}}/'"$safe_stem"'.diagram.yaml'
+        schema_out_path='{{.OUTPUT_DIR}}/'"$safe_stem"'.schema.yaml'
+        schema_source='{{if .SCHEMA_SOURCE}}{{.SCHEMA_SOURCE}}{{else}}{{.WORKER_DIR}}/assets/schemas{{end}}'
+
+        mkdir -p '{{.OUTPUT_DIR}}'
+
+        set -- \
+          "$repo" \
+          --schema-source "$schema_source" \
+          --out "$out_path" \
+          --schema-out "$schema_out_path" \
+          --mode '{{.MODE_VALUE}}' \
+          --model '{{.MODEL_VALUE}}' \
+          --reasoning-effort '{{.REASONING_EFFORT_VALUE}}'
+
+        if [ -n "$ref_value" ]; then
+          set -- "$@" --ref "$ref_value"
+        fi
+
+        if [ '{{.BUILD_ACTION}}' = 'overwrite' ]; then
+          set -- "$@" --fresh --overwrite
+        fi
+
+        npm run build-diagram -- "$@"

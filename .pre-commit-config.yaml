@@ -14,7 +14,7 @@ repos:
       - id: biome-check
         args: ["--diagnostic-level=error"]
         files: '(^|/).+\.(ts|tsx|js|jsx|json|css|md|yaml|yml)$'
-        exclude: '^(frontend/dist/|frontend/src/api/generated/|packages/diagram-semantics/dist/)'
+        exclude: '^(frontend/dist/|worker/dist/|frontend/src/api/generated/|packages/diagram-semantics/dist/)'
 
   - repo: local
     hooks:
@@ -33,3 +33,11 @@ repos:
         args: ["run", "test", "-w", "@tarskia/frontend"]
         pass_filenames: false
         files: '^(frontend/|gallery/curated/|packages/diagram-semantics/|package\.json$|package-lock\.json$|\.node-version$)'
+
+      - id: worker-typecheck
+        name: worker typecheck
+        entry: npm
+        language: system
+        args: ["run", "typecheck", "-w", "@tarskia/diagram-worker"]
+        pass_filenames: false
+        files: '^(worker/|packages/diagram-semantics/|package\.json$|package-lock\.json$|\.node-version$)'

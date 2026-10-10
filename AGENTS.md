@@ -5,14 +5,14 @@
 This repository contains the public, open-source parts of Tarskia:
 
 - `frontend/`: Vite + React + TypeScript app for the public gallery viewer.
+- `worker/`: the `tarskia` CLI (diagram-generation worker). `worker/AGENTS.md` has worker-specific guidance and takes precedence there.
 - `gallery/curated/`: source-of-truth curated gallery diagrams.
 - `packages/diagram-semantics/`: shared semantic diagram model and validation package.
 - `openapi/`: public API contract snapshot consumed by the generated frontend client.
 
-The backend and diagram-generation worker are private repositories while the
-worker pipeline is still experimental.
+The backend is a private repository. The worker consumes the built `packages/diagram-semantics/dist/`.
 
-The frontend consumes `packages/diagram-semantics/src` directly through an alias; `dist/` is only for the package’s own build.
+The frontend consumes `packages/diagram-semantics/src` directly through an alias.
 
 ## Working Norms
 
@@ -39,6 +39,7 @@ Generated or derived locations include:
 
 - `frontend/src/api/generated/`
 - `frontend/dist/`
+- `worker/dist/`
 - `packages/diagram-semantics/dist/`
 
 ## Commands
@@ -54,6 +55,12 @@ Frontend commands can also be run with `-w @tarskia/frontend`:
 - `npm run test -w @tarskia/frontend`
 - `npm run lint -w @tarskia/frontend`
 - `npm run generate:api -w @tarskia/frontend`
+
+Worker commands:
+
+- `npm run build -w @tarskia/diagram-worker`
+- `npm run test -w @tarskia/diagram-worker`
+- `npm run typecheck -w @tarskia/diagram-worker`
 
 Semantic package commands:
 

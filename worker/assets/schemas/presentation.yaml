@@ -1,0 +1,81 @@
+owner: core
+name: presentation
+version: "0.1"
+description: Generic note and media nodes for tutorials, explainers, and lightweight presentation flows inside the diagram canvas.
+use:
+  - schema: core/base@0.1
+    alias: base
+
+tags:
+  - id: guide
+    label: Guided Tour
+    color: "#5b9cf5"
+  - id: concept
+    label: Concept
+    color: "#f5b85b"
+  - id: workflow
+    label: Workflow
+    color: "#8be38a"
+  - id: example
+    label: Example
+    color: "#ff8aa8"
+
+types:
+  - id: topic
+    label: Topic
+    traits: [core/base.traits.container]
+    defaultTags: [guide]
+    containment:
+      allowedChildTypes: [topic, note, image]
+    display:
+      primaryTag: guide
+      defaultSize:
+        width: 320
+        height: 140
+      style:
+        hue: 215
+      count:
+        childTypes: [topic, note, image]
+        label: steps
+
+  - id: note
+    label: Note
+    defaultTags: [concept]
+    display:
+      primaryTag: concept
+      defaultSize:
+        width: 340
+        height: 240
+      content:
+        kind: markdown
+        bodyPath: body
+      style:
+        hue: 36
+    properties:
+      - id: body
+        type: string
+
+  - id: image
+    label: Image
+    defaultTags: [example]
+    display:
+      primaryTag: example
+      defaultSize:
+        width: 360
+        height: 280
+      content:
+        kind: image
+        srcPath: src
+        altPath: alt
+        captionPath: caption
+      style:
+        hue: 188
+    properties:
+      - id: src
+        type: string
+      - id: alt
+        type: string
+      - id: caption
+        type: string
+
+relations: []

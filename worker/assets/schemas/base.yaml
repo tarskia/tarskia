@@ -1,0 +1,22 @@
+owner: core
+name: base
+version: "0.1"
+description: Technology-independent structural primitives for semantic diagrams. Use this schema for generic containment, grouping, and abstract flow semantics that can be shared across application domains.
+
+traits:
+  - id: container
+    label: Container
+
+  - id: containable
+    label: Containable
+
+  - id: group-like
+    label: Group
+    extends: containable
+
+  - id: countable
+    label: Countable
+
+types: []
+
+relations: []
