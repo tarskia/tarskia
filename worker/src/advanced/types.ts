@@ -1,8 +1,6 @@
 import type { Diagnostic, ResolvedFlowRole, SchemaActivation, SemanticDocument } from '../semantic';
 import type { TokenUsageTotals } from '../token-usage';
 
-export type BuildMode = 'basic' | 'advanced';
-
 export const ADVANCED_CHECKPOINT_STAGES = [
   'repo-census',
   'area-plan',
@@ -35,15 +33,6 @@ export function compareAdvancedCheckpointStage(
     (ADVANCED_CHECKPOINT_STAGE_RANK.get(right) ?? Number.MAX_SAFE_INTEGER)
   );
 }
-
-export const normalizeBuildMode = (value?: string | null): BuildMode => {
-  switch (value?.trim().toLowerCase()) {
-    case 'advanced':
-      return 'advanced';
-    default:
-      return 'basic';
-  }
-};
 
 export type ResponsibilityConfidence = 'low' | 'medium' | 'high';
 export type ExplorationPolicy = 'finish-or-split' | 'finish-only';

@@ -4,7 +4,9 @@ import path from 'node:path';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { buildDiagram } from './build-diagram';
 import { DefaultRepositoryService } from './repository-service';
+import { parseDocument } from './semantic';
 import { CANONICAL_EXAMPLE_YAML } from './semantic/diagram-synthesis-contract';
+import { emptyTokenUsageTotals } from './token-usage';
 import { prepareWorkspace } from './workspace';
 
 const state = vi.hoisted(() => ({
@@ -77,20 +79,22 @@ async function readTree(root: string): Promise<string> {
 it('keeps credentials only in clone/authenticated preparation, never in artifacts or logs', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'credential-build-'));
   const log = logger();
-  const agent = {
-    analyzeAndDraftDiagram: vi.fn().mockResolvedValue({
-      yaml: CANONICAL_EXAMPLE_YAML,
-      rawResponse: CANONICAL_EXAMPLE_YAML,
+  const aiDiagramService = {
+    generateDiagram: vi.fn().mockResolvedValue({
+      finalYaml: CANONICAL_EXAMPLE_YAML,
+      document: parseDocument(CANONICAL_EXAMPLE_YAML),
+      repaired: false,
+      diagnostics: [],
+      resolvedSchemaIds: [],
+      turnCount: 1,
+      tokenUsage: emptyTokenUsageTotals(),
       threadId: 'mock',
-      items: [],
-      usage: null,
     }),
-    repairDiagram: vi.fn(),
   };
   try {
     await buildDiagram(
       { repo, ref: 'main', schemaSource, out: path.join(root, 'diagram.yaml') },
-      { agent, logger: log },
+      { aiDiagramService, logger: log },
     );
     expect(state.clones).toEqual([repo]);
     expect(state.fetched).toEqual([repo]);
@@ -98,7 +102,7 @@ it('keeps credentials only in clone/authenticated preparation, never in artifact
     expect(
       JSON.stringify([log.info.mock.calls, log.error.mock.calls, log.warn.mock.calls]),
     ).not.toContain('SECRET123');
-    expect(JSON.stringify(agent.analyzeAndDraftDiagram.mock.calls)).not.toContain('SECRET123');
+    expect(JSON.stringify(aiDiagramService.generateDiagram.mock.calls)).not.toContain('SECRET123');
   } finally {
     await fs.rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 20 });
   }

@@ -6,7 +6,6 @@ import { version } from '../package.json';
 import {
   ADVANCED_CHECKPOINT_STAGES,
   compareAdvancedCheckpointStage,
-  normalizeBuildMode,
   parseAdvancedCheckpointStage,
 } from './advanced/types';
 import { BuildDiagramError, buildDiagram, derivePartialOutputPath } from './build-diagram';
@@ -37,12 +36,12 @@ let unmaskedSecrets: UnmaskedSecrets | undefined;
 function printUsage(command?: string, json = false): void {
   const usage: Record<string, string[]> = {
     build: [
-      `tarskia build <repo-path-or-git-url> --out <file> [--schema-out <file>] [--schema-id <repo/name>] [--schema-source <dir>] [--ref <git-ref>] [--model <model>] [--reasoning-effort <${REASONING_EFFORTS.join('|')}>] [--mode <basic|advanced>] [--graphify-hints <auto|off|required>] [--restart-from <stage>] [--stop-after <stage>] [--max-depth <n>] [--max-turns <n>] [--turn-timeout <minutes>] [--overwrite] [--fresh]`,
+      `tarskia build <repo-path-or-git-url> --out <file> [--schema-out <file>] [--schema-id <repo/name>] [--schema-source <dir>] [--ref <git-ref>] [--model <model>] [--reasoning-effort <${REASONING_EFFORTS.join('|')}>] [--graphify-hints <auto|off|required>] [--restart-from <stage>] [--stop-after <stage>] [--max-depth <n>] [--max-turns <n>] [--turn-timeout <minutes>] [--overwrite] [--fresh]`,
       '  --max-turns: optional invocation-wide limit, including repairs and retries; checkpoints to .partial.yaml.',
       '  --turn-timeout: per-turn minutes (0 disables); default 5 for minimal/low/medium, 15 high/xhigh, 30 max/ultra/persistent.',
       '  --repo <path-or-git-url> is an alternative to the positional repository.',
       `  --restart-from: ${ADVANCED_CHECKPOINT_STAGES.join(', ')}`,
-      '  --stop-after: level0-backbone, level0-review (advanced mode only); writes <out>.partial.yaml and records a stopped job.',
+      '  --stop-after: level0-backbone, level0-review; writes <out>.partial.yaml and records a stopped job.',
       '  --overwrite replaces output files without discarding checkpoints; --fresh discards checkpoints and caches but does not imply --overwrite.',
       '  --restart-from requires an existing advanced job and allows replacing its output.',
     ],
@@ -79,7 +78,6 @@ async function pathExists(targetPath: string): Promise<boolean> {
 async function assertBuildOutputsAreSafe(params: {
   repo: string;
   ref?: string;
-  mode: ReturnType<typeof normalizeBuildMode>;
   out: string;
   schemaSource: string;
   schemaOut?: string;
@@ -106,7 +104,6 @@ async function assertBuildOutputsAreSafe(params: {
   const compatibleResume =
     metadata?.status !== 'succeeded' &&
     isCompatibleResumeMetadata(metadata, {
-      mode: params.mode,
       repo: params.repo,
       ref: params.ref,
       generateSchema: Boolean(params.schemaOut),
@@ -217,7 +214,6 @@ type ParsedValues = {
   out?: string;
   model?: string;
   'reasoning-effort'?: string;
-  mode?: string;
   'graphify-hints'?: string;
   overwrite?: boolean;
   fresh?: boolean;
@@ -250,7 +246,6 @@ async function main(): Promise<void> {
         out: { type: 'string' },
         model: { type: 'string' },
         'reasoning-effort': { type: 'string' },
-        mode: { type: 'string' },
         'graphify-hints': { type: 'string' },
         overwrite: { type: 'boolean' },
         fresh: { type: 'boolean' },
@@ -323,11 +318,6 @@ async function main(): Promise<void> {
       !repo ? 'missing repository (positional or --repo)' : 'missing required --out',
     );
   }
-  const mode = parsedValues.mode?.trim();
-  if (mode && mode !== 'simple' && mode !== 'basic' && mode !== 'advanced') {
-    throw new UsageError(`invalid --mode '${mode}' (expected basic or advanced)`);
-  }
-  const normalizedMode = normalizeBuildMode(mode);
   const effort = parsedValues['reasoning-effort'];
   if (effort !== undefined && !REASONING_EFFORTS.includes(effort.trim() as never))
     throw new UsageError(
@@ -364,12 +354,6 @@ async function main(): Promise<void> {
       `invalid --stop-after '${parsedValues['stop-after']}' (expected level0-backbone or level0-review)`,
     );
   }
-  if (restartFrom && normalizedMode !== 'advanced') {
-    throw new UsageError('--restart-from requires --mode advanced');
-  }
-  if (stopAfter && normalizedMode !== 'advanced') {
-    throw new UsageError('--stop-after requires --mode advanced');
-  }
   const maxTurns = parsePositiveInteger(parsedValues['max-turns']);
   if (parsedValues['max-turns'] !== undefined && (!maxTurns || !Number.isSafeInteger(maxTurns)))
     throw new UsageError('invalid --max-turns (expected a positive integer)');
@@ -390,9 +374,6 @@ async function main(): Promise<void> {
       `invalid --max-depth '${parsedValues['max-depth']}' (expected a positive integer)`,
     );
   }
-  if (maxDepth && normalizedMode !== 'advanced') {
-    throw new UsageError('--max-depth requires --mode advanced');
-  }
   if (restartFrom && stopAfter && compareAdvancedCheckpointStage(stopAfter, restartFrom) < 0) {
     throw new UsageError('--stop-after must not precede --restart-from');
   }
@@ -408,7 +389,6 @@ async function main(): Promise<void> {
     const metadata = await readJobMetadata(deriveDefaultJobRoot(resolvedOut));
     if (
       !isCompatibleResumeMetadata(metadata, {
-        mode: normalizedMode,
         repo,
         ref: parsedValues.ref?.trim() || undefined,
         generateSchema: Boolean(schemaOut),
@@ -427,7 +407,6 @@ async function main(): Promise<void> {
   await assertBuildOutputsAreSafe({
     repo,
     ref: parsedValues.ref?.trim() || undefined,
-    mode: normalizedMode,
     out: resolvedOut,
     schemaSource,
     schemaOut,
@@ -453,7 +432,6 @@ async function main(): Promise<void> {
         schemaId,
         model: parsedValues.model?.trim() || undefined,
         reasoningEffort,
-        mode: normalizedMode,
         hardRefresh: parsedValues.fresh || undefined,
         restartFrom,
         stopAfter,
