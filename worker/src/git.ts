@@ -29,13 +29,11 @@ export function workerGitEnv(source: NodeJS.ProcessEnv = process.env): NodeJS.Pr
 }
 
 export function workerGitTimeoutMs(source: NodeJS.ProcessEnv = process.env): number {
-  const raw = source.DIAGRAM_WORKER_GIT_TIMEOUT_MS;
+  const raw = source.TARSKIA_GIT_TIMEOUT_MS;
   if (raw === undefined) return DEFAULT_TIMEOUT_MS;
   const value = Number(raw);
   if (!Number.isSafeInteger(value) || value <= 0 || value > 2_147_483_647) {
-    throw new Error(
-      'DIAGRAM_WORKER_GIT_TIMEOUT_MS must be a positive integer no greater than 2147483647',
-    );
+    throw new Error('TARSKIA_GIT_TIMEOUT_MS must be a positive integer no greater than 2147483647');
   }
   return value;
 }

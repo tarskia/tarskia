@@ -41,9 +41,9 @@ describe('worker git process boundary', () => {
   });
   it('uses a bounded default and validates overrides', () => {
     expect(workerGitTimeoutMs({})).toBe(600000);
-    expect(workerGitTimeoutMs({ DIAGRAM_WORKER_GIT_TIMEOUT_MS: '1234' })).toBe(1234);
+    expect(workerGitTimeoutMs({ TARSKIA_GIT_TIMEOUT_MS: '1234' })).toBe(1234);
     for (const value of ['', '0', '-1', 'Infinity', 'NaN', '2.5', '2147483648']) {
-      expect(() => workerGitTimeoutMs({ DIAGRAM_WORKER_GIT_TIMEOUT_MS: value })).toThrow(
+      expect(() => workerGitTimeoutMs({ TARSKIA_GIT_TIMEOUT_MS: value })).toThrow(
         'positive integer',
       );
     }
@@ -58,7 +58,7 @@ describe('worker git process boundary', () => {
       );
       const git = workerGit(undefined, {
         PATH: `${bin}${path.delimiter}${process.env.PATH}`,
-        DIAGRAM_WORKER_GIT_TIMEOUT_MS: '150',
+        TARSKIA_GIT_TIMEOUT_MS: '150',
       });
       await expect(git.raw(['--version'])).rejects.toMatchObject({ plugin: 'timeout' });
     } finally {
