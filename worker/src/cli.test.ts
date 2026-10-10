@@ -7,7 +7,6 @@ import { promisify } from 'node:util';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { version } from '../package.json';
 import { createInitialJobMetadata, writeJobMetadata } from './job-metadata';
-import { CANONICAL_EXAMPLE_YAML } from './semantic/diagram-synthesis-contract';
 
 const exec = promisify(execFile);
 const cli = path.resolve('dist/cli.js');
@@ -113,10 +112,6 @@ describe('built CLI streams and errors', () => {
   it.each([
     [['build', '.', '--outt', 'x.yaml'], "unknown option '--outt'"],
     [
-      ['build', '.', '--out', 'x.yaml', '--mode', 'fancy'],
-      "invalid --mode 'fancy' (expected basic or advanced)",
-    ],
-    [
       ['build', '.', '--out', 'x.yaml', '--reasoning-effort', 'huge'],
       "invalid --reasoning-effort 'huge' (expected minimal, low, medium, high, xhigh, max, ultra or persistent)",
     ],
@@ -126,43 +121,16 @@ describe('built CLI streams and errors', () => {
     ],
     [['validate', 'nope.yaml'], 'file not found: nope.yaml'],
     [
-      [
-        'build',
-        '.',
-        '--out',
-        'x.yaml',
-        '--mode',
-        'advanced',
-        '--fresh',
-        '--restart-from',
-        'final-review',
-      ],
+      ['build', '.', '--out', 'x.yaml', '--fresh', '--restart-from', 'final-review'],
       '--fresh cannot be combined with --restart-from',
     ],
     [
       ['build', '.', '--out', 'x.yaml', '--restart-from', 'level0-review'],
-      '--restart-from requires --mode advanced',
-    ],
-    [
-      [
-        'build',
-        '.',
-        '--out',
-        'missing-job.yaml',
-        '--mode',
-        'advanced',
-        '--restart-from',
-        'final-review',
-      ],
       '--restart-from needs an existing advanced job for this repo and output; none was found.',
     ],
     [
-      ['build', '.', '--out', 'x.yaml', '--mode', 'basic', '--stop-after', 'level0-review'],
-      '--stop-after requires --mode advanced',
-    ],
-    [
-      ['build', '.', '--out', 'x.yaml', '--mode', 'basic', '--max-depth', '2'],
-      '--max-depth requires --mode advanced',
+      ['build', '.', '--out', 'missing-job.yaml', '--restart-from', 'final-review'],
+      '--restart-from needs an existing advanced job for this repo and output; none was found.',
     ],
     [
       ['build', '.', '--out', 'x.yaml', '--max-depth', '2abc'],
@@ -254,25 +222,19 @@ describe('built CLI streams and errors', () => {
     expect(result.code).toBe(2);
     expect(result.stderr).toContain('    at ');
   });
-  it.each([
-    'basic',
-    'simple',
-  ])('accepts --repo and %s while keeping runtime build logs off stdout', async (mode) => {
+  it('accepts --repo while keeping runtime build logs off stdout', async () => {
     const result = await run([
       'build',
       '--repo',
       path.join(tmp, 'nonexistent-repository'),
-      '--mode',
-      mode,
       '--out',
-      path.join(tmp, `${mode}.yaml`),
+      path.join(tmp, 'advanced.yaml'),
       '--graphify-hints',
       'off',
     ]);
     expect(result.code).toBe(2);
     expect(result.stdout).toBe('');
     expect(result.stderr).toContain('[INFO]');
-    expect(result.stderr).not.toContain('invalid --mode');
     expect(result.stderr).not.toContain('    at ');
   });
 });
@@ -508,7 +470,6 @@ it('separates output replacement from fresh builds and permits restarting a succ
   await fs.mkdir(schemaSource, { recursive: true });
   await fs.writeFile(out, 'keep original');
   const metadata = createInitialJobMetadata({
-    mode: 'advanced',
     repo: '.',
     schemaSource,
     outputPath: out,
@@ -516,7 +477,7 @@ it('separates output replacement from fresh builds and permits restarting a succ
   });
   metadata.status = 'succeeded';
   await writeJobMetadata(`${out}.job`, metadata);
-  const args = ['build', '.', '--out', out, '--schema-source', schemaSource, '--mode', 'advanced'];
+  const args = ['build', '.', '--out', out, '--schema-source', schemaSource];
   const fresh = await run([...args, '--fresh'], false, 'codex');
   expect(fresh.code).toBe(2);
   expect(fresh.stderr).toContain('Refusing to overwrite');
@@ -551,7 +512,7 @@ it.each([
   expect(result.stderr).toContain(`invalid ${flag}`);
 });
 
-it('built CLI exits zero on budget exhaustion and resumes repair with the same limit', async () => {
+it('built CLI exits zero on budget exhaustion and resumes the advanced pipeline with the same limit', async () => {
   const repo = path.join(tmp, 'budget-repo');
   await fs.mkdir(path.join(repo, 'src'), { recursive: true });
   await fs.writeFile(path.join(repo, 'src/index.ts'), 'export const app = true;');
@@ -568,10 +529,25 @@ it('built CLI exits zero on budget exhaustion and resumes repair with the same l
   ])
     await exec('git', args, { cwd: repo });
   const yaml = path.join(tmp, 'sdk-output.yaml');
-  await fs.writeFile(
-    yaml,
-    CANONICAL_EXAMPLE_YAML.replace('to: module-schema-validation', 'to: missing-module'),
-  );
+  const plan = JSON.stringify({
+    repoSummary: 'Fixture app',
+    galleryDescription: 'Fixture app',
+    initialSchemaActivations: [{ schema: 'core/web-app@0.3', layer: 0 }],
+    candidateSchemaRefs: [],
+    keyConcepts: [
+      {
+        id: 'app',
+        kind: 'service',
+        title: 'App',
+        paths: ['src/index.ts'],
+        rationale: 'Runtime app',
+        evidence: [{ path: 'src/index.ts', reason: 'Runtime entry' }],
+        groupingHints: [],
+        openQuestions: [],
+      },
+    ],
+  });
+  await fs.writeFile(yaml, plan);
   const out = path.join(tmp, 'budget-diagram.yaml');
   const partial = path.join(tmp, 'budget-diagram.partial.yaml');
   const args = [
@@ -606,17 +582,63 @@ it('built CLI exits zero on budget exhaustion and resumes repair with the same l
   expect(firstAlert).toContain('and 1 more');
   expect(firstAlert).not.toContain('.env-9');
   expect(JSON.parse(first.stdout).secrets.files).toHaveLength(11);
-  expect(await fs.readFile(partial, 'utf8')).toContain('missing-module');
+  expect(await fs.readFile(partial, 'utf8')).toContain('schemaRefs:');
   await expect(fs.stat(out)).rejects.toMatchObject({ code: 'ENOENT' });
   expect(
     JSON.parse(await fs.readFile(path.join(out + '.job', 'out/job-metadata.json'), 'utf8')).status,
   ).toBe('budget-exhausted');
   expect(await fs.readFile(yaml + '.calls', 'utf8')).toBe('call;');
-  await fs.writeFile(yaml, CANONICAL_EXAMPLE_YAML);
+  await fs.writeFile(
+    yaml,
+    `version: 0.1.0
+schemaRefs:
+  - schema: core/web-app@0.3
+    layer: 0
+entities:
+  - id: browser-client
+    type: core/web-app.types.external-api
+    name: Browser Client
+    provenance:
+      locations:
+        - input: primary
+          path: src/index.ts
+  - id: app
+    type: core/web-app.types.application
+    name: Application
+    provenance:
+      locations:
+        - input: primary
+          path: src/index.ts
+  - id: backend
+    type: core/web-app.types.external-api
+    name: Backend
+    provenance:
+      locations:
+        - input: primary
+          path: src/index.ts
+relations:
+  - id: browser-calls-app
+    type: core/software.relations.calls
+    from: browser-client
+    to: app
+    provenance:
+      locations:
+        - input: primary
+          path: src/index.ts
+  - id: app-calls-backend
+    type: core/software.relations.calls
+    from: app
+    to: backend
+    provenance:
+      locations:
+        - input: primary
+          path: src/index.ts
+`,
+  );
   const second = await run(args, false, '', yaml);
   expect(second.code, second.stderr).toBe(0);
   expect(JSON.parse(second.stdout)).toMatchObject({
-    outputPath: out,
+    outputPath: partial,
     secrets: {
       maskedInRepo: 11,
       files: expect.arrayContaining([{ path: '.env', rules: ['github'] }]),
@@ -626,17 +648,18 @@ it('built CLI exits zero on budget exhaustion and resumes repair with the same l
   expect(second.stderr.trim()).toMatch(/Consider rotating them\.$/);
   expect(second.stderr).not.toContain(secret);
   expect(await fs.readFile(yaml + '.calls', 'utf8')).toBe('call;call;');
-  expect(await fs.readFile(out, 'utf8')).not.toContain('missing-module');
-  await expect(fs.stat(partial)).rejects.toMatchObject({ code: 'ENOENT' });
-  await fs.writeFile(
-    yaml,
-    CANONICAL_EXAMPLE_YAML.replace('to: module-schema-validation', 'to: missing-module'),
+  const resumedMetadata = JSON.parse(
+    await fs.readFile(path.join(`${out}.job`, 'out/job-metadata.json'), 'utf8'),
   );
+  expect(resumedMetadata.advanced.lastCompletedStage, second.stderr).toBe('level0-backbone');
+  await expect(fs.stat(out)).rejects.toMatchObject({ code: 'ENOENT' });
+  await fs.writeFile(yaml, 'not a plan');
   const failureArgs = args.filter(
     (value, index) => value !== '--max-turns' && args[index - 1] !== '--max-turns',
   );
   const failed = await run([...failureArgs, '--fresh', '--overwrite'], false, '', yaml);
-  expect(failed.code, failed.stderr).toBe(1);
+  // Exhausted malformed planner responses are a configuration/runtime error.
+  expect(failed.code, failed.stderr).toBe(2);
   expect(JSON.parse(failed.stdout)).toMatchObject({
     ok: false,
     secrets: {
@@ -651,7 +674,7 @@ it('built CLI exits zero on budget exhaustion and resumes repair with the same l
     if (filename.startsWith('.env')) await fs.writeFile(path.join(repo, filename), 'safe');
   await exec('git', ['add', '.'], { cwd: repo });
   await exec('git', ['commit', '-m', 'remove planted fixture keys'], { cwd: repo });
-  await fs.writeFile(yaml, CANONICAL_EXAMPLE_YAML);
+  await fs.writeFile(yaml, plan);
   const clean = await run([...args, '--fresh', '--overwrite'], false, '', yaml);
   expect(clean.code, clean.stderr).toBe(0);
   expect(JSON.parse(clean.stdout).secrets).toEqual({
@@ -716,4 +739,13 @@ it('rejects the retired strict validation option as an unknown option', async ()
   expect(result.code).toBe(2);
   expect(result.stderr).toContain(`unknown option '${retiredFlag}'`);
   expect((await run(['validate', '--help'])).stdout).not.toContain(retiredFlag);
+});
+
+it('rejects the retired build mode option with an unknown-option usage error', async () => {
+  // Build the retired flag separately so supported-option scans remain useful.
+  const retiredFlag = ['--', 'mode'].join('');
+  const result = await run(['build', '.', '--out', 'x.yaml', retiredFlag, 'advanced']);
+  expect(result.code).toBe(2);
+  expect(result.stderr).toContain(`unknown option '${retiredFlag}'`);
+  expect((await run(['build', '--help'])).stdout).not.toContain(`${retiredFlag} `);
 });

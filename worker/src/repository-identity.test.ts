@@ -62,7 +62,6 @@ describe('repository identities', () => {
 
   it('compares old credential-bearing metadata with safe resume identity', () => {
     const params = {
-      mode: 'advanced' as const,
       repo: credentialRepo,
       schemaSource: '/schemas',
       outputPath: '/out.yaml',

@@ -1,11 +1,9 @@
-import type { BuildMode } from './advanced/types';
 import { resolveReasoningEffort } from './reasoning-effort';
 import type { SemanticDocument } from './semantic';
 import type { SourceRepositoryMetadata } from './source-repository';
 import { addTokenUsageTotals, type TokenUsageTotals } from './token-usage';
 
 export interface WorkerBuildSummary extends TokenUsageTotals {
-  mode: BuildMode;
   model: string;
   reasoningEffort?: string;
   builtAt: string;
@@ -26,7 +24,6 @@ function countDocumentEntities(entities: SemanticDocument['entities']): number {
 
 export function summarizeWorkerBuild(params: {
   document: SemanticDocument;
-  mode: BuildMode;
   model: string;
   reasoningEffort?: string;
   builtAt: string;
@@ -36,7 +33,6 @@ export function summarizeWorkerBuild(params: {
 }): WorkerBuildSummary {
   return {
     ...addTokenUsageTotals(params.tokenUsage),
-    mode: params.mode,
     model: params.model,
     reasoningEffort: params.reasoningEffort ?? resolveReasoningEffort(undefined),
     builtAt: params.builtAt,

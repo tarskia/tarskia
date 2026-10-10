@@ -30,7 +30,7 @@ node dist/cli.js build <repo-path-or-git-url> --out diagram.yaml
 Useful options:
 
 ```sh
-node dist/cli.js build <repo> --out diagram.yaml --mode advanced
+node dist/cli.js build <repo> --out diagram.yaml
 node dist/cli.js build <repo> --out diagram.yaml --ref <git-ref>
 node dist/cli.js build <repo> --out diagram.yaml --model gpt-6-luna --reasoning-effort max
 node dist/cli.js build <repo> --out diagram.yaml --graphify-hints off
@@ -75,7 +75,7 @@ from scratch. `--fresh` does not permit replacing existing outputs: add
 `--overwrite` too when needed. The `task overwrite` convenience command passes
 both flags.
 
-In advanced mode, `--stop-after level0-backbone` or `--stop-after level0-review`
+`--stop-after level0-backbone` or `--stop-after level0-review`
 writes `diagram.partial.yaml` for `--out diagram.yaml` and records the job as
 `stopped`. Without an extension, the partial filename ends in `.partial.yaml`.
 The final output stays untouched. A later plain run continues the checkpoint,
@@ -84,7 +84,7 @@ writes the final output, and deletes the partial file.
 `--restart-from <stage>` re-runs that stage and subsequent stages, including
 `level0-review` and `final-review`. Restarting a successful job permits replacing
 its output without `--overwrite`. Restart requires an existing compatible
-advanced job; restart and stop flags are usage errors in basic mode.
+job.
 
 Ctrl-C or SIGTERM cancels active work and marks the job `interrupted`; rerun the
 same advanced build to resume its checkpoints. Exit codes are 130 and 143,

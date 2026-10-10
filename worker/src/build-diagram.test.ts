@@ -956,6 +956,21 @@ relations:
   };
 }
 
+function cannedDiagramService(yaml: string) {
+  return {
+    generateDiagram: vi.fn().mockResolvedValue({
+      finalYaml: yaml,
+      document: parseDocument(yaml),
+      threadId: 'thread-canned',
+      repaired: false,
+      diagnostics: [],
+      resolvedSchemaIds: [],
+      turnCount: 1,
+      tokenUsage: emptyTokenUsageTotals(),
+    }),
+  };
+}
+
 describe('buildDiagram', () => {
   it('rejects invalid reasoning effort before preparing a workspace', async () => {
     const repositoryService = { prepareRepositoryContext: vi.fn() };
@@ -995,90 +1010,11 @@ describe('buildDiagram', () => {
     expect(repositoryService.prepareRepositoryContext).not.toHaveBeenCalled();
   });
 
-  it('writes a validated artifact on the first basic pass', async () => {
-    const repoRoot = await createGitRepo({
-      'package.json': JSON.stringify({ name: 'test-repo' }, null, 2),
-      'src/index.ts': 'export const hello = "world";\n',
-    });
-    const outputPath = path.join(await createTempDir('diagram-worker-out-'), 'diagram.yaml');
-    const agent = {
-      analyzeAndDraftDiagram: vi.fn().mockResolvedValue({
-        yaml: CANONICAL_EXAMPLE_YAML,
-        rawResponse: CANONICAL_EXAMPLE_YAML,
-        threadId: 'thread-ok',
-        items: [],
-        usage: null,
-      }),
-      repairDiagram: vi.fn(),
-    };
-
-    const result = await buildDiagram(
-      {
-        repo: repoRoot,
-        schemaSource: fixturePath('schema-repo'),
-        out: outputPath,
-      },
-      {
-        agent,
-        logger: quietLogger(),
-      },
-    );
-
-    const writtenYaml = await fs.readFile(outputPath, 'utf8');
-    const writtenDoc = parseDocument(writtenYaml);
-    const schemaRegistry = await loadSchemaRegistry(fixturePath('schema-repo'));
-    const workspaceSchemaRegistry = await loadSchemaRegistry(result.workspace.schemaRepoPath);
-    const validation = validateDiagramYaml({
-      yaml: writtenYaml,
-      schemaRegistry,
-    });
-    const workerBuild = (
-      writtenDoc.metadata as
-        | {
-            workerBuild?: {
-              mode: string;
-              model: string;
-              builtAt: string;
-              durationMs: number;
-              turns: number;
-              nodes: number;
-              edges: number;
-            };
-          }
-        | undefined
-    )?.workerBuild;
-
-    expect(result.repaired).toBe(false);
-    expect(validation.ok).toBe(true);
-    expect([...workspaceSchemaRegistry.modulesById.keys()]).not.toContain('core/data-model');
-    expect(agent.repairDiagram).not.toHaveBeenCalled();
-    expect(result.threadId).toBe('thread-ok');
-    expect(result.buildSummary).toMatchObject({
-      mode: 'basic',
-      model: 'Codex CLI default',
-      turns: 1,
-      nodes: 6,
-      edges: 1,
-      inputTokens: 0,
-      cachedInputTokens: 0,
-      outputTokens: 0,
-      approxTotalTokens: 0,
-    });
-    expect(Date.parse(result.buildSummary.builtAt)).not.toBeNaN();
-    expect(Date.parse(result.buildSummary.builtAt)).not.toBeNaN();
-    expect(result.buildSummary.durationMs).toBeGreaterThanOrEqual(0);
-    expect(workerBuild).toEqual(result.buildSummary);
-
-    const metadata = await readJobMetadata(`${outputPath}.job`);
-    expect(metadata?.buildSummary).toEqual(result.buildSummary);
-    expect(metadata?.finishedAt).toBe(result.buildSummary.builtAt);
-  });
-
   it('persists reported SDK usage before a later agent failure', async () => {
     const repoRoot = await createGitRepo({ 'src/index.ts': 'export const value = 1;\n' });
     const outputPath = path.join(await createTempDir('diagram-worker-usage-'), 'diagram.yaml');
-    const agent = {
-      analyzeAndDraftDiagram: vi.fn().mockImplementation(async ({ workspaceRoot }) => {
+    const aiDiagramService = {
+      generateDiagram: vi.fn().mockImplementation(async ({ workspace }) => {
         await runCodexPrompt(
           {
             id: 'persisted-failed-thread',
@@ -1099,16 +1035,15 @@ describe('buildDiagram', () => {
         );
         // Usage is already durable, before returning from the adapter or validation.
         expect(
-          (await readJobMetadata(workspaceRoot))?.usageAccounting?.totals.approxTotalTokens,
+          (await readJobMetadata(workspace.jobRoot))?.usageAccounting?.totals.approxTotalTokens,
         ).toBe(130);
         throw new Error('invalid model output after reported turn');
       }),
-      repairDiagram: vi.fn(),
     };
     await expect(
       buildDiagram(
         { repo: repoRoot, schemaSource: fixturePath('schema-repo'), out: outputPath },
-        { agent, logger: quietLogger() },
+        { aiDiagramService, logger: quietLogger() },
       ),
     ).rejects.toThrow('invalid model output');
     const metadata = await readJobMetadata(`${outputPath}.job`);
@@ -1127,88 +1062,6 @@ describe('buildDiagram', () => {
     });
   });
 
-  it('aggregates approximate token usage across basic draft and repair turns', async () => {
-    const repoRoot = await createGitRepo({
-      'package.json': JSON.stringify({ name: 'test-repo' }, null, 2),
-      'src/index.ts': 'export const hello = "world";\n',
-    });
-    const outputPath = path.join(await createTempDir('diagram-worker-out-'), 'diagram.yaml');
-    const invalidDraftYaml = CANONICAL_EXAMPLE_YAML.replace(
-      'to: module-schema-validation',
-      'to: missing-module',
-    );
-    const agent = {
-      analyzeAndDraftDiagram: vi.fn().mockResolvedValue({
-        yaml: invalidDraftYaml,
-        rawResponse: invalidDraftYaml,
-        threadId: 'thread-draft',
-        items: [],
-        usage: {
-          input_tokens: 120,
-          cached_input_tokens: 30,
-          output_tokens: 40,
-        },
-      }),
-      repairDiagram: vi.fn().mockResolvedValue({
-        yaml: CANONICAL_EXAMPLE_YAML,
-        rawResponse: CANONICAL_EXAMPLE_YAML,
-        threadId: 'thread-repair',
-        items: [],
-        usage: {
-          input_tokens: 60,
-          cached_input_tokens: 10,
-          output_tokens: 20,
-        },
-      }),
-    };
-
-    const result = await buildDiagram(
-      {
-        repo: repoRoot,
-        schemaSource: fixturePath('schema-repo'),
-        out: outputPath,
-      },
-      {
-        agent,
-        logger: quietLogger(),
-      },
-    );
-
-    expect(result.repaired).toBe(true);
-    expect(result.threadId).toBe('thread-repair');
-    expect(result.buildSummary).toMatchObject({
-      turns: 2,
-      inputTokens: 180,
-      cachedInputTokens: 40,
-      nonCachedInputTokens: 140,
-      reasoningOutputTokens: 0,
-      outputTokens: 60,
-      approxTotalTokens: 240,
-    });
-
-    const writtenDoc = parseDocument(await fs.readFile(outputPath, 'utf8'));
-    const workerBuild = (
-      writtenDoc.metadata as
-        | {
-            workerBuild?: {
-              inputTokens: number;
-              cachedInputTokens: number;
-              outputTokens: number;
-              approxTotalTokens: number;
-            };
-          }
-        | undefined
-    )?.workerBuild;
-    expect(workerBuild).toMatchObject({
-      inputTokens: 180,
-      cachedInputTokens: 40,
-      nonCachedInputTokens: 140,
-      reasoningOutputTokens: 0,
-      outputTokens: 60,
-      approxTotalTokens: 240,
-    });
-  });
-
   it('stamps source repository metadata from the checked-out commit and origin remote', async () => {
     const repoRoot = await createGitRepo({
       'package.json': JSON.stringify({ name: 'test-repo' }, null, 2),
@@ -1217,16 +1070,7 @@ describe('buildDiagram', () => {
     const git = simpleGit(repoRoot);
     await git.addRemote('origin', 'git@github.com:example/test-repo.git');
     const outputPath = path.join(await createTempDir('diagram-worker-out-'), 'diagram.yaml');
-    const agent = {
-      analyzeAndDraftDiagram: vi.fn().mockResolvedValue({
-        yaml: CANONICAL_EXAMPLE_YAML,
-        rawResponse: CANONICAL_EXAMPLE_YAML,
-        threadId: 'thread-ok',
-        items: [],
-        usage: null,
-      }),
-      repairDiagram: vi.fn(),
-    };
+    const aiDiagramService = cannedDiagramService(CANONICAL_EXAMPLE_YAML);
 
     const result = await buildDiagram(
       {
@@ -1235,7 +1079,7 @@ describe('buildDiagram', () => {
         out: outputPath,
       },
       {
-        agent,
+        aiDiagramService,
         logger: quietLogger(),
       },
     );
@@ -1283,16 +1127,7 @@ npm install
       'src/index.ts': 'export const hello = "world";\n',
     });
     const outputPath = path.join(await createTempDir('diagram-worker-out-'), 'diagram.yaml');
-    const agent = {
-      analyzeAndDraftDiagram: vi.fn().mockResolvedValue({
-        yaml: CANONICAL_EXAMPLE_YAML,
-        rawResponse: CANONICAL_EXAMPLE_YAML,
-        threadId: 'thread-ok',
-        items: [],
-        usage: null,
-      }),
-      repairDiagram: vi.fn(),
-    };
+    const aiDiagramService = cannedDiagramService(CANONICAL_EXAMPLE_YAML);
 
     await buildDiagram(
       {
@@ -1301,7 +1136,7 @@ npm install
         out: outputPath,
       },
       {
-        agent,
+        aiDiagramService,
         logger: quietLogger(),
       },
     );
@@ -1349,16 +1184,7 @@ npm install
     const candidate = parseDocument(CANONICAL_EXAMPLE_YAML);
     if (alreadyActive) candidate.schemaRefs.push({ schema: 'repo/test-repo@0.2', layer: 7 });
     const candidateYaml = serializeDocument(candidate);
-    const agent = {
-      analyzeAndDraftDiagram: vi.fn().mockResolvedValue({
-        yaml: candidateYaml,
-        rawResponse: candidateYaml,
-        threadId: 'thread-ok',
-        items: [],
-        usage: null,
-      }),
-      repairDiagram: vi.fn(),
-    };
+    const aiDiagramService = cannedDiagramService(candidateYaml);
     const generatedSchemaService = {
       prepareGeneratedSchema: vi.fn().mockResolvedValue({
         status: 'succeeded',
@@ -1378,13 +1204,17 @@ npm install
       await expect(
         buildDiagram(
           { repo: repoRoot, schemaSource, out: outputPath, schemaOut, schemaId: 'repo/test-repo' },
-          { agent, generatedSchemaService: generatedSchemaService as never, logger: quietLogger() },
+          {
+            aiDiagramService,
+            generatedSchemaService: generatedSchemaService as never,
+            logger: quietLogger(),
+          },
         ),
       ).rejects.toThrow(
         `schema id repo/test-repo already exists in ${schemaSource}; pass a different --schema-id.`,
       );
       expect(generatedSchemaService.prepareGeneratedSchema).not.toHaveBeenCalled();
-      expect(agent.analyzeAndDraftDiagram).not.toHaveBeenCalled();
+      expect(aiDiagramService.generateDiagram).not.toHaveBeenCalled();
       expect(
         await fs.readFile(path.join(schemaSource, 'src/schemas/test-repo.yaml'), 'utf8'),
       ).toContain('version: "0.2"');
@@ -1400,7 +1230,7 @@ npm install
         schemaId: 'repo/test-repo',
       },
       {
-        agent,
+        aiDiagramService,
         generatedSchemaService: generatedSchemaService as never,
         logger: quietLogger(),
       },
@@ -1444,7 +1274,6 @@ npm install
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
       },
       {
         ...dependencies,
@@ -1493,7 +1322,6 @@ npm install
     );
     expect(result.threadId).toBe('thread-final-review');
     expect(result.buildSummary).toMatchObject({
-      mode: 'advanced',
       model: 'Codex CLI default',
       turns: 6,
       nodes: 3,
@@ -1510,7 +1338,6 @@ npm install
       writtenDoc.metadata as
         | {
             workerBuild?: {
-              mode: string;
               model: string;
               builtAt: string;
               durationMs: number;
@@ -1624,7 +1451,7 @@ relations:
       generateDiagram: vi.fn().mockResolvedValue({
         finalYaml: duplicateRelationYaml,
         document: duplicateRelationDoc,
-        threadId: 'thread-basic',
+        threadId: 'thread-canned',
         repaired: false,
         diagnostics: [],
         resolvedSchemaIds: ['core/web-app', 'core/software'],
@@ -1643,7 +1470,6 @@ relations:
         repo: repoRoot,
         schemaSource,
         out: outputPath,
-        mode: 'basic',
       },
       {
         aiDiagramService: aiDiagramService as never,
@@ -1819,7 +1645,6 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
       },
       {
         ...dependencies,
@@ -1949,7 +1774,6 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
       },
       {
         ...dependencies,
@@ -2021,7 +1845,7 @@ relations:
       },
     );
     const run = buildDiagram(
-      { repo: repoRoot, schemaSource: fixturePath('schema-repo'), out, mode: 'advanced' },
+      { repo: repoRoot, schemaSource: fixturePath('schema-repo'), out },
       { ...dependencies, logger: quietLogger() },
     );
     if (fixed) await expect(run).resolves.toMatchObject({ threadId: 'thread-final-review-repair' });
@@ -2056,7 +1880,7 @@ relations:
     const options = {
       repo,
       out,
-      mode: 'advanced' as const,
+
       schemaSource: fixturePath('schema-repo'),
     };
     await buildDiagram(options, { ...createAdvancedDependencies(), logger: quietLogger() });
@@ -2103,7 +1927,7 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
+
         stopAfter: 'level0-backbone',
       },
       {
@@ -2147,7 +1971,7 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
+
         stopAfter: 'level0-review',
       },
       {
@@ -2196,7 +2020,7 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
+
         nodeRefinementMaxDepth: 2,
       },
       {
@@ -2316,7 +2140,7 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
+
         stopAfter: 'level0-backbone',
       },
       {
@@ -2469,7 +2293,6 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
       },
       {
         areaPlanner,
@@ -2511,7 +2334,6 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
       },
       {
         ...dependencies,
@@ -2541,7 +2363,6 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
       },
       {
         ...firstDependencies,
@@ -2571,7 +2392,6 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
       },
       {
         ...resumedDependencies,
@@ -2600,7 +2420,6 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
       },
       {
         ...firstDependencies,
@@ -2642,7 +2461,6 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
       },
       {
         ...resumedDependencies,
@@ -2671,7 +2489,7 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
+
         stopAfter: 'level0-review',
       },
       {
@@ -2690,7 +2508,7 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
+
         restartFrom: 'level0-review',
       },
       {
@@ -2848,7 +2666,6 @@ relations:
           repo: repoRoot,
           schemaSource: fixturePath('schema-repo'),
           out: outputPath,
-          mode: 'advanced',
         },
         {
           ...firstDependencies,
@@ -2965,7 +2782,6 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
       },
       {
         ...resumedDependencies,
@@ -3126,7 +2942,6 @@ relations:
           repo: repoRoot,
           schemaSource: fixturePath('schema-repo'),
           out: outputPath,
-          mode: 'advanced',
         },
         {
           ...firstDependencies,
@@ -3235,7 +3050,7 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
+
         restartFrom: 'node-refinement',
       },
       {
@@ -3275,7 +3090,7 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
+
         reasoningEffort: 'max',
       },
       {
@@ -3364,7 +3179,6 @@ relations:
         repo: repoRoot,
         schemaSource: fixturePath('schema-repo'),
         out: outputPath,
-        mode: 'advanced',
       },
       {
         ...dependencies,
@@ -3425,7 +3239,6 @@ describe('stage-owned backbone checkpoints', () => {
       repo,
       out,
       schemaSource: fixturePath('schema-repo'),
-      mode: 'advanced' as const,
     };
     await expect(buildDiagram(options, { ...first, logger: quietLogger() })).rejects.toThrow(
       'intentional interruption',
@@ -3502,7 +3315,6 @@ describe('stage-owned backbone checkpoints', () => {
       repo,
       out,
       schemaSource: fixturePath('schema-repo'),
-      mode: 'advanced' as const,
     };
     await expect(buildDiagram(options, { ...first, logger: quietLogger() })).rejects.toThrow(
       'intentional deeper interruption',
@@ -3545,7 +3357,6 @@ describe('restart checkpoint invalidation', () => {
       repo,
       out,
       schemaSource: fixturePath('schema-repo'),
-      mode: 'advanced' as const,
     };
     const first = createAdvancedDependencies();
     let outputDir = '';
@@ -3609,7 +3420,6 @@ describe('restart checkpoint invalidation', () => {
       repo,
       out,
       schemaSource: fixturePath('schema-repo'),
-      mode: 'advanced' as const,
     };
     const first = createAdvancedDependencies();
     const planned = await first.areaPlanner.planAreas();
@@ -3697,30 +3507,6 @@ describe('restart checkpoint invalidation', () => {
   }, 40000);
 });
 
-it('wraps basic-mode runtime failures with workspace context and the original cause', async () => {
-  const repo = await createGitRepo({ 'src/index.ts': 'export const runtime = true;\n' });
-  const out = path.join(await createTempDir('basic-failure-'), 'diagram.yaml');
-  const cause = new Error('mock basic generation failure');
-  await expect(
-    buildDiagram(
-      { repo, out, schemaSource: fixturePath('schema-repo'), mode: 'basic' },
-      {
-        logger: quietLogger(),
-        aiDiagramService: {
-          generateDiagram: async () => {
-            throw cause;
-          },
-        },
-      },
-    ),
-  ).rejects.toMatchObject({
-    name: 'BuildDiagramError',
-    message: cause.message,
-    cause,
-    workspace: expect.objectContaining({ jobRoot: `${out}.job` }),
-  });
-});
-
 it('preserves the original advanced error cause and thread ID', async () => {
   const repo = await createGitRepo({ 'src/index.ts': 'export const runtime = true;\n' });
   const out = path.join(await createTempDir('advanced-cause-'), 'diagram.yaml');
@@ -3731,7 +3517,7 @@ it('preserves the original advanced error cause and thread ID', async () => {
   dependencies.areaPlanner.planAreas.mockRejectedValue(cause);
   await expect(
     buildDiagram(
-      { repo, out, schemaSource: fixturePath('schema-repo'), mode: 'advanced' },
+      { repo, out, schemaSource: fixturePath('schema-repo') },
       { ...dependencies, logger: quietLogger() },
     ),
   ).rejects.toMatchObject({
@@ -3832,7 +3618,7 @@ it.each([
   });
   const logger = { ...quietLogger(), warn: vi.fn() };
   const build = buildDiagram(
-    { repo, out, schemaSource: fixturePath('schema-repo'), mode: 'advanced' },
+    { repo, out, schemaSource: fixturePath('schema-repo') },
     { ...dependencies, logger },
   );
   if (mode === 'later-failure') {
@@ -3887,7 +3673,6 @@ describe('corrupt checkpoint recovery', () => {
       repo,
       out,
       schemaSource: fixturePath('schema-repo'),
-      mode: 'advanced' as const,
     };
     await expect(buildDiagram(options, { ...first, logger: quietLogger() })).rejects.toThrow(
       'intentional interruption',
@@ -3916,7 +3701,6 @@ describe('corrupt checkpoint recovery', () => {
       out: path.join(root, 'diagram.yaml'),
       jobRoot,
       schemaSource: fixturePath('schema-repo'),
-      mode: 'advanced' as const,
     };
     await expect(
       buildDiagram(options, { ...createAdvancedDependencies(), logger: quietLogger() }),
@@ -3965,7 +3749,7 @@ it('marks an aborted turn interrupted, retains durable usage and releases the jo
       repo,
       out,
       schemaSource: fixturePath('schema-repo'),
-      mode: 'basic',
+
       signal: controller.signal,
     },
     {
@@ -4004,7 +3788,7 @@ it('marks an aborted turn interrupted, retains durable usage and releases the jo
   // A subsequent run can acquire the job and surface its own failure normally.
   await expect(
     buildDiagram(
-      { repo, out, schemaSource: fixturePath('schema-repo'), mode: 'basic' },
+      { repo, out, schemaSource: fixturePath('schema-repo') },
       {
         logger: quietLogger(),
         aiDiagramService: {
@@ -4041,7 +3825,7 @@ describe('resume input fingerprints', () => {
         repo,
         out,
         schemaSource: source,
-        mode: 'advanced' as const,
+
         graphifyHintsMode: 'off' as const,
         nodeRefinementMaxDepth: 2,
       };
@@ -4155,7 +3939,7 @@ describe('resume input fingerprints', () => {
       repo,
       out: path.join(dir, 'diagram.yaml'),
       schemaSource: fixturePath('schema-repo'),
-      mode: 'advanced' as const,
+
       graphifyHintsMode: 'off' as const,
       stopAfter: 'level0-review' as const,
     };
@@ -4192,7 +3976,7 @@ describe('resume input fingerprints', () => {
       repo,
       out: path.join(dir, 'diagram.yaml'),
       schemaSource: fixturePath('schema-repo'),
-      mode: 'advanced' as const,
+
       graphifyHintsMode: 'off' as const,
     };
     await buildDiagram(options, { ...createAdvancedDependencies(), logger: quietLogger() });
@@ -4223,7 +4007,7 @@ describe('resume input fingerprints', () => {
       repo,
       out: path.join(dir, 'diagram.yaml'),
       schemaSource: fixturePath('schema-repo'),
-      mode: 'advanced' as const,
+
       graphifyHintsMode: 'off' as const,
     };
     await buildDiagram(
@@ -4292,7 +4076,7 @@ describe('explicit build lifecycle', () => {
       repo,
       out,
       schemaSource: fixturePath('schema-repo'),
-      mode: 'advanced' as const,
+
       graphifyHintsMode: 'off' as const,
     };
     const stopped = await buildDiagram(
@@ -4336,7 +4120,7 @@ describe('explicit build lifecycle', () => {
       repo,
       out,
       schemaSource: fixturePath('schema-repo'),
-      mode: 'advanced' as const,
+
       graphifyHintsMode: 'off' as const,
     };
     const first = createAdvancedDependencies();
@@ -4411,7 +4195,7 @@ describe('invocation turn budget', () => {
       repo,
       out,
       schemaSource: fixturePath('schema-repo'),
-      mode: 'advanced' as const,
+
       graphifyHintsMode: 'off' as const,
     };
     const first = await buildDiagram({ ...options, maxTurns: 5 }, { ...dependencies, logger });
@@ -4433,52 +4217,6 @@ describe('invocation turn budget', () => {
     expect(sdk.run.mock.calls.length).toBeGreaterThan(5);
     expect(parseDocument(await fs.readFile(out, 'utf8')).entities.length).toBeGreaterThan(0);
   });
-});
-
-it('resumes basic draft repair after a one-turn allowance instead of redrafting', async () => {
-  const repo = await createGitRepo({
-    'package.json': '{"name":"budget"}',
-    'src/index.ts': 'export const app = true;',
-  });
-  const out = path.join(await createTempDir('basic-budget-'), 'diagram.yaml');
-  const invalid = CANONICAL_EXAMPLE_YAML.replace(
-    'to: module-schema-validation',
-    'to: missing-module',
-  );
-  const sdk = {
-    id: 'basic-canned',
-    run: vi.fn().mockResolvedValue({ finalResponse: '', items: [], usage: null }),
-  };
-  const turn = (yaml: string) => ({
-    yaml,
-    rawResponse: yaml,
-    threadId: sdk.id,
-    items: [],
-    usage: null,
-  });
-  const agent = {
-    analyzeAndDraftDiagram: vi.fn(async () => {
-      await runCodexPrompt(sdk, 'draft', { operation: 'draft' });
-      return turn(invalid);
-    }),
-    repairDiagram: vi.fn(async () => {
-      await runCodexPrompt(sdk, 'repair', { operation: 'repair' });
-      return turn(CANONICAL_EXAMPLE_YAML);
-    }),
-  };
-  const options = { repo, out, schemaSource: fixturePath('schema-repo'), maxTurns: 1 };
-  const first = await buildDiagram(options, { agent, logger: quietLogger() });
-  expect(sdk.run).toHaveBeenCalledTimes(1);
-  expect((await readJobMetadata(first.workspace.jobRoot))?.status).toBe('budget-exhausted');
-  expect(
-    parseDocument(await fs.readFile(first.outputPath, 'utf8')).entities.length,
-  ).toBeGreaterThan(0);
-  const second = await buildDiagram(options, { agent, logger: quietLogger() });
-  expect(agent.analyzeAndDraftDiagram).toHaveBeenCalledTimes(1);
-  expect(sdk.run).toHaveBeenCalledTimes(2);
-  expect((await readJobMetadata(second.workspace.jobRoot))?.status).toBe('succeeded');
-  expect(second.outputPath).toBe(out);
-  await expect(fs.stat(first.outputPath)).rejects.toMatchObject({ code: 'ENOENT' });
 });
 
 it('bounds malformed area planning across repeated one-turn invocations', async () => {
@@ -4504,7 +4242,7 @@ it('bounds malformed area planning across repeated one-turn invocations', async 
     repo,
     out,
     schemaSource: fixturePath('schema-repo'),
-    mode: 'advanced' as const,
+
     graphifyHintsMode: 'off' as const,
     maxTurns: 1,
   };
@@ -4574,7 +4312,7 @@ it('resumes a pending wave-1 repair with the same one-turn limit', async () => {
     repo,
     out,
     schemaSource: fixturePath('schema-repo'),
-    mode: 'advanced' as const,
+
     graphifyHintsMode: 'off' as const,
     maxTurns: 1,
   };
@@ -4642,7 +4380,7 @@ it.each([
     repo,
     out,
     schemaSource: fixturePath('schema-repo'),
-    mode: 'advanced' as const,
+
     graphifyHintsMode: 'off' as const,
     maxTurns: 1,
   };
@@ -4690,7 +4428,6 @@ describe('output secret redaction integration', () => {
         repo,
         out,
         schemaSource: fixturePath('schema-repo'),
-        mode: kind === 'stop' ? 'advanced' : 'basic',
         ...(kind === 'stop' ? { stopAfter: 'repo-census' as const } : {}),
         onSecrets,
       },
@@ -4821,14 +4558,11 @@ describe('output secret redaction integration', () => {
   });
 });
 
-it.each([
-  'basic',
-  'advanced',
-] as const)('ignores all %s resume inputs after masking marker migration', async (mode) => {
+it('ignores all resume inputs after masking marker migration', async () => {
   const repo = await createGitRepo({ 'src/index.ts': 'export const app = true;' });
   const out = path.join(await createTempDir('mask-resume-gate-'), 'diagram.yaml');
   const document = parseDocument(CANONICAL_EXAMPLE_YAML);
-  const options = { repo, out, mode, schemaSource: fixturePath('schema-repo') };
+  const options = { repo, out, schemaSource: fixturePath('schema-repo') };
   await buildDiagram(options, {
     logger: quietLogger(),
     aiDiagramService: {
@@ -4880,7 +4614,6 @@ describe('pipeline repair-loop characterization', () => {
         repo,
         out,
         schemaSource: fixturePath('schema-repo'),
-        mode: 'advanced',
       },
       { ...dependencies, logger: quietLogger() },
     );
@@ -4890,33 +4623,6 @@ describe('pipeline repair-loop characterization', () => {
       'bundle-compile',
     );
     expect((await readJobMetadata(result.workspace.jobRoot))?.status).toBe('succeeded');
-  });
-
-  it('gives up basic validation after exactly three unsuccessful repair passes', async () => {
-    const repo = await createGitRepo({ 'src/index.ts': 'export const app = true;' });
-    const out = path.join(await createTempDir('characterize-basic-'), 'diagram.yaml');
-    const yaml = CANONICAL_EXAMPLE_YAML.replace(
-      'to: module-schema-validation',
-      'to: absent-endpoint',
-    );
-    const turn = { yaml, rawResponse: yaml, threadId: 'invalid-basic', items: [], usage: null };
-    const agent = {
-      analyzeAndDraftDiagram: vi.fn().mockResolvedValue(turn),
-      repairDiagram: vi.fn().mockResolvedValue(turn),
-    };
-    await expect(
-      buildDiagram(
-        { repo, out, schemaSource: fixturePath('schema-repo') },
-        { agent, logger: quietLogger() },
-      ),
-    ).rejects.toMatchObject({
-      message: 'Generated diagram did not validate after 3 repair passes',
-      diagnostics: expect.arrayContaining([expect.objectContaining({ severity: 'error' })]),
-    });
-    expect(agent.analyzeAndDraftDiagram).toHaveBeenCalledTimes(1);
-    expect(agent.repairDiagram).toHaveBeenCalledTimes(3);
-    expect((await readJobMetadata(`${out}.job`))?.status).toBe('failed');
-    await expect(fs.stat(out)).rejects.toMatchObject({ code: 'ENOENT' });
   });
 
   it.each([
@@ -4938,7 +4644,7 @@ describe('pipeline repair-loop characterization', () => {
     repair.mockRejectedValue(malformed(`${stage}-repair`));
     await expect(
       buildDiagram(
-        { repo, out, schemaSource: fixturePath('schema-repo'), mode: 'advanced' },
+        { repo, out, schemaSource: fixturePath('schema-repo') },
         { ...dependencies, logger: quietLogger() },
       ),
     ).rejects.toMatchObject({
@@ -4980,7 +4686,7 @@ describe('pipeline repair-loop characterization', () => {
       return review(input);
     });
     const build = buildDiagram(
-      { repo, out, schemaSource: fixturePath('schema-repo'), mode: 'advanced' },
+      { repo, out, schemaSource: fixturePath('schema-repo') },
       { ...dependencies, logger: quietLogger() },
     );
     if (failure === 'malformed') {
@@ -5002,4 +4708,26 @@ describe('pipeline repair-loop characterization', () => {
     }
     expect(dependencies.graphCollator.collateGraph).toHaveBeenCalledTimes(1);
   });
+});
+
+it.each([
+  'basic',
+  'advanced',
+] as const)('handles legacy %s job metadata safely', async (legacyMode) => {
+  const repo = await createGitRepo({ 'src/index.ts': 'export const app = true;' });
+  const out = path.join(await createTempDir('legacy-mode-'), 'diagram.yaml');
+  const dependencies = createAdvancedDependencies();
+  const options = {
+    repo,
+    out,
+    schemaSource: fixturePath('schema-repo'),
+    stopAfter: 'level0-backbone' as const,
+  };
+  await buildDiagram(options, { ...dependencies, logger: quietLogger() });
+  const metadataPath = path.join(out + '.job', 'out', 'job-metadata.json');
+  const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+  await fs.writeFile(metadataPath, JSON.stringify({ ...metadata, mode: legacyMode }));
+  await buildDiagram(options, { ...dependencies, logger: quietLogger() });
+  expect(dependencies.areaPlanner.planAreas).toHaveBeenCalledTimes(legacyMode === 'basic' ? 2 : 1);
+  expect(JSON.parse(await fs.readFile(metadataPath, 'utf8'))).not.toHaveProperty('mode');
 });

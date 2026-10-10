@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import type { StageRecords } from './advanced/checkpoint-inputs';
-import type { AdvancedCheckpointStage, BuildMode } from './advanced/types';
+import type { AdvancedCheckpointStage } from './advanced/types';
 import type { WorkerBuildSummary } from './build-summary';
 import { emptyUsageAccountingState, type UsageAccountingState } from './codex/usage-accounting';
 import { ensureJobRoot } from './job-root';
@@ -52,7 +52,6 @@ export interface GeneratedSchemaMetadata {
 export interface JobMetadata {
   secrets?: BuildSecrets;
   version: 1;
-  mode: BuildMode;
   repo: string;
   ref: string | null;
   model: string | null;
@@ -110,7 +109,6 @@ export function serializeDiagnostics(diagnostics: Diagnostic[]): SerializedDiagn
 }
 
 export function createInitialJobMetadata(params: {
-  mode: BuildMode;
   repo: string;
   ref?: string;
   model?: string;
@@ -132,7 +130,6 @@ export function createInitialJobMetadata(params: {
   return {
     version: 1,
     usageAccounting: emptyUsageAccountingState(),
-    mode: params.mode,
     repo: redactRepositorySpecifier(params.repo),
     ref: params.ref ?? null,
     model: params.model ?? null,
@@ -174,18 +171,15 @@ export function createInitialJobMetadata(params: {
           failureMessage: params.generateSchema ? 'Schema generation has not run yet' : null,
         }
       : null,
-    advanced:
-      params.mode === 'advanced'
-        ? {
-            lastCompletedStage: null,
-            restartFrom: params.restartFrom ?? null,
-            currentAdvancedThreadId: null,
-            currentNodeRefinementArtifact: null,
-            currentGraphArtifact: null,
-            currentGraphResponseArtifact: null,
-            currentGraphReviewCompleted: false,
-          }
-        : undefined,
+    advanced: {
+      lastCompletedStage: null,
+      restartFrom: params.restartFrom ?? null,
+      currentAdvancedThreadId: null,
+      currentNodeRefinementArtifact: null,
+      currentGraphArtifact: null,
+      currentGraphResponseArtifact: null,
+      currentGraphReviewCompleted: false,
+    },
   };
 }
 
@@ -193,8 +187,11 @@ export async function readJobMetadata(jobRoot: string): Promise<JobMetadata | un
   const metadataPath = metadataPathForJobRoot(jobRoot);
   try {
     const raw = await fs.readFile(metadataPath, 'utf8');
-    const parsed = JSON.parse(raw) as JobMetadata;
+    const parsed = JSON.parse(raw) as JobMetadata & { mode?: string };
     if (!parsed || parsed.version !== 1) throw new Error('Unsupported or missing metadata version');
+    // Legacy basic jobs have no reusable advanced pipeline checkpoints.
+    if (parsed.mode === 'basic' || parsed.mode === 'simple') return undefined;
+    delete parsed.mode;
     parsed.appDescription = parsed.appDescription ?? null;
     if (parsed.advanced) {
       parsed.advanced = {
@@ -222,7 +219,6 @@ export async function writeJobMetadata(jobRoot: string, metadata: JobMetadata): 
 export function isCompatibleResumeMetadata(
   metadata: JobMetadata | undefined,
   params: {
-    mode: BuildMode;
     repo: string;
     ref?: string;
     generateSchema?: boolean;
@@ -234,7 +230,6 @@ export function isCompatibleResumeMetadata(
 ): metadata is JobMetadata {
   if (!metadata) return false;
   return (
-    metadata.mode === params.mode &&
     redactRepositorySpecifier(metadata.repo) === redactRepositorySpecifier(params.repo) &&
     metadata.ref === (params.ref ?? null) &&
     (metadata.generateSchema ?? false) === (params.generateSchema ?? false) &&

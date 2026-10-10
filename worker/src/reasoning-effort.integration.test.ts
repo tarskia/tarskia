@@ -49,7 +49,7 @@ describe('reasoning effort through real build services', () => {
     'max',
     'ultra',
     'persistent',
-  ] as const)('uses effort %s for schema and basic diagram drafts and repairs', async (reasoningEffort:
+  ] as const)('uses effort %s for schema draft and repair and passes effort to diagram generation', async (reasoningEffort:
     | ReasoningEffort
     | undefined) => {
     const repo = path.join(tempRoot, 'repo');
@@ -64,9 +64,17 @@ describe('reasoning effort through real build services', () => {
     sdk.responses.push(
       'owner: [unterminated\n',
       'owner: repo\nname: test-repo\nversion: "0.1"\ntypes: []\nrelations: []\n',
-      CANONICAL_EXAMPLE_YAML.replace('to: module-schema-validation', 'to: missing-module'),
-      CANONICAL_EXAMPLE_YAML,
     );
+    const generateDiagram = vi.fn().mockResolvedValue({
+      document: parseDocument(CANONICAL_EXAMPLE_YAML),
+      finalYaml: CANONICAL_EXAMPLE_YAML,
+      threadId: null,
+      repaired: false,
+      diagnostics: [],
+      resolvedSchemaIds: [],
+      turnCount: 0,
+      tokenUsage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, approxTotalTokens: 0 },
+    });
     const out = path.join(tempRoot, 'diagram.yaml');
     const result = await buildDiagram(
       {
@@ -75,15 +83,17 @@ describe('reasoning effort through real build services', () => {
         out,
         schemaOut: path.join(tempRoot, 'schema.yaml'),
         schemaId: 'repo/test-repo',
-        mode: 'basic',
         model: 'gpt-6-luna',
         reasoningEffort,
       },
-      { logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } },
+      {
+        aiDiagramService: { generateDiagram },
+        logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+      },
     );
 
     const effectiveEffort = reasoningEffort ?? 'medium';
-    expect(sdk.threads).toHaveLength(2);
+    expect(sdk.threads).toHaveLength(1);
     for (const thread of sdk.threads) {
       expect(thread.options).toMatchObject({
         model: 'gpt-6-luna',
@@ -93,7 +103,9 @@ describe('reasoning effort through real build services', () => {
     }
     expect(sdk.responses).toEqual([]);
     expect(result.generatedSchema.repaired).toBe(true);
-    expect(result.repaired).toBe(true);
+    expect(generateDiagram).toHaveBeenCalledWith(
+      expect.objectContaining({ reasoningEffort: effectiveEffort, model: 'gpt-6-luna' }),
+    );
     expect(result.buildSummary.reasoningEffort).toBe(effectiveEffort);
     expect((await readJobMetadata(`${out}.job`))?.reasoningEffort).toBe(effectiveEffort);
     expect(parseDocument(await fs.readFile(out, 'utf8')).metadata?.workerBuild).toMatchObject({

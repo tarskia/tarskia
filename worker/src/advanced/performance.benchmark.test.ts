@@ -221,7 +221,7 @@ describe.skipIf(!enabled)('opt-in worker performance benchmarks (no models)', ()
           repo,
           schemaSource: path.resolve('test/fixtures/schema-repo'),
           out: path.join(root, 'diagram.yaml'),
-          mode: 'advanced',
+
           graphifyHintsMode: 'off',
           nodeRefinementMaxDepth: 1,
         },

@@ -19,17 +19,8 @@ import type {
 } from './advanced/graph-builders';
 import type { GraphifyHintsBuilder, GraphifyHintsMode } from './advanced/graphify-hints';
 import { dedupeSchemaActivations } from './advanced/schema-set';
-import {
-  type AdvancedCheckpointStage,
-  type BuildMode,
-  compareAdvancedCheckpointStage,
-  normalizeBuildMode,
-} from './advanced/types';
-import {
-  type AiDiagramService,
-  AiDiagramServiceError,
-  DefaultAiDiagramService,
-} from './ai-diagram-service';
+import { type AdvancedCheckpointStage, compareAdvancedCheckpointStage } from './advanced/types';
+import { type AiDiagramService, AiDiagramServiceError } from './ai-diagram-service';
 import { normalizeAppDescriptionText } from './app-description';
 import {
   applyBuildMetadataToDocument,
@@ -37,7 +28,6 @@ import {
   type WorkerBuildSummary,
 } from './build-summary';
 import { currentCancellationSignal, throwIfCancelled, withCancellation } from './cancellation';
-import type { DiagramAgent } from './codex/diagram-agent';
 import {
   currentTurnPolicy,
   findTurnBudgetError,
@@ -103,7 +93,6 @@ import { writeFileAtomic } from './write-file-atomic';
 export interface BuildDiagramOptions extends PrepareWorkspaceOptions {
   signal?: AbortSignal;
   out: string;
-  mode?: BuildMode;
   model?: string;
   reasoningEffort?: ReasoningEffort;
   maxTurns?: number;
@@ -124,7 +113,6 @@ export interface BuildDiagramResult {
   repaired: boolean;
   diagnostics: Diagnostic[];
   resolvedSchemaIds: string[];
-  mode: BuildMode;
   generatedSchema: GeneratedSchemaResult;
   buildSummary: WorkerBuildSummary;
 }
@@ -172,7 +160,6 @@ export async function buildDiagram(
 ): Promise<BuildDiagramResult> {
   const signal = options.signal ?? currentCancellationSignal();
   signal?.throwIfAborted();
-  normalizeBuildMode(options.mode);
   resolveReasoningEffort(options.reasoningEffort);
   const schemaSource = resolvePathOption(options.schemaSource, 'schema-source');
   if (options.schemaOut?.trim()) {
@@ -208,7 +195,6 @@ export async function buildDiagram(
 async function runBuildDiagram(
   options: BuildDiagramOptions,
   dependencies: {
-    agent?: DiagramAgent;
     areaPlanner?: AreaPlanner;
     level0BackboneBuilder?: Level0BackboneBuilder;
     level0BackboneRepairer?: Level0BackboneRepairer;
@@ -233,7 +219,6 @@ async function runBuildDiagram(
   options = { ...options, repo: redactRepositorySpecifier(rawRepo) };
   const logger = dependencies.logger ?? defaultLogger();
   const repositoryService = dependencies.repositoryService ?? new DefaultRepositoryService();
-  const normalizedMode = normalizeBuildMode(options.mode);
   const modelLabel = options.model?.trim() || 'Codex CLI default';
   const reasoningEffort = resolveReasoningEffort(options.reasoningEffort);
   const resolvedOutputPath = resolvePathOption(options.out, 'out');
@@ -255,38 +240,33 @@ async function runBuildDiagram(
   const previousMetadata = !options.hardRefresh
     ? await readJobMetadata(resolvedJobRoot)
     : undefined;
-  let canResume =
-    (normalizedMode === 'advanced' || previousMetadata?.status === 'budget-exhausted') &&
-    isCompatibleResumeMetadata(previousMetadata, {
-      mode: normalizedMode,
-      repo: options.repo,
-      ref: options.ref,
-      generateSchema: Boolean(resolvedSchemaOut),
-      schemaId: resolvedSchemaId ?? null,
-      schemaOutPath: resolvedSchemaOut ?? null,
-      schemaSource: resolvedSchemaSource,
-      outputPath: resolvedOutputPath,
-    });
+  let canResume = isCompatibleResumeMetadata(previousMetadata, {
+    repo: options.repo,
+    ref: options.ref,
+    generateSchema: Boolean(resolvedSchemaOut),
+    schemaId: resolvedSchemaId ?? null,
+    schemaOutPath: resolvedSchemaOut ?? null,
+    schemaSource: resolvedSchemaSource,
+    outputPath: resolvedOutputPath,
+  });
   const aiDiagramService =
     dependencies.aiDiagramService ??
-    (normalizedMode === 'advanced'
-      ? new AdvancedAiDiagramService({
-          areaPlanner: dependencies.areaPlanner,
-          level0BackboneBuilder: dependencies.level0BackboneBuilder,
-          level0BackboneRepairer: dependencies.level0BackboneRepairer,
-          level0BackboneReviewer: dependencies.level0BackboneReviewer,
-          level0BackboneReviewerRepairer: dependencies.level0BackboneReviewerRepairer,
-          wave1Reviewer: dependencies.wave1Reviewer,
-          wave1ReviewerRepairer: dependencies.wave1ReviewerRepairer,
-          nodeRefiner: dependencies.nodeRefiner,
-          nodeRefinerRepairer: dependencies.nodeRefinerRepairer,
-          graphCollator: dependencies.graphCollator,
-          finalGraphReviewer: dependencies.finalGraphReviewer,
-          finalGraphReviewerRepairer: dependencies.finalGraphReviewerRepairer,
-          graphifyHintsBuilder: dependencies.graphifyHintsBuilder,
-          advancedThreadClient: dependencies.advancedThreadClient,
-        })
-      : new DefaultAiDiagramService({ agent: dependencies.agent }));
+    new AdvancedAiDiagramService({
+      areaPlanner: dependencies.areaPlanner,
+      level0BackboneBuilder: dependencies.level0BackboneBuilder,
+      level0BackboneRepairer: dependencies.level0BackboneRepairer,
+      level0BackboneReviewer: dependencies.level0BackboneReviewer,
+      level0BackboneReviewerRepairer: dependencies.level0BackboneReviewerRepairer,
+      wave1Reviewer: dependencies.wave1Reviewer,
+      wave1ReviewerRepairer: dependencies.wave1ReviewerRepairer,
+      nodeRefiner: dependencies.nodeRefiner,
+      nodeRefinerRepairer: dependencies.nodeRefinerRepairer,
+      graphCollator: dependencies.graphCollator,
+      finalGraphReviewer: dependencies.finalGraphReviewer,
+      finalGraphReviewerRepairer: dependencies.finalGraphReviewerRepairer,
+      graphifyHintsBuilder: dependencies.graphifyHintsBuilder,
+      advancedThreadClient: dependencies.advancedThreadClient,
+    });
   const generatedSchemaService =
     dependencies.generatedSchemaService ?? new GeneratedSchemaService();
   const canReuseGeneratedSchema =
@@ -294,7 +274,6 @@ async function runBuildDiagram(
     Boolean(previousMetadata?.generatedSchema?.artifactPath);
   const canResumeWithoutTargetRepoClone =
     canResume &&
-    normalizedMode === 'advanced' &&
     Boolean(previousMetadata?.advanced?.lastCompletedStage) &&
     compareAdvancedCheckpointStage(
       'repo-census',
@@ -311,7 +290,6 @@ async function runBuildDiagram(
     canResume && previousMetadata
       ? {
           ...previousMetadata,
-          mode: normalizedMode,
           model: options.model?.trim() || null,
           reasoningEffort,
           generateSchema: Boolean(resolvedSchemaOut),
@@ -363,7 +341,6 @@ async function runBuildDiagram(
             : undefined,
         }
       : createInitialJobMetadata({
-          mode: normalizedMode,
           repo: options.repo,
           ref: options.ref,
           model: options.model,
@@ -514,7 +491,7 @@ async function runBuildDiagram(
   await persistMetadata(metadata);
 
   logger.info(
-    `Starting ${normalizedMode} diagram build with model ${modelLabel}, reasoning effort ${reasoningEffort}`,
+    `Starting advanced diagram build with model ${modelLabel}, reasoning effort ${reasoningEffort}`,
   );
   logger.info(`Job metadata: ${path.join(resolvedJobRoot, 'out', 'job-metadata.json')}`);
   if (canResume && previousMetadata?.advanced?.lastCompletedStage) {
@@ -594,16 +571,12 @@ async function runBuildDiagram(
     reportSecrets(workspace.secrets ?? secrets);
     if (workspace.analysisReusable === false) {
       canResume = false;
-      metadata.advanced =
-        normalizedMode === 'advanced'
-          ? createInitialJobMetadata({
-              mode: normalizedMode,
-              repo: options.repo,
-              schemaSource: resolvedSchemaSource,
-              outputPath: resolvedOutputPath,
-              workspaceRoot: resolvedJobRoot,
-            }).advanced
-          : undefined;
+      metadata.advanced = createInitialJobMetadata({
+        repo: options.repo,
+        schemaSource: resolvedSchemaSource,
+        outputPath: resolvedOutputPath,
+        workspaceRoot: resolvedJobRoot,
+      }).advanced;
     }
     retainPartialDocument({
       version: '0.1.0',
@@ -618,8 +591,7 @@ async function runBuildDiagram(
       repoRevision: workspace.repoRevision,
       sourceRepository,
       schemaSourceRevision: workspace.schemaSourceRevision ?? null,
-      activeStage:
-        normalizedMode === 'advanced' ? 'advanced/prompt-contract-preparation' : 'basic/generation',
+      activeStage: 'advanced/prompt-contract-preparation',
     });
 
     logger.info(`Prepared workspace at ${workspace.jobRoot}`);
@@ -674,7 +646,7 @@ async function runBuildDiagram(
         );
       }
       await applyMetadataUpdate({
-        activeStage: normalizedMode === 'advanced' ? 'advanced/pipeline' : 'basic/generation',
+        activeStage: 'advanced/pipeline',
         generatedSchema,
       });
     } else {
@@ -684,13 +656,13 @@ async function runBuildDiagram(
     let diagramResult: Awaited<ReturnType<AiDiagramService['generateDiagram']>>;
     try {
       await applyMetadataUpdate({
-        activeStage: normalizedMode === 'advanced' ? 'advanced/pipeline' : 'basic/generation',
+        activeStage: 'advanced/pipeline',
       });
       diagramResult = await withUsageAccounting(usageAccounting, () =>
         runTimedStep(
           {
             logger,
-            label: `${normalizedMode} diagram generation`,
+            label: `advanced diagram generation`,
             timings,
             detail: (result) =>
               `thread ${result.threadId ?? 'none'}, repaired=${result.repaired}, schemaRefs=${result.resolvedSchemaIds.length}`,
@@ -704,8 +676,7 @@ async function runBuildDiagram(
               reasoningEffort,
               stopAfter: options.stopAfter,
               nodeRefinementMaxDepth: options.nodeRefinementMaxDepth,
-              graphifyHintsMode:
-                normalizedMode === 'advanced' ? (options.graphifyHintsMode ?? 'auto') : 'off',
+              graphifyHintsMode: options.graphifyHintsMode ?? 'auto',
               primaryDocumentInput,
               logger,
               onProgress: async (update) => {
@@ -739,13 +710,7 @@ async function runBuildDiagram(
                           previousMetadata.advanced.currentGraphReviewCompleted ?? false,
                       },
                     }
-                  : canResume &&
-                      normalizedMode === 'basic' &&
-                      previousMetadata?.repoRevision === workspace.repoRevision &&
-                      previousMetadata?.schemaSourceRevision ===
-                        (workspace.schemaSourceRevision ?? null)
-                    ? { basic: true }
-                    : undefined,
+                  : undefined,
             }),
         ),
       );
@@ -790,7 +755,6 @@ async function runBuildDiagram(
     const builtAt = new Date().toISOString();
     const buildSummary = summarizeWorkerBuild({
       document: finalDocument,
-      mode: normalizedMode,
       ...summarizeStageSettings(metadata.advanced?.stageRecords, modelLabel, reasoningEffort),
       builtAt,
       durationMs: Math.max(0, Date.parse(builtAt) - startedAt),
@@ -847,7 +811,7 @@ async function runBuildDiagram(
     });
     throwIfCancelled();
     const partialOutputPath = derivePartialOutputPath(resolvedOutputPath);
-    const stopped = normalizedMode === 'advanced' && Boolean(options.stopAfter);
+    const stopped = Boolean(options.stopAfter);
     const destination = stopped ? partialOutputPath : resolvedOutputPath;
     const outputPath = await runTimedStep(
       {
@@ -890,7 +854,6 @@ async function runBuildDiagram(
       repaired: diagramResult.repaired,
       diagnostics: [...diagramResult.diagnostics, ...redactionDiagnostics],
       resolvedSchemaIds: diagramResult.resolvedSchemaIds,
-      mode: normalizedMode,
       generatedSchema,
       buildSummary,
     };
@@ -904,7 +867,6 @@ async function runBuildDiagram(
       const builtAt = new Date().toISOString();
       const buildSummary = summarizeWorkerBuild({
         document,
-        mode: normalizedMode,
         model: modelLabel,
         reasoningEffort,
         builtAt,
@@ -929,7 +891,6 @@ async function runBuildDiagram(
         repaired: metadata.repaired ?? false,
         diagnostics: [...redactionDiagnostics],
         resolvedSchemaIds: metadata.resolvedSchemaIds ?? [],
-        mode: normalizedMode,
         generatedSchema,
         buildSummary,
       };

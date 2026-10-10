@@ -5,7 +5,6 @@ vars:
   REPO_ROOT: '{{.TASKFILE_DIR}}/..'
   OUTPUT_DIR: '{{.TASKFILE_DIR}}/.tmp'
   DEFAULT_MODEL: 'gpt-6-luna'
-  DEFAULT_MODE: 'advanced'
   DEFAULT_REASONING_EFFORT: 'medium'
 
 tasks:
@@ -28,7 +27,6 @@ tasks:
     requires:
       vars: [REPO]
     vars:
-      MODE_VALUE: '{{if .MODE}}{{.MODE}}{{else}}{{.DEFAULT_MODE}}{{end}}'
       MODEL_VALUE: '{{if .MODEL}}{{.MODEL}}{{else}}{{.DEFAULT_MODEL}}{{end}}'
       REASONING_EFFORT_VALUE: '{{if .REASONING_EFFORT}}{{.REASONING_EFFORT}}{{else}}{{.DEFAULT_REASONING_EFFORT}}{{end}}'
     cmds:
@@ -36,7 +34,6 @@ tasks:
         vars:
           REPO_HANDLE: '{{.REPO}}'
           REF_VALUE: '{{if .REF}}{{.REF}}{{else}}{{end}}'
-          MODE_VALUE: '{{.MODE_VALUE}}'
           MODEL_VALUE: '{{.MODEL_VALUE}}'
           REASONING_EFFORT_VALUE: '{{.REASONING_EFFORT_VALUE}}'
           BUILD_ACTION: 'overwrite'
@@ -48,7 +45,6 @@ tasks:
     requires:
       vars: [REPO]
     vars:
-      MODE_VALUE: '{{if .MODE}}{{.MODE}}{{else}}{{.DEFAULT_MODE}}{{end}}'
       MODEL_VALUE: '{{if .MODEL}}{{.MODEL}}{{else}}{{.DEFAULT_MODEL}}{{end}}'
       REASONING_EFFORT_VALUE: '{{if .REASONING_EFFORT}}{{.REASONING_EFFORT}}{{else}}{{.DEFAULT_REASONING_EFFORT}}{{end}}'
     cmds:
@@ -56,7 +52,6 @@ tasks:
         vars:
           REPO_HANDLE: '{{.REPO}}'
           REF_VALUE: '{{if .REF}}{{.REF}}{{else}}{{end}}'
-          MODE_VALUE: '{{.MODE_VALUE}}'
           MODEL_VALUE: '{{.MODEL_VALUE}}'
           REASONING_EFFORT_VALUE: '{{.REASONING_EFFORT_VALUE}}'
           BUILD_ACTION: 'continue'
@@ -66,7 +61,6 @@ tasks:
     dir: '{{.WORKER_DIR}}'
     deps: [build]
     vars:
-      MODE_VALUE: '{{if .MODE}}{{.MODE}}{{else}}advanced{{end}}'
       MODEL_VALUE: '{{if .MODEL}}{{.MODEL}}{{else}}{{.DEFAULT_MODEL}}{{end}}'
       REASONING_EFFORT_VALUE: '{{if .REASONING_EFFORT}}{{.REASONING_EFFORT}}{{else}}{{.DEFAULT_REASONING_EFFORT}}{{end}}'
     requires:
@@ -77,7 +71,6 @@ tasks:
         --repo '{{.REPO}}'
         --schema-source '{{.SCHEMA_SOURCE}}'
         --out '{{.OUT}}'
-        --mode '{{.MODE_VALUE}}'
         --model '{{.MODEL_VALUE}}'
         --reasoning-effort '{{.REASONING_EFFORT_VALUE}}'
 
@@ -134,7 +127,6 @@ tasks:
           --schema-source "$schema_source" \
           --out "$out_path" \
           --schema-out "$schema_out_path" \
-          --mode '{{.MODE_VALUE}}' \
           --model '{{.MODEL_VALUE}}' \
           --reasoning-effort '{{.REASONING_EFFORT_VALUE}}'
 
