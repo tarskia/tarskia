@@ -117,6 +117,11 @@ contents, independent of the enclosing Git repository. Bundled schemas and
 ontology are loaded only from the installed package; missing assets are errors,
 even when the working directory contains similarly named files.
 
+## Environment variables
+
+- `TARSKIA_GIT_TIMEOUT_MS`: how long each git command may run, in milliseconds. The default is 600000 (10 minutes); the maximum is 2147483647. The value must be a positive integer.
+- `TARSKIA_DEBUG=1`: print the redacted stack trace when a command fails.
+
 ## Process
 
 The advanced worker flow is staged so intermediate outputs can be inspected and resumed:

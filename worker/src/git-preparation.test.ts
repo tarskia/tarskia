@@ -152,7 +152,7 @@ describe('clone transport policy', () => {
   it('uses the configured factory for local metadata and workspace reuse too', async () => {
     vi.stubEnv('GIT_DIR', '/unsafe');
     vi.stubEnv('SECRET_TOKEN', 'secret');
-    vi.stubEnv('DIAGRAM_WORKER_GIT_TIMEOUT_MS', '2345');
+    vi.stubEnv('TARSKIA_GIT_TIMEOUT_MS', '2345');
     const local = path.join(root, 'local');
     await fs.mkdir(path.join(local, '.git'), { recursive: true });
     await fs.writeFile(path.join(local, 'app.ts'), 'app');
