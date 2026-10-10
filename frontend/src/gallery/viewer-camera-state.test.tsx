@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import * as semantics from '@tarskia/diagram-semantics';
+import * as schemaClosure from '@tarskia/diagram-semantics';
 import {
   applyDiagramViewOperation,
   type DiagramView,
@@ -13,7 +14,6 @@ import { afterEach, expect, it, vi } from 'vitest';
 import * as layout from '../canvas/rendering/layout/layout-pipeline';
 import { useDiagramRenderingController } from '../canvas/useDiagramRenderingController';
 import * as validation from '../model/validation';
-import * as schemaClosure from '../model/validation/schema-closure';
 import { semanticBootstrap } from '../semantic/bootstrap';
 import { useDiagramSemanticRuntime } from '../semantic/runtime';
 import { loadGallery } from '../test/curated-rendering';

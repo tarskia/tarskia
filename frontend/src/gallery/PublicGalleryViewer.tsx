@@ -1,4 +1,8 @@
-import { applyDiagramViewOperation, searchDiagramText } from '@tarskia/diagram-semantics';
+import {
+  applyDiagramViewOperation,
+  buildSchemaVersionCatalog,
+  searchDiagramText,
+} from '@tarskia/diagram-semantics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import type { DtoGalleryDiagramDetailResponse } from '../api/generated/model';
@@ -7,7 +11,6 @@ import { LoadingState } from '../components/ui/loading-state';
 import { useDiagramEngine } from '../diagram/useDiagramEngine';
 import { useDiagramSurface } from '../diagram/useDiagramSurface';
 import { useReducedMotion } from '../hooks/useReducedMotion';
-import { buildSchemaVersionCatalog } from '../model/validation/schema-closure';
 import type { PublicGalleryShellContext } from '../PublicGalleryShell';
 import { semanticBootstrap } from '../semantic/bootstrap';
 import { useDiagramSemanticRuntime } from '../semantic/runtime';

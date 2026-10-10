@@ -1,4 +1,6 @@
 import {
+  buildSchemaRuntimeFromCatalog,
+  buildSchemaVersionCatalog,
   diagnosticsToMessages,
   getSchemaModuleRef,
   parseAndValidateSchemaModule,
@@ -7,10 +9,6 @@ import {
 } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
 import starterRaw from '../data/starters/starter.yaml?raw';
-import {
-  buildSchemaRuntimeFromCatalog,
-  buildSchemaVersionCatalog,
-} from '../model/validation/schema-closure';
 
 const bundledSchemaFixtures = Object.entries(
   import.meta.glob('../schemas/*.yaml', {

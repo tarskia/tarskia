@@ -1166,18 +1166,20 @@ export function buildSchemaSelection(params: {
   const selected = new Set(
     activations.map((activation) => buildSchemaId(parseSchemaRef(activation.schema))),
   );
+  // Keep the registry's ordering for known roots, but retain missing roots so
+  // resolution can report them instead of silently treating selection as empty.
+  const rootModuleIds = [
+    ...raw.moduleIds.filter((moduleId) => selected.has(moduleId)),
+    ...Array.from(selected).filter((moduleId) => !raw.modulesById.has(moduleId)),
+  ];
   return {
-    rootModuleIds: raw.moduleIds.filter((moduleId) => selected.has(moduleId)),
+    rootModuleIds,
     activationsByModuleId,
-    rootActivations: raw.moduleIds
-      .filter((moduleId) => selected.has(moduleId))
-      .map((moduleId) => {
-        const activation = activationsByModuleId.get(moduleId);
-        if (!activation) {
-          throw new Error(`Missing schema activation for ${moduleId}`);
-        }
-        return activation;
-      }),
+    rootActivations: rootModuleIds.map((moduleId) => {
+      const activation = activationsByModuleId.get(moduleId);
+      if (!activation) throw new Error(`Missing schema activation for ${moduleId}`);
+      return activation;
+    }),
   };
 }
 

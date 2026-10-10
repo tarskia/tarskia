@@ -4,6 +4,7 @@ export * from './model/diagnostics';
 export * from './model/entity-tree';
 export * from './model/flow-analysis';
 export * from './model/schema';
+export * from './model/schema-closure';
 export * from './model/schema-ids';
 export * from './model/schema-ref';
 export * from './model/schema-runtime';

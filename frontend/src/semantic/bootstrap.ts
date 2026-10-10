@@ -1,5 +1,5 @@
+import type { SchemaVersionCatalogEntry } from '@tarskia/diagram-semantics';
 import { getSchemaModuleRef, type SchemaModule } from '@tarskia/diagram-semantics';
-import type { SchemaVersionCatalogEntry } from '../model/validation/schema-closure';
 import { parseTrustedBundledSchemaModule } from './trusted-bundled-assets';
 
 /** Bundled schemas are validated in Vitest and parsed once at the viewer boundary. */

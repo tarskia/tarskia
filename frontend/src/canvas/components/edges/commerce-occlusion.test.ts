@@ -1,13 +1,11 @@
 import {
+  buildSchemaRuntimeFromCatalog,
+  buildSchemaVersionCatalog,
   buildSemanticIndex,
   parseDocument,
   type SemanticDocument,
 } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import {
-  buildSchemaRuntimeFromCatalog,
-  buildSchemaVersionCatalog,
-} from '../../../model/validation/schema-closure';
 import { semanticBootstrap } from '../../../semantic/bootstrap';
 import { compileDiagramViewState } from '../../../semantic/view/compile-diagram-view-tree';
 import occlusionFixtureRaw from '../../../test-fixtures/commerce-occlusion.yaml?raw';
