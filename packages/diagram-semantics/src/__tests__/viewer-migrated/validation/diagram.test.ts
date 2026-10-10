@@ -63,6 +63,38 @@ relations: []
     expect(doc.schemaRefs[0].schema).toBe('repo/x@0.1');
   });
 
+  it.each([
+    { schema: 'core/web-app@0.3', layer: 1 },
+    { schema: 'core/web-app@99.0', layer: 0 },
+  ])('rejects conflicting schema activation %j', (duplicate) => {
+    const doc = parseDocument(starterDiagramRaw);
+    doc.schemaRefs = [{ schema: 'core/web-app@0.3', layer: 0 }, duplicate];
+    const result = validateDiagramDoc(doc, schema);
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        severity: 'error',
+        code: 'diagram.document.conflicting_schema_ref',
+        targetId: 'core/web-app',
+        path: 'schemaRefs[1]',
+      }),
+    );
+  });
+
+  it('warns about identical repeated activations without rejecting the document', () => {
+    const doc = parseDocument(starterDiagramRaw);
+    doc.schemaRefs.push({ ...doc.schemaRefs[0] });
+    const result = validateDiagramDoc(doc, schema);
+    expect(result.ok).toBe(true);
+    expect(result.value).toBe(doc);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        severity: 'warning',
+        code: 'diagram.document.duplicate_schema_ref',
+      }),
+    ]);
+  });
+
   it('parses and validates diagram raw text', () => {
     const result = parseAndValidateDiagramDoc(starterDiagramRaw, schema);
     expect(result.ok).toBe(true);

@@ -105,7 +105,11 @@ export const areSchemaActivationListsEqual = (
   right: SchemaActivation[] | undefined,
 ) => serializeSchemaActivationList(left ?? []) === serializeSchemaActivationList(right ?? []);
 
-export const buildSchemaActivationMap = (activations: SchemaActivation[]) =>
-  new Map(
-    activations.map((activation) => [getSchemaActivationId(activation), activation] as const),
-  );
+export const buildSchemaActivationMap = (activations: SchemaActivation[]) => {
+  const byId = new Map<string, SchemaActivation>();
+  for (const activation of activations) {
+    const id = getSchemaActivationId(activation);
+    if (!byId.has(id)) byId.set(id, activation);
+  }
+  return byId;
+};

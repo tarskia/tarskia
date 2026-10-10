@@ -10,6 +10,7 @@ import {
   CORE_GROUP_TYPE_ID,
   FREEFORM_RELATION_TYPE,
 } from './schema-ids';
+import { buildSchemaActivationMap, getSchemaActivationId } from './schema-ref';
 import {
   compileSchemaSemantics,
   evaluateContainment,
@@ -662,6 +663,30 @@ export function validateDocument(
   const compiledSchemaSemantics = compileSchemaSemantics(schema);
   const validationOptions = resolveDiagramValidationOptions(options);
   const diagnostics: Diagnostic[] = [];
+  const effectiveActivations = buildSchemaActivationMap(doc.schemaRefs);
+  const seenSchemaIds = new Set<string>();
+  for (const [index, activation] of doc.schemaRefs.entries()) {
+    const id = getSchemaActivationId(activation);
+    const first = effectiveActivations.get(id);
+    if (seenSchemaIds.has(id) && first) {
+      const conflict = first.schema !== activation.schema || first.layer !== activation.layer;
+      diagnostics.push(
+        diagramDiagnostic({
+          phase: 'document',
+          severity: conflict ? 'error' : 'warning',
+          code: conflict
+            ? 'diagram.document.conflicting_schema_ref'
+            : 'diagram.document.duplicate_schema_ref',
+          targetId: id,
+          path: `schemaRefs[${index}]`,
+          message: conflict
+            ? `Schema ${id} is activated inconsistently (${first.schema} @ layer ${first.layer} vs ${activation.schema} @ layer ${activation.layer}); the first activation is effective`
+            : `Schema ${id} is activated more than once; the first activation is effective`,
+        }),
+      );
+    }
+    seenSchemaIds.add(id);
+  }
   const inputMap = validateDocumentInputs({ diagnostics, doc });
   if (validationOptions.provenance.requireDocumentInputs && inputMap.size === 0) {
     pushDiagramError(diagnostics, {

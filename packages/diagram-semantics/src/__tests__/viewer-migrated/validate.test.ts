@@ -157,6 +157,11 @@ describe('validateDocument bundled schema containment', () => {
     };
 
     expect(validateDocument(doc, bundledSchema)).toEqual([]);
+    // A later activation cannot change the valid adjacent-layer containment.
+    doc.schemaRefs.push(act('core/code@0.1', 4));
+    expect(validateDocument(doc, bundledSchema).map(({ code }) => code)).toEqual([
+      'diagram.document.conflicting_schema_ref',
+    ]);
   });
 
   it('allows neutral software systems to contain runtime boundaries and deeper code modules', () => {

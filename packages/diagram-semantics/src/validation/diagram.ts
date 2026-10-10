@@ -14,10 +14,10 @@ export function validateDiagramDoc(
   options?: DiagramValidationOptions,
 ): ValidationResult<SemanticDocument> {
   const diagnostics = validateDocument(doc, schema, options);
-  if (diagnostics.length > 0) {
+  if (diagnostics.some((diagnostic) => diagnostic.severity === 'error')) {
     return { ok: false, diagnostics };
   }
-  return { ok: true, value: doc, diagnostics: [] };
+  return { ok: true, value: doc, diagnostics };
 }
 
 export function parseAndValidateDiagramDoc(
