@@ -1,14 +1,12 @@
 # Diagram Worker
 
-This repo is the repo-to-diagram worker for the semantic diagram project.
+This folder is the repo-to-diagram worker for the semantic diagram project.
 
 ## Project context
 
 The wider project is an opinionated semantic architecture diagrammer. It is not a generic whiteboarding tool. Diagrams are meant to describe software systems in terms of schema-defined architectural concepts such as applications, services, APIs, code modules, datastores, queues, and their relationships.
 
-The source of truth for the semantic model lives in the public Tarskia repository's
-`packages/diagram-semantics/` package. This repository keeps a pinned copy of that
-package for the worker.
+The semantic model lives in `packages/diagram-semantics/` in this repository. The worker depends on it as a workspace package; its build, typecheck and test scripts build the package first.
 
 ## What this worker does
 
@@ -21,7 +19,7 @@ Current flow:
 3. Copy the schema source repo into `schema-repo/`.
 4. Build a prompt package from the live schema registry plus the worker contract.
 5. Use the Codex TypeScript SDK to inspect the repo and draft a semantic document.
-6. Validate the result deterministically against the copied semantic kernel.
+6. Validate the result deterministically against the shared semantic package.
 7. If validation fails, run bounded repair passes with diagnostics.
 8. Write the final validated YAML artifact.
 
@@ -35,9 +33,7 @@ The worker is responsible for:
 - provenance requirements for generated entities and relations
 - prompt/debug artifacts in the job workspace
 
-The worker is not the source of truth for the semantic model. The shared
-`packages/diagram-semantics/` package is synced from the public repository, with
-its source revision recorded in `packages/diagram-semantics/UPSTREAM`.
+The semantic model lives in `packages/diagram-semantics/` in this repository. The worker depends on it as a workspace package; its build, typecheck and test scripts build the package first.
 Worker-local semantic adapters live under `src/semantic/`.
 
 ## Important architectural constraints
@@ -66,7 +62,7 @@ Worker-local semantic adapters live under `src/semantic/`.
 
 ## Editing guidance
 
-- Fix shared semantic behavior in the public source repository and sync its package; do not hand-edit the copied kernel.
+- Fix shared semantic behavior in `packages/diagram-semantics/`.
 - Keep filesystem loading and other worker-specific integration in the local adapters.
 - If you change prompt contract behavior here, keep tests updated so the rendered contract stays intentional.
 - Do not relax validation just to make model output pass.

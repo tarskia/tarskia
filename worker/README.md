@@ -2,6 +2,8 @@
 
 Tarskia CLI analyzes a git repository and writes a semantic architecture diagram as a YAML file. The Tarskia gallery viewer can't open your own diagrams yet.
 
+Experimental: the CLI isn't released on npm yet.
+
 The worker is intentionally opinionated. It models software architecture with schema-defined concepts such as applications, services, APIs, modules, datastores, queues, and their relationships. It is not a generic diagramming or whiteboarding tool.
 
 ## Requirements
@@ -165,7 +167,7 @@ new cumulative report. `approxTotalTokens` therefore remains approximate.
 
 These opt-in tests run real advanced orchestration, validation and atomic writes
 with canned agent adapters; they never call a model. The default suite skips them.
-From the repository root, first run `npm run build:semantics`, then:
+From the repository root, first run `npm run build -w @tarskia/diagram-semantics`, then:
 
 ```sh
 TARSKIA_PERFORMANCE_BENCHMARK=1 npm exec -w worker -- vitest run src/advanced/performance.benchmark.test.ts --maxWorkers=1

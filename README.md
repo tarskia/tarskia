@@ -6,12 +6,11 @@ types come from versioned schemas, and the result is plain YAML that fits into
 normal source control.
 
 This repository contains the public gallery frontend, diagram renderer, curated
-gallery source, and shared diagram model. The generation worker, hosted backend,
-and studio are private or archived separately.
+gallery source, and shared diagram model. It also contains the `tarskia` CLI, which generates diagrams; it's experimental and not released yet. The hosted backend and studio are private or archived separately.
 
 ## To come
 
-- Worker to let you build your own diagrams - on a bring-your-own-key basis
+- A released `tarskia` CLI to build your own diagrams, on a bring-your-own-key basis
 - Diagram diffs: confirm that the AI only broke the thing you asked it to change
 - GitHub integration to keep your diagrams fresh
 - Studio for diagram editing, management, and cloud saves and sharing
@@ -25,6 +24,7 @@ backend. In local dev, the gallery loads checked-in YAML diagrams from
 ## Repository Layout
 
 - `frontend/`: Vite + React + TypeScript app.
+- `worker/`: the `tarskia` CLI, which builds a diagram of a git repository using your own Codex sign-in. See `worker/README.md`.
 - `gallery/curated/`: source-of-truth curated gallery diagrams.
 - `packages/diagram-semantics/`: shared diagram model — parser, validator, and view helpers.
 - `openapi/`: public API contract snapshot for the hosted backend.
