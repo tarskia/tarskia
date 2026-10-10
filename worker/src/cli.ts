@@ -23,7 +23,12 @@ import { REASONING_EFFORTS, resolveReasoningEffort } from './reasoning-effort';
 import { redactRepositoryText } from './repository-identity';
 import { runValidateSchemaSelectionCli } from './schema-selection-validator-cli';
 import { emptyBuildSecrets, formatSecretsAlert, type UnmaskedSecrets } from './secret-masking';
-import { checkSetup, runBuildWithPreflight, type SetupCheck } from './setup-preflight';
+import {
+  assertBuildPlatform,
+  checkSetup,
+  runBuildWithPreflight,
+  type SetupCheck,
+} from './setup-preflight';
 import { runValidateCli, type ValidateKind } from './validate-cli';
 
 let lastBuildSecrets = emptyBuildSecrets();
@@ -42,7 +47,7 @@ function printUsage(command?: string, json = false): void {
       '  --restart-from requires an existing advanced job and allows replacing its output.',
     ],
     validate: [
-      'tarskia validate <path> [--kind <auto|diagram|schema|schema-registry>] [--schema <file>...] [--schema-source <dir>] [--json] [--strict]',
+      'tarskia validate <path> [--kind <auto|diagram|schema|schema-registry>] [--schema <file>...] [--schema-source <dir>] [--json]',
     ],
     check: ['tarskia check'],
     internal: [
@@ -225,12 +230,12 @@ type ParsedValues = {
   context?: string;
   kind?: string;
   json?: boolean;
-  strict?: boolean;
   help?: boolean;
   version?: boolean;
 };
 
 async function main(): Promise<void> {
+  if (process.argv[2] === 'build') assertBuildPlatform();
   let parsed: ReturnType<typeof parseArgs>;
   try {
     parsed = parseArgs({
@@ -258,7 +263,6 @@ async function main(): Promise<void> {
         context: { type: 'string' },
         kind: { type: 'string' },
         json: { type: 'boolean' },
-        strict: { type: 'boolean' },
         help: { type: 'boolean', short: 'h' },
         version: { type: 'boolean' },
       },
@@ -303,7 +307,6 @@ async function main(): Promise<void> {
       schemaSource: parsedValues['schema-source']?.trim() || undefined,
       schemas: parsedValues.schema,
       json: Boolean(parsedValues.json),
-      strict: Boolean(parsedValues.strict),
     });
     return;
   }
@@ -312,6 +315,7 @@ async function main(): Promise<void> {
     throw new UsageError(command ? `unknown command '${command}'` : 'missing command');
   }
 
+  assertBuildPlatform();
   const repo = positionals[1]?.trim() || parsedValues.repo?.trim();
   const out = parsedValues.out?.trim();
   if (!repo || !out) {

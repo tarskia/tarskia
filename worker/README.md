@@ -8,6 +8,8 @@ The worker is intentionally opinionated. It models software architecture with sc
 
 ## Requirements
 
+- macOS or Linux. On Windows, run it in WSL.
+
 - Node.js 22 or newer
 - npm
 - git
@@ -116,6 +118,28 @@ Bundled schema revisions use the package version and a hash of asset names and
 contents, independent of the enclosing Git repository. Bundled schemas and
 ontology are loaded only from the installed package; missing assets are errors,
 even when the working directory contains similarly named files.
+
+## Validate output
+
+Use `tarskia validate diagram.yaml --json` for one JSON result. A valid document:
+
+```json
+{"version":1,"ok":true,"kind":"diagram","path":"/work/diagram.yaml","diagnostics":[],"resolvedSchemaIds":["core/base@0.1"]}
+```
+
+An invalid document:
+
+```json
+{"version":1,"ok":false,"kind":"diagram","path":"/work/diagram.yaml","diagnostics":[{"severity":"error","phase":"parse","code":"semantic.parse.invalid_yaml","message":"unexpected end of the stream"}],"resolvedSchemaIds":[]}
+```
+
+`version` identifies this output contract. `ok` reports validity, `kind` is
+`diagram`, `schema`, or `schema-registry`, and `path` is absolute. `diagnostics`
+contains `severity`, `phase`, `code`, and `message`, with optional `entityId`,
+`relationId`, `moduleId`, `path`, and `hint`. `resolvedSchemaIds` and
+`dependencyRefs` are optional arrays. A breaking shape change bumps `version`.
+Exit codes are 0 for valid input, 1 for invalid input, and 2 for CLI or
+configuration errors.
 
 ## Environment variables
 

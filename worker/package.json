@@ -36,5 +36,10 @@
     "typescript": "^5.9.3",
     "vitest": "^4.1.3"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tarskia/tarskia.git",
+    "directory": "worker"
+  }
 }

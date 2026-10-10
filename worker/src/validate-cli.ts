@@ -2,7 +2,6 @@ import { existsSync, promises as fs, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { ConfigError, ValidationError } from './cli-errors';
 import { resolveDefaultSchemaSource } from './default-assets';
-import { type SerializedDiagnostic, serializeDiagnostics } from './job-metadata';
 import {
   assessSchemaValidation,
   buildRawSchemaSet,
@@ -13,7 +12,6 @@ import {
   parseSchemaModuleYaml,
   parseSourceDocument,
   type SchemaModule,
-  STRICT_WORKER_GENERATED_DIAGRAM_VALIDATION_OPTIONS,
   serializeDocument,
   serializeSourceDocument,
   validateDiagramYaml,
@@ -34,14 +32,40 @@ export interface ValidateCliOptions {
   schemaSource?: string;
   schemas?: string[];
   json?: boolean;
-  strict?: boolean;
+}
+
+export interface ValidateDiagnostic {
+  severity: Diagnostic['severity'];
+  phase: Diagnostic['phase'];
+  code: string;
+  message: string;
+  entityId?: string;
+  relationId?: string;
+  moduleId?: string;
+  path?: string;
+  hint?: string;
+}
+
+function serializeDiagnostics(diagnostics: Diagnostic[]): ValidateDiagnostic[] {
+  return diagnostics.map((diagnostic) => ({
+    severity: diagnostic.severity,
+    phase: diagnostic.phase,
+    code: diagnostic.code,
+    message: diagnostic.message,
+    entityId: diagnostic.entityId,
+    relationId: diagnostic.relationId,
+    moduleId: diagnostic.moduleId,
+    path: diagnostic.path,
+    hint: diagnostic.hint,
+  }));
 }
 
 export interface ValidateCliResult {
+  version: 1;
   ok: boolean;
   kind: Exclude<ValidateKind, 'auto'>;
   path: string;
-  diagnostics: SerializedDiagnostic[];
+  diagnostics: ValidateDiagnostic[];
   resolvedSchemaIds?: string[];
   dependencyRefs?: string[];
 }
@@ -175,7 +199,7 @@ async function loadRegistryWithExtraSchemas(params: {
   return registry;
 }
 
-function formatDiagnostics(diagnostics: SerializedDiagnostic[]): string {
+function formatDiagnostics(diagnostics: ValidateDiagnostic[]): string {
   return diagnostics
     .map((diagnostic) => {
       const target = diagnostic.path
@@ -197,7 +221,6 @@ async function validateDiagramFile(params: {
   raw: string;
   schemaSource?: string;
   schemas?: string[];
-  strict?: boolean;
 }): Promise<ValidateCliResult> {
   const [raw, schemaRegistry] = await Promise.all([
     Promise.resolve(params.raw),
@@ -256,6 +279,7 @@ async function validateDiagramFile(params: {
     : undefined;
   if (compiled && !compiled.result)
     return {
+      version: 1,
       ok: false,
       kind: 'diagram',
       path: path.resolve(params.targetPath),
@@ -264,11 +288,9 @@ async function validateDiagramFile(params: {
   const validation = validateDiagramYaml({
     yaml: compiled?.result ? serializeDocument(compiled.result.doc) : raw,
     schemaRegistry,
-    validationOptions: params.strict
-      ? STRICT_WORKER_GENERATED_DIAGRAM_VALIDATION_OPTIONS
-      : undefined,
   });
   return {
+    version: 1,
     ok: validation.ok && !(compiled?.diagnostics ?? []).some((item) => item.severity === 'error'),
     kind: 'diagram',
     path: path.resolve(params.targetPath),
@@ -300,6 +322,7 @@ async function validateSchemaFile(params: {
     rawSchemaSet: buildRawSchemaSet(Array.from(registry.modulesById.values())),
   });
   return {
+    version: 1,
     ok: assessment.ok,
     kind: 'schema',
     path: path.resolve(params.targetPath),
@@ -319,6 +342,7 @@ async function validateSchemaRegistryDirectory(targetPath: string): Promise<Vali
     );
   }
   return {
+    version: 1,
     ok: diagnostics.every((diagnostic) => diagnostic.severity !== 'error'),
     kind: 'schema-registry',
     path: path.resolve(targetPath),
@@ -342,7 +366,6 @@ export async function validateCli(options: ValidateCliOptions): Promise<Validate
         raw: raw ?? '',
         schemaSource: options.schemaSource,
         schemas: options.schemas,
-        strict: options.strict,
       });
     else if (kind === 'schema')
       result = await validateSchemaFile({
@@ -362,6 +385,7 @@ export async function validateCli(options: ValidateCliOptions): Promise<Validate
       error = new ValidationError([yamlInputDiagnostic(error, targetPath)]);
     if (error instanceof ValidationError)
       return {
+        version: 1,
         ok: false,
         kind,
         path: targetPath,

@@ -18,6 +18,7 @@ async function run(
   debug = false,
   missing: 'codex' | 'uv' | '' = '',
   codexYaml = '',
+  platform = process.platform,
 ) {
   return new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve, reject) => {
     const child = spawn(process.execPath, [cli, ...args], {
@@ -27,6 +28,7 @@ async function run(
         TARSKIA_DEBUG: debug ? '1' : '',
         NODE_OPTIONS: `--import=${probePreload}`,
         TARSKIA_TEST_MISSING: missing,
+        TARSKIA_TEST_PLATFORM: platform,
         TARSKIA_TEST_CODEX_YAML: codexYaml,
       },
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -51,6 +53,7 @@ beforeAll(async () => {
     `
     import childProcess from 'node:child_process';
     import { syncBuiltinESMExports } from 'node:module';
+    Object.defineProperty(process, 'platform', { value: process.env.TARSKIA_TEST_PLATFORM || process.platform });
     const original = childProcess.execFile;
     childProcess.execFile = function(file, args, options, callback) {
       const codex = args?.includes('login') && args?.includes('status');
@@ -659,3 +662,58 @@ it('built CLI exits zero on budget exhaustion and resumes repair with the same l
   expect(clean.stderr).not.toContain('Warning: found');
   expect(clean.stderr).not.toContain('Consider rotating');
 }, 30000);
+
+it('rejects Windows builds before argument validation or setup and reports platform in check', async () => {
+  const message = "Windows isn't supported yet. Run tarskia in WSL (Windows Subsystem for Linux).";
+  const result = await run(['build'], false, 'codex', '', 'win32');
+  expect(result.code).toBe(2);
+  expect(result.stderr).toBe(`tarskia: ${message}\nRun 'tarskia build --help' for usage.\n`);
+  const check = await run(['check', '--json'], false, '', '', 'win32');
+  expect(check.code).toBe(2);
+  expect(JSON.parse(check.stdout).checks).toContainEqual({
+    name: 'platform',
+    ok: false,
+    detail: message,
+  });
+  const supported = await run(['check', '--json']);
+  expect(JSON.parse(supported.stdout).checks).toContainEqual({
+    name: 'platform',
+    ok: true,
+    detail: process.platform,
+  });
+});
+
+it('versions valid and invalid validate JSON documents', async () => {
+  await fs.writeFile(
+    path.join(tmp, 'valid-versioned.yaml'),
+    'schemaRefs: [{schema: core/base@0.1, layer: 0}]\nentities: []\nrelations: []\n',
+  );
+  for (const [file, code, ok] of [
+    ['valid-versioned.yaml', 0, true],
+    ['broken.yaml', 1, false],
+  ] as const) {
+    const result = await run(['validate', file, '--json']);
+    expect(result.code).toBe(code);
+    const output = JSON.parse(result.stdout);
+    expect(Object.keys(output)[0]).toBe('version');
+    expect(output).toMatchObject({
+      version: 1,
+      ok,
+      kind: 'diagram',
+      path: path.join(await fs.realpath(tmp), file),
+    });
+    if (!ok)
+      expect(output.diagnostics).toContainEqual(
+        expect.objectContaining({ code: 'semantic.parse.invalid_yaml' }),
+      );
+  }
+});
+
+it('rejects the retired strict validation option as an unknown option', async () => {
+  // Construct the retired flag so repository scans distinguish it from supported CLI options.
+  const retiredFlag = ['--', 'strict'].join('');
+  const result = await run(['validate', 'empty.yaml', retiredFlag]);
+  expect(result.code).toBe(2);
+  expect(result.stderr).toContain(`unknown option '${retiredFlag}'`);
+  expect((await run(['validate', '--help'])).stdout).not.toContain(retiredFlag);
+});

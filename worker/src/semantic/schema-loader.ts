@@ -3,6 +3,7 @@ import path from 'node:path';
 import {
   buildSchemaRuntimeFromCatalog,
   buildSchemaVersionCatalogFromRegistry,
+  DocumentStructureError,
 } from '@tarskia/diagram-semantics';
 import { YamlInputError, yamlInputDiagnostic } from '../untrusted-yaml';
 import { type Diagnostic, diagramDiagnostic, sortDiagnostics } from './model/diagnostics';
@@ -30,12 +31,12 @@ export interface DiagramValidationResult {
 
 const isYamlFile = (filePath: string) => /\.(ya?ml)$/i.test(filePath);
 
-const toParseDiagnostic = (message: string): Diagnostic =>
+const toParseDiagnostic = (error: unknown): Diagnostic =>
   diagramDiagnostic({
     phase: 'parse',
     severity: 'error',
-    code: 'diagram.parse.invalid_document',
-    message,
+    code: error instanceof DocumentStructureError ? error.code : 'semantic.parse.invalid_yaml',
+    message: error instanceof Error ? error.message : String(error),
   });
 
 async function pathExists(filePath: string): Promise<boolean> {
@@ -119,9 +120,7 @@ export function validateDiagramYaml(params: {
     return {
       ok: false,
       diagnostics: [
-        error instanceof YamlInputError
-          ? yamlInputDiagnostic(error)
-          : toParseDiagnostic(error instanceof Error ? error.message : String(error)),
+        error instanceof YamlInputError ? yamlInputDiagnostic(error) : toParseDiagnostic(error),
       ],
       resolvedSchemaIds: [],
     };
