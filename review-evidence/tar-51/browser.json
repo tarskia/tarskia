@@ -1,0 +1,18 @@
+{
+  "urlLength": 331,
+  "themes": [
+    {
+      "theme": "Light",
+      "outline": "rgb(19, 109, 236) dashed 2px",
+      "outlineOffset": "5px",
+      "id": "portal-app"
+    },
+    {
+      "theme": "Dark",
+      "outline": "rgb(90, 153, 242) dashed 2px",
+      "outlineOffset": "5px",
+      "id": "portal-app"
+    }
+  ],
+  "errors": []
+}
