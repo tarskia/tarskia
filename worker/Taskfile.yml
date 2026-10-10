@@ -3,9 +3,7 @@ version: "3"
 vars:
   WORKER_DIR: '{{.TASKFILE_DIR}}'
   REPO_ROOT: '{{.TASKFILE_DIR}}/..'
-  FRONTEND_REPO: '{{.TASKFILE_DIR}}/../frontend'
   OUTPUT_DIR: '{{.TASKFILE_DIR}}/.tmp'
-  FRONTEND_OUTPUT: '{{.OUTPUT_DIR}}/frontend.diagram.yaml'
   DEFAULT_MODEL: 'gpt-6-luna'
   DEFAULT_MODE: 'advanced'
   DEFAULT_REASONING_EFFORT: 'medium'
@@ -79,25 +77,6 @@ tasks:
         --repo '{{.REPO}}'
         --schema-source '{{.SCHEMA_SOURCE}}'
         --out '{{.OUT}}'
-        --mode '{{.MODE_VALUE}}'
-        --model '{{.MODEL_VALUE}}'
-        --reasoning-effort '{{.REASONING_EFFORT_VALUE}}'
-
-  diagram:frontend:
-    desc: Build a semantic diagram for the monorepo frontend
-    dir: '{{.WORKER_DIR}}'
-    deps: [build]
-    vars:
-      MODE_VALUE: '{{if .MODE}}{{.MODE}}{{else}}advanced{{end}}'
-      MODEL_VALUE: '{{if .MODEL}}{{.MODEL}}{{else}}{{.DEFAULT_MODEL}}{{end}}'
-      REASONING_EFFORT_VALUE: '{{if .REASONING_EFFORT}}{{.REASONING_EFFORT}}{{else}}{{.DEFAULT_REASONING_EFFORT}}{{end}}'
-    cmds:
-      - mkdir -p '{{.OUTPUT_DIR}}'
-      - >-
-        npm run build-diagram --
-        --repo '{{.FRONTEND_REPO}}'
-        --schema-source '{{.FRONTEND_REPO}}'
-        --out '{{.FRONTEND_OUTPUT}}'
         --mode '{{.MODE_VALUE}}'
         --model '{{.MODEL_VALUE}}'
         --reasoning-effort '{{.REASONING_EFFORT_VALUE}}'
