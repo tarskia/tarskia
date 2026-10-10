@@ -34,8 +34,8 @@ node dist/cli.js build <repo> --out diagram.yaml
 node dist/cli.js build <repo> --out diagram.yaml --ref <git-ref>
 node dist/cli.js build <repo> --out diagram.yaml --model gpt-6-luna --reasoning-effort max
 node dist/cli.js build <repo> --out diagram.yaml --graphify-hints off
-node dist/cli.js validate assets/schemas --kind schema-registry
-node dist/cli.js validate diagram.yaml --kind diagram --schema-source assets/schemas
+node dist/cli.js validate dist/schemas --kind schema-registry
+node dist/cli.js validate diagram.yaml --kind diagram
 ```
 
 `--model` accepts any model ID supported by Codex for your sign-in method and

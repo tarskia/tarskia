@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import baseRaw from '../../__tests__/fixtures/viewer/base.yaml?raw';
-import codeRaw from '../../__tests__/fixtures/viewer/code.yaml?raw';
-import frontendRaw from '../../__tests__/fixtures/viewer/frontend.yaml?raw';
-import softwareRaw from '../../__tests__/fixtures/viewer/software.yaml?raw';
-import webAppRaw from '../../__tests__/fixtures/viewer/web-app.yaml?raw';
+import baseRaw from '../../../core-schemas/base.yaml?raw';
+import codeRaw from '../../../core-schemas/code.yaml?raw';
+import frontendRaw from '../../../core-schemas/frontend.yaml?raw';
+import softwareRaw from '../../../core-schemas/software.yaml?raw';
+import webAppRaw from '../../../core-schemas/web-app.yaml?raw';
 import {
   buildQualifiedSchemaObjectId,
   buildRawSchemaSet,

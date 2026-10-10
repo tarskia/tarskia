@@ -8,11 +8,18 @@ export interface SemanticBootstrap {
   builtInSchemaCatalogEntries: SchemaVersionCatalogEntry[];
 }
 
-const bundledSchemaRawModules = import.meta.glob('../schemas/*.yaml', {
-  eager: true,
-  import: 'default',
-  query: '?raw',
-}) as Record<string, string>;
+const bundledSchemaRawModules = {
+  ...import.meta.glob('../../../packages/diagram-semantics/core-schemas/*.yaml', {
+    eager: true,
+    import: 'default',
+    query: '?raw',
+  }),
+  ...import.meta.glob('../schemas/*.yaml', {
+    eager: true,
+    import: 'default',
+    query: '?raw',
+  }),
+} as Record<string, string>;
 
 const builtInSchemaFixtures = Object.entries(bundledSchemaRawModules)
   .map(([filePath, raw]) => {

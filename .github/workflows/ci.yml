@@ -74,12 +74,12 @@ jobs:
         run: npm run build -w @tarskia/diagram-worker
 
       - name: Validate bundled schemas
-        run: node worker/dist/cli.js validate worker/assets/schemas --kind schema-registry
+        run: node worker/dist/cli.js validate packages/diagram-semantics/core-schemas --kind schema-registry
 
       - name: Validate curated gallery
         run: |
           for f in gallery/curated/*.yaml; do
-            node worker/dist/cli.js validate "$f" --kind diagram --schema-source frontend/src/schemas || exit 1
+            node worker/dist/cli.js validate "$f" --kind diagram --schema "frontend/src/schemas/$(basename "$f")" || exit 1
           done
 
       - name: Smoke test installed package
@@ -92,4 +92,4 @@ jobs:
           npm install -g --prefix "$install_prefix" "$pack_dir/$tarball"
           cd "$RUNNER_TEMP"
           "$install_prefix/bin/tarskia" --help
-          "$install_prefix/bin/tarskia" validate "$install_prefix/lib/node_modules/$package_name/assets/schemas" --kind schema-registry
+          "$install_prefix/bin/tarskia" validate "$install_prefix/lib/node_modules/$package_name/dist/schemas" --kind schema-registry

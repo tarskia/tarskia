@@ -10,13 +10,18 @@ import {
 import { describe, expect, it } from 'vitest';
 import starterRaw from '../data/starters/starter.yaml?raw';
 
-const bundledSchemaFixtures = Object.entries(
-  import.meta.glob('../schemas/*.yaml', {
+const bundledSchemaFixtures = Object.entries({
+  ...import.meta.glob('../../../packages/diagram-semantics/core-schemas/*.yaml', {
     eager: true,
     import: 'default',
     query: '?raw',
-  }) as Record<string, string>,
-).map(([filePath, raw]) => ({
+  }),
+  ...import.meta.glob('../schemas/*.yaml', {
+    eager: true,
+    import: 'default',
+    query: '?raw',
+  }),
+} as Record<string, string>).map(([filePath, raw]) => ({
   label:
     filePath
       .split('/')

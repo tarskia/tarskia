@@ -9,10 +9,10 @@ import {
   validateDiagramDoc,
 } from '@tarskia/diagram-semantics';
 import { describe, expect, it } from 'vitest';
-import baseRaw from '../../schemas/base.yaml?raw';
-import codeRaw from '../../schemas/code.yaml?raw';
-import softwareRaw from '../../schemas/software.yaml?raw';
-import webAppRaw from '../../schemas/web-app.yaml?raw';
+import baseRaw from '../../../../packages/diagram-semantics/core-schemas/base.yaml?raw';
+import codeRaw from '../../../../packages/diagram-semantics/core-schemas/code.yaml?raw';
+import softwareRaw from '../../../../packages/diagram-semantics/core-schemas/software.yaml?raw';
+import webAppRaw from '../../../../packages/diagram-semantics/core-schemas/web-app.yaml?raw';
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
 

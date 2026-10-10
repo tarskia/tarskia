@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { resolveDefaultSchemaSource } from '../default-assets';
 import { type SchemaModule, type SemanticDocument, validateDiagramYaml } from '../semantic';
 import { loadSchemaRegistry } from '../semantic/schema-loader';
 import {
@@ -9,11 +10,9 @@ import {
   serializeFlowBuildStateArtifact,
 } from './flow-build-state';
 
-const repoPath = (...segments: string[]) => path.resolve(process.cwd(), '..', ...segments);
-
 describe('flow build state', () => {
   it('tracks unresolved flow, may-terminate retries, and descendant edge bindings', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const yaml = `version: 0.1.0
 schemaRefs:
   - schema: core/web-app@0.3
@@ -150,7 +149,7 @@ relations:
   });
 
   it('flags disconnected top-level grouping nodes for level-0 repair', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const yaml = `version: 0.1.0
 schemaRefs:
   - schema: core/web-app@0.3
@@ -257,7 +256,7 @@ relations: []
   });
 
   it('requires queueing boundaries to have publisher and subscriber flow', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const disconnectedYaml = `version: 0.1.0
 schemaRefs:
   - schema: core/web-app@0.3
@@ -357,7 +356,7 @@ relations:
   });
 
   it('requires topics to have publisher and subscriber flow', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const publishOnlyYaml = `version: 0.1.0
 schemaRefs:
   - schema: core/frontend@0.3
@@ -513,7 +512,7 @@ relations:
   });
 
   it('treats ingress on a direct child sink as satisfying the refined parent sink boundary', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const yaml = `version: 0.1.0
 schemaRefs:
   - schema: core/web-app@0.3
@@ -597,7 +596,7 @@ relations:
   });
 
   it('warns when a refined sink does not preserve a direct child sink', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const yaml = `version: 0.1.0
 schemaRefs:
   - schema: core/web-app@0.3
@@ -673,7 +672,7 @@ relations:
   });
 
   it('warns when a refined sink keeps external ingress on the parent despite a child sink', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const yaml = `version: 0.1.0
 schemaRefs:
   - schema: core/web-app@0.3
@@ -750,7 +749,7 @@ relations:
   });
 
   it('warns when a refined source does not preserve a direct child source', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const yaml = `version: 0.1.0
 schemaRefs:
   - schema: core/web-app@0.3

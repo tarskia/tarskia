@@ -1,1 +1,1 @@
-These YAML fixtures were copied from the frontend schemas and starter when the semantic model tests moved into this package (TAR-15). They are fixed inputs for package regression tests and do not depend on frontend runtime loading.
+The starter diagram is a fixed regression fixture from the viewer. Core schema fixtures are loaded directly from `core-schemas/`, the package-owned canonical modules shared by the viewer and CLI.

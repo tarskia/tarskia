@@ -96,7 +96,7 @@ types:
       count:
         childTypes:
           - module
-          - group
+          - core/web-app.types.group
         label: components
     properties:
       - id: runtime
@@ -154,7 +154,7 @@ types:
       count:
         childTypes:
           - module
-          - group
+          - core/web-app.types.group
         label: modules
     properties:
       - id: language

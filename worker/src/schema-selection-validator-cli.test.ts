@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { resolveDefaultSchemaSource } from './default-assets';
 import {
   extractProposedSchemaRefs,
   type SchemaSelectionValidationContextArtifact,
@@ -8,7 +9,6 @@ import {
 import { buildSchemaActivation } from './semantic';
 import { loadSchemaRegistry } from './semantic/schema-loader';
 
-const repoPath = (...segments: string[]) => path.resolve(process.cwd(), '..', ...segments);
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
 
 describe('schema selection validator cli helpers', () => {
@@ -42,7 +42,7 @@ relations: []
   });
 
   it('validates proposed refs with the same schema-set acceptance rules used by the pipeline', async () => {
-    const schemaRegistry = await loadSchemaRegistry(repoPath('frontend'));
+    const schemaRegistry = await loadSchemaRegistry(resolveDefaultSchemaSource());
     const context: SchemaSelectionValidationContextArtifact = {
       version: 1,
       rootSchemaRefs: [act('core/web-app@0.3')],

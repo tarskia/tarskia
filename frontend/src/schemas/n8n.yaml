@@ -157,7 +157,7 @@ types:
     containment:
       allowedChildTypes:
         - module
-        - group
+        - core/web-app.types.group
       allowedChildTraits:
         - core/code.traits.code-like
         - core/base.traits.group-like
@@ -171,7 +171,7 @@ types:
       count:
         childTypes:
           - module
-          - group
+          - core/web-app.types.group
         label: components
     properties:
       - id: runtime
@@ -221,7 +221,7 @@ types:
         - scheduler
         - scheduled-job
         - module
-        - group
+        - core/web-app.types.group
       allowedChildTraits:
         - core/software.traits.api-like
         - core/software.traits.scheduler-like
@@ -241,7 +241,7 @@ types:
           - scheduler
           - scheduled-job
           - module
-          - group
+          - core/web-app.types.group
         label: components
     properties:
       - id: runtime
@@ -290,7 +290,7 @@ types:
         - scheduler
         - scheduled-job
         - module
-        - group
+        - core/web-app.types.group
       allowedChildTraits:
         - core/software.traits.scheduler-like
         - core/software.traits.job-like
@@ -308,7 +308,7 @@ types:
           - scheduler
           - scheduled-job
           - module
-          - group
+          - core/web-app.types.group
         label: jobs
     properties:
       - id: runtime
@@ -340,7 +340,7 @@ types:
     containment:
       allowedChildTypes:
         - module
-        - group
+        - core/web-app.types.group
       allowedChildTraits:
         - core/code.traits.code-like
         - core/base.traits.group-like
@@ -354,7 +354,7 @@ types:
       count:
         childTypes:
           - module
-          - group
+          - core/web-app.types.group
         label: components
     properties:
       - id: runtime
@@ -386,7 +386,7 @@ types:
     containment:
       allowedChildTypes:
         - module
-        - group
+        - core/web-app.types.group
       allowedChildTraits:
         - core/code.traits.code-like
         - core/base.traits.group-like
@@ -400,7 +400,7 @@ types:
       count:
         childTypes:
           - module
-          - group
+          - core/web-app.types.group
         label: components
     properties:
       - id: runtime

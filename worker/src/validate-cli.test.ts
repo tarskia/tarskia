@@ -2,9 +2,10 @@ import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, expect, it } from 'vitest';
+import { resolveDefaultSchemaSource } from './default-assets';
 import { validateCli } from './validate-cli';
 
-const schemaSource = path.resolve('assets/schemas');
+const schemaSource = resolveDefaultSchemaSource();
 let root: string;
 beforeEach(async () => {
   root = await fs.mkdtemp(path.join(os.tmpdir(), 'validate-catalog-'));

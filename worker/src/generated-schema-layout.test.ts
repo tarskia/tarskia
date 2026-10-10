@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { simpleGit } from 'simple-git';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { resolveDefaultSchemaSource } from './default-assets';
 import { GeneratedSchemaService } from './generated-schema';
 import { loadSchemaRegistry, validateDiagramYaml } from './semantic';
 import { type PreparedWorkspace, prepareWorkspace } from './workspace';
@@ -21,7 +22,7 @@ describe('generated schema registry layout', () => {
   it('reuses an older generated module without installing a duplicate schema ID', async () => {
     const schemaRepoPath = path.join(tempRoot, 'schema-repo');
     const schemaDirectory = path.join(schemaRepoPath, 'src', 'schemas');
-    await fs.cp(path.resolve('assets/schemas'), schemaDirectory, { recursive: true });
+    await fs.cp(resolveDefaultSchemaSource(), schemaDirectory, { recursive: true });
     const artifactPath = path.join(schemaDirectory, 'application.yaml');
     await fs.writeFile(
       artifactPath,
@@ -77,7 +78,7 @@ relations: []
 
   it('refreshes schemas in a trusted masked workspace after an upgrade and retains its generated schema and census', async () => {
     const schemaSource = path.join(tempRoot, 'source');
-    await fs.cp(path.resolve('assets/schemas'), schemaSource, { recursive: true });
+    await fs.cp(resolveDefaultSchemaSource(), schemaSource, { recursive: true });
     const sourceGit = simpleGit(schemaSource);
     await sourceGit.init();
     await sourceGit.addConfig('user.name', 'Tarskia Test');
@@ -172,7 +173,7 @@ relations: []
       layout === 'flat'
         ? workspace.schemaRepoPath
         : path.join(workspace.schemaRepoPath, 'src', 'schemas');
-    await fs.cp(path.resolve('assets/schemas'), schemaDirectory, { recursive: true });
+    await fs.cp(resolveDefaultSchemaSource(), schemaDirectory, { recursive: true });
     const coreCodeBefore = await fs.readFile(path.join(schemaDirectory, 'code.yaml'), 'utf8');
     const yaml = `owner: repo
 name: code

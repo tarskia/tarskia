@@ -6,7 +6,9 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { version } from '../package.json';
+import { resolveDefaultSchemaSource } from './default-assets';
 import { createInitialJobMetadata, writeJobMetadata } from './job-metadata';
+import { schemaRepoFixture } from './schema-repo-fixture';
 
 const exec = promisify(execFile);
 const cli = path.resolve('dist/cli.js');
@@ -293,7 +295,7 @@ it('check prints WARN for missing optional uv without failing the command', asyn
 
 it('rejects a generated schema source collision before workspace preparation', async () => {
   const source = path.join(tmp, 'schema-collision-source');
-  await fs.cp(path.resolve('assets/schemas'), source, { recursive: true });
+  await fs.cp(resolveDefaultSchemaSource(), source, { recursive: true });
   const schemaFile = path.join(source, 'existing.yaml');
   const original = 'owner: repo\nname: existing\nversion: "0.1"\ntypes: []\nrelations: []\n';
   await fs.writeFile(schemaFile, original);
@@ -338,7 +340,7 @@ it('rejects ambiguous directories as usage/config errors without corrupting JSON
 });
 
 it('rejects duplicate --schema IDs with both paths and exit 2', async () => {
-  const bundled = path.resolve('assets/schemas/web-app.yaml');
+  const bundled = path.join(resolveDefaultSchemaSource(), 'web-app.yaml');
   const duplicate = path.join(tmp, 'duplicate-web-app.yaml');
   await fs.copyFile(bundled, duplicate);
   const result = await run(['validate', 'empty.yaml', '--schema', duplicate, '--json']);
@@ -347,7 +349,7 @@ it('rejects duplicate --schema IDs with both paths and exit 2', async () => {
   expect(result.stderr).not.toContain('    at ');
   const message = JSON.parse(result.stdout).error.message;
   expect(message).toContain('duplicate schema id core/web-app');
-  expect(message).toContain(bundled);
+  expect(message).toContain(path.resolve('dist/schemas/web-app.yaml'));
   expect(message).toContain(duplicate);
 });
 
@@ -556,7 +558,7 @@ it('built CLI exits zero on budget exhaustion and resumes the advanced pipeline 
     '--out',
     out,
     '--schema-source',
-    path.resolve('test/fixtures/schema-repo'),
+    schemaRepoFixture(),
     '--max-turns',
     '1',
     '--graphify-hints',

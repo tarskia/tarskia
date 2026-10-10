@@ -5,10 +5,13 @@ import { describe, expect, it } from 'vitest';
 import { buildInitialNodeRefinementState } from './advanced/node-refinement-engine';
 import { testGroupSemantics } from './advanced/refinement-test-context';
 import { validateNodeRefinementCandidateCommand } from './node-refinement-validator-cli';
+import { schemaRepoFixture } from './schema-repo-fixture';
 import { parseDocument } from './semantic';
 
 const fixturePath = (...segments: string[]) =>
-  path.resolve(process.cwd(), 'test', 'fixtures', ...segments);
+  segments[0] === 'schema-repo'
+    ? path.join(schemaRepoFixture(), ...segments.slice(1))
+    : path.resolve(process.cwd(), 'test', 'fixtures', ...segments);
 
 describe('validateNodeRefinementCandidateCommand', () => {
   it('returns hard diagnostics for an invalid runtime-to-code sibling edge', async () => {

@@ -7,7 +7,6 @@
     "tarskia": "./dist/cli.js"
   },
   "files": [
-    "assets",
     "dist",
     "README.md"
   ],

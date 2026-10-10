@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { schemaRepoFixture } from '../schema-repo-fixture';
 import {
   buildDiagramSynthesisContract,
   OPTIONAL_DOCUMENT_KEYS,
@@ -9,7 +10,9 @@ import { STRICT_WORKER_GENERATED_DIAGRAM_VALIDATION_OPTIONS } from './model/vali
 import { loadSchemaRegistry, validateDiagramYaml } from './schema-loader';
 
 const fixturePath = (...segments: string[]) =>
-  path.resolve(process.cwd(), 'test', 'fixtures', ...segments);
+  segments[0] === 'schema-repo'
+    ? path.join(schemaRepoFixture(), ...segments.slice(1))
+    : path.resolve(process.cwd(), 'test', 'fixtures', ...segments);
 
 describe('diagram-synthesis-contract', () => {
   it('builds a contract from the live schema registry', async () => {

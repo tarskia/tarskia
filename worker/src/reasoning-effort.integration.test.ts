@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildDiagram } from './build-diagram';
 import { readJobMetadata } from './job-metadata';
 import type { ReasoningEffort } from './reasoning-effort';
+import { schemaRepoFixture } from './schema-repo-fixture';
 import { parseDocument } from './semantic';
 import { CANONICAL_EXAMPLE_YAML } from './semantic/diagram-synthesis-contract';
 
@@ -79,7 +80,7 @@ describe('reasoning effort through real build services', () => {
     const result = await buildDiagram(
       {
         repo,
-        schemaSource: path.resolve('test/fixtures/schema-repo'),
+        schemaSource: schemaRepoFixture(),
         out,
         schemaOut: path.join(tempRoot, 'schema.yaml'),
         schemaId: 'repo/test-repo',

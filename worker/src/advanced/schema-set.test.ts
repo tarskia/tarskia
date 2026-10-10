@@ -1,10 +1,13 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { schemaRepoFixture } from '../schema-repo-fixture';
 import { buildSchemaActivation, loadSchemaRegistry } from '../semantic';
 import { buildSchemaSetManagerFromAreaPlan } from './schema-set';
 
 const fixturePath = (...segments: string[]) =>
-  path.resolve(process.cwd(), 'test', 'fixtures', ...segments);
+  segments[0] === 'schema-repo'
+    ? path.join(schemaRepoFixture(), ...segments.slice(1))
+    : path.resolve(process.cwd(), 'test', 'fixtures', ...segments);
 
 const act = (schema: string, layer = 0) => buildSchemaActivation(schema, layer);
 

@@ -4,7 +4,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { version } from '../package.json';
 
-const bundledSchemaSource = fileURLToPath(new URL('../assets/schemas', import.meta.url));
+// Source tests load the canonical modules; bundled JS must use only its own installed assets.
+const bundledSchemaSource = fileURLToPath(
+  new URL(
+    import.meta.url.endsWith('.ts') ? '../../packages/diagram-semantics/core-schemas' : './schemas',
+    import.meta.url,
+  ),
+);
 
 export function resolveDefaultSchemaSource(): string {
   if (existsSync(bundledSchemaSource)) return bundledSchemaSource;

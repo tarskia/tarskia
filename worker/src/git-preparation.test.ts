@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DefaultRepositoryService } from './repository-service';
+import { schemaRepoFixture } from './schema-repo-fixture';
 import { prepareWorkspace } from './workspace';
 
 const state = vi.hoisted(() => ({
@@ -39,7 +40,7 @@ vi.mock('simple-git', () => ({
   },
 }));
 let root: string;
-const schemaSource = path.resolve('test/fixtures/schema-repo');
+const schemaSource = schemaRepoFixture();
 beforeEach(async () => {
   root = await fs.mkdtemp(path.join(os.tmpdir(), 'git-preparation-'));
   state.attempts = [];

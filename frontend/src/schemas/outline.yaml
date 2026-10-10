@@ -170,7 +170,7 @@ types:
         hue: 188
       count:
         childTypes:
-          - group
+          - core/web-app.types.group
         label: components
   - id: web-service
     label: Web Service
@@ -198,7 +198,7 @@ types:
         childTypes:
           - api
           - module
-          - group
+          - core/web-app.types.group
         label: components
   - id: collaboration-service
     label: Collaboration Service
@@ -224,7 +224,7 @@ types:
       count:
         childTypes:
           - module
-          - group
+          - core/web-app.types.group
         label: components
   - id: websocket-service
     label: Websocket Service
@@ -250,7 +250,7 @@ types:
       count:
         childTypes:
           - module
-          - group
+          - core/web-app.types.group
         label: components
   - id: worker-service
     label: Worker Service
@@ -281,7 +281,7 @@ types:
           - scheduler
           - scheduled-job
           - module
-          - group
+          - core/web-app.types.group
         label: jobs
   - id: plugin-suite
     label: Plugin Suite

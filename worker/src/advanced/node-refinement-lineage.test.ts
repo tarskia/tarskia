@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { schemaRepoFixture } from '../schema-repo-fixture';
 import { compileSchemaSemantics, loadSchemaRegistry, validateDiagramYaml } from '../semantic';
 import type { NodeRefinerInput } from './graph-builders';
 import { buildNodeRefinementEdgeHandles } from './node-refinement-edge-handles';
@@ -22,9 +23,7 @@ const child = (localId: string, expand = false) => ({
   queueDecision: expand ? ('expand' as const) : ('leaf' as const),
 });
 async function fixture() {
-  const schemaRegistry = await loadSchemaRegistry(
-    path.resolve(process.cwd(), 'test/fixtures/schema-repo'),
-  );
+  const schemaRegistry = await loadSchemaRegistry(schemaRepoFixture());
   const validated = validateDiagramYaml({
     schemaRegistry,
     yaml: `version: 0.1.0

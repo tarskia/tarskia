@@ -153,7 +153,7 @@ types:
       count:
         childTypes:
           - module
-          - group
+          - core/web-app.types.group
         label: components
   - id: server-runtime
     label: Server Runtime
@@ -189,7 +189,7 @@ types:
       count:
         childTypes:
           - module
-          - group
+          - core/web-app.types.group
           - service
           - api
         label: components
@@ -220,7 +220,7 @@ types:
       count:
         childTypes:
           - datastore
-          - group
+          - core/web-app.types.group
           - module
         label: components
   - id: cli-suite
@@ -247,6 +247,6 @@ types:
       count:
         childTypes:
           - module
-          - group
+          - core/web-app.types.group
         label: commands
 relations: []
