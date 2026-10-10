@@ -68,6 +68,7 @@ export function buildLayoutResult(params: {
     ]);
   })();
   const result = Object.freeze({
+    highlightedIds: new Set(viewState.highlightedIds),
     schema: graph.schema,
     ...(viewState.scopeRootId &&
     (viewState.edges.some((edge) => edge.external) ||

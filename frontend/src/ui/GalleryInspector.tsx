@@ -1,4 +1,6 @@
+import { Highlighter } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Button } from '../components/ui/button';
 import type {
   InspectorPropertyEntryView,
   InspectorProvenanceView,
@@ -120,7 +122,15 @@ function TagList({ tags }: { tags: Array<{ id: string; label: string; color?: st
   );
 }
 
-export function GalleryInspector({ viewModel }: { viewModel: InspectorViewModel }) {
+export function GalleryInspector({
+  viewModel,
+  onToggleHighlight,
+  onClearHighlights,
+}: {
+  viewModel: InspectorViewModel;
+  onToggleHighlight?: (entityId: string) => void;
+  onClearHighlights?: () => void;
+}) {
   if (viewModel.kind === 'empty') {
     return null;
   }
@@ -139,6 +149,31 @@ export function GalleryInspector({ viewModel }: { viewModel: InspectorViewModel 
           {entityView ? entityView.displayName : relationView?.relationLabel}
         </h2>
       </div>
+
+      {entityView && onToggleHighlight ? (
+        <div className="flex flex-wrap items-center gap-3 px-6 py-3">
+          <Button
+            variant="accent"
+            size="sm"
+            className="rounded-none border-0 bg-transparent px-1 text-accent shadow-none hover:bg-transparent hover:text-accent"
+            aria-pressed={entityView.highlighted === true}
+            onClick={() => onToggleHighlight(entityView.entityId)}
+          >
+            <Highlighter size={12} />
+            Highlight
+          </Button>
+          {entityView.hasHighlights && onClearHighlights ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-none bg-transparent px-1 shadow-none hover:bg-transparent"
+              onClick={onClearHighlights}
+            >
+              Clear highlights
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
       {relationView ? (
         <Section title="Endpoints">

@@ -129,6 +129,7 @@ export interface CanvasNodeView {
   opacity: number;
   contentScale: number;
   content: {
+    highlighted?: boolean;
     label: string;
     entityType: string;
     badges: string[];
@@ -328,6 +329,7 @@ const buildStaticCanvasPresentationUncached = ({
         opacity: 1,
         contentScale: 1,
         content: {
+          highlighted: scene.highlightedIds?.has(nodeId) ?? false,
           label,
           entityType: nodeVisual.projection.typeLabel,
           badges: [],

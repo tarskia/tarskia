@@ -128,3 +128,25 @@ describe('shared view links', () => {
     });
   });
 });
+
+it('carries a toggled Chatwoot highlight in a copied share link', async () => {
+  const { graph } = loadGallery('chatwoot.yaml');
+  const entityId = graph.entities[0].id;
+  const view = applyDiagramViewOperation(graph.tree, graph.content.view, {
+    kind: 'toggle-highlight',
+    entityId,
+  });
+  const saved: SavedDiagramView = {
+    kind: 'semantic-diagram-saved-view',
+    version: 1,
+    diagram: { namespace: 'tarskia', slug: 'chatwoot' },
+    revision: hashDiagramContent(graph.content),
+    view: view!,
+  };
+  const url = new URL(
+    await createSharedViewUrl(saved, 'https://tarskia.com/gallery/tarskia/chatwoot'),
+  );
+  const decoded = await decodeSharedView(url.searchParams.get('view')!, saved.diagram);
+  expect(decoded.view.nodesById?.[entityId]?.highlighted).toBe(true);
+  expect(compileView(graph, decoded.view).tree.byId.get(entityId)?.view.highlighted).toBe(true);
+});

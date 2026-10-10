@@ -6,6 +6,7 @@ import type { ResolvedNodeVisual } from '../visual/node-visuals';
 export interface CanvasScene {
   schema: SchemaModule;
   focusContext?: { scopeRootId: string; index: SemanticIndex; edges: CompiledDiagramEdge[] };
+  highlightedIds?: ReadonlySet<string>;
   tree: LayoutTree;
   edges: ResolvedVisualEdge[];
   nodeVisuals: Map<string, ResolvedNodeVisual>;

@@ -277,6 +277,12 @@ body {
   box-shadow: 0 0 0 2px var(--node-selection-ring, rgba(255, 200, 120, 0.9));
 }
 
+/* Outside the selection/search rings, without affecting layout or dimming neighbors. */
+.node.highlighted {
+  outline: 2px dashed var(--accent);
+  outline-offset: 5px;
+}
+
 .node.matched {
   box-shadow: 0 0 0 2px rgba(141, 224, 255, 0.85);
 }

@@ -65,6 +65,8 @@ export interface CompileDiagramViewTreeParams {
 }
 
 export interface CompiledDiagramViewState {
+  /** Highlighted semantic IDs, including nodes outside the current projection. */
+  highlightedIds: readonly string[];
   tree: DiagramViewTree;
   edges: CompiledDiagramEdge[];
   /**
@@ -447,6 +449,11 @@ export function compileView(
     : new Set<string>();
   const result = {
     ...(effectiveExpansion.scopeRootId ? { scopeRootId: effectiveExpansion.scopeRootId } : {}),
+    highlightedIds: Object.freeze(
+      [...normalizedViewState.highlightedIds].filter(
+        (id) => index.tree.byId.has(id) && id !== index.tree.rootId,
+      ),
+    ),
     tree: projectedTree,
     edges: projectCompiledDiagramEdges({
       tree: workingTree,

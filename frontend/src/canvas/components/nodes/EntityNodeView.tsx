@@ -38,7 +38,7 @@ export function EntityNodeView({ id, view, rootRef, bodyRef }: EntityNodeViewPro
   return (
     <div
       ref={rootRef}
-      className={`node entity-node${listMode ? ' list-item' : ''}${richContent ? ' has-rich-content' : ''}${view.matched ? ' matched' : ''}`}
+      className={`node entity-node${listMode ? ' list-item' : ''}${richContent ? ' has-rich-content' : ''}${view.matched ? ' matched' : ''}${view.content.highlighted ? ' highlighted' : ''}`}
       data-node-id={id}
       data-external-context={view.content.externalContext || undefined}
     >

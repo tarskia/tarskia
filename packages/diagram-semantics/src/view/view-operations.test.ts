@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { DiagramView, SchemaModule, SemanticDocument } from '../model/types';
 import { buildEntityTree } from '../tree/entity-tree';
-import { compileDiagramViewTree } from './compile-diagram-view-tree';
+import { compileDiagramViewTree, compileView } from './compile-diagram-view-tree';
 import { getDiagramViewExpandedMap } from './normalize-diagram-view';
+import { buildSemanticIndex } from './semantic-index';
 import { applyDiagramViewOperation, type DiagramViewOperation } from './view-operations';
 
 const doc: SemanticDocument = {
@@ -149,4 +150,43 @@ describe('pure view operations', () => {
         .controls.canCollapseDetails,
     ).toBe(true);
   });
+});
+
+it('toggles highlights and clears all flags without changing scope, expansion or camera', () => {
+  const view = {
+    ...initial,
+    scopeRootId: 'platform',
+    nodesById: {
+      platform: { expanded: true },
+      leaf: { highlighted: true },
+      'remote-leaf': { highlighted: true },
+    },
+  };
+  const next = apply({ kind: 'toggle-highlight', entityId: 'platform' }, view);
+  expect(next?.nodesById?.platform).toEqual({ expanded: true, highlighted: true });
+  expect(next?.scopeRootId).toBe(view.scopeRootId);
+  expect(next?.camera).toEqual(view.camera);
+  const clear = apply({ kind: 'clear-highlights' }, next);
+  expect(clear?.nodesById).toEqual({ platform: { expanded: true } });
+  expect(clear?.scopeRootId).toBe(view.scopeRootId);
+  expect(clear?.camera).toEqual(view.camera);
+  expect(apply({ kind: 'clear-highlights' }, clear)).toBe(clear);
+  expect(apply({ kind: 'toggle-highlight', entityId: 'missing' }, view)).toBe(view);
+});
+
+it('retains semantic highlights outside a focused projection', () => {
+  const index = buildSemanticIndex(doc, {
+    owner: 'test',
+    name: 'highlight',
+    version: '1',
+    types: [],
+    relations: [],
+  });
+  const compiled = compileView(index, {
+    ...initial,
+    scopeRootId: 'platform',
+    nodesById: { 'remote-leaf': { highlighted: true } },
+  });
+  expect(compiled.tree.byId.has('remote-leaf')).toBe(false);
+  expect(compiled.highlightedIds).toEqual(['remote-leaf']);
 });

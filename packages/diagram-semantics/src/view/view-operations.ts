@@ -7,6 +7,8 @@ import { resolveRevealAnnotations } from './reveal-tree';
 
 export type DiagramViewOperation =
   | { kind: 'toggle'; entityId: string }
+  | { kind: 'toggle-highlight'; entityId: string }
+  | { kind: 'clear-highlights' }
   | { kind: 'set-expansion'; entityId: string; expanded: boolean; expandSingleChildChain?: boolean }
   | { kind: 'expand-all' | 'collapse-all' }
   | {
@@ -42,6 +44,22 @@ export function applyDiagramViewOperation(
     );
   let scopeRootId = view.scopeRootId;
   switch (operation.kind) {
+    case 'toggle-highlight':
+      if (!tree.byId.has(operation.entityId) || operation.entityId === tree.rootId) break;
+      nodes[operation.entityId] = {
+        ...nodes[operation.entityId],
+        highlighted: nodes[operation.entityId]?.highlighted ? undefined : true,
+      };
+      changed = true;
+      break;
+    case 'clear-highlights':
+      for (const [id, state] of Object.entries(nodes)) {
+        if (state.highlighted === undefined) continue;
+        const { highlighted: _highlighted, ...rest } = state;
+        nodes[id] = rest;
+        changed = true;
+      }
+      break;
     case 'toggle':
     case 'set-expansion': {
       if (!tree.byId.has(operation.entityId)) break;

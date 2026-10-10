@@ -59,7 +59,7 @@ export function GroupNodeView({ id, view, bindings, controls, rootRef }: GroupNo
   return (
     <div
       ref={rootRef}
-      className={`node group-node${listMode ? ' list-item' : ''}${focusShell ? ' focus-shell' : ''}${view.matched ? ' matched' : ''}`}
+      className={`node group-node${listMode ? ' list-item' : ''}${focusShell ? ' focus-shell' : ''}${view.matched ? ' matched' : ''}${view.content.highlighted ? ' highlighted' : ''}`}
       data-node-id={id}
       data-zoomable
     >

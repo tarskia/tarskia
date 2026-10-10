@@ -41,6 +41,7 @@ export function addFocusContextNodes(scene: CanvasScene, nodes: CanvasNodeView[]
       listShowType: true,
       externalContext: !boundary,
       focusBoundary: boundary,
+      highlighted: scene.highlightedIds?.has(id) ?? false,
     },
     style: {
       background: boundary ? 'transparent' : 'hsl(0, 0%, var(--node-bg-l, 18%))',

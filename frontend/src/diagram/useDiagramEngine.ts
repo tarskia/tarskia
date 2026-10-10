@@ -8,7 +8,10 @@ import type {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CanvasCamera, CanvasPoint, CanvasViewport } from '../canvas/camera';
 import { collectRectBounds } from '../canvas/focus-viewport';
-import { buildStaticCanvasPresentation } from '../canvas/rendering/presentation/presentation';
+import {
+  buildStaticCanvasPresentation,
+  type CanvasNodeView,
+} from '../canvas/rendering/presentation/presentation';
 import { useCanvasTransitionController } from '../canvas/useCanvasTransitionController';
 import { useDiagramRenderingController } from '../canvas/useDiagramRenderingController';
 import { captureDiagramCamera } from './camera-framing';
@@ -179,7 +182,38 @@ export function useDiagramEngine({
   });
 
   const { compiled, isTransitionQueued, cancelTransitions } = transitions;
-  const presentation = useMemo(() => motion.hostSnapshot, [motion.hostSnapshot]);
+  // Highlight is live view decoration: apply it even while geometry is moving.
+  const decorateHighlight = useCallback(
+    (node: CanvasNodeView): CanvasNodeView => ({
+      ...node,
+      content: {
+        ...node.content,
+        highlighted: rendering.layout.highlightedIds?.has(node.id) ?? false,
+      },
+    }),
+    [rendering.layout.highlightedIds],
+  );
+  const presentation = useMemo(
+    () => ({
+      ...motion.hostSnapshot,
+      nodes: motion.hostSnapshot.nodes.map(decorateHighlight),
+    }),
+    [motion.hostSnapshot, decorateHighlight],
+  );
+  const transitionFrame = useMemo(
+    () =>
+      motion.transitionFrame
+        ? {
+            ...motion.transitionFrame,
+            nodes: motion.transitionFrame.nodes.map((track) => ({
+              ...track,
+              fromView: track.fromView && decorateHighlight(track.fromView),
+              toView: track.toView && decorateHighlight(track.toView),
+            })),
+          }
+        : null,
+    [motion.transitionFrame, decorateHighlight],
+  );
 
   const { sceneBounds, nodeRectsById } = useMemo(() => {
     const cameraBoundsNodes = stableSnapshot.nodes.filter(
@@ -257,7 +291,7 @@ export function useDiagramEngine({
     graph: rendering.graph,
     compiled,
     presentation,
-    transitionFrame: motion.transitionFrame,
+    transitionFrame,
     overlayFrameStore: motion.overlayFrameStore,
     isTransitionRunning: motion.motionPhase === 'animating',
     isTransitionQueued,

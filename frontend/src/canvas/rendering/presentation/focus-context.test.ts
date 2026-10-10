@@ -1,10 +1,13 @@
+import { applyDiagramViewOperation, compileView } from '@tarskia/diagram-semantics';
 import { expect, it } from 'vitest';
 import { loadGallery } from '../../../test/curated-rendering';
 import { canFocusLayoutNode } from '../../../viewer-core/focus-view';
+import { buildLayoutResult } from '../layout/layout-pipeline';
 import { resolveStructuralCamera } from '../transition/camera';
 import { buildTransitionFrameState, resolveAnimationFrame } from '../transition/overlay';
 import { buildEdgeVisuals } from '../visual/edge-visuals';
 import { rectanglesIntersect } from './edge-routing';
+import { buildStaticCanvasPresentation } from './presentation';
 
 it('renders all 20 Chatwoot crossing relations, including frame attachments and camera bounds', () => {
   const gallery = loadGallery('chatwoot.yaml');
@@ -79,4 +82,33 @@ it('renders all 20 Chatwoot crossing relations, including frame attachments and 
       (node) => !node.content.externalContext && !node.content.focusBoundary,
     ),
   ).toBe(true);
+});
+
+it('highlights external context and the scope boundary without changing focused geometry', () => {
+  const gallery = loadGallery('chatwoot.yaml');
+  const focused = gallery.render([], 'rails-control-plane');
+  const frame = focused.presentation.nodes.find((node) => node.content.focusBoundary)!;
+  const external = focused.presentation.nodes.find((node) => node.content.externalContext)!;
+  let view = focused.doc.view;
+  for (const entityId of [frame.id, external.id]) {
+    view = applyDiagramViewOperation(gallery.graph.tree, view, {
+      kind: 'toggle-highlight',
+      entityId,
+    });
+  }
+  const scene = buildLayoutResult({
+    graph: gallery.graph,
+    viewState: compileView(gallery.graph, view),
+  });
+  const highlighted = buildStaticCanvasPresentation({ scene });
+  expect(
+    highlighted.nodes
+      .filter((node) => node.content.highlighted)
+      .map((node) => node.id)
+      .sort(),
+  ).toEqual([frame.id, external.id].sort());
+  expect(highlighted.nodes.map(({ id, rect, opacity }) => ({ id, rect, opacity }))).toEqual(
+    focused.presentation.nodes.map(({ id, rect, opacity }) => ({ id, rect, opacity })),
+  );
+  expect(highlighted.overlayEdges).toEqual(focused.presentation.overlayEdges);
 });
