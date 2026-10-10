@@ -1,0 +1,7 @@
+owner: repo
+name: example
+version: '0.1'
+types:
+  - id: service
+    label: Service
+relations: []

@@ -34,6 +34,14 @@ const renderAt = (path: string, routes: RouteObject[] = appRoutes) =>
   );
 
 describe('AppShell routes', () => {
+  it('defines local opening inside the gallery shell before the hosted viewer route', () => {
+    const gallery = appRoutes.find((route) => route.path === '/gallery');
+    expect(gallery?.children?.map((route) => route.path)).toEqual([
+      undefined,
+      'open',
+      ':namespace/:slug',
+    ]);
+  });
   it('redirects / to /gallery', () => {
     const rootRoute = appRoutes.find((route) => route.path === '/');
     if (!isValidElement(rootRoute?.element)) {

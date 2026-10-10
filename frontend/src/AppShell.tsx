@@ -1,7 +1,7 @@
 import { Navigate, type RouteObject, useParams, useRoutes } from 'react-router-dom';
-
 import AboutPage from './AboutPage';
 import { DiagramErrorBoundary } from './gallery/DiagramErrorBoundary';
+import LocalGalleryViewer from './gallery/LocalGalleryViewer';
 import PublicGalleryIndex from './gallery/PublicGalleryIndex';
 import PublicGalleryViewer from './gallery/PublicGalleryViewer';
 import PublicGalleryShell from './PublicGalleryShell';
@@ -31,6 +31,10 @@ export const appRoutes: RouteObject[] = [
       {
         index: true,
         element: <PublicGalleryIndex />,
+      },
+      {
+        path: 'open',
+        element: <LocalGalleryViewer />,
       },
       {
         path: ':namespace/:slug',

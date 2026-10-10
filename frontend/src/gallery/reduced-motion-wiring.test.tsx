@@ -5,7 +5,12 @@ import { MemoryRouter, Outlet, Route, Routes } from 'react-router-dom';
 import { afterEach, expect, it, vi } from 'vitest';
 
 vi.mock('../api/generated/gallery/gallery', () => ({
-  useGetGalleryDiagram: () => ({ isPending: true }),
+  useGetGalleryDiagram: () => ({
+    data: {
+      status: 200,
+      data: { raw: 'version: 0.1.0\nschemaRefs: []\nentities: []\nrelations: []' },
+    },
+  }),
 }));
 vi.mock('../diagram/useDiagramEngine', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../diagram/useDiagramEngine')>();
