@@ -711,6 +711,29 @@ export function validateDocument(
   };
 
   for (const entity of entities) {
+    if (entity.represents !== undefined) {
+      if (
+        typeof entity.represents !== 'string' ||
+        !/^[a-z0-9]+(?:-[a-z0-9]+)*\/[^/\s]+$/.test(entity.represents)
+      ) {
+        pushDiagramError(diagnostics, {
+          phase: 'document',
+          severity: 'error',
+          code: 'diagram.document.invalid_represents',
+          entityId: entity.id,
+          message: `Entity ${entity.id} represents must be <name>/<id>`,
+        });
+      }
+      if (entity.children?.length || entities.some((child) => child.parent === entity.id)) {
+        pushDiagramError(diagnostics, {
+          phase: 'document',
+          severity: 'error',
+          code: 'diagram.document.represents_has_children',
+          entityId: entity.id,
+          message: `Entity ${entity.id} with represents cannot have children`,
+        });
+      }
+    }
     validateProvenance({
       diagnostics,
       provenance: entity.provenance,

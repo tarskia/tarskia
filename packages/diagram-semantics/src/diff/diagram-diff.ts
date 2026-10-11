@@ -11,6 +11,7 @@ export type SemanticDiagramDiffChange = 'added' | 'removed' | 'changed' | 'uncha
 export type SemanticDiagramDiffSide = 'before' | 'after' | 'merged';
 
 export type SemanticDiagramEntityChangedField =
+  | 'represents'
   | 'name'
   | 'type'
   | 'parent'
@@ -116,6 +117,7 @@ export interface EvolveSemanticDiagramDiffUnionParams {
 }
 
 const ENTITY_FIELD_ORDER: SemanticDiagramEntityChangedField[] = [
+  'represents',
   'name',
   'type',
   'parent',
@@ -218,6 +220,8 @@ const collectEntityChangedFields = (
 ): SemanticDiagramEntityChangedField[] =>
   ENTITY_FIELD_ORDER.filter((field) => {
     switch (field) {
+      case 'represents':
+        return before.represents !== after.represents;
       case 'name':
         return before.name !== after.name;
       case 'type':

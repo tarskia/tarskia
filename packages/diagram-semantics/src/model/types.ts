@@ -239,6 +239,7 @@ export interface RelationTypeAnalysisConfig {
 }
 
 export interface Entity {
+  represents?: string;
   id: string;
   type: string;
   name?: string;

@@ -1,5 +1,6 @@
 export * from './diff';
 export * from './io';
+export * from './model/combine-repos';
 export * from './model/diagnostics';
 export * from './model/entity-tree';
 export * from './model/flow-analysis';

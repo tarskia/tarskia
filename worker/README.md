@@ -121,7 +121,22 @@ even when the working directory contains similarly named files.
 
 ## Validate output
 
-Use `tarskia validate diagram.yaml --json` for one JSON result. A valid document:
+Use `tarskia validate diagram.yaml --json` for one JSON result. To validate a
+combined set of repositories, run `tarskia validate <folder> --kind diagram --json`.
+If the folder has a `.tarskia/` directory, its diagrams are used. Otherwise,
+diagrams are read from each direct child's `.tarskia/` directory. Only `*.yaml`
+diagrams and `*.schema.yaml` schemas in those directories are read; `.job/` is
+ignored. Local schemas and any `--schema` files are included in validation.
+
+An entity can declare `represents: sibling-diagram/entity-id` to identify a
+stand-in for an entity in another diagram. The sibling name is its YAML filename
+without `.yaml`, regardless of the repository folder name. A stand-in cannot
+have children. Combining redirects its relations to the target and removes the
+stand-in, preserving each repository's provenance. Missing repositories are
+silent; missing entities in available repositories produce warnings. Validating
+one `.tarskia/*.yaml` diagram also checks available sibling targets.
+
+A valid document:
 
 ```json
 {"version":1,"ok":true,"kind":"diagram","path":"/work/diagram.yaml","diagnostics":[],"resolvedSchemaIds":["core/base@0.1"]}

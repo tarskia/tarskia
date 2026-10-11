@@ -13,7 +13,7 @@ import type {
   SemanticSourceImport,
 } from './types';
 
-const NAMESPACE_SEGMENT_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export const NAMESPACE_SEGMENT_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export interface SourceGraphResolver {
   resolveImport: (slug: string) => { slug: string; raw: string } | undefined;
 }

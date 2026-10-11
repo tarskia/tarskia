@@ -520,3 +520,22 @@ describe('nested diff evolution', () => {
     ).toEqual(after);
   });
 });
+
+it('round-trips represents through diff snapshots and preserves it when evolving', () => {
+  const before: SemanticDocument = {
+    version: '1',
+    schemaRefs: [],
+    entities: [{ id: 'external', type: 'service', represents: 'api/old' }],
+    relations: [],
+  };
+  const after: SemanticDocument = {
+    ...before,
+    entities: [{ ...before.entities[0], represents: 'api/new' }],
+  };
+  const diff = diffSemanticDiagramDocuments({ before, after });
+  expect(diff.entities[0].changedFields).toEqual(['represents']);
+  const parsed = ingestSemanticDiagramDiff(serializeSemanticDiagramDiff(diff));
+  expect(parsed.ok).toBe(true);
+  const evolved = evolveSemanticDiagramDiffUnion({ before, diff: parsed.value! });
+  expect(evolved.value?.afterDocument.entities[0].represents).toBe('api/new');
+});

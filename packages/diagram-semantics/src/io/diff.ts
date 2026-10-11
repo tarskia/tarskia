@@ -15,6 +15,7 @@ const DIFF_KIND = 'semantic-diagram-diff';
 const DIFF_VERSION = 1;
 
 const ENTITY_FIELD_ORDER: SemanticDiagramEntityChangedField[] = [
+  'represents',
   'name',
   'type',
   'parent',
@@ -81,6 +82,8 @@ const collectEntityChangedFields = (
 ): SemanticDiagramEntityChangedField[] =>
   ENTITY_FIELD_ORDER.filter((field) => {
     switch (field) {
+      case 'represents':
+        return before.represents !== after.represents;
       case 'name':
         return before.name !== after.name;
       case 'type':
@@ -299,6 +302,7 @@ const validateEntitySnapshot = (candidate: unknown, path: string): ValidationRes
   const diagnostics: Diagnostic[] = [];
   const id = readRequiredString(candidate, 'id', path, diagnostics);
   const type = readRequiredString(candidate, 'type', path, diagnostics);
+  const represents = readOptionalString(candidate, 'represents', path, diagnostics);
   const name = readOptionalString(candidate, 'name', path, diagnostics);
   const parent = readOptionalString(candidate, 'parent', path, diagnostics);
   const tags = readOptionalStringArray(candidate, 'tags', path, diagnostics);
@@ -329,6 +333,7 @@ const validateEntitySnapshot = (candidate: unknown, path: string): ValidationRes
     value: {
       id,
       type,
+      ...(represents !== undefined ? { represents } : {}),
       ...(name !== undefined ? { name } : {}),
       ...(parent !== undefined ? { parent } : {}),
       ...(tags !== undefined ? { tags } : {}),

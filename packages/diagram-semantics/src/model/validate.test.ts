@@ -326,3 +326,61 @@ describe('explicit containment alternatives', () => {
     }
   });
 });
+
+describe('represents stand-ins', () => {
+  it.each([
+    'other-repo/api',
+    'other-repo/a_b',
+  ])('accepts a sibling target without resolving it: %s', (represents) => {
+    const doc: SemanticDocument = {
+      version: '1',
+      schemaRefs: [],
+      entities: [{ id: 'external', type: 'core/test.types.module', represents }],
+      relations: [],
+    };
+    expect(
+      validateDocument(doc, buildSchema()).filter((item) => item.code.includes('represents')),
+    ).toEqual([]);
+  });
+  it.each([
+    'api',
+    'Bad/api',
+    'repo/a/b',
+    'repo/',
+    '',
+    123,
+    null,
+  ])('rejects malformed represents %s', (represents) => {
+    const doc: SemanticDocument = {
+      version: '1',
+      schemaRefs: [],
+      entities: [
+        { id: 'external', type: 'core/test.types.module', represents: represents as string },
+      ],
+      relations: [],
+    };
+    expect(validateDocument(doc, buildSchema())).toContainEqual(
+      expect.objectContaining({ code: 'diagram.document.invalid_represents' }),
+    );
+  });
+  it.each([false, true])('rejects children in nested and flat forms (%s)', (flat) => {
+    const child = { id: 'child', type: 'core/test.types.module' };
+    const doc: SemanticDocument = {
+      version: '1',
+      schemaRefs: [],
+      entities: [
+        {
+          id: 'external',
+          type: 'core/test.types.module',
+          represents: 'other/api',
+          ...(flat ? {} : { children: [child] }),
+        },
+        ...(flat ? [{ ...child, parent: 'external' }] : []),
+      ],
+      relations: [],
+    };
+    expect(validateDocument(doc, buildSchema())).toContainEqual(
+      expect.objectContaining({ code: 'diagram.document.represents_has_children' }),
+    );
+  });
+});
