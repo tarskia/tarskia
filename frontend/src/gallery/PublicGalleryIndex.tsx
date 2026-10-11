@@ -1,17 +1,18 @@
 import { ArrowDown, ArrowUp, ArrowUpDown, ExternalLink, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { useListGalleryDiagrams } from '../api/generated/gallery/gallery';
 import type { DtoGalleryDiagramSummaryResponse } from '../api/generated/model';
 import { Input } from '../components/ui/input';
 import { LoadingState } from '../components/ui/loading-state';
+import type { PublicGalleryShellContext } from '../PublicGalleryShell';
 import {
   galleryRetryDelay,
   listGalleryDiagramsWithLocalFallback,
   retryGalleryQuery,
 } from './gallery-query';
 import { coerceGallerySummaryArray, coerceSuccessfulResponseBody } from './gallery-response';
-import { OpenLocalFileButton, useLocalFileOpening } from './OpenLocalFile';
+import { OpenLocalFileButton, OpenLocalFolderButton } from './OpenLocalFile';
 import { describePublicGalleryRepository } from './public-gallery-repository';
 import { formatCompactNumber } from './worker-build-summary';
 
@@ -132,7 +133,7 @@ export function sortPublicGalleryRows(
 }
 
 export default function PublicGalleryIndex() {
-  const localFiles = useLocalFileOpening();
+  const { localFiles } = useOutletContext<PublicGalleryShellContext>() ?? {};
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.sortKey);
   const [sortDirection, setSortDirection] = useState<SortDirection>(DEFAULT_SORT.sortDirection);
@@ -190,7 +191,12 @@ export default function PublicGalleryIndex() {
           implementation details.
         </p>
 
-        <OpenLocalFileButton open={localFiles.open} />
+        {localFiles ? (
+          <div className="flex shrink-0 gap-2">
+            <OpenLocalFileButton open={localFiles.open} />
+            <OpenLocalFolderButton open={localFiles.pickFolder} />
+          </div>
+        ) : null}
         <div className="w-full max-w-sm md:w-[320px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -206,19 +212,6 @@ export default function PublicGalleryIndex() {
         </div>
       </div>
 
-      {localFiles.dragging ? (
-        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center border-2 border-accent bg-background/95 p-8 text-center text-lg">
-          Drop a diagram file, and its schema file if it has one, to open it here
-        </div>
-      ) : null}
-      {localFiles.error ? (
-        <div
-          role="alert"
-          className="mt-6 rounded-lg border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-        >
-          {localFiles.error}
-        </div>
-      ) : null}
       {galleryQuery.isPending ? (
         <LoadingState label="Loading gallery" hint="Fetching curated diagrams." />
       ) : galleryQuery.isError || galleryQuery.data?.status !== 200 ? (

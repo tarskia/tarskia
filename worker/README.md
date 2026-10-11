@@ -1,6 +1,6 @@
 # Tarskia CLI Worker
 
-Tarskia CLI analyzes a git repository and writes a semantic architecture diagram as a YAML file. To view a diagram, open the YAML file at [https://tarskia.io/gallery](https://tarskia.io/gallery) with **Open file**, together with the `--schema-out` file if you used one. It stays in your browser.
+Tarskia CLI analyzes a git repository and writes a semantic architecture diagram as a YAML file. To view a diagram, open the YAML file at [https://tarskia.io/gallery](https://tarskia.io/gallery) with **Open file**, together with the `--schema-out` file if you used one. To see several repos together, open their parent folder in the viewer. It stays in your browser.
 
 Experimental: the CLI isn't released on npm yet.
 
