@@ -5,12 +5,14 @@ import { resolveDefaultSchemaSource } from './default-assets';
 import {
   assessSchemaValidation,
   buildRawSchemaSet,
+  combineRepoDiagrams,
   compileSourceGraph,
   type Diagnostic,
   diagramDiagnostic,
   getSchemaModuleRef,
   parseSchemaModuleYaml,
   parseSourceDocument,
+  pickRepoDiagramFiles,
   type SchemaModule,
   serializeDocument,
   serializeSourceDocument,
@@ -78,11 +80,79 @@ async function pathIsDirectory(targetPath: string): Promise<boolean> {
   return (await fs.stat(targetPath)).isDirectory();
 }
 
+/** Read only conventional diagram directories, never recurse into repository contents. */
+async function discoverRepoDiagrams(root: string) {
+  const paths: string[] = [];
+  const list = async (relative: string): Promise<boolean> => {
+    try {
+      const entries = await fs.readdir(path.join(root, relative), { withFileTypes: true });
+      paths.push(`${relative}/`);
+      paths.push(
+        ...entries.filter((entry) => entry.isFile()).map((entry) => `${relative}/${entry.name}`),
+      );
+      return true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+      throw error;
+    }
+  };
+  if (!(await list('.tarskia'))) {
+    for (const entry of await fs.readdir(root, { withFileTypes: true })) {
+      if (entry.isDirectory()) await list(`${entry.name}/.tarskia`);
+    }
+  }
+  return pickRepoDiagramFiles(paths);
+}
+
+async function combineDirectory(root: string) {
+  const files = await discoverRepoDiagrams(root);
+  const diagrams = await Promise.all(
+    files.map(async (file) => ({
+      name: file.name,
+      raw: await fs.readFile(path.join(root, file.diagramPath), 'utf8'),
+    })),
+  );
+  return { files, ...combineRepoDiagrams({ name: path.basename(root), diagrams }) };
+}
+
+async function validateDiagramDirectory(
+  options: ValidateCliOptions,
+  targetPath: string,
+): Promise<ValidateCliResult> {
+  const combined = await combineDirectory(targetPath);
+  if (!combined.files.length) throw new ConfigError(`no repo diagrams found under ${targetPath}`);
+  if (!combined.doc)
+    return {
+      version: 1,
+      ok: false,
+      kind: 'diagram',
+      path: targetPath,
+      diagnostics: serializeDiagnostics(combined.diagnostics),
+    };
+  const schemas = [
+    ...new Set([
+      ...combined.files.flatMap((file) =>
+        file.schemaPaths.map((schema) => path.join(targetPath, schema)),
+      ),
+      ...(options.schemas ?? []).map((schema) => path.resolve(schema)),
+    ]),
+  ];
+  const result = await validateDiagramFile({
+    targetPath,
+    raw: serializeDocument(combined.doc),
+    schemaSource: options.schemaSource,
+    schemas,
+  });
+  result.diagnostics.unshift(...serializeDiagnostics(combined.diagnostics));
+  return result;
+}
+
 async function detectValidateKind(
   targetPath: string,
   raw?: string,
 ): Promise<Exclude<ValidateKind, 'auto'>> {
   if (await pathIsDirectory(targetPath)) {
+    if ((await discoverRepoDiagrams(targetPath)).length) return 'diagram';
     const conventional = path.join(targetPath, 'src', 'schemas');
     if (
       await fs
@@ -360,14 +430,41 @@ export async function validateCli(options: ValidateCliOptions): Promise<Validate
       : await fs.readFile(targetPath, 'utf8');
     if (!options.kind || options.kind === 'auto') kind = await detectValidateKind(targetPath, raw);
     let result: ValidateCliResult;
-    if (kind === 'diagram')
-      result = await validateDiagramFile({
-        targetPath,
-        raw: raw ?? '',
-        schemaSource: options.schemaSource,
-        schemas: options.schemas,
-      });
-    else if (kind === 'schema')
+    if (kind === 'diagram') {
+      result =
+        raw === undefined
+          ? await validateDiagramDirectory(options, targetPath)
+          : await validateDiagramFile({
+              targetPath,
+              raw: raw ?? '',
+              schemaSource: options.schemaSource,
+              schemas: options.schemas,
+            });
+      if (
+        result.ok &&
+        raw !== undefined &&
+        path.basename(path.dirname(targetPath)) === '.tarskia'
+      ) {
+        const parsed = parseSourceDocument(raw);
+        const hasRepresents = (entities: typeof parsed.entities): boolean =>
+          entities.some(
+            (entity) => entity.represents !== undefined || hasRepresents(entity.children ?? []),
+          );
+        if (hasRepresents(parsed.entities)) {
+          const combined = await combineDirectory(path.resolve(targetPath, '../../..'));
+          const prefix = `${path.basename(targetPath, '.yaml')}/`;
+          result.diagnostics.push(
+            ...serializeDiagnostics(
+              combined.diagnostics.filter(
+                (item) =>
+                  item.code === 'diagram.combine.represents_target_missing' &&
+                  item.entityId?.startsWith(prefix),
+              ),
+            ),
+          );
+        }
+      }
+    } else if (kind === 'schema')
       result = await validateSchemaFile({
         targetPath,
         raw: raw ?? '',
@@ -406,6 +503,8 @@ export async function runValidateCli(options: ValidateCliOptions): Promise<void>
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } else if (result.ok) {
     process.stdout.write(`OK ${result.kind}: ${result.path}\n`);
+    if (result.diagnostics.length)
+      process.stdout.write(`${formatDiagnostics(result.diagnostics)}\n`);
   } else {
     process.stdout.write(
       `Invalid ${result.kind}: ${result.path}\n${formatDiagnostics(result.diagnostics)}\n`,
