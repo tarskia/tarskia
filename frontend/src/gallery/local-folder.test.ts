@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { load } from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 import {
@@ -98,7 +99,7 @@ describe.each(['handle', 'entry'] as const)('folder opening using %s', (kind) =>
       ),
     };
   };
-  it('reads only chosen files in own/direct-child .tarskia, never node_modules or .job', async () => {
+  it('reads only chosen files in own/direct-child .tarskia, never node_modules or job artifacts outside compare', async () => {
     const { fake, result } = open({
       root: {
         '.tarskia': {
@@ -122,11 +123,39 @@ describe.each(['handle', 'entry'] as const)('folder opening using %s', (kind) =>
       'workspace/root/.tarskia',
       'workspace/api',
       'workspace/api/.tarskia',
+      'workspace/root/.tarskia/.job',
     ]);
     expect(fake.read.sort()).toEqual([
       'workspace/api/.tarskia/api.yaml',
       'workspace/root/.tarskia/root.yaml',
     ]);
+  });
+  it('reads only matching compare files and exposes current changes', async () => {
+    const current = raw('Current');
+    const { fake, result } = open({
+      '.tarskia': {
+        'api.yaml': current,
+        '.job': {
+          workspace: { 'secret.txt': 'secret' },
+          compare: {
+            'api.base.yaml': raw('Before'),
+            'api.json': JSON.stringify({
+              baseCommit: '1234567',
+              afterSha256: createHash('sha256').update(current).digest('hex'),
+            }),
+            'other.base.yaml': 'ignored',
+            'secret.txt': 'ignored',
+          },
+        },
+      },
+    });
+    expect((await result).comparison?.baseCommits).toEqual(['1234567']);
+    expect(fake.read.sort()).toEqual([
+      'workspace/.tarskia/.job/compare/api.base.yaml',
+      'workspace/.tarskia/.job/compare/api.json',
+      'workspace/.tarskia/api.yaml',
+    ]);
+    expect(fake.listed).not.toContain('workspace/.tarskia/.job/workspace');
   });
   it('combines two repos and merges a stand-in into its sibling target', async () => {
     const { result } = open({

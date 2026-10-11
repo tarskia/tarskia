@@ -1,3 +1,11 @@
+import { CanvasDiffContext } from '../canvas/diff-context';
+import { DiffInspector } from './DiffInspector';
+import {
+  buildViewerComparison,
+  type DiagramComparison,
+  nextChangeIndex,
+} from './diagram-comparison';
+import './diagram-diff.css';
 import {
   applyDiagramViewOperation,
   buildSchemaVersionCatalog,
@@ -9,6 +17,7 @@ import { Link, useOutletContext, useParams, useSearchParams } from 'react-router
 import type { DtoGalleryDiagramDetailResponse } from '../api/generated/model';
 import Diagram from '../canvas/Diagram';
 import { LoadingState } from '../components/ui/loading-state';
+import type { NavigationIntent } from '../diagram/motion-types';
 import { useDiagramEngine } from '../diagram/useDiagramEngine';
 import { useDiagramSurface } from '../diagram/useDiagramSurface';
 import { useReducedMotion } from '../hooks/useReducedMotion';
@@ -38,6 +47,61 @@ const MIN_VIEW_ZOOM = 0.05;
 const MAX_VIEW_ZOOM = 2;
 const INSPECTOR_PANEL_WIDTH = 420;
 const INSPECTOR_CENTER_OFFSET = INSPECTOR_PANEL_WIDTH / 2;
+
+// DiagramCanvas defers unmount notifications to survive Fast Refresh. When a keyed
+// canvas is replaced, its old notification must not detach the newly mounted camera.
+export function useGalleryCanvasLifecycle<T>(
+  key: string,
+  onInit: (camera: T) => void,
+  onUnmount?: () => void,
+) {
+  const token = useMemo(() => ({ key }), [key]);
+  const active = useRef<object | undefined>(undefined);
+  const initialize = useCallback(
+    (camera: T) => {
+      active.current = token;
+      onInit(camera);
+    },
+    [onInit, token],
+  );
+  const unmount = useCallback(() => {
+    if (active.current !== token) return;
+    active.current = undefined;
+    onUnmount?.();
+  }, [onUnmount, token]);
+  return { onInit: initialize, onUnmount: unmount };
+}
+
+interface PendingGalleryChange {
+  nodeIds: string[];
+  waitForLayoutAfter?: number;
+}
+export function useGalleryChangeFraming({
+  pending,
+  canvasLayoutVersion,
+  ready,
+  requestNavigation,
+  clearPending,
+}: {
+  pending?: PendingGalleryChange;
+  canvasLayoutVersion: number;
+  ready: boolean;
+  requestNavigation: (intent: NavigationIntent) => unknown;
+  clearPending: (pending: undefined) => void;
+}) {
+  useEffect(() => {
+    if (!pending || !ready) return;
+    // ResizeObserver must consume an inspector resize before the fit is scheduled,
+    // otherwise the already-sized fit plan receives the resize's centre shift too.
+    if (
+      pending.waitForLayoutAfter !== undefined &&
+      canvasLayoutVersion <= pending.waitForLayoutAfter
+    )
+      return;
+    requestNavigation({ kind: 'fit-node-set', nodeIds: pending.nodeIds, preset: 'focus' });
+    clearPending(undefined);
+  }, [pending, canvasLayoutVersion, ready, requestNavigation, clearPending]);
+}
 
 const buildViewerTitle = (params: { title?: string; slug?: string; namespace?: string }) =>
   params.title?.trim() || params.slug?.trim() || params.namespace?.trim() || 'Gallery diagram';
@@ -119,12 +183,46 @@ export function GalleryDiagramViewer({
   title,
   schemaVersionCatalog,
   shareIdentity,
+  comparison,
 }: {
   raw: string;
+  comparison?: DiagramComparison;
   title: string;
   schemaVersionCatalog: SchemaVersionCatalog;
   shareIdentity?: { namespace: string; slug: string };
 }) {
+  const [showChanges, setShowChanges] = useState(false);
+  const [changeIndex, setChangeIndex] = useState(-1);
+  const [pendingChange, setPendingChange] = useState<PendingGalleryChange>();
+  const comparisonView = useMemo(
+    () => (comparison ? buildViewerComparison(comparison) : undefined),
+    [comparison],
+  );
+  const activeComparison = showChanges ? comparisonView : undefined;
+  const diffStates = useMemo(
+    () =>
+      activeComparison
+        ? {
+            entities: new Map(
+              activeComparison.diff.entities.map((entry) => [
+                entry.entityId,
+                entry.changedFields.length === 1 && entry.changedFields[0] === 'provenance'
+                  ? ('unchanged' as const)
+                  : entry.change,
+              ]),
+            ),
+            relations: new Map(
+              activeComparison.diff.relations.map((entry) => [
+                entry.relationId,
+                entry.changedFields.length === 1 && entry.changedFields[0] === 'provenance'
+                  ? ('unchanged' as const)
+                  : entry.change,
+              ]),
+            ),
+          }
+        : undefined,
+    [activeComparison],
+  );
   const reducedMotion = useReducedMotion();
   const canShare = Boolean(shareIdentity);
   const { namespace = '', slug = '' } = shareIdentity ?? {};
@@ -136,18 +234,20 @@ export function GalleryDiagramViewer({
   const [selectedEntityId, setSelectedEntity] = useState<string | undefined>();
   const [selectedEdgeId, setSelectedEdge] = useState<string | undefined>();
   const revealFrameRef = useRef<number | null>(null);
-  const viewerCanvasKey = `${namespace}/${slug}?view=${JSON.stringify(searchParams.get('view'))}`;
+  const viewerCanvasKey = `${namespace}/${slug}?changes=${Boolean(activeComparison)}&view=${JSON.stringify(searchParams.get('view'))}`;
   const [visibleCanvasKey, setVisibleCanvasKey] = useState<string | undefined>();
   const isLiveCanvasVisible = visibleCanvasKey === viewerCanvasKey;
 
   const loadedDiagram = useMemo(
     () =>
-      loadDiagramDocFromRaw({
-        raw,
-        streamName: title,
-        sourceLabel: canShare ? `${namespace}/${slug}` : title,
-      }),
-    [raw, title, namespace, slug, canShare],
+      activeComparison
+        ? { doc: activeComparison.document, readable: true, sourceDiagnostics: [] }
+        : loadDiagramDocFromRaw({
+            raw,
+            streamName: title,
+            sourceLabel: canShare ? `${namespace}/${slug}` : title,
+          }),
+    [raw, title, namespace, slug, canShare, activeComparison],
   );
 
   const content = useMemo(() => {
@@ -200,6 +300,7 @@ export function GalleryDiagramViewer({
   const diagramEngine = useDiagramEngine({
     index,
     view,
+    preserveParallelEdges: Boolean(activeComparison),
     skipTransitions: reducedMotion,
     showDebug: false,
     persistViewport,
@@ -238,6 +339,46 @@ export function GalleryDiagramViewer({
     flushUserGesture,
     setPendingStructuralTransitionIntent,
   } = diagramEngine;
+  const initialChangeFrame = useRef<unknown>(undefined);
+  useEffect(() => {
+    if (
+      !activeComparison ||
+      !isLiveCanvasVisible ||
+      initialChangeFrame.current === activeComparison
+    )
+      return;
+    initialChangeFrame.current = activeComparison;
+    requestNavigation({
+      kind: 'fit-node-set',
+      nodeIds: activeComparison.targets.flatMap((target) => target.nodeIds),
+      preset: 'focus',
+      deferUntilNextFrame: true,
+    });
+  }, [activeComparison, isLiveCanvasVisible, requestNavigation]);
+  const navigateChange = (direction: number) => {
+    if (!activeComparison?.targets.length) return;
+    const next = nextChangeIndex(changeIndex, direction, activeComparison.targets.length);
+    setChangeIndex(next);
+    const target = activeComparison.targets[next];
+    setSelectedEntity(target.kind === 'entity' ? target.id : undefined);
+    setSelectedEdge(target.kind === 'relation' ? target.id : undefined);
+    flushUserGesture();
+    setView((previous) =>
+      applyDiagramViewOperation(index.tree, previous, {
+        kind: 'search-reveal',
+        entityIds: new Set(target.nodeIds),
+        relationIds: new Set(target.kind === 'relation' ? [target.id] : []),
+        relations: content.relations,
+      }),
+    );
+    setPendingChange({
+      nodeIds: target.nodeIds,
+      waitForLayoutAfter:
+        !showInspector && typeof ResizeObserver !== 'undefined'
+          ? diagramEngine.canvasLayoutVersion
+          : undefined,
+    });
+  };
   const defaultViewport = diagramEngine.initialViewport;
   const hasSceneContent = content.entities.length > 0 || content.relations.length > 0;
   const shouldDelayCanvasMount = shouldDelayGalleryCanvasMount({
@@ -307,6 +448,13 @@ export function GalleryDiagramViewer({
     ],
   );
   const showInspector = inspectorViewModel.kind !== 'empty';
+  useGalleryChangeFraming({
+    pending: pendingChange,
+    canvasLayoutVersion: diagramEngine.canvasLayoutVersion,
+    ready: viewerDocumentReady && isLiveCanvasVisible,
+    requestNavigation,
+    clearPending: setPendingChange,
+  });
 
   const canvasBindings = useMemo(
     () => buildCanvasSemanticBindings({ schema, entityIndex }),
@@ -355,6 +503,12 @@ export function GalleryDiagramViewer({
       });
     },
     [canvasProps, viewerCanvasKey],
+  );
+
+  const canvasLifecycle = useGalleryCanvasLifecycle(
+    viewerCanvasKey,
+    handleCanvasInit,
+    canvasProps.onUnmount,
   );
 
   const { clearFocus, focusViewOnEntity } = useFocusViewController({
@@ -461,70 +615,138 @@ export function GalleryDiagramViewer({
   }
 
   return (
-    <div className="flex h-full min-w-0 min-h-0 flex-1 flex-col">
-      <div className="flex h-full flex-1 min-w-0 min-h-0">
-        <div className="relative flex h-full flex-1 min-w-0 min-h-0">
-          <div className="h-full flex-1 min-w-0 min-h-0">
-            {shouldDelayCanvasMount ? (
-              <div
-                ref={diagramEngine.onCanvasElementChange}
-                className="h-full w-full"
-                aria-hidden="true"
+    <CanvasDiffContext.Provider value={diffStates}>
+      <div className="flex h-full min-w-0 min-h-0 flex-1 flex-col">
+        {comparisonView ? (
+          <div className="flex items-center gap-4 border-b border-border px-5 py-2 text-sm">
+            <span className="font-medium">{title}</span>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={showChanges}
+                onChange={(event) => {
+                  setShowChanges(event.target.checked);
+                  setChangeIndex(-1);
+                  initialChangeFrame.current = undefined;
+                }}
               />
-            ) : (
-              <Diagram
-                key={viewerCanvasKey}
-                {...canvasProps}
-                defaultViewport={defaultViewport}
-                hidden={!isLiveCanvasVisible}
-                onInit={handleCanvasInit}
-              />
-            )}
+              Show changes
+            </label>
+            {activeComparison ? (
+              <>
+                <button
+                  type="button"
+                  disabled={!activeComparison.targets.length}
+                  onClick={() => navigateChange(-1)}
+                >
+                  Previous change
+                </button>
+                <button
+                  type="button"
+                  disabled={!activeComparison.targets.length}
+                  onClick={() => navigateChange(1)}
+                >
+                  Next change
+                </button>
+              </>
+            ) : null}
           </div>
-          {shared.notice ? (
-            <div
-              role="status"
-              className="absolute left-4 right-4 top-3 z-30 flex items-center justify-center gap-2 text-xs text-muted-foreground"
-            >
-              <span>
-                This link was made for an earlier version of this diagram, so some of it couldn't be
-                shown.
-              </span>
-              <button
-                type="button"
-                onClick={shared.dismissNotice}
-                aria-label="Dismiss notice"
-                className="px-1 hover:text-foreground"
-              >
-                ×
-              </button>
-            </div>
-          ) : null}
-          <CanvasToolbar
-            onCenter={centerScene}
-            onExpandAll={expandAll}
-            onCollapseAll={collapseAll}
-            onFocusView={
-              inspectorViewModel.kind === 'entity' &&
-              inspectorViewModel.canFocusView &&
-              !inspectorViewModel.isFocusedEntity
-                ? () => focusViewOnEntity(inspectorViewModel.entityId)
-                : undefined
-            }
-            onResetFocusView={focusRootId ? clearFocus : undefined}
-            centerOffset={showInspector ? INSPECTOR_CENTER_OFFSET : 0}
-          />
-        </div>
-        {showInspector ? (
-          <aside className="w-[420px] shrink-0 border-l border-border overflow-hidden flex flex-col">
-            <GalleryInspector
-              viewModel={inspectorViewModel}
-              onToggleHighlight={toggleHighlight}
-              onClearHighlights={clearHighlights}
-            />
-          </aside>
         ) : null}
+        <div className="flex h-full flex-1 min-w-0 min-h-0">
+          <div className="relative flex h-full flex-1 min-w-0 min-h-0">
+            <div className="h-full flex-1 min-w-0 min-h-0">
+              {shouldDelayCanvasMount ? (
+                <div
+                  ref={diagramEngine.onCanvasElementChange}
+                  className="h-full w-full"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Diagram
+                  key={viewerCanvasKey}
+                  {...canvasProps}
+                  defaultViewport={defaultViewport}
+                  hidden={!isLiveCanvasVisible}
+                  onInit={canvasLifecycle.onInit}
+                  onUnmount={canvasLifecycle.onUnmount}
+                />
+              )}
+            </div>
+            {shared.notice ? (
+              <div
+                role="status"
+                className="absolute left-4 right-4 top-3 z-30 flex items-center justify-center gap-2 text-xs text-muted-foreground"
+              >
+                <span>
+                  This link was made for an earlier version of this diagram, so some of it couldn't
+                  be shown.
+                </span>
+                <button
+                  type="button"
+                  onClick={shared.dismissNotice}
+                  aria-label="Dismiss notice"
+                  className="px-1 hover:text-foreground"
+                >
+                  ×
+                </button>
+              </div>
+            ) : null}
+            {activeComparison ? (
+              <div
+                className="absolute bottom-4 right-4 bg-surface/95 p-3 text-xs"
+                role="note"
+                aria-label="Change legend"
+              >
+                <p className="mb-2">
+                  {comparison?.baseCommits?.length && new Set(comparison.baseCommits).size === 1
+                    ? `Changes since ${comparison.baseCommits[0].slice(0, 7)}`
+                    : "Changes since each repo's base"}
+                </p>
+                <p>+ Added</p>
+                <p>− Removed</p>
+                <p>~ Changed</p>
+              </div>
+            ) : null}
+            <CanvasToolbar
+              onCenter={centerScene}
+              onExpandAll={expandAll}
+              onCollapseAll={collapseAll}
+              onFocusView={
+                inspectorViewModel.kind === 'entity' &&
+                inspectorViewModel.canFocusView &&
+                !inspectorViewModel.isFocusedEntity
+                  ? () => focusViewOnEntity(inspectorViewModel.entityId)
+                  : undefined
+              }
+              onResetFocusView={focusRootId ? clearFocus : undefined}
+              centerOffset={showInspector ? INSPECTOR_CENTER_OFFSET : 0}
+            />
+          </div>
+          {showInspector ? (
+            <aside className="w-[420px] shrink-0 border-l border-border overflow-hidden flex flex-col">
+              {activeComparison && comparison ? (
+                <DiffInspector
+                  before={comparison.before}
+                  entry={
+                    selectedEntityId
+                      ? activeComparison.diff.entities.find(
+                          (entry) => entry.entityId === selectedEntityId,
+                        )
+                      : activeComparison.diff.relations.find(
+                          (entry) => entry.relationId === selectedEdgeId,
+                        )
+                  }
+                />
+              ) : null}
+              <GalleryInspector
+                viewModel={inspectorViewModel}
+                onToggleHighlight={toggleHighlight}
+                onClearHighlights={clearHighlights}
+              />
+            </aside>
+          ) : null}
+        </div>
       </div>
-    </div>
+    </CanvasDiffContext.Provider>
   );
 }

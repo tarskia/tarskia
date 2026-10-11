@@ -220,3 +220,26 @@ describe('opposite visual directions', () => {
     expect(edge.directionalLabels?.map((label) => label.relationId)).toEqual(['a', 'b']);
   });
 });
+
+it.each([
+  false,
+  true,
+])('preserves each comparison relation, including antiparallel=%s', (reverse) => {
+  const edges: CompiledDiagramEdge[] = [
+    { id: 'removed', relationId: 'removed', sourceId: 'a', targetId: 'b', label: 'old call' },
+    {
+      id: 'added',
+      relationId: 'added',
+      sourceId: reverse ? 'b' : 'a',
+      targetId: reverse ? 'a' : 'b',
+      label: 'new call',
+    },
+  ];
+  const visual = buildEdgeVisuals({ schema, edges, preserveParallelEdges: true });
+  expect(visual).toHaveLength(2);
+  expect(visual.map((edge) => [edge.relationId, edge.relationIds, edge.label])).toEqual([
+    ['removed', ['removed'], 'old call'],
+    ['added', ['added'], 'new call'],
+  ]);
+  expect(buildEdgeVisuals({ schema, edges })).toHaveLength(1);
+});

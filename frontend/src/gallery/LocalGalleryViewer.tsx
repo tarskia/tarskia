@@ -51,6 +51,7 @@ export default function LocalGalleryViewer() {
   return (
     <DiagramErrorBoundary>
       <GalleryDiagramViewer
+        comparison={localDiagram.comparison}
         raw={localDiagram.raw}
         title={localDiagram.title}
         schemaVersionCatalog={catalog}

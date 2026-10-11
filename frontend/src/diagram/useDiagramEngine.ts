@@ -26,6 +26,7 @@ export interface UseDiagramEngineArgs {
   view?: DiagramView;
   schema?: SchemaModule;
   skipTransitions: boolean;
+  preserveParallelEdges?: boolean;
   showDebug: boolean;
   persistViewport: (viewport: { x: number; y: number; zoom: number }) => void;
   savedCamera?: DiagramCamera;
@@ -42,6 +43,7 @@ export function useDiagramEngine({
   index,
   view,
   skipTransitions,
+  preserveParallelEdges,
   showDebug,
   persistViewport,
   savedCamera,
@@ -108,6 +110,7 @@ export function useDiagramEngine({
   }, [canvasElement]);
 
   const rendering = useDiagramRenderingController({
+    preserveParallelEdges,
     doc,
     schema,
     index,

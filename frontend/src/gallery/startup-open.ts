@@ -1,5 +1,6 @@
 import { openLocalDiagram } from './local-diagram';
 import { openRepoDiagramFiles } from './local-folder';
+import { readRepoComparison } from './repo-comparison';
 
 export function hasStartupOpen(): boolean {
   return (
@@ -24,7 +25,13 @@ export async function fetchStartupDiagram(signal?: AbortSignal) {
       text: async () => raw,
     },
   }));
-  return body.kind === 'folder'
-    ? openRepoDiagramFiles(body.name, files)
-    : openLocalDiagram(files.map(({ file }) => file));
+  if (body.kind === 'folder') return openRepoDiagramFiles(body.name, files);
+  const opened = await openLocalDiagram(
+    files.filter(({ path }) => !path.includes('.job/')).map(({ file }) => file),
+  );
+  const comparison = await readRepoComparison(
+    body.name,
+    body.files.map((file) => ({ ...file, path: `.tarskia/${file.path}` })),
+  );
+  return { ...opened, comparison };
 }

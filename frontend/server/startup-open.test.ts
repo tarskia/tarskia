@@ -55,6 +55,26 @@ describe('startup diagrams', () => {
       ],
     });
   });
+  it('serves only matching compare artifacts, without following compare symlinks', async () => {
+    await write('one/.tarskia/one.yaml');
+    await write('one/.tarskia/.job/compare/one.base.yaml', 'base');
+    await write('one/.tarskia/.job/compare/one.json', '{}');
+    await write('one/.tarskia/.job/compare/other.base.yaml', 'secret');
+    await write('one/.tarskia/.job/input/secret.yaml', 'secret');
+    expect((await readStartupOpen(root)).files.map((file) => file.path).sort()).toEqual([
+      'one/.tarskia/.job/compare/one.base.yaml',
+      'one/.tarskia/.job/compare/one.json',
+      'one/.tarskia/one.yaml',
+    ]);
+    await fs.rm(path.join(root, 'one/.tarskia/.job/compare'), { recursive: true });
+    await fs.symlink(
+      path.join(root, 'one/.tarskia/.job/input'),
+      path.join(root, 'one/.tarskia/.job/compare'),
+    );
+    expect((await readStartupOpen(root)).files.map((file) => file.path)).toEqual([
+      'one/.tarskia/one.yaml',
+    ]);
+  });
   it('reads changed files again', async () => {
     await write('.tarskia/root.yaml', 'before');
     expect((await readStartupOpen(root)).files[0].raw).toBe('before');
