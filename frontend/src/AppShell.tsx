@@ -4,6 +4,7 @@ import { DiagramErrorBoundary } from './gallery/DiagramErrorBoundary';
 import LocalGalleryViewer from './gallery/LocalGalleryViewer';
 import PublicGalleryIndex from './gallery/PublicGalleryIndex';
 import PublicGalleryViewer from './gallery/PublicGalleryViewer';
+import { hasStartupOpen } from './gallery/startup-open';
 import PublicGalleryShell from './PublicGalleryShell';
 
 function GalleryDiagramRoute() {
@@ -15,10 +16,14 @@ function GalleryDiagramRoute() {
   );
 }
 
+function HomeRoute() {
+  return <Navigate to={hasStartupOpen() ? '/gallery/open' : '/gallery'} replace />;
+}
+
 export const appRoutes: RouteObject[] = [
   {
     path: '/',
-    element: <Navigate to="/gallery" replace />,
+    element: <HomeRoute />,
   },
   {
     path: '/about',
