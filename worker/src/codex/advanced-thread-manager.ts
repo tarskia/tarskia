@@ -215,7 +215,11 @@ export class AdvancedThreadManager implements AdvancedBuildPromptRunner {
             : 'rollout disappeared during advanced stage turn',
         );
         this.options.logger.warn(
-          `Retrying ${params.operation} once on a fresh Codex thread using ${toWorkspaceRelativePath(this.options.workspaceRoot, params.handoffArtifactPath ?? this.options.workspaceRoot)}.`,
+          `Retrying ${params.operation} once on a fresh Codex thread${
+            params.handoffArtifactPath
+              ? ` using ${toWorkspaceRelativePath(this.options.workspaceRoot, params.handoffArtifactPath)}`
+              : ''
+          }.`,
         );
         return execute(false);
       }
