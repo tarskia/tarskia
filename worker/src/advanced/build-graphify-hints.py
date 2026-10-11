@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import traceback
 from collections import Counter
 from datetime import datetime, timezone
@@ -220,7 +221,10 @@ def main() -> int:
     warnings = []
 
     try:
-        code_files = collect_files(repo_root, root=repo_root)
+        # Graphify excludes any hidden component in the paths it collects. Limit
+        # that check to repository contents, not ancestors such as .cache/.codex.
+        os.chdir(repo_root)
+        code_files = collect_files(Path("."), root=Path("."))
         extraction = extract(code_files, cache_root=out_dir)
         extraction = normalize_source_locations(repo_root, extraction)
         extraction_path = out_dir / "extraction.json"
@@ -277,6 +281,7 @@ def main() -> int:
             "mode": "code-only",
             "generatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "graphifyPackage": GRAPHIFY_PACKAGE,
+            "collectionPolicy": "repo-relative-v1",
             "corpus": {
                 "codeFiles": len(code_files),
                 "nodes": G.number_of_nodes(),

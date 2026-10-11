@@ -41,6 +41,7 @@ function hintsArtifact(): GraphifyHints {
     mode: 'code-only',
     generatedAt: '2026-01-01T00:00:00.000Z',
     graphifyPackage: 'graphifyy==0.6.7',
+    collectionPolicy: 'repo-relative-v1',
     corpus: {
       codeFiles: 2,
       nodes: 3,
@@ -116,6 +117,38 @@ async function writeGeneratedArtifacts(
 }
 
 describe('DefaultGraphifyHintsBuilder', () => {
+  it('regenerates artifacts collected with the old absolute-path policy', async () => {
+    const workspace = await createWorkspace();
+    const summaryJsonPath = path.join(workspace.workspaceOutputDir, 'analysis/graphify-hints.json');
+    const summaryMarkdownPath = path.join(
+      workspace.workspaceOutputDir,
+      'analysis/graphify-hints.md',
+    );
+    const graphifyOutDir = path.join(workspace.workspaceOutputDir, 'analysis/graphify');
+    await writeGeneratedArtifacts(summaryJsonPath, summaryMarkdownPath, graphifyOutDir, {
+      ...hintsArtifact(),
+      collectionPolicy: undefined,
+    });
+    const commandRunner = {
+      execFile: vi.fn().mockImplementation(async (_file: string, args: string[]) => {
+        if (args[0] === '--version') return { stdout: 'uv 1.0.0', stderr: '' };
+        await writeGeneratedArtifacts(summaryJsonPath, summaryMarkdownPath, graphifyOutDir);
+        return { stdout: '', stderr: '' };
+      }),
+    } satisfies GraphifyCommandRunner;
+    try {
+      const result = await new DefaultGraphifyHintsBuilder({ commandRunner }).buildGraphifyHints({
+        workspace,
+        mode: 'required',
+        logger: quietLogger(),
+      });
+      expect(result?.collectionPolicy).toBe('repo-relative-v1');
+      expect(commandRunner.execFile).toHaveBeenCalledTimes(2);
+    } finally {
+      await fs.rm(workspace.jobRoot, { recursive: true, force: true });
+    }
+  });
+
   it('skips in auto mode when uv is unavailable', async () => {
     const workspace = await createWorkspace();
     const logger = quietLogger();
@@ -313,6 +346,43 @@ it.each([
     spy.mockRestore();
   }
 });
+
+it.skipIf(process.env.TARSKIA_GRAPHIFY_INTEGRATION !== '1')(
+  'collects repository code under hidden ancestors while honoring repository exclusions',
+  async () => {
+    const workspace = await createWorkspace();
+    workspace.targetRepoPath = path.join(workspace.jobRoot, '.codex', '.cache', 'target-repo');
+    await fs.mkdir(path.join(workspace.targetRepoPath, '.hidden'), { recursive: true });
+    const code = 'def hello():\n    return "hello"\n\ndef run():\n    return hello()\n';
+    await fs.writeFile(path.join(workspace.targetRepoPath, 'app.py'), code);
+    await fs.writeFile(path.join(workspace.targetRepoPath, 'ignored.py'), code);
+    await fs.writeFile(path.join(workspace.targetRepoPath, '.hidden', 'private.py'), code);
+    await fs.writeFile(path.join(workspace.targetRepoPath, '.graphifyignore'), 'ignored.py\n');
+    try {
+      const result = await new DefaultGraphifyHintsBuilder().buildGraphifyHints({
+        workspace,
+        mode: 'required',
+        logger: quietLogger(),
+      });
+      expect(result?.corpus.codeFiles).toBe(1);
+      expect(result?.corpus.nodes).toBeGreaterThan(0);
+      const extraction = JSON.parse(
+        await fs.readFile(
+          path.join(workspace.workspaceOutputDir, 'analysis/graphify/extraction.json'),
+          'utf8',
+        ),
+      );
+      const sources = [...extraction.nodes, ...extraction.edges]
+        .map((item) => item.source_file)
+        .filter(Boolean);
+      expect(sources.length).toBeGreaterThan(0);
+      expect(new Set(sources)).toEqual(new Set(['app.py']));
+    } finally {
+      await fs.rm(workspace.jobRoot, { recursive: true, force: true });
+    }
+  },
+  120000,
+);
 
 it
   .skipIf(process.env.TARSKIA_GRAPHIFY_INTEGRATION !== '1')
