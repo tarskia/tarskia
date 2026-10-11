@@ -87,6 +87,50 @@ it('compiles nested filesystem imports relative to each importing diagram', asyn
     diagnostics: [expect.objectContaining({ code: 'diagram.source.import_not_found' })],
   });
 });
+it('validates two worker-style imported repositories without top-level inputs', async () => {
+  for (const name of ['backend', 'frontend']) {
+    await file(
+      `${name}.yaml`,
+      `version: 0.1.0
+schemaRefs:
+  - schema: core/web-app@0.3
+    layer: 0
+inputs:
+  - id: primary
+    kind: git
+    role: primary
+    repo: https://github.com/acme/${name}
+    revision: ${'a'.repeat(40)}
+entities:
+  - id: api
+    type: core/web-app.types.service
+    name: API
+    provenance:
+      locations:
+        - input: primary
+          path: src/api.ts
+relations: []
+`,
+    );
+  }
+  const target = await file(
+    'combined.yaml',
+    `version: 0.1.0
+schemaRefs: []
+imports:
+  - slug: backend.yaml
+    namespace: backend
+  - slug: frontend.yaml
+    namespace: frontend
+entities: []
+relations: []
+`,
+  );
+  expect(await validateCli({ path: target, schemaSource })).toMatchObject({
+    ok: true,
+    diagnostics: [],
+  });
+});
 it('rejects duplicate extra schema IDs and names both files', async () => {
   const bundled = path.join(schemaSource, 'web-app.yaml');
   const duplicate = await file('duplicate.yaml', await fs.readFile(bundled, 'utf8'));

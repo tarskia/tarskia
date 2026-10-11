@@ -292,9 +292,11 @@ export function GalleryDiagramViewer({
         scopeRootId: focusRootId,
         canFocusView: selectedEntityCanFocus,
         diagramProvenanceSource: diagramProvenance,
+        inputs: content.inputs,
       }),
     [
       diagramProvenance,
+      content.inputs,
       entityIndex,
       focusRootId,
       schema,

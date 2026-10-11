@@ -4,6 +4,7 @@ import { type Diagnostic, diagramDiagnostic } from './diagnostics';
 import { normalizeDocumentHierarchy } from './normalize-hierarchy';
 import { buildSchemaId, parseSchemaRef } from './schema-ref';
 import type {
+  DocumentInput,
   Entity,
   Relation,
   SchemaActivation,
@@ -67,20 +68,48 @@ const qualifyReference = (
   return trimmed;
 };
 
+const compileProvenance = (
+  provenance: Entity['provenance'],
+  prefix: string[],
+  inputs: DocumentInput[],
+): Entity['provenance'] => {
+  if (!provenance) return provenance;
+  return {
+    ...provenance,
+    locations: provenance.locations.map((location) => {
+      if (location.input) {
+        return inputs.some((input) => input.id === location.input)
+          ? { ...location, input: qualifyLocalId(prefix, location.input) }
+          : location;
+      }
+      // Match provenance validation: both SHA-1 and SHA-256 are full git object IDs.
+      const absolute =
+        Boolean(location.repo?.trim()) &&
+        /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/i.test(location.commit?.trim() ?? '');
+      return inputs.length === 1 && !absolute
+        ? { ...location, input: qualifyLocalId(prefix, inputs[0].id) }
+        : location;
+    }),
+  };
+};
+
 const compileEntity = (
   entity: Entity,
   prefix: string[],
   localImportNamespaces: Set<string>,
+  inputs: DocumentInput[],
 ): Entity => {
   return {
     ...entity,
+    provenance: compileProvenance(entity.provenance, prefix, inputs),
     id: qualifyLocalId(prefix, entity.id),
     parent: entity.parent
       ? qualifyReference(entity.parent, prefix, localImportNamespaces)
       : undefined,
     children:
-      entity.children?.map((child) => compileEntity(child, prefix, localImportNamespaces)) ??
-      undefined,
+      entity.children?.map((child) =>
+        compileEntity(child, prefix, localImportNamespaces, inputs),
+      ) ?? undefined,
   };
 };
 
@@ -88,9 +117,11 @@ const compileRelation = (
   relation: Relation,
   prefix: string[],
   localImportNamespaces: Set<string>,
+  inputs: DocumentInput[],
 ): Relation => {
   return {
     ...relation,
+    provenance: compileProvenance(relation.provenance, prefix, inputs),
     id: qualifyLocalId(prefix, relation.id),
     from: qualifyReference(relation.from, prefix, localImportNamespaces),
     to: qualifyReference(relation.to, prefix, localImportNamespaces),
@@ -209,6 +240,7 @@ export const compileSourceGraph = (
     return { diagnostics };
   }
 
+  const compiledInputs: DocumentInput[] = [...(rootSource.inputs ?? [])];
   const compiledEntities: Entity[] = [];
   const compiledRelations: Relation[] = [];
   const orderedSchemaRefs: SchemaActivation[] = [];
@@ -217,6 +249,16 @@ export const compileSourceGraph = (
   const seenRelationIds = new Map<string, string>();
 
   const visit = (context: SourceNodeContext, ancestry: string[]) => {
+    const inputs = context.doc.inputs ?? [];
+    if (context.prefix.length > 0) {
+      compiledInputs.push(
+        ...inputs.map((input) => ({
+          ...input,
+          id: qualifyLocalId(context.prefix, input.id),
+          role: 'secondary' as const,
+        })),
+      );
+    }
     const localImportNamespaces = new Set(
       (context.doc.imports ?? []).map((importSpec) => importSpec.namespace.trim()),
     );
@@ -231,7 +273,7 @@ export const compileSourceGraph = (
 
     for (const entity of context.doc.entities) {
       validateLocalId(diagnostics, context.sourceLabel, 'entity', entity.id);
-      const compiledEntity = compileEntity(entity, context.prefix, localImportNamespaces);
+      const compiledEntity = compileEntity(entity, context.prefix, localImportNamespaces, inputs);
       const previousSource = seenEntityIds.get(compiledEntity.id);
       if (previousSource) {
         pushDiagnostic(diagnostics, {
@@ -250,7 +292,12 @@ export const compileSourceGraph = (
 
     for (const relation of context.doc.relations) {
       validateLocalId(diagnostics, context.sourceLabel, 'relation', relation.id);
-      const compiledRelation = compileRelation(relation, context.prefix, localImportNamespaces);
+      const compiledRelation = compileRelation(
+        relation,
+        context.prefix,
+        localImportNamespaces,
+        inputs,
+      );
       const previousSource = seenRelationIds.get(compiledRelation.id);
       if (previousSource) {
         pushDiagnostic(diagnostics, {
@@ -336,7 +383,7 @@ export const compileSourceGraph = (
         schemaRefs: orderedSchemaRefs,
         entities: normalized.doc.entities,
         relations: compiledRelations,
-        inputs: rootSource.inputs,
+        inputs: compiledInputs.length > 0 ? compiledInputs : rootSource.inputs,
         metadata: rootSource.metadata,
         view: rootSource.view,
       },

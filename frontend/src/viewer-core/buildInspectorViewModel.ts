@@ -189,22 +189,26 @@ export const buildDiagramProvenanceSource = (
 const buildInspectorProvenance = (
   provenance: Entity['provenance'] | Relation['provenance'] | undefined,
   diagramProvenanceSource?: DiagramProvenanceSourceView,
+  inputs?: SemanticDocument['inputs'],
 ): InspectorProvenanceView | undefined => {
   if (!provenance || provenance.locations.length === 0) {
     return undefined;
   }
   return {
     confidence: provenance.confidence,
-    locations: provenance.locations.map((location) => ({
-      path: location.path,
-      symbol: location.symbol,
-      note: location.note,
-      permalink: buildGitHubProvenancePermalink(
-        location.repo ?? diagramProvenanceSource?.repo,
-        location.commit ?? diagramProvenanceSource?.commit,
-        location.path,
-      ),
-    })),
+    locations: provenance.locations.map((location) => {
+      const input = inputs?.find((input) => input.id === location.input);
+      return {
+        path: location.path,
+        symbol: location.symbol,
+        note: location.note,
+        permalink: buildGitHubProvenancePermalink(
+          location.repo ?? input?.repo ?? diagramProvenanceSource?.repo,
+          location.commit ?? input?.revision ?? diagramProvenanceSource?.commit,
+          location.path,
+        ),
+      };
+    }),
   };
 };
 
@@ -217,6 +221,7 @@ export const buildInspectorViewModel = (params: {
   scopeRootId?: string;
   canFocusView?: boolean;
   diagramProvenanceSource?: DiagramProvenanceSourceView;
+  inputs?: SemanticDocument['inputs'];
 }): InspectorViewModel => {
   const {
     selectedEntity,
@@ -226,6 +231,7 @@ export const buildInspectorViewModel = (params: {
     scopeRootId,
     canFocusView,
     diagramProvenanceSource,
+    inputs,
   } = params;
 
   if (!selectedEntity) {
@@ -272,7 +278,11 @@ export const buildInspectorViewModel = (params: {
             href: resolveExternalHref(entry.value),
           };
         }),
-      provenance: buildInspectorProvenance(selectedEdge.provenance, diagramProvenanceSource),
+      provenance: buildInspectorProvenance(
+        selectedEdge.provenance,
+        diagramProvenanceSource,
+        inputs,
+      ),
     };
   }
 
@@ -315,7 +325,11 @@ export const buildInspectorViewModel = (params: {
         href: resolveExternalHref(entry.value),
       };
     }),
-    provenance: buildInspectorProvenance(selectedEntity.provenance, diagramProvenanceSource),
+    provenance: buildInspectorProvenance(
+      selectedEntity.provenance,
+      diagramProvenanceSource,
+      inputs,
+    ),
     selectedChildCount: entityIndex.childrenByParent.get(selectedEntity.id)?.length ?? 0,
     canFocusView: canFocusView !== false,
     isFocusedEntity: selectedEntity.id === scopeRootId,
