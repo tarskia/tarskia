@@ -7,7 +7,7 @@ import type {
   SemanticDiagramRelationDiff,
 } from '../diff/diagram-diff';
 import { type Diagnostic, diagramDiagnostic, sortDiagnostics } from '../model/diagnostics';
-import type { Entity, Relation } from '../model/types';
+import type { Entity, Provenance, Relation } from '../model/types';
 import type { ValidationResult } from '../validation/types';
 import { parseYamlTextResult, serializeYamlText } from './yaml';
 
@@ -20,6 +20,7 @@ const ENTITY_FIELD_ORDER: SemanticDiagramEntityChangedField[] = [
   'parent',
   'tags',
   'props',
+  'provenance',
 ];
 
 const RELATION_FIELD_ORDER: SemanticDiagramRelationChangedField[] = [
@@ -30,6 +31,7 @@ const RELATION_FIELD_ORDER: SemanticDiagramRelationChangedField[] = [
   'from',
   'to',
   'props',
+  'provenance',
 ];
 
 const SERIALIZED_CHANGE_SET = new Set<SemanticDiagramDiffChange>(['added', 'removed', 'changed']);
@@ -89,6 +91,8 @@ const collectEntityChangedFields = (
         return tagFieldKey(before) !== tagFieldKey(after);
       case 'props':
         return propsKey(before.props) !== propsKey(after.props);
+      case 'provenance':
+        return stableSerialize(before.provenance) !== stableSerialize(after.provenance);
       default:
         return false;
     }
@@ -114,6 +118,8 @@ const collectRelationChangedFields = (
         return before.to !== after.to;
       case 'props':
         return propsKey(before.props) !== propsKey(after.props);
+      case 'provenance':
+        return stableSerialize(before.provenance) !== stableSerialize(after.provenance);
       default:
         return false;
     }
@@ -239,6 +245,43 @@ const readOptionalRecord = (
   return undefined;
 };
 
+// Diff snapshots are untrusted input; document validation assumes typed locations.
+const readOptionalProvenance = (
+  candidate: Record<string, unknown>,
+  path: string,
+  diagnostics: Diagnostic[],
+): Provenance | undefined => {
+  const value = candidate.provenance;
+  if (value === undefined) return undefined;
+  const optionalStrings = ['repo', 'commit', 'input', 'symbol', 'note'];
+  if (
+    !isRecord(value) ||
+    (value.confidence !== undefined &&
+      (typeof value.confidence !== 'number' || !Number.isFinite(value.confidence))) ||
+    !Array.isArray(value.locations) ||
+    value.locations.length === 0 ||
+    !value.locations.every(
+      (location) =>
+        isRecord(location) &&
+        typeof location.path === 'string' &&
+        location.path.trim().length > 0 &&
+        optionalStrings.every(
+          (key) => location[key] === undefined || typeof location[key] === 'string',
+        ),
+    )
+  ) {
+    diagnostics.push(
+      buildDiffDiagnostic({
+        code: 'diagram.diff.invalid_snapshot',
+        message: `Expected "${path}.provenance" to contain valid locations and optional finite confidence.`,
+        path: `${path}.provenance`,
+      }),
+    );
+    return undefined;
+  }
+  return value as unknown as Provenance;
+};
+
 const validateEntitySnapshot = (candidate: unknown, path: string): ValidationResult<Entity> => {
   if (!isRecord(candidate)) {
     return {
@@ -272,6 +315,7 @@ const validateEntitySnapshot = (candidate: unknown, path: string): ValidationRes
     diagnostics,
   );
   const props = readOptionalRecord(candidate, 'props', path, diagnostics);
+  const provenance = readOptionalProvenance(candidate, path, diagnostics);
 
   if (diagnostics.length > 0 || !id || !type) {
     return {
@@ -291,6 +335,7 @@ const validateEntitySnapshot = (candidate: unknown, path: string): ValidationRes
       ...(removeDefaultTags !== undefined ? { removeDefaultTags } : {}),
       ...(replaceDefaultTags !== undefined ? { replaceDefaultTags } : {}),
       ...(props !== undefined ? { props } : {}),
+      ...(provenance !== undefined ? { provenance } : {}),
     },
     diagnostics: [],
   };
@@ -342,6 +387,7 @@ const validateRelationSnapshot = (candidate: unknown, path: string): ValidationR
     diagnostics,
   );
   const props = readOptionalRecord(candidate, 'props', path, diagnostics);
+  const provenance = readOptionalProvenance(candidate, path, diagnostics);
 
   if (diagnostics.length > 0 || !id || !from || !to) {
     return {
@@ -363,6 +409,7 @@ const validateRelationSnapshot = (candidate: unknown, path: string): ValidationR
       ...(removeDefaultTags !== undefined ? { removeDefaultTags } : {}),
       ...(replaceDefaultTags !== undefined ? { replaceDefaultTags } : {}),
       ...(props !== undefined ? { props } : {}),
+      ...(provenance !== undefined ? { provenance } : {}),
     },
     diagnostics: [],
   };
@@ -994,9 +1041,9 @@ const validateSemanticDiagramDiffObject = (
     value: {
       kind: DIFF_KIND,
       version: DIFF_VERSION,
-      entities: entityResults
-        .flatMap((result) => (result.ok && result.value ? [result.value] : []))
-        .sort((left, right) => left.entityId.localeCompare(right.entityId)),
+      entities: entityResults.flatMap((result) =>
+        result.ok && result.value ? [result.value] : [],
+      ),
       relations: relationResults
         .flatMap((result) => (result.ok && result.value ? [result.value] : []))
         .sort((left, right) => left.relationId.localeCompare(right.relationId)),
@@ -1013,8 +1060,7 @@ const sparsifySemanticDiagramDiff = (diff: SemanticDiagramDiff): SemanticDiagram
     .map((entry) => ({
       ...entry,
       changedFields: ENTITY_FIELD_ORDER.filter((field) => entry.changedFields.includes(field)),
-    }))
-    .sort((left, right) => left.entityId.localeCompare(right.entityId)),
+    })),
   relations: diff.relations
     .filter((entry) => entry.change !== 'unchanged')
     .map((entry) => ({

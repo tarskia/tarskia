@@ -1,4 +1,5 @@
 import { type Diagnostic, diagramDiagnostic, sortDiagnostics } from '../model/diagnostics';
+import { normalizeDocumentHierarchy } from '../model/normalize-hierarchy';
 import { FREEFORM_RELATION_TYPE, getSchemaObjectLocalId } from '../model/schema-ids';
 import type { Entity, Relation, SchemaModule, SemanticDocument } from '../model/types';
 import { type CanonicalTree, getChildren } from '../tree/canonical-tree';
@@ -9,7 +10,13 @@ import { buildCompiledDiagramEdgeId } from '../view/compile-diagram-view-tree';
 export type SemanticDiagramDiffChange = 'added' | 'removed' | 'changed' | 'unchanged';
 export type SemanticDiagramDiffSide = 'before' | 'after' | 'merged';
 
-export type SemanticDiagramEntityChangedField = 'name' | 'type' | 'parent' | 'tags' | 'props';
+export type SemanticDiagramEntityChangedField =
+  | 'name'
+  | 'type'
+  | 'parent'
+  | 'tags'
+  | 'props'
+  | 'provenance';
 export type SemanticDiagramRelationChangedField =
   | 'type'
   | 'label'
@@ -17,7 +24,8 @@ export type SemanticDiagramRelationChangedField =
   | 'tags'
   | 'from'
   | 'to'
-  | 'props';
+  | 'props'
+  | 'provenance';
 
 export interface SemanticDiagramEntityDiff {
   entityId: string;
@@ -77,6 +85,9 @@ export interface SemanticDiagramDiffEdge {
 }
 
 export interface SemanticDiagramDiffUnion {
+  /** Materialized nested document. Retained siblings keep their order; moved/added
+   * entities append in diff order. Omitted provenance retains the base value. */
+  afterDocument: SemanticDocument;
   tree: CanonicalTree<SemanticDiagramDiffNode>;
   edges: SemanticDiagramDiffEdge[];
   pointsOfInterest: {
@@ -110,6 +121,7 @@ const ENTITY_FIELD_ORDER: SemanticDiagramEntityChangedField[] = [
   'parent',
   'tags',
   'props',
+  'provenance',
 ];
 
 const RELATION_FIELD_ORDER: SemanticDiagramRelationChangedField[] = [
@@ -120,6 +132,7 @@ const RELATION_FIELD_ORDER: SemanticDiagramRelationChangedField[] = [
   'from',
   'to',
   'props',
+  'provenance',
 ];
 
 const stableSerialize = (value: unknown): string => {
@@ -146,10 +159,18 @@ const normalizeStringArray = (values?: string[]): string[] | undefined => {
 const normalizeParentId = (parentId?: string) =>
   parentId && parentId !== ROOT_ID ? parentId : undefined;
 
-const normalizeEntitySnapshot = (node?: SemanticEntityNode): Entity | undefined => {
+const normalizeEntitySnapshot = (
+  node?: SemanticEntityNode,
+  includeProvenance = false,
+): Entity | undefined => {
   if (!node) return undefined;
   const { children: _children, provenance: _provenance, ...entity } = node.entity;
-  const snapshot: Entity = { ...entity };
+  const snapshot: Entity = {
+    ...entity,
+    ...(includeProvenance && node.entity.provenance !== undefined
+      ? { provenance: node.entity.provenance }
+      : {}),
+  };
   const parentId = normalizeParentId(node.parentId);
   if (parentId) {
     snapshot.parent = parentId;
@@ -159,10 +180,18 @@ const normalizeEntitySnapshot = (node?: SemanticEntityNode): Entity | undefined 
   return snapshot;
 };
 
-const normalizeRelationSnapshot = (relation?: Relation): Relation | undefined => {
+const normalizeRelationSnapshot = (
+  relation?: Relation,
+  includeProvenance = false,
+): Relation | undefined => {
   if (!relation) return undefined;
   const { provenance: _provenance, ...snapshot } = relation;
-  return { ...snapshot };
+  return {
+    ...snapshot,
+    ...(includeProvenance && relation.provenance !== undefined
+      ? { provenance: relation.provenance }
+      : {}),
+  };
 };
 
 const tagFieldKey = (
@@ -199,6 +228,8 @@ const collectEntityChangedFields = (
         return tagFieldKey(before) !== tagFieldKey(after);
       case 'props':
         return propsKey(before.props) !== propsKey(after.props);
+      case 'provenance':
+        return stableSerialize(before.provenance) !== stableSerialize(after.provenance);
       default:
         return false;
     }
@@ -224,6 +255,8 @@ const collectRelationChangedFields = (
         return before.to !== after.to;
       case 'props':
         return propsKey(before.props) !== propsKey(after.props);
+      case 'provenance':
+        return stableSerialize(before.provenance) !== stableSerialize(after.provenance);
       default:
         return false;
     }
@@ -241,7 +274,7 @@ const buildEntityDiff = (
   afterNode?: SemanticEntityNode,
 ): SemanticDiagramEntityDiff => {
   const before = normalizeEntitySnapshot(beforeNode);
-  const after = normalizeEntitySnapshot(afterNode);
+  const after = normalizeEntitySnapshot(afterNode, true);
   if (!before && !after) {
     throw new Error(`Entity "${entityId}" not found in either document`);
   }
@@ -262,7 +295,16 @@ const buildEntityDiff = (
     };
   }
 
-  const changedFields = collectEntityChangedFields(before, after);
+  if (beforeNode?.entity.provenance !== undefined && after.provenance === undefined) {
+    throw new Error(
+      `Entity "${entityId}" provenance removal is unsupported: omitted provenance preserves the base value`,
+    );
+  }
+  const changedFields = collectEntityChangedFields(
+    normalizeEntitySnapshot(beforeNode, true)!,
+    after,
+  );
+  if (!changedFields.includes('provenance')) delete after.provenance;
 
   return {
     entityId,
@@ -279,7 +321,7 @@ const buildRelationDiff = (
   afterRelation?: Relation,
 ): SemanticDiagramRelationDiff => {
   const before = normalizeRelationSnapshot(beforeRelation);
-  const after = normalizeRelationSnapshot(afterRelation);
+  const after = normalizeRelationSnapshot(afterRelation, true);
   if (!before && !after) {
     throw new Error(`Relation "${relationId}" not found in either document`);
   }
@@ -300,7 +342,13 @@ const buildRelationDiff = (
     };
   }
 
-  const changedFields = collectRelationChangedFields(before, after);
+  if (beforeRelation?.provenance !== undefined && after.provenance === undefined) {
+    throw new Error(
+      `Relation "${relationId}" provenance removal is unsupported: omitted provenance preserves the base value`,
+    );
+  }
+  const changedFields = collectRelationChangedFields(beforeRelation!, after);
+  if (!changedFields.includes('provenance')) delete after.provenance;
 
   return {
     relationId,
@@ -321,12 +369,12 @@ export function diffSemanticDiagramDocuments(
   const beforeTree = buildEntityTree(before);
   const afterTree = buildEntityTree(after);
 
-  const entityIds = sortStrings(
-    new Set([
-      ...[...beforeTree.byId.keys()].filter((id) => id !== beforeTree.rootId),
+  const entityIds = [
+    ...new Set([
       ...[...afterTree.byId.keys()].filter((id) => id !== afterTree.rootId),
+      ...[...beforeTree.byId.keys()].filter((id) => id !== beforeTree.rootId),
     ]),
-  );
+  ];
   const relationIds = sortStrings(
     new Set([
       ...before.relations.map((relation) => relation.id),
@@ -458,34 +506,52 @@ const buildDiffDiagnostic = (
     relationId: options?.relationId,
   });
 
+const preserveProvenance = <T extends Entity | Relation>(base: T, after: T): T => ({
+  ...after,
+  ...(after.provenance === undefined && base.provenance !== undefined
+    ? { provenance: base.provenance }
+    : {}),
+});
+
 const materializeAfterDocumentFromDiff = (
+  before: SemanticDocument,
+  diff: SemanticDiagramDiff,
+): SemanticDocument =>
+  normalizeDocumentHierarchy(materializeFlatAfterDocumentFromDiff(before, diff)).doc;
+
+const materializeFlatAfterDocumentFromDiff = (
   before: SemanticDocument,
   diff: SemanticDiagramDiff,
 ): SemanticDocument => {
   const entityDiffById = new Map(diff.entities.map((entry) => [entry.entityId, entry]));
   const relationDiffById = new Map(diff.relations.map((entry) => [entry.relationId, entry]));
 
-  const entities: Entity[] = [];
-  const seenAddedEntityIds = new Set<string>();
-  for (const entity of before.entities) {
+  const tree = buildEntityTree(before);
+  const retained: Entity[] = [];
+  const appended = new Map<string, Entity>();
+  for (const node of tree.byId.values()) {
+    if (node.id === tree.rootId) continue;
+    const entity = normalizeEntitySnapshot(node, true)!;
     const entry = entityDiffById.get(entity.id);
-    if (!entry || entry.change === 'unchanged') {
-      entities.push({ ...entity });
-      continue;
-    }
-    if (entry.change === 'removed') {
-      continue;
-    }
-    entities.push({
-      ...getRequired(entry.after, `Missing after snapshot for entity "${entry.entityId}"`),
-    });
-    seenAddedEntityIds.add(entry.entityId);
+    if (entry?.change === 'removed') continue;
+    const next =
+      entry?.change === 'changed'
+        ? preserveProvenance(
+            entity,
+            getRequired(entry.after, `Missing after snapshot for entity "${entry.entityId}"`),
+          )
+        : entity;
+    if (node.entity.children) next.children = [];
+    if (next.parent !== entity.parent) appended.set(entity.id, next);
+    else retained.push(next);
   }
+  const entities = [...retained];
   for (const entry of diff.entities) {
-    if (entry.change !== 'added' || seenAddedEntityIds.has(entry.entityId)) continue;
-    entities.push({
-      ...getRequired(entry.after, `Missing after snapshot for entity "${entry.entityId}"`),
-    });
+    if (entry.change === 'added')
+      entities.push({
+        ...getRequired(entry.after, `Missing after snapshot for entity "${entry.entityId}"`),
+      });
+    else if (appended.has(entry.entityId)) entities.push(appended.get(entry.entityId)!);
   }
 
   const relations: Relation[] = [];
@@ -499,9 +565,12 @@ const materializeAfterDocumentFromDiff = (
     if (entry.change === 'removed') {
       continue;
     }
-    relations.push({
-      ...getRequired(entry.after, `Missing after snapshot for relation "${entry.relationId}"`),
-    });
+    relations.push(
+      preserveProvenance(
+        relation,
+        getRequired(entry.after, `Missing after snapshot for relation "${entry.relationId}"`),
+      ),
+    );
     seenAddedRelationIds.add(entry.relationId);
   }
   for (const entry of diff.relations) {
@@ -770,7 +839,7 @@ const validateSemanticDiagramDiffAgainstBefore = (params: {
     };
   }
 
-  const after = materializeAfterDocumentFromDiff(before, diff);
+  const after = materializeFlatAfterDocumentFromDiff(before, diff);
   const afterDiagnostics = validateMaterializedAfterDocument(after);
   if (afterDiagnostics.length > 0) {
     return {
@@ -805,13 +874,15 @@ const compileSemanticDiagramDiffUnionFromDocuments = (params: {
   const afterEntitySnapshotById = new Map(
     [...afterTree.byId.values()]
       .filter((node) => node.id !== afterTree.rootId)
-      .map((node) => [node.id, normalizeEntitySnapshot(node)] as const),
+      .map((node) => [node.id, normalizeEntitySnapshot(node, true)] as const),
   );
   const beforeRelationSnapshotById = new Map(
     before.relations.map((relation) => [relation.id, normalizeRelationSnapshot(relation)] as const),
   );
   const afterRelationSnapshotById = new Map(
-    after.relations.map((relation) => [relation.id, normalizeRelationSnapshot(relation)] as const),
+    after.relations.map(
+      (relation) => [relation.id, normalizeRelationSnapshot(relation, true)] as const,
+    ),
   );
   const relationTypeById = schema
     ? new Map(schema.relations.map((relation) => [relation.id, relation]))
@@ -1041,15 +1112,32 @@ const compileSemanticDiagramDiffUnionFromDocuments = (params: {
     [...byId.values()]
       .filter((node) => node.id !== ROOT_ID)
       .filter((node) => node.diff.side !== 'merged' || node.diff.change !== 'unchanged')
+      .filter(
+        (node) =>
+          !(
+            node.diff.change === 'changed' &&
+            node.diff.changedFields.length === 1 &&
+            node.diff.changedFields[0] === 'provenance'
+          ),
+      )
       .map((node) => node.id),
   );
   const edgeIds = sortStrings(
     edges
       .filter((edge) => edge.diff.side !== 'merged' || edge.diff.change !== 'unchanged')
+      .filter(
+        (edge) =>
+          !(
+            edge.diff.change === 'changed' &&
+            edge.diff.changedFields.length === 1 &&
+            edge.diff.changedFields[0] === 'provenance'
+          ),
+      )
       .map((edge) => edge.id),
   );
 
   return {
+    afterDocument: after,
     tree: {
       rootId: rootNode.id,
       root: rootNode,
