@@ -158,3 +158,109 @@ it('registers Share for the hosted viewer after the canvas is ready', async () =
     vi.unstubAllGlobals();
   }
 });
+
+it('keeps the replacement canvas ready when the previous keyed canvas unmounts later', async () => {
+  const { useEffect, useLayoutEffect } = await import('react');
+  const { useGalleryCanvasLifecycle } = await import('./PublicGalleryViewer');
+  const { scheduleHotReloadSafeUnmount } = await import('../canvas/hot-reload-unmount');
+  const deferred: (() => void)[] = [];
+  let ready = false;
+  const initialize = vi.fn(() => {
+    ready = true;
+  });
+  const unmount = vi.fn(() => {
+    ready = false;
+  });
+  function Canvas({
+    onInit,
+    onUnmount,
+  }: {
+    onInit: (camera: string) => void;
+    onUnmount: () => void;
+  }) {
+    useLayoutEffect(() => {
+      onInit('camera');
+    }, []);
+    useEffect(
+      () => () =>
+        scheduleHotReloadSafeUnmount({
+          onUnmount,
+          effectGeneration: 1,
+          getCurrentEffectGeneration: () => 1,
+          queueMicrotaskImpl: (callback) => deferred.push(callback),
+        }),
+      [onUnmount],
+    );
+    return null;
+  }
+  function Viewer({ canvasKey }: { canvasKey: string }) {
+    const lifecycle = useGalleryCanvasLifecycle(canvasKey, initialize, unmount);
+    return <Canvas key={canvasKey} {...lifecycle} />;
+  }
+  const host = document.createElement('div');
+  const root = createRoot(host);
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  try {
+    await act(async () => root.render(<Viewer canvasKey="diagram" />));
+    await act(async () => root.render(<Viewer canvasKey="changes" />));
+    expect(initialize).toHaveBeenCalledTimes(2);
+    expect(deferred).toHaveLength(1);
+    await act(async () => {
+      deferred.shift()!();
+    });
+    expect(unmount).not.toHaveBeenCalled();
+    expect(ready).toBe(true);
+    // A selection/inspector rerender must preserve the same active camera too.
+    await act(async () => root.render(<Viewer canvasKey="changes" />));
+    expect(ready).toBe(true);
+    await act(async () => root.unmount());
+    await act(async () => {
+      deferred.shift()!();
+    });
+    expect(unmount).toHaveBeenCalledTimes(1);
+    expect(ready).toBe(false);
+  } finally {
+    await act(async () => root.unmount());
+    vi.unstubAllGlobals();
+  }
+});
+
+it('frames a change after the inspector resize is consumed, but does not wait when it is already open', async () => {
+  const { useGalleryChangeFraming } = await import('./PublicGalleryViewer');
+  const requestNavigation = vi.fn();
+  const clearPending = vi.fn();
+  const pending = { nodeIds: ['removed', 'moved'], waitForLayoutAfter: 1 };
+  function Framing({ version, wait = true }: { version: number; wait?: boolean }) {
+    useGalleryChangeFraming({
+      pending: wait ? pending : { nodeIds: ['next'] },
+      canvasLayoutVersion: version,
+      ready: true,
+      requestNavigation,
+      clearPending,
+    });
+    return null;
+  }
+  const root = createRoot(document.createElement('div'));
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  try {
+    await act(async () => root.render(<Framing version={1} />));
+    expect(requestNavigation).not.toHaveBeenCalled();
+    expect(clearPending).not.toHaveBeenCalled();
+    await act(async () => root.render(<Framing version={2} />));
+    expect(requestNavigation).toHaveBeenLastCalledWith({
+      kind: 'fit-node-set',
+      nodeIds: ['removed', 'moved'],
+      preset: 'focus',
+    });
+    expect(clearPending).toHaveBeenCalledTimes(1);
+    await act(async () => root.render(<Framing version={2} wait={false} />));
+    expect(requestNavigation).toHaveBeenLastCalledWith({
+      kind: 'fit-node-set',
+      nodeIds: ['next'],
+      preset: 'focus',
+    });
+  } finally {
+    await act(async () => root.unmount());
+    vi.unstubAllGlobals();
+  }
+});

@@ -59,6 +59,28 @@ export async function readStartupOpen(openPath: string) {
         .map((entry) => entry.name),
     ];
   }
+  // Read only named compare artifacts. Never follow .job or compare symlinks.
+  const diagramFiles = selected.filter(
+    (file) => file.endsWith('.yaml') && !file.endsWith('.schema.yaml'),
+  );
+  for (const diagramPath of diagramFiles) {
+    const directory = path.posix.dirname(diagramPath);
+    const job = (await directoryEntries(path.join(root, directory))).find(
+      (entry) => entry.name === '.job' && entry.isDirectory(),
+    );
+    if (!job) continue;
+    const jobPath = path.posix.join(directory, '.job');
+    const compare = (await directoryEntries(path.join(root, jobPath))).find(
+      (entry) => entry.name === 'compare' && entry.isDirectory(),
+    );
+    if (!compare) continue;
+    const name = path.basename(diagramPath, '.yaml');
+    const compareDirectory = path.posix.join(jobPath, 'compare');
+    for (const entry of await directoryEntries(path.join(root, compareDirectory))) {
+      if (entry.isFile() && [`${name}.base.yaml`, `${name}.json`].includes(entry.name))
+        selected.push(path.posix.join(compareDirectory, entry.name));
+    }
+  }
   const files = await Promise.all(
     [...new Set(selected)].map(async (relative) => ({
       path: relative,

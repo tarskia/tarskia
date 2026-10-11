@@ -1,4 +1,5 @@
-import type { CSSProperties } from 'react';
+import { type CSSProperties, useContext } from 'react';
+import { CanvasDiffContext, diffSymbol } from '../../diff-context';
 import type { CanvasOverlayEdgeView } from '../../rendering/presentation/presentation';
 import { resolveEdgeLabelTransform } from './edge-label-placement';
 
@@ -27,10 +28,12 @@ export function EdgeLabel({
   interactive?: boolean;
   delegateClicks?: boolean;
 }) {
+  const diff = useContext(CanvasDiffContext);
+  const symbol = diffSymbol(diff?.relations.get(edge.relationId));
   const directions = edge.directionalLabels;
   const merged = directions?.length === 2;
-  const dot = edge.state === 'none' && (!merged || !edge.label);
-  const text = dot ? '' : edge.label || 'set';
+  const dot = !symbol && edge.state === 'none' && (!merged || !edge.label);
+  const text = `${symbol}${symbol ? ' ' : ''}${dot ? '' : edge.label || 'set'}`;
   const enabled = interactive && edge.opacity > 0.15;
   const className = `edge-label ${dot ? 'edge-label-dot' : 'edge-label-text'}${!dot && !edge.label ? ' edge-label-empty' : ''}${edge.matched ? ' edge-label-matched' : ''}${merged ? ' edge-label-pair' : ''}`;
   const style: CSSProperties = {
@@ -95,7 +98,7 @@ export function EdgeLabel({
             }}
           >
             {distinct ? (
-              direction.label
+              `${diffSymbol(diff?.relations.get(direction.relationId))} ${direction.label}`
             ) : (
               <span className="sr-only">{direction.label || 'Relation'}</span>
             )}

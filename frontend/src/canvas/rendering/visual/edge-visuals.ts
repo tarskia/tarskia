@@ -12,6 +12,7 @@ export interface ResolvedVisualEdge extends CompiledDiagramEdge {
 export function buildEdgeVisuals(params: {
   schema: SchemaModule;
   edges: CompiledDiagramEdge[];
+  preserveParallelEdges?: boolean;
 }): ResolvedVisualEdge[] {
   const { schema, edges } = params;
   const relationTypeById = new Map(schema.relations.map((relation) => [relation.id, relation]));
@@ -31,6 +32,16 @@ export function buildEdgeVisuals(params: {
       _order: order,
     };
   });
+
+  // Comparison colors and interaction are relation-specific; retain each candidate so
+  // routing can allocate independent anchors, lanes, and labels for its change state.
+  if (params.preserveParallelEdges) {
+    return candidates.map(({ _priority, _order, ...edge }) => {
+      void _priority;
+      void _order;
+      return edge;
+    });
+  }
 
   const groupedByVisibleEndpoints = new Map<string, typeof candidates>();
   for (const candidate of candidates) {
