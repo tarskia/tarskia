@@ -161,6 +161,14 @@ The advanced worker flow is staged so intermediate outputs can be inspected and 
 
 All generated diagram output is treated as a candidate until it passes deterministic validation.
 
+Collation and final review return targeted JSON edits against canonical graph
+artifacts rather than regenerating the full YAML. Omitted fields preserve existing
+items, descriptions, provenance and containment. Reviews may change an existing
+item only when deterministic diagnostics identify it as invalid. The worker checks
+both semantic validity and flow continuity after merging edits, rejects invalid
+additions, and retains independent repairs. Final compilation still requires all
+errors to be resolved.
+
 ## Security Notes
 
 - Codex agent turns run with a read-only sandbox, no network access for the commands Codex runs, web search disabled and no approval escalation. Codex otherwise uses your own Codex configuration.
@@ -236,3 +244,6 @@ Defaults are 5 minutes for minimal/low/medium, 15 for high/xhigh, and 30 for
 max/ultra/persistent effort. A timed-out turn is retried at most once on a fresh
 thread, restoring advanced-stage context from its handoff artifact. A caller
 without a handoff retains its thread for that one retry rather than losing context.
+Timeout logs identify both attempts and announce the recovery retry. A first-turn
+timeout is not a terminal build failure; monitors should await the CLI's final
+status or their explicitly configured overall deadline.

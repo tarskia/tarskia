@@ -65,7 +65,7 @@ export async function runGraphCollation(context: Awaited<ReturnType<typeof prepa
             },
             async () => {
               const handoffArtifactPath = await writeGraphCollationHandoff(
-                'Node refinement is complete. Collate the assembled refined document into the final graph using the canonical artifacts referenced here.',
+                'Node refinement is complete. Inspect the assembled refined document and return only targeted JSON edits using the canonical artifacts referenced here; preserve valid items unchanged.',
               );
               run.graphTurnCount += 1;
               const result = await graphCollator.collateGraph({
@@ -134,7 +134,7 @@ export async function runGraphCollation(context: Awaited<ReturnType<typeof prepa
       pendingGraphModelOutputDiagnostics = [
         buildModelOutputDiagnostic({
           code: 'diagram.document.invalid_graph_output',
-          message: `Graph collation output was not valid YAML: ${error.message}. Return only a semantic document YAML artifact.`,
+          message: `Graph collation output was not a valid graph edit response: ${error.message}. Return only a targeted JSON graph edit object, or {} when no changes are needed.`,
         }),
       ];
       run.totalTokenUsage = addTokenUsageTotals(run.totalTokenUsage, error.tokenUsage);
@@ -155,6 +155,8 @@ export async function runGraphCollation(context: Awaited<ReturnType<typeof prepa
     throw new Error('Graph collation did not produce a candidate graph');
   }
   graphResult = stabilizeFinalGraphResult(graphResult, 'Graph collation');
+  // Reviews read this artifact, so it must reflect guard-restored items and parse fallbacks.
+  await writeWorkspaceArtifact(options.workspace, 'analysis/final-graph.yaml', graphResult.rawYaml);
   await resume.pendingCandidates.save('graph-collation', {
     rawYaml: graphResult.rawYaml,
     rawResponse: graphResult.rawResponse,

@@ -41,6 +41,7 @@ export async function runFinalReview(context: Awaited<ReturnType<typeof runGraph
     assembledDoc,
     finalGraphReviewer,
     finalGraphReviewerRepairer,
+    validateGraph,
     finalFlowDiagnostics,
     stabilizeFinalGraphResult,
     writeFinalReviewHandoff,
@@ -71,6 +72,11 @@ export async function runFinalReview(context: Awaited<ReturnType<typeof runGraph
   }
   if (!graph.currentGraphReviewCompleted) {
     await beginStage('final-review');
+    await writeWorkspaceArtifact(
+      options.workspace,
+      'analysis/final-graph.yaml',
+      graph.graphResult.rawYaml,
+    );
     if (!resumedFinalReview) {
       await writeWorkspaceArtifact(
         options.workspace,
@@ -96,6 +102,11 @@ export async function runFinalReview(context: Awaited<ReturnType<typeof runGraph
 
     if (!pendingFinalReview)
       try {
+        const reviewDiagnostics = [
+          ...graph.pendingGraphModelOutputDiagnostics,
+          ...validateGraph(graph.graphResult.doc),
+          ...finalFlowDiagnostics(graph.graphResult.doc),
+        ];
         const reviewResult = await runTimedStep(
           {
             logger: options.logger,
@@ -106,8 +117,8 @@ export async function runFinalReview(context: Awaited<ReturnType<typeof runGraph
           },
           async () => {
             const handoffArtifactPath = await writeFinalReviewHandoff(
-              'A collated candidate final graph exists. Review it as a whole diagram and return the final graph that bundle compile should accept.',
-              graph.pendingGraphModelOutputDiagnostics,
+              'A candidate final graph exists. Inspect the whole diagram and return only targeted JSON edits that fix deterministic errors; preserve valid items unchanged.',
+              reviewDiagnostics,
             );
             run.graphTurnCount += 1;
             const result = await finalGraphReviewer.reviewFinalGraph({
@@ -131,6 +142,7 @@ export async function runFinalReview(context: Awaited<ReturnType<typeof runGraph
               handoffArtifactPath,
               currentFinalGraphYaml: graph.graphResult.rawYaml,
               finalReviewSummary,
+              diagnostics: reviewDiagnostics,
             });
             graph.currentGraphResponseArtifactPath = await writeWorkspaceArtifact(
               options.workspace,
@@ -163,7 +175,7 @@ export async function runFinalReview(context: Awaited<ReturnType<typeof runGraph
         pendingFinalReviewModelOutputDiagnostics = [
           buildModelOutputDiagnostic({
             code: 'diagram.document.invalid_final_review_output',
-            message: `Final-review output was not valid YAML: ${error.message}. Return only a semantic document YAML artifact.`,
+            message: `Final-review output was not a valid graph edit response: ${error.message}. Return only a targeted JSON graph edit object, or {} when no changes are needed.`,
           }),
         ];
         run.graphTurnCount += 1;
@@ -303,8 +315,13 @@ export async function runFinalReview(context: Awaited<ReturnType<typeof runGraph
                     `thread ${result.threadId ?? 'none'}, entities=${result.doc.entities.length}, relations=${result.doc.relations.length}`,
                 },
                 async () => {
+                  await writeWorkspaceArtifact(
+                    options.workspace,
+                    'analysis/final-review.candidate.yaml',
+                    finalReviewResult.rawYaml,
+                  );
                   const handoffArtifactPath = await writeFinalReviewHandoff(
-                    'A reviewed final graph exists but still has deterministic validation issues. Repair the reviewed graph from the reviewed YAML and current diagnostics.',
+                    'A reviewed final graph exists but still has deterministic validation issues. Return targeted JSON edits against analysis/final-review.candidate.yaml using the current diagnostics.',
                     finalDiagnostics,
                     { includeCandidateFinalGraph: false },
                   );
@@ -359,7 +376,7 @@ export async function runFinalReview(context: Awaited<ReturnType<typeof runGraph
               pendingFinalReviewModelOutputDiagnostics = [
                 buildModelOutputDiagnostic({
                   code: 'diagram.document.invalid_final_review_output',
-                  message: `Final-review repair output was not valid YAML: ${error.message}. Return only a semantic document YAML artifact.`,
+                  message: `Final-review repair output was not a valid graph edit response: ${error.message}. Return only a targeted JSON graph edit object, or {} when no changes are needed.`,
                 }),
               ];
               run.graphTurnCount += 1;

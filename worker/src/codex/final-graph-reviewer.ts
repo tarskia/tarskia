@@ -13,7 +13,7 @@ import { parseDocument, serializeDocument } from '../semantic';
 import { normalizeGeneratedDocument } from '../semantic/generated-document-normalizer';
 import { tokenUsageFromSdkUsage } from '../token-usage';
 import type { CodexClientLike, CodexThreadLike } from './diagram-agent';
-import { extractYamlResponse } from './diagram-agent';
+import { applyGraphEditResponse, renderGraphEditContract } from './graph-edit-response';
 import { renderGraphifyHintsSection } from './graphify-hints-prompt';
 import { ModelOutputParseError } from './model-output-error';
 import { renderSchemaSelectionGuidance, renderSharedDiagramPromptGuidance } from './prompt-package';
@@ -126,14 +126,13 @@ function buildPromptHeader(
 function buildReviewRules(compact: boolean): string[] {
   return [
     'Final-review rules:',
-    '- Review and edit the full candidate final graph YAML. This is an editing pass, not a re-draft.',
+    '- Inspect the full candidate graph, then return only targeted JSON edits; never reproduce unchanged items.',
     '- Focus on whole-diagram coherence: stable top-level structure, believable containment, clear client/server/storage separation, and edge structure that reads cleanly.',
-    '- You may reparent, prune, retype, reroute, normalize, and simplify the final graph when that materially improves coherence.',
+    '- Preserve every valid input entity and relation unchanged. Edit, reparent, retype, or remove an existing item only to fix a deterministic error on that exact id. Coherence alone does not authorize changing a valid item.',
     '- Do not collapse descendant relations back to level-0 relations. Preserve every assembled relation with a child endpoint using the same id, endpoints, and relation type unless it is deterministically invalid.',
     '- Do not erase source/sink/flow-through continuity while cleaning up the final graph: source nodes need outgoing flow, sink nodes need incoming flow, and flow-through nodes need both unless the catalogue marks them terminal.',
-    '- You may add, remove, or update schemaRefs only when the schema catalog and property/type descriptions make the need explicit.',
-    '- If you add or change schemaRefs and a schema selection validation command is available, run it with the candidate YAML on stdin before finalizing. Do not keep schema refs that the command rejects.',
-    '- Preserve stable ids for surviving entities and relations whenever possible.',
+    '- Add entities or relations only when needed to resolve a deterministic error; keep the active schemaRefs unchanged.',
+    '- Preserve exact entity and relation ids. Never rename a surviving node or copy it under a shorter containment path.',
     '- Keep provenance repo-relative only. Never prefix paths with target-repo/ or workspace directories.',
     '- Do not add new local detail just because you see more evidence. Prefer coherence and cleanup over extra expansion.',
     ...(compact
@@ -144,26 +143,13 @@ function buildReviewRules(compact: boolean): string[] {
   ];
 }
 
-function buildOutputRequirements(): string[] {
-  return [
-    'Output requirements:',
-    '- Return YAML only. Do not wrap it in markdown fences.',
-    '- Output a semantic document, not a source document.',
-    '- Include version, schemaRefs, entities, and relations only.',
-    '- schemaRefs entries must be objects of the form { schema, layer }.',
-    '- Do not include inputs, imports, view, or layout.',
-    '- Use only ontology type ids and relation ids from the schema catalog.',
-    '- Every entity and relation must include provenance in canonical locations form: provenance.locations[] entries with input: primary and repo-relative path.',
-  ];
-}
-
 export function buildFinalGraphReviewPrompt(
   input: FinalGraphReviewerInput,
   options: { compact?: boolean } = {},
 ): string {
   const compact = options.compact ?? false;
   return [
-    'Review the candidate final semantic graph YAML for the repository and return an improved final graph if needed.',
+    'Review the candidate final semantic graph for the repository and return targeted JSON edits only.',
     '',
     ...(compact
       ? [
@@ -181,15 +167,16 @@ export function buildFinalGraphReviewPrompt(
           renderSharedDiagramPromptGuidance(input.promptPackage),
           '',
         ]),
-    'Current candidate final graph YAML:',
-    input.currentFinalGraphYaml,
+    'Read the candidate final graph artifact listed above; do not copy it into your response.',
+    'Deterministic diagnostics on the candidate graph:',
+    JSON.stringify(input.diagnostics ?? [], null, 2),
     '',
     'Assembled-vs-collated regression summary JSON:',
     JSON.stringify(input.finalReviewSummary, null, 2),
     '',
     ...buildReviewRules(compact),
     '',
-    ...buildOutputRequirements(),
+    ...renderGraphEditContract(),
   ].join('\n');
 }
 
@@ -199,7 +186,7 @@ export function buildFinalGraphReviewRepairPrompt(
 ): string {
   const compact = options.compact ?? false;
   return [
-    'Repair the reviewed final semantic graph YAML for the repository.',
+    'Repair the reviewed final semantic graph with targeted JSON edits.',
     '',
     ...(compact
       ? [
@@ -218,17 +205,13 @@ export function buildFinalGraphReviewRepairPrompt(
     'Diagnostics to fix:',
     JSON.stringify(input.diagnostics, null, 2),
     '',
-    'Current reviewed YAML to repair:',
-    input.previousReviewYaml,
+    `Current reviewed graph to repair: ${toWorkspaceRelativePath(input.workspace.jobRoot, path.join(input.workspace.workspaceOutputDir, 'analysis/final-review.candidate.yaml'))}`,
+    'Read this artifact as the patch base. Do not use an earlier candidate or copy unchanged items into your response.',
     '',
     ...(compact ? [] : [renderSharedDiagramPromptGuidance(input.promptPackage), '']),
-    'Repair rules:',
-    '- Preserve the good parts of the reviewed final graph; do not restart from scratch unless the reviewed output is fundamentally unusable.',
-    '- Keep the final graph coherent and runtime-focused. Do not add extra local detail while repairing.',
-    '- Preserve stable ids where possible.',
-    '- Keep provenance repo-relative only.',
+    ...buildReviewRules(compact),
     '',
-    ...buildOutputRequirements(),
+    ...renderGraphEditContract(),
   ].join('\n');
 }
 
@@ -278,8 +261,10 @@ export class CodexFinalGraphReviewer implements FinalGraphReviewer, FinalGraphRe
           };
         })();
     try {
-      const rawYaml = extractYamlResponse(turn.finalResponse);
-      const parsed = parseDocument(rawYaml);
+      const parsed = applyGraphEditResponse(
+        parseDocument(input.currentFinalGraphYaml),
+        turn.finalResponse,
+      );
       const sanitized = normalizeGeneratedDocument(
         {
           ...parsed,
@@ -298,7 +283,7 @@ export class CodexFinalGraphReviewer implements FinalGraphReviewer, FinalGraphRe
     } catch (error) {
       throw new ModelOutputParseError({
         operation: 'advanced final graph review',
-        expectedFormat: 'yaml',
+        expectedFormat: 'json',
         rawResponse: turn.finalResponse,
         threadId: turn.threadId,
         tokenUsage: tokenUsageFromSdkUsage(turn.usage),
@@ -338,8 +323,10 @@ export class CodexFinalGraphReviewer implements FinalGraphReviewer, FinalGraphRe
           };
         })();
     try {
-      const rawYaml = extractYamlResponse(turn.finalResponse);
-      const parsed = parseDocument(rawYaml);
+      const parsed = applyGraphEditResponse(
+        parseDocument(input.previousReviewYaml),
+        turn.finalResponse,
+      );
       const sanitized = normalizeGeneratedDocument(
         {
           ...parsed,
@@ -358,7 +345,7 @@ export class CodexFinalGraphReviewer implements FinalGraphReviewer, FinalGraphRe
     } catch (error) {
       throw new ModelOutputParseError({
         operation: `advanced final graph review repair attempt ${input.attempt}`,
-        expectedFormat: 'yaml',
+        expectedFormat: 'json',
         rawResponse: turn.finalResponse,
         threadId: turn.threadId,
         tokenUsage: tokenUsageFromSdkUsage(turn.usage),

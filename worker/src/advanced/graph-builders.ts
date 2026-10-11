@@ -213,6 +213,7 @@ export interface GraphCollator {
 export interface FinalGraphReviewerInput extends GraphCollatorInput {
   currentFinalGraphYaml: string;
   finalReviewSummary: FinalGraphReviewSummary;
+  diagnostics?: Diagnostic[];
 }
 
 export interface FinalGraphReviewerResult {

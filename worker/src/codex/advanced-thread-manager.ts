@@ -182,13 +182,12 @@ export class AdvancedThreadManager implements AdvancedBuildPromptRunner {
           retries: 0,
           reasoningEffort: this.options.modelReasoningEffort,
           timeoutMs: params.timeoutMs ?? this.options.turnTimeoutMs,
-          onTimeoutAttempt: ({ attempt, maxAttempts, timeoutMs, operation }) => {
-            const retryNote =
-              attempt < maxAttempts
-                ? ` Retrying (${maxAttempts - attempt} attempts remaining).`
-                : ' No retry attempts remain.';
+          onTimeoutAttempt: ({ timeoutMs, operation }) => {
+            const retryNote = allowRecovery
+              ? ' One recovery retry remains.'
+              : ' No retry attempts remain.';
             this.options.logger.warn(
-              `Codex turn timed out after ${timeoutMs}ms during ${operation} (attempt ${attempt}/${maxAttempts}).${retryNote}`,
+              `Codex turn timed out after ${timeoutMs}ms during ${operation} (attempt ${allowRecovery ? 1 : 2}/2).${retryNote}`,
             );
           },
         });
@@ -214,6 +213,9 @@ export class AdvancedThreadManager implements AdvancedBuildPromptRunner {
           error instanceof CodexTurnTimeoutError
             ? 'advanced stage turn timed out'
             : 'rollout disappeared during advanced stage turn',
+        );
+        this.options.logger.warn(
+          `Retrying ${params.operation} once on a fresh Codex thread using ${toWorkspaceRelativePath(this.options.workspaceRoot, params.handoffArtifactPath ?? this.options.workspaceRoot)}.`,
         );
         return execute(false);
       }

@@ -1,12 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { GraphifyHints } from '../advanced/graphify-hints';
 import { testGroupSemantics } from '../advanced/refinement-test-context';
 import type { SchemaFlowCatalog } from '../advanced/schema-flow-catalog';
-import { buildSchemaActivation } from '../semantic';
+import { buildSchemaActivation, serializeDocument } from '../semantic';
 import { emptyTokenUsageTotals } from '../token-usage';
 import {
   buildFinalGraphReviewPrompt,
   buildFinalGraphReviewRepairPrompt,
+  CodexFinalGraphReviewer,
 } from './final-graph-reviewer';
 import { GRAPHIFY_HINTS_GUARDRAIL } from './graphify-hints-prompt';
 
@@ -70,144 +71,153 @@ function testGraphifyHints(): GraphifyHints {
   };
 }
 
-describe('CodexFinalGraphReviewer prompt', () => {
-  it('includes the candidate final graph, review summary, and canonical artifacts', () => {
-    const input = {
-      workspace: {
-        jobRoot: '/tmp/job',
-        targetRepoPath: '/tmp/job/target-repo',
-        schemaRepoPath: '/tmp/job/schema-repo',
-        workspaceOutputDir: '/tmp/job/out',
-        repoRevision: 'abc123',
+function reviewInput(): import('../advanced/graph-builders').FinalGraphReviewerInput {
+  return {
+    workspace: {
+      jobRoot: '/tmp/job',
+      targetRepoPath: '/tmp/job/target-repo',
+      schemaRepoPath: '/tmp/job/schema-repo',
+      workspaceOutputDir: '/tmp/job/out',
+      repoRevision: 'abc123',
+    },
+    repo: 'https://github.com/example/repo',
+    ref: 'main',
+    repoCensus: {
+      repoUrl: 'https://github.com/example/repo',
+      requestedRef: 'main',
+      repoRevision: 'abc123',
+      repoRoot: '/tmp/job/target-repo',
+      generatedAt: '2026-01-01T00:00:00.000Z',
+      summary: {
+        totalFiles: 8,
+        totalDirectories: 3,
+        totalLines: 200,
+        languages: { typescript: 200 },
+        topLevelPaths: [],
       },
-      repo: 'https://github.com/example/repo',
-      ref: 'main',
-      repoCensus: {
-        repoUrl: 'https://github.com/example/repo',
-        requestedRef: 'main',
-        repoRevision: 'abc123',
-        repoRoot: '/tmp/job/target-repo',
-        generatedAt: '2026-01-01T00:00:00.000Z',
-        summary: {
-          totalFiles: 8,
-          totalDirectories: 3,
-          totalLines: 200,
-          languages: { typescript: 200 },
-          topLevelPaths: [],
-        },
-        directories: [],
-        manifests: [],
-        signals: [],
-        files: [],
-      },
-      graphifyHints: testGraphifyHints(),
-      areaPlan: {
-        repoSummary: 'Test repo',
-        initialSchemaActivations: [buildSchemaActivation('core/web-app@0.3')],
-        candidateSchemaRefs: [],
-        areas: [],
-      },
-      nodeRefinementState: {
-        rootNodeIds: ['app'],
-        queue: [],
-        tasksByNodeId: {},
-        nodesById: {
-          app: {
-            id: 'app',
-            localId: 'app',
-            name: 'App',
-            typeId: 'core/web-app.types.application',
-            scope: ['src/app.ts'],
-            evidence: [],
-            queueDecision: 'expand' as const,
-          },
-        },
-        refinementsByNodeId: {},
-        edgeContracts: [],
-        activeEdgeProposals: [],
-        reviewedDepths: [1],
-        budgets: {
-          maxDepth: 2,
-          maxTurns: 10,
-          maxWorkItems: 10,
-          turnsUsed: 1,
-          workItemsCreated: 1,
-          tokenUsage: emptyTokenUsageTotals(),
+      directories: [],
+      manifests: [],
+      signals: [],
+      files: [],
+    },
+    graphifyHints: testGraphifyHints(),
+    areaPlan: {
+      repoSummary: 'Test repo',
+      initialSchemaActivations: [buildSchemaActivation('core/web-app@0.3')],
+      candidateSchemaRefs: [],
+      areas: [],
+    },
+    nodeRefinementState: {
+      rootNodeIds: ['app'],
+      queue: [],
+      tasksByNodeId: {},
+      nodesById: {
+        app: {
+          id: 'app',
+          localId: 'app',
+          name: 'App',
+          typeId: 'core/web-app.types.application',
+          scope: ['src/app.ts'],
+          evidence: [],
+          queueDecision: 'expand' as const,
         },
       },
-      assembledDoc: {
+      refinementsByNodeId: {},
+      edgeContracts: [],
+      activeEdgeProposals: [],
+      reviewedDepths: [1],
+      budgets: {
+        maxDepth: 2,
+        maxTurns: 10,
+        maxWorkItems: 10,
+        turnsUsed: 1,
+        workItemsCreated: 1,
+        tokenUsage: emptyTokenUsageTotals(),
+      },
+    },
+    assembledDoc: {
+      version: '0.1.0',
+      schemaRefs: [{ schema: 'core/web-app@0.3', layer: 0 }],
+      entities: [{ id: 'app', type: 'core/web-app.types.application', name: 'App' }],
+      relations: [],
+    },
+    level0Backbone: {
+      level0Doc: {
         version: '0.1.0',
-        schemaRefs: [{ schema: 'core/web-app@0.3', layer: 0 }],
-        entities: [{ id: 'app', type: 'core/web-app.types.application', name: 'App' }],
+        schemaRefs: [],
+        entities: [],
         relations: [],
       },
-      level0Backbone: {
-        level0Doc: {
-          version: '0.1.0',
-          schemaRefs: [],
-          entities: [],
-          relations: [],
+      level0EdgeIds: [],
+      activeFrontier: [],
+      terminatedNodes: [],
+      refinementQueue: [],
+      edgeBindings: [],
+      visibleResponsibilityIds: ['app'],
+    },
+    activeSchemaRefs: [buildSchemaActivation('core/web-app@0.3')],
+    semantics: testGroupSemantics,
+    schemaFlowCatalog: testSchemaFlowCatalog(),
+    promptPackage: {
+      contract: { schemaCatalog: [] } as never,
+      renderedContract: 'Validation-backed contract:',
+      metaOntologyMarkdown: '# Meta ontology',
+      schemaCatalogJson: '[]',
+    },
+    primaryDocumentInput: {
+      id: 'primary',
+      kind: 'git' as const,
+      repo: 'https://github.com/example/repo',
+      revision: 'abc123',
+      role: 'primary' as const,
+    },
+    logger: {
+      info: () => {},
+      warn: () => {},
+      error: () => {},
+    },
+    currentFinalGraphYaml: serializeDocument({
+      version: '0.1.0',
+      schemaRefs: [{ schema: 'core/web-app@0.3', layer: 0 }],
+      entities: [
+        {
+          id: 'app',
+          type: 'core/web-app.types.application',
+          name: 'App',
+          description: 'INLINE_FINAL_GRAPH_SENTINEL',
         },
-        level0EdgeIds: [],
-        activeFrontier: [],
-        terminatedNodes: [],
-        refinementQueue: [],
-        edgeBindings: [],
-        visibleResponsibilityIds: ['app'],
+      ],
+      relations: [],
+    }),
+    finalReviewSummary: {
+      assembledDocument: {
+        entityCount: 2,
+        relationCount: 1,
       },
-      activeSchemaRefs: [buildSchemaActivation('core/web-app@0.3')],
-      semantics: testGroupSemantics,
-      schemaFlowCatalog: testSchemaFlowCatalog(),
-      promptPackage: {
-        contract: { schemaCatalog: [] } as never,
-        renderedContract: 'Validation-backed contract:',
-        metaOntologyMarkdown: '# Meta ontology',
-        schemaCatalogJson: '[]',
+      candidateFinalGraph: {
+        entityCount: 1,
+        relationCount: 0,
       },
-      primaryDocumentInput: {
-        id: 'primary',
-        kind: 'git' as const,
-        repo: 'https://github.com/example/repo',
-        revision: 'abc123',
-        role: 'primary' as const,
-      },
-      logger: {
-        info: () => {},
-        warn: () => {},
-        error: () => {},
-      },
-      currentFinalGraphYaml: `version: 0.1.0
-schemaRefs:
-  - schema: core/web-app@0.3
-    layer: 0
-entities:
-  - id: app
-    type: core/web-app.types.application
-    name: App
-    description: INLINE_FINAL_GRAPH_SENTINEL
-relations: []
-`,
-      finalReviewSummary: {
-        assembledDocument: {
-          entityCount: 2,
-          relationCount: 1,
-        },
-        candidateFinalGraph: {
-          entityCount: 1,
-          relationCount: 0,
-        },
-        removedEntityIds: ['app/runtime'],
-        reparentedEntityIds: [],
-        removedRelationIds: ['app-calls-runtime'],
-        rewrittenRelationIds: [],
-        candidateMissingRelationEndpointIds: [],
-      },
-    };
+      removedEntityIds: ['app/runtime'],
+      reparentedEntityIds: [],
+      removedRelationIds: ['app-calls-runtime'],
+      rewrittenRelationIds: [],
+      candidateMissingRelationEndpointIds: [],
+    },
+  };
+}
+
+describe('CodexFinalGraphReviewer prompt', () => {
+  it('includes the candidate final graph, review summary, and canonical artifacts', () => {
+    const input = reviewInput();
 
     const prompt = buildFinalGraphReviewPrompt(input);
 
-    expect(prompt).toContain('Current candidate final graph YAML:');
-    expect(prompt).toContain('INLINE_FINAL_GRAPH_SENTINEL');
+    expect(prompt).toContain('Deterministic diagnostics on the candidate graph:');
+    expect(prompt).not.toContain('INLINE_FINAL_GRAPH_SENTINEL');
+    expect(prompt).toContain('Return a JSON edit object only');
+    expect(prompt).toContain('Preserve every valid input entity and relation unchanged.');
+    expect(prompt).not.toContain('You may reparent, prune');
     expect(prompt).toContain('Assembled-vs-collated regression summary JSON:');
     expect(prompt).toContain('"removedEntityIds": [');
     expect(prompt).toContain('out/analysis/assembled-refined-document.yaml');
@@ -243,7 +253,49 @@ relations: []
     expect(repairPrompt).not.toContain('Current candidate final graph YAML:');
     expect(repairPrompt).not.toContain('INLINE_FINAL_GRAPH_SENTINEL');
     expect(repairPrompt).not.toContain('out/analysis/final-graph.yaml');
-    expect(repairPrompt).toContain('Current reviewed YAML to repair:');
-    expect(repairPrompt).toContain('REVIEWED_FINAL_GRAPH_SENTINEL');
+    expect(repairPrompt).toContain(
+      'Current reviewed graph to repair: out/analysis/final-review.candidate.yaml',
+    );
+    expect(repairPrompt).not.toContain('REVIEWED_FINAL_GRAPH_SENTINEL');
+    expect(repairPrompt).toContain('Return a JSON edit object only');
   });
+});
+
+it('reviews and repairs using the supplied current graph as the exact patch base', async () => {
+  const input = reviewInput();
+  input.diagnostics = [
+    {
+      domain: 'diagram',
+      phase: 'document',
+      severity: 'error',
+      code: 'diagram.flow.unresolved_ingress',
+      message: 'Missing ingress',
+      entityId: 'app',
+    },
+  ];
+  const runPrompt = vi.fn().mockResolvedValue({
+    threadId: 'review',
+    usage: null,
+    finalResponse: JSON.stringify({ entityEdits: [{ id: 'app', name: 'Reviewed' }] }),
+  });
+  input.promptRunner = { runPrompt, getThreadId: () => 'review', isScopePrimed: () => false };
+  const reviewer = new CodexFinalGraphReviewer();
+  const result = await reviewer.reviewFinalGraph(input);
+  expect(result.doc.entities[0]).toMatchObject({
+    name: 'Reviewed',
+    description: 'INLINE_FINAL_GRAPH_SENTINEL',
+  });
+  expect(runPrompt.mock.calls[0][0].prompt).toContain('diagram.flow.unresolved_ingress');
+  runPrompt.mockResolvedValueOnce({
+    threadId: 'review',
+    usage: null,
+    finalResponse: '{"entityEdits": [{"id": "app", "description": "Repaired"}]}',
+  });
+  const repaired = await reviewer.repairFinalGraphReview({
+    ...input,
+    previousReviewYaml: result.rawYaml,
+    diagnostics: [],
+    attempt: 1,
+  });
+  expect(repaired.doc.entities[0]).toMatchObject({ name: 'Reviewed', description: 'Repaired' });
 });

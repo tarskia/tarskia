@@ -66,7 +66,7 @@ export async function prepareGraphContext(
       assembledDoc: inputDoc,
       candidateDoc: result.doc,
       inputDiagnostics: [...validateGraph(inputDoc), ...finalFlowDiagnostics(inputDoc)],
-      validate: validateGraph,
+      validate: (doc) => [...validateGraph(doc), ...finalFlowDiagnostics(doc)],
     });
     for (const diagnostic of regression.diagnostics) {
       options.logger.warn(`${stage}: ${diagnostic.message}`);

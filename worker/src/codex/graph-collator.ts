@@ -6,11 +6,11 @@ import type {
   GraphCollatorResult,
 } from '../advanced/graph-builders';
 import { renderSchemaFlowCatalogForPrompt } from '../advanced/schema-flow-catalog';
-import { parseDocument, serializeDocument } from '../semantic';
+import { serializeDocument } from '../semantic';
 import { normalizeGeneratedDocument } from '../semantic/generated-document-normalizer';
 import { tokenUsageFromSdkUsage } from '../token-usage';
 import type { CodexClientLike, CodexThreadLike } from './diagram-agent';
-import { extractYamlResponse } from './diagram-agent';
+import { applyGraphEditResponse, renderGraphEditContract } from './graph-edit-response';
 import { ModelOutputParseError } from './model-output-error';
 import { renderSharedDiagramPromptGuidance } from './prompt-package';
 import { createReadOnlyThread } from './read-only-thread';
@@ -121,7 +121,7 @@ export function buildGraphCollationPrompt(
   );
 
   return [
-    'Collate the assembled advanced diagram into the final semantic document YAML.',
+    'Inspect the assembled advanced diagram and return only targeted JSON edits.',
     '',
     ...(compact
       ? [
@@ -162,19 +162,12 @@ export function buildGraphCollationPrompt(
     ...(compact ? [] : [renderSharedDiagramPromptGuidance(input.promptPackage), '']),
     'Collation rules:',
     '- Keep the final graph focused on shipped runtime architecture. Treat packaging/install/bootstrap artifacts as supporting evidence for runtime boundaries, not as collation-time promotions, unless delivery/runtime operations are explicitly central to the architecture.',
-    '- Preserve the assembled containment tree and refined edge set unless a minimal top-level reconciliation is needed.',
+    '- Preserve every valid assembled entity and relation unchanged. Edit or remove an existing item only to fix a deterministic error on that exact id.',
     '- Do not collapse descendant relations back to level-0 relations. Every assembled relation with a child endpoint must remain present with the same id, endpoints, and relation type unless it is deterministically invalid.',
     '- Do not invent containment wrappers or synthetic fallback groups.',
-    '- If you change schemaRefs and a schema selection validation command is available, run it with the candidate YAML on stdin before finalizing. Do not keep schema refs that the command rejects.',
     '- Keep all explicit provenance in canonical locations form: provenance.locations[] entries with input: primary and repo-relative path. Never prefix provenance paths with target-repo/ or other workspace directories. Do not use provenance.input/provenance.paths shorthand.',
     '',
-    'Output requirements:',
-    '- Return YAML only. Do not wrap it in markdown fences.',
-    '- Output a semantic document, not a source document.',
-    '- Use exactly the active schema refs listed above.',
-    '- Do not retype child nodes.',
-    '- Root-owned inferred external nodes may remain if they are needed to preserve the backbone.',
-    '- Keep all explicit provenance in canonical locations form: provenance.locations[] entries with input: primary and repo-relative path. Never prefix provenance paths with target-repo/ or other workspace directories. Do not use provenance.input/provenance.paths shorthand.',
+    ...renderGraphEditContract(),
   ].join('\n');
 }
 
@@ -232,8 +225,7 @@ export class CodexGraphCollator implements GraphCollator {
           };
         })();
     try {
-      const rawYaml = extractYamlResponse(turn.finalResponse);
-      const parsed = parseDocument(rawYaml);
+      const parsed = applyGraphEditResponse(input.assembledDoc, turn.finalResponse);
       const sanitized = normalizeGeneratedDocument(
         {
           ...parsed,
@@ -253,7 +245,7 @@ export class CodexGraphCollator implements GraphCollator {
     } catch (error) {
       throw new ModelOutputParseError({
         operation,
-        expectedFormat: 'yaml',
+        expectedFormat: 'json',
         rawResponse: turn.finalResponse,
         threadId: turn.threadId,
         tokenUsage: tokenUsageFromSdkUsage(turn.usage),
