@@ -1795,10 +1795,7 @@ relations:
     );
   }, 40000);
 
-  it.each([
-    false,
-    true,
-  ])('blocks surviving final flow errors after one repair (fixed=%s)', async (fixed) => {
+  it('rejects orphan review additions without losing valid additions or needing a repair turn', async () => {
     const repoRoot = await createGitRepo({
       'package.json': JSON.stringify({ name: 'test-repo' }),
       'src/index.ts': 'export const hello = "world";\n',
@@ -1812,7 +1809,12 @@ relations:
       threadId: 'thread-graph',
     }));
     dependencies.finalGraphReviewer.reviewFinalGraph.mockImplementation(
-      async ({ currentFinalGraphYaml }) => {
+      async ({ currentFinalGraphYaml, workspace }) => {
+        const candidateYaml = await fs.readFile(
+          path.join(workspace.workspaceOutputDir, 'analysis/final-graph.yaml'),
+          'utf8',
+        );
+        expect(candidateYaml.trim()).toBe(currentFinalGraphYaml.trim());
         const doc = parseDocument(currentFinalGraphYaml);
         doc.entities.push({
           id: 'unconnected',
@@ -1832,49 +1834,23 @@ relations:
         };
       },
     );
-    dependencies.finalGraphReviewerRepairer.repairFinalGraphReview.mockImplementation(
-      async ({ previousReviewYaml }) => {
-        const doc = parseDocument(previousReviewYaml);
-        if (fixed)
-          doc.entities = doc.entities.filter(
-            (entity) => entity.id !== 'unconnected' && entity.id !== 'valid-addition',
-          );
-        return {
-          doc,
-          rawYaml: serializeDocument(doc),
-          rawResponse: 'repair service',
-          threadId: 'thread-final-review-repair',
-        };
-      },
-    );
     const run = buildDiagram(
       { repo: repoRoot, schemaSource: fixturePath('schema-repo'), out },
       { ...dependencies, logger: quietLogger() },
     );
-    if (fixed) await expect(run).resolves.toMatchObject({ threadId: 'thread-final-review-repair' });
-    else
-      await expect(run).rejects.toMatchObject({
-        diagnostics: expect.arrayContaining([
-          expect.objectContaining({
-            code: expect.stringMatching(/^diagram\.flow\./),
-            severity: 'error',
-          }),
-        ]),
-      });
-    if (fixed) {
-      const doc = parseDocument(await fs.readFile(out, 'utf8'));
-      expect(doc.entities.some((entity) => entity.id === 'valid-addition')).toBe(true);
-      expect(doc.entities.some((entity) => entity.id === 'unconnected')).toBe(false);
-      expect((await readJobMetadata(`${out}.job`))?.diagnostics).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            code: 'diagram.review.reverted_edit',
-            entityId: 'valid-addition',
-          }),
-        ]),
-      );
-    }
-    expect(dependencies.finalGraphReviewerRepairer.repairFinalGraphReview).toHaveBeenCalledTimes(1);
+    await expect(run).resolves.toMatchObject({ threadId: 'thread-final-review' });
+    const doc = parseDocument(await fs.readFile(out, 'utf8'));
+    expect(doc.entities.some((entity) => entity.id === 'valid-addition')).toBe(true);
+    expect(doc.entities.some((entity) => entity.id === 'unconnected')).toBe(false);
+    expect((await readJobMetadata(`${out}.job`))?.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'diagram.review.reverted_addition',
+          entityId: 'unconnected',
+        }),
+      ]),
+    );
+    expect(dependencies.finalGraphReviewerRepairer.repairFinalGraphReview).not.toHaveBeenCalled();
   }, 40000);
 
   it('reopens a previously reviewed checkpoint with flow errors for final repair', async () => {
@@ -1899,7 +1875,12 @@ relations:
     await fs.rm(out);
     const dependencies = createAdvancedDependencies();
     dependencies.finalGraphReviewerRepairer.repairFinalGraphReview.mockImplementation(
-      async ({ previousReviewYaml }) => {
+      async ({ previousReviewYaml, workspace }) => {
+        const candidate = await fs.readFile(
+          path.join(workspace.workspaceOutputDir, 'analysis/final-review.candidate.yaml'),
+          'utf8',
+        );
+        expect(candidate.trim()).toBe(previousReviewYaml.trim());
         const repairedDoc = parseDocument(previousReviewYaml);
         repairedDoc.entities = repairedDoc.entities.filter((entity) => entity.id !== 'orphan');
         return {
@@ -4686,6 +4667,16 @@ describe('pipeline repair-loop characterization', () => {
     dependencies.finalGraphReviewer.reviewFinalGraph.mockImplementation(async (input) => {
       reviewHandoff = await fs.readFile(input.handoffArtifactPath!, 'utf8');
       expect(parseDocument(input.currentFinalGraphYaml)).toEqual(input.assembledDoc);
+      const candidate = await fs.readFile(
+        path.join(input.workspace.workspaceOutputDir, 'analysis/final-graph.yaml'),
+        'utf8',
+      );
+      expect(parseDocument(candidate)).toEqual(input.assembledDoc);
+      expect(input.diagnostics).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ code: 'diagram.document.invalid_graph_output' }),
+        ]),
+      );
       return review(input);
     });
     const build = buildDiagram(

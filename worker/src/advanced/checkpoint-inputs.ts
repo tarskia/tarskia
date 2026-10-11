@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { version } from '../../package.json';
+import { GRAPHIFY_COLLECTION_POLICY } from './graphify-hints';
 import {
   ADVANCED_CHECKPOINT_STAGES,
   type AdvancedCheckpointStage,
@@ -12,6 +13,7 @@ export interface CheckpointInputs {
   checkpointFormat: number;
   repoRevision: string;
   graphifyHints: string;
+  graphifyCollectionPolicy?: string;
   schemaSourceRevision: string | null;
   maxDepth: number;
 }
@@ -35,6 +37,9 @@ export function checkpointInputs(params: {
     repoRevision: params.repoRevision,
     schemaSourceRevision: params.schemaSourceRevision ?? null,
     graphifyHints: params.graphifyHintsMode ?? 'auto',
+    ...(params.graphifyHintsMode === 'off'
+      ? {}
+      : { graphifyCollectionPolicy: GRAPHIFY_COLLECTION_POLICY }),
     maxDepth: params.nodeRefinementMaxDepth ?? 8,
   };
 }
@@ -47,6 +52,7 @@ export function stageInputs(
     checkpointFormat,
     repoRevision,
     graphifyHints,
+    graphifyCollectionPolicy,
     schemaSourceRevision,
     maxDepth,
   } = inputs;
@@ -55,6 +61,7 @@ export function stageInputs(
     checkpointFormat,
     repoRevision,
     graphifyHints,
+    ...(graphifyHints === 'off' ? {} : { graphifyCollectionPolicy }),
     ...(compareAdvancedCheckpointStage(stage, 'area-plan') >= 0 ? { schemaSourceRevision } : {}),
     ...(compareAdvancedCheckpointStage(stage, 'node-refinement') >= 0 ? { maxDepth } : {}),
   };

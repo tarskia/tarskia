@@ -165,10 +165,11 @@ it('retries a timed-out advanced turn exactly once on a fresh handoff-primed thr
     const first = { id: 'old', run: hang };
     const second = { id: 'fresh', run: hang };
     const client = { startThread: vi.fn().mockReturnValueOnce(first).mockReturnValueOnce(second) };
+    const logger = quietLogger();
     const manager = new AdvancedThreadManager({
       client,
       workspaceRoot: '/tmp/job',
-      logger: quietLogger(),
+      logger,
       canResumePersistedThread: false,
       turnTimeoutMs: 25,
     });
@@ -185,6 +186,15 @@ it('retries a timed-out advanced turn exactly once on a fresh handoff-primed thr
     expect(hang).toHaveBeenCalledTimes(2);
     expect(hang.mock.calls[1]?.[0]).toContain('Handoff artifact: out/handoff.md');
     expect(manager.getThreadId()).toBe('fresh');
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('(attempt 1/2). One recovery retry remains.'),
+    );
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Retrying node once on a fresh Codex thread using out/handoff.md.',
+    );
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('(attempt 2/2). No retry attempts remain.'),
+    );
   } finally {
     vi.useRealTimers();
   }

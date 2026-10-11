@@ -7,6 +7,7 @@ import type { Logger } from '../logger';
 import type { PreparedWorkspace } from '../workspace';
 
 export type GraphifyHintsMode = 'auto' | 'off' | 'required';
+export const GRAPHIFY_COLLECTION_POLICY = 'repo-relative-v1';
 
 export interface GraphifyNodeHint {
   id: string;
@@ -44,6 +45,7 @@ export interface GraphifyHints {
   mode: 'code-only';
   generatedAt: string;
   graphifyPackage: string;
+  collectionPolicy?: typeof GRAPHIFY_COLLECTION_POLICY;
   corpus: {
     codeFiles: number;
     nodes: number;
@@ -193,6 +195,9 @@ function normalizeGraphifyHints(value: unknown, markdown: string): GraphifyHints
   }
   if (!record.corpus || typeof record.corpus.nodes !== 'number') {
     throw new Error('Graphify hints artifact is missing corpus statistics');
+  }
+  if (record.collectionPolicy !== GRAPHIFY_COLLECTION_POLICY) {
+    throw new Error('Graphify hints artifact uses an obsolete collection policy');
   }
   return {
     ...record,

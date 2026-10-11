@@ -177,32 +177,104 @@ export function detectFinalGraphRegression(params: {
       warn('relation', original.id, !candidate);
     }
   }
-  // Rebuild nesting while retaining all independent additions and accepted edits.
-  const entities: Entity[] = [];
-  const rebuilt = new Map(
-    [...after].map(([id, item]) => [id, { ...item.entity, children: [] as Entity[] }]),
-  );
-  let invalidHierarchy = duplicateIds;
-  for (const [id, item] of after) {
-    const entity = rebuilt.get(id)!;
-    const visited = new Set([id]);
-    let ancestor = item.parent;
-    while (ancestor !== null) {
-      if (visited.has(ancestor) || !after.has(ancestor)) {
-        invalidHierarchy = true;
-        break;
+  const rebuild = () => {
+    const entities: Entity[] = [];
+    const rebuilt = new Map(
+      [...after].map(([id, item]) => [id, { ...item.entity, children: [] as Entity[] }]),
+    );
+    let invalidHierarchy = duplicateIds;
+    for (const [id, item] of after) {
+      const entity = rebuilt.get(id)!;
+      const visited = new Set([id]);
+      let ancestor = item.parent;
+      while (ancestor !== null) {
+        if (visited.has(ancestor) || !after.has(ancestor)) {
+          invalidHierarchy = true;
+          break;
+        }
+        visited.add(ancestor);
+        ancestor = after.get(ancestor)!.parent;
       }
-      visited.add(ancestor);
-      ancestor = after.get(ancestor)!.parent;
+      if (invalidHierarchy) break;
+      if (item.parent === null) entities.push(entity);
+      else rebuilt.get(item.parent)!.children!.push(entity);
     }
-    if (invalidHierarchy) break;
-    if (item.parent === null) entities.push(entity);
-    else rebuilt.get(item.parent)!.children!.push(entity);
+    return {
+      invalidHierarchy,
+      document: { ...params.candidateDoc, entities, relations: [...relations.values()] },
+    };
+  };
+  // An input may already need repair. Preserve those diagnostics for the final validator,
+  // while rejecting new errors introduced by review (including flow continuity errors).
+  const signature = (item: Diagnostic) =>
+    JSON.stringify([item.code, item.entityId, item.relationId, item.targetId]);
+  const inputErrors = new Set(errors.map(signature));
+  const newErrors = (document: SemanticDocument) =>
+    params
+      .validate(document)
+      .filter((item) => item.severity === 'error' && !inputErrors.has(signature(item)));
+  const inputRelationIds = new Set(params.assembledDoc.relations.map((item) => item.id));
+  let { document, invalidHierarchy } = rebuild();
+  let mergedErrors = invalidHierarchy ? [] : newErrors(document);
+  while (!invalidHierarchy && mergedErrors.length) {
+    const removedEntityIds = new Set(
+      mergedErrors.flatMap((error) =>
+        error.entityId && after.has(error.entityId) && !before.has(error.entityId)
+          ? [error.entityId]
+          : [],
+      ),
+    );
+    // Remove descendants of a rejected addition too; never orphan accepted input children.
+    for (const [id, item] of after) {
+      let parent = item.parent;
+      while (parent !== null) {
+        if (removedEntityIds.has(parent) && !before.has(id)) {
+          removedEntityIds.add(id);
+          break;
+        }
+        parent = after.get(parent)!.parent;
+      }
+    }
+    const removedRelationIds = new Set(
+      mergedErrors.flatMap((error) =>
+        error.relationId &&
+        relations.has(error.relationId) &&
+        !inputRelationIds.has(error.relationId)
+          ? [error.relationId]
+          : [],
+      ),
+    );
+    for (const [id, relation] of relations) {
+      if (
+        !inputRelationIds.has(id) &&
+        (removedEntityIds.has(relation.from) || removedEntityIds.has(relation.to))
+      ) {
+        removedRelationIds.add(id);
+      }
+    }
+    if (!removedEntityIds.size && !removedRelationIds.size) break;
+    const removals = [
+      ['entity', removedEntityIds],
+      ['relation', removedRelationIds],
+    ] as const;
+    for (const [kind, ids] of removals) {
+      for (const id of ids) {
+        if (kind === 'entity') after.delete(id);
+        else relations.delete(id);
+        diagnostics.push(
+          diagramDiagnostic({
+            phase: 'document',
+            severity: 'warning',
+            code: 'diagram.review.reverted_addition',
+            message: `Rejected added ${kind} ${id}: the merged review introduced a deterministic validation error.`,
+            ...(kind === 'entity' ? { entityId: id } : { relationId: id }),
+          }),
+        );
+      }
+    }
+    ({ document, invalidHierarchy } = rebuild());
+    mergedErrors = invalidHierarchy ? [] : newErrors(document);
   }
-  const document = { ...params.candidateDoc, entities, relations: [...relations.values()] };
-  const mergedErrors = invalidHierarchy
-    ? []
-    : params.validate(document).filter((item) => item.severity === 'error');
   if (invalidHierarchy || mergedErrors.length > 0) {
     diagnostics.push(
       diagramDiagnostic({

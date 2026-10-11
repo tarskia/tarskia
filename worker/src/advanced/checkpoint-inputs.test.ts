@@ -62,3 +62,32 @@ it('invalidates legacy metadata and includes depth in refinement fingerprint onl
     stageFingerprint(inputs, 'node-refinement'),
   );
 });
+
+it('recomputes Graphify-dependent checkpoints from census when the collection policy changes', () => {
+  const enabled = checkpointInputs({ repoRevision: 'commit-a', graphifyHintsMode: 'auto' });
+  const legacyRecords: StageRecords = Object.fromEntries(
+    ADVANCED_CHECKPOINT_STAGES.map((stage) => {
+      const oldInputs = { ...stageInputs(enabled, stage) };
+      delete oldInputs.graphifyCollectionPolicy;
+      return [
+        stage,
+        {
+          inputs: oldInputs,
+          fingerprint: 'legacy',
+          model: 'a',
+          reasoningEffort: 'max',
+          completed: true,
+        },
+      ];
+    }),
+  );
+  expect(firstChangedStage(enabled, legacyRecords, 'bundle-compile')).toMatchObject({
+    stage: 'repo-census',
+    message: expect.stringContaining('graphifyCollectionPolicy changed'),
+  });
+  expect(stageFingerprint(enabled, 'repo-census')).not.toBe(
+    stageFingerprint({ ...enabled, graphifyCollectionPolicy: undefined }, 'repo-census'),
+  );
+  expect(stageInputs(inputs, 'repo-census')).not.toHaveProperty('graphifyCollectionPolicy');
+  expect(firstChangedStage(inputs, records, 'bundle-compile')).toBeUndefined();
+});

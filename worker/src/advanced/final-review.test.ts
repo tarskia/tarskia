@@ -148,4 +148,60 @@ describe('final graph review helpers', () => {
       }),
     ]);
   });
+
+  it('rejects a renamed orphan addition while keeping an independent flow repair', () => {
+    const assembledDoc = createAssembledDoc();
+    assembledDoc.entities.push({ id: 'missing-flow', type: 'service' });
+    const candidateDoc = structuredClone(assembledDoc);
+    candidateDoc.entities[0].children![0].id = 'app/renamed-runtime';
+    candidateDoc.relations.push({ id: 'repair-flow', from: 'backend', to: 'missing-flow' });
+    const diagnostic = (entityId: string) => ({
+      domain: 'diagram' as const,
+      phase: 'document' as const,
+      severity: 'error' as const,
+      code: 'diagram.flow.unresolved_ingress',
+      message: `Missing ingress for ${entityId}`,
+      entityId,
+    });
+    const result = detectFinalGraphRegression({
+      assembledDoc,
+      candidateDoc,
+      inputDiagnostics: [diagnostic('missing-flow')],
+      validate: (doc) => [
+        ...(doc.entities[0].children!.some((item) => item.id === 'app/renamed-runtime')
+          ? [diagnostic('app/renamed-runtime')]
+          : []),
+        ...(doc.relations.some((item) => item.to === 'missing-flow')
+          ? []
+          : [diagnostic('missing-flow')]),
+      ],
+    });
+    expect(result.useAssembledGraph).toBe(false);
+    expect(result.document.entities[0].children!.map((item) => item.id)).toEqual(['app/runtime']);
+    expect(result.document.relations.some((item) => item.id === 'repair-flow')).toBe(true);
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'diagram.review.reverted_addition',
+          entityId: 'app/renamed-runtime',
+        }),
+      ]),
+    );
+  });
+
+  it('retains pre-existing errors for final repair rather than discarding a partial repair', () => {
+    const diagnostic = {
+      domain: 'diagram' as const,
+      phase: 'document' as const,
+      severity: 'error' as const,
+      code: 'diagram.flow.unresolved_ingress',
+      message: 'Missing ingress',
+      entityId: 'app/runtime',
+    };
+    const candidate = createAssembledDoc();
+    candidate.entities[0].children![0].description = 'Accepted partial repair';
+    const result = decide(candidate, [diagnostic], () => [diagnostic]);
+    expect(result.useAssembledGraph).toBe(false);
+    expect(result.document.entities[0].children![0].description).toBe('Accepted partial repair');
+  });
 });

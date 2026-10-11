@@ -176,6 +176,14 @@ The advanced worker flow is staged so intermediate outputs can be inspected and 
 
 All generated diagram output is treated as a candidate until it passes deterministic validation.
 
+Collation and final review return targeted JSON edits against canonical graph
+artifacts rather than regenerating the full YAML. Omitted fields preserve existing
+items, descriptions, provenance and containment. Reviews may change an existing
+item only when deterministic diagnostics identify it as invalid. The worker checks
+both semantic validity and flow continuity after merging edits, rejects invalid
+additions, and retains independent repairs. Final compilation still requires all
+errors to be resolved.
+
 ## Security Notes
 
 - Codex agent turns run with a read-only sandbox, no network access for the commands Codex runs, web search disabled and no approval escalation. Codex otherwise uses your own Codex configuration.
@@ -183,6 +191,7 @@ All generated diagram output is treated as a candidate until it passes determini
 - Worker-generated entities and relations must include repo-relative provenance.
 - Git inputs are checked before clone/fetch operations, and Git subprocesses run with a reduced environment.
 - Advanced Graphify hints mode executes static Graphify extraction outside the Codex sandbox. The shipped `build-graphify-hints.py.lock` pins Graphify 0.6.7 and its complete Python dependency set, including distribution hashes across Python >=3.10. The worker copies this lock beside its script and runs `uv run --no-config --isolated --locked --no-build --script`; it never loads script assets from the working directory. `--no-config` disables project/ancestor/user configuration discovery. Only prebuilt distributions are installed: `--no-build` prevents unpinned build backends from running for source distributions. Platforms without compatible wheels skip Graphify in `auto` mode and fail with a diagnostic in `required` mode. Inline scripts are already isolated in uv 0.11.26 (`--isolated` is a harmless no-op). Use `--graphify-hints off` to disable this optional step.
+- Graphify collects paths relative to the target repository so hidden job-directory ancestors such as `.cache` and `.codex` do not exclude its code. Hidden paths inside the repository and `.graphifyignore` still apply. Cached hints from the earlier absolute-path collection policy are regenerated, and dependent checkpoints recompute from census. Jobs with Graphify disabled keep their checkpoints.
 - To deliberately update the Graphify dependency lock, run `uv lock --no-config --default-index https://pypi.org/simple --script worker/src/advanced/build-graphify-hints.py` from the repository root and review the generated lock. Test static extraction without model calls with `TARSKIA_GRAPHIFY_INTEGRATION=1 npm exec -w worker -- vitest run src/advanced/graphify-hints.test.ts`.
 
 ### Token accounting
@@ -251,6 +260,9 @@ Defaults are 5 minutes for minimal/low/medium, 15 for high/xhigh, and 30 for
 max/ultra/persistent effort. A timed-out turn is retried at most once on a fresh
 thread, restoring advanced-stage context from its handoff artifact. A caller
 without a handoff retains its thread for that one retry rather than losing context.
+Timeout logs identify both attempts and announce the recovery retry. A first-turn
+timeout is not a terminal build failure; monitors should await the CLI's final
+status or their explicitly configured overall deadline.
 
 ## Open diagrams when the viewer starts
 
