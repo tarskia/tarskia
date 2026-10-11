@@ -1,55 +1,13 @@
-import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
-import { defineConfig, loadEnv, type Plugin } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 
 import { semanticsSourceAlias } from './semantics-source-alias';
+import { startupOpenPlugin } from './server/startup-open';
 
-const DEV_WORKER_DIAGRAM_ENDPOINT = '/__dev/worker-diagram';
 const FRONTEND_ROOT = import.meta.dirname;
 const WORKSPACE_ROOT = path.resolve(FRONTEND_ROOT, '..');
 const IGNORED_LOCAL_WORKSPACE_GLOBS = ['**/.claude/**', '**/.tmp/**', '**/.playwright-mcp/**'];
-
-function workerDiagramDevPlugin(workerDiagramPath: string): Plugin {
-  return {
-    name: 'worker-diagram-dev-plugin',
-    apply: 'serve',
-    configureServer(server) {
-      server.middlewares.use(DEV_WORKER_DIAGRAM_ENDPOINT, async (req, res, next) => {
-        if (req.method !== 'GET') {
-          next();
-          return;
-        }
-
-        try {
-          const [yaml, stats] = await Promise.all([
-            fs.readFile(workerDiagramPath, 'utf8'),
-            fs.stat(workerDiagramPath),
-          ]);
-          res.statusCode = 200;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(
-            JSON.stringify({
-              path: workerDiagramPath,
-              yaml,
-              updatedAt: stats.mtime.toISOString(),
-            }),
-          );
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          res.statusCode = 404;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(
-            JSON.stringify({
-              error: `Worker diagram artifact not available: ${message}`,
-              path: workerDiagramPath,
-            }),
-          );
-        }
-      });
-    },
-  };
-}
 
 function resolveManualChunk(id: string) {
   if (
@@ -80,7 +38,7 @@ const API_PROXY_PREFIXES = ['/api/gallery', '/healthz', '/ping'] as const;
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, WORKSPACE_ROOT, '');
-  const workerDiagramPath = env.DEV_WORKER_DIAGRAM_PATH?.trim();
+  const openPath = env.TARSKIA_OPEN?.trim();
   const apiOrigin =
     env.VITE_API_BASE_URL?.trim() ||
     env.API_ORIGIN?.trim() ||
@@ -92,7 +50,7 @@ export default defineConfig(({ mode }) => {
     envDir: WORKSPACE_ROOT,
     plugins: [
       react(),
-      ...(workerDiagramPath ? [workerDiagramDevPlugin(path.resolve(workerDiagramPath))] : []),
+      ...(openPath ? [startupOpenPlugin(path.resolve(WORKSPACE_ROOT, openPath))] : []),
     ],
     server: {
       fs: {

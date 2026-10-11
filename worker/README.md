@@ -251,3 +251,34 @@ Defaults are 5 minutes for minimal/low/medium, 15 for high/xhigh, and 30 for
 max/ultra/persistent effort. A timed-out turn is retried at most once on a fresh
 thread, restoring advanced-stage context from its handoff artifact. A caller
 without a handoff retains its thread for that one retry rather than losing context.
+
+## Open diagrams when the viewer starts
+
+Set `TARSKIA_OPEN` to a repository, a folder of repositories, or one diagram file.
+Repository folders load the selected diagrams and schemas from `.tarskia/`;
+a single file loads with the `*.schema.yaml` files beside it. The viewer opens
+at `/gallery/open`, with the gallery reachable from the header. Reload to read
+changes written by `tarskia evolve` or a build. No backend is needed.
+
+From the Tarskia checkout:
+
+```sh
+TARSKIA_OPEN=/path/to/repos npm run dev -w @tarskia/frontend
+```
+
+You can also set `TARSKIA_OPEN` in the checkout's `.env`. Relative paths resolve
+from the checkout root. The same setting works with `npm run preview` after a
+frontend build; a static deployment does not read local files.
+
+To run the viewer alongside a local stack, build from the Tarskia repository root
+and mount the folder read-only:
+
+```sh
+docker build -f frontend/Dockerfile -t tarskia-viewer .
+docker run --rm -p 4173:4173 \
+  -v /path/to/repos:/workspace:ro \
+  -e TARSKIA_OPEN=/workspace tarskia-viewer
+```
+
+Visit http://localhost:4173/. The image uses the Node version in `.node-version`
+and builds its own Linux dependencies. It does not need host `node_modules`.
