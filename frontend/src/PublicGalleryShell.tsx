@@ -17,6 +17,7 @@ import {
   coerceSuccessfulResponseBody,
 } from './gallery/gallery-response';
 import type { LocalDiagram } from './gallery/local-diagram';
+import { useLocalFileOpening } from './gallery/OpenLocalFile';
 import {
   describePublicGalleryRepository,
   formatPublicGalleryCommit,
@@ -38,6 +39,7 @@ export interface PublicGalleryViewerSearchChrome {
 }
 
 export interface PublicGalleryShellContext {
+  localFiles?: ReturnType<typeof useLocalFileOpening>;
   localDiagram?: LocalDiagram;
   setLocalDiagram?: (diagram: LocalDiagram) => void;
   setViewerSearchChrome: (chrome: PublicGalleryViewerSearchChrome) => void;
@@ -49,6 +51,7 @@ export default function PublicGalleryShell() {
   const [searchParams, setSearchParams] = useSearchParams();
   const isLocal = useLocation().pathname.replace(/\/+$/, '') === '/gallery/open';
   const [localDiagram, setLocalDiagram] = useState<LocalDiagram>();
+  const localFiles = useLocalFileOpening(setLocalDiagram);
   const inViewer = isLocal || Boolean(namespace && slug);
   const [shareAction, setShareAction] = useState<(() => Promise<string>) | undefined>();
   const setViewerShareAction = useCallback(
@@ -215,7 +218,9 @@ export default function PublicGalleryShell() {
                 </span>
                 {isLocal && localDiagram ? (
                   <p className="text-xs text-muted-foreground">
-                    Opened from {localDiagram.filename}. Nothing was uploaded.
+                    {localDiagram.folder
+                      ? `Opened from the ${localDiagram.folder.name} folder: ${localDiagram.folder.repos.length} repos (${localDiagram.folder.repos.join(', ')}). Nothing was uploaded.`
+                      : `Opened from ${localDiagram.filename}. Nothing was uploaded.`}
                   </p>
                 ) : viewerRepository?.href || viewerCommit || viewerMeta ? (
                   <div className="flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap text-[11px] text-muted-foreground">
@@ -334,9 +339,38 @@ export default function PublicGalleryShell() {
           </div>
         </div>
       </header>
+      {isLocal && localDiagram?.folder?.missingTargets.length ? (
+        <div className="px-6 py-3 text-sm text-muted-foreground">
+          <p>
+            {localDiagram.folder.missingTargets.length} links to other repos point at entities that
+            aren't in those repos' diagrams.
+          </p>
+          <details>
+            <summary>Show links</summary>
+            <ul>
+              {localDiagram.folder.missingTargets.map((target) => (
+                <li key={`${target.repo}/${target.name}/${target.target}`}>
+                  {target.repo}: {target.name} → {target.target}
+                </li>
+              ))}
+            </ul>
+          </details>
+        </div>
+      ) : null}
+      {localFiles.dragging ? (
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center border-2 border-accent bg-background/95 p-8 text-center text-lg">
+          Drop a diagram with its schema file, or a folder of repos, to open it here
+        </div>
+      ) : null}
+      {localFiles.error ? (
+        <div role="alert" className="px-6 py-3 text-sm text-destructive">
+          {localFiles.error}
+        </div>
+      ) : null}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <Outlet
           context={{
+            localFiles,
             localDiagram,
             setLocalDiagram,
             setViewerSearchChrome: syncViewerSearchChrome,

@@ -1,31 +1,55 @@
 import { FolderOpen } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import type { PublicGalleryShellContext } from '../PublicGalleryShell';
-import { openLocalDiagram } from './local-diagram';
+import { type LocalDiagram, openLocalDiagram } from './local-diagram';
 
-export function useLocalFileOpening() {
-  const { setLocalDiagram } = useOutletContext<PublicGalleryShellContext>() ?? {};
+import {
+  type DirectoryHandle,
+  directoryFromEntry,
+  directoryFromHandle,
+  type LocalDirectory,
+  openRepoFolder,
+} from './local-folder';
+
+export function useLocalFileOpening(setLocalDiagram?: (diagram: LocalDiagram) => void) {
   const navigate = useNavigate();
   const [error, setError] = useState<string>();
   const [dragging, setDragging] = useState(false);
   const attempt = useRef(0);
   const open = useCallback(
-    async (files: File[]) => {
+    async (load: () => Promise<LocalDiagram>) => {
       const current = ++attempt.current;
       setError(undefined);
       try {
-        const diagram = await openLocalDiagram(files);
+        const diagram = await load();
         if (current !== attempt.current) return;
         setLocalDiagram?.(diagram);
         navigate('/gallery/open');
       } catch (error) {
-        if (current === attempt.current)
+        if (
+          current === attempt.current &&
+          !(error instanceof DOMException && error.name === 'AbortError')
+        )
           setError(error instanceof Error ? error.message : 'Unable to open files.');
       }
     },
     [navigate, setLocalDiagram],
+  );
+  const openFiles = useCallback((files: File[]) => open(() => openLocalDiagram(files)), [open]);
+  const openFolder = useCallback(
+    (directory: LocalDirectory) => open(() => openRepoFolder(directory)),
+    [open],
+  );
+  const pickFolder = useCallback(
+    () =>
+      open(async () => {
+        const picker = (
+          window as unknown as { showDirectoryPicker: () => Promise<DirectoryHandle> }
+        ).showDirectoryPicker;
+        return openRepoFolder(directoryFromHandle(await picker.call(window)));
+      }),
+    [open],
   );
   useEffect(() => {
     let depth = 0;
@@ -55,7 +79,12 @@ export function useLocalFileOpening() {
       event.preventDefault();
       depth = 0;
       setDragging(false);
-      void open(Array.from(event.dataTransfer?.files ?? []));
+      const entries = Array.from(event.dataTransfer?.items ?? []).map((item) =>
+        item.webkitGetAsEntry?.(),
+      );
+      const folder = entries.find((entry) => entry?.isDirectory);
+      if (folder) void openFolder(directoryFromEntry(folder as FileSystemDirectoryEntry));
+      else void openFiles(Array.from(event.dataTransfer?.files ?? []));
     };
     window.addEventListener('dragenter', enter);
     window.addEventListener('dragover', over);
@@ -68,8 +97,8 @@ export function useLocalFileOpening() {
       window.removeEventListener('dragleave', leave);
       window.removeEventListener('drop', drop);
     };
-  }, [open]);
-  return { open, error, dragging };
+  }, [openFiles, openFolder]);
+  return { open: openFiles, pickFolder, error, dragging };
 }
 export function OpenLocalFileButton({ open }: { open: (files: File[]) => Promise<void> }) {
   const input = useRef<HTMLInputElement>(null);
@@ -98,5 +127,24 @@ export function OpenLocalFileButton({ open }: { open: (files: File[]) => Promise
         }}
       />
     </>
+  );
+}
+
+export function OpenLocalFolderButton({ open }: { open: () => Promise<void> }) {
+  if (
+    typeof window === 'undefined' ||
+    typeof (window as unknown as { showDirectoryPicker?: unknown }).showDirectoryPicker !==
+      'function'
+  )
+    return null;
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      title="Open a repo folder, or a folder of repos, to see their Tarskia diagrams together. Nothing is uploaded."
+      onClick={() => void open()}
+    >
+      Open folder
+    </Button>
   );
 }

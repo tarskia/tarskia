@@ -10,6 +10,11 @@ import { semanticBootstrap } from '../semantic/bootstrap';
 import { loadDiagramDocFromRaw } from '../viewer-core/loadDiagramDocFromRaw';
 
 export interface LocalDiagram {
+  folder?: {
+    name: string;
+    repos: string[];
+    missingTargets: { repo: string; name: string; target: string }[];
+  };
   raw: string;
   title: string;
   filename: string;
