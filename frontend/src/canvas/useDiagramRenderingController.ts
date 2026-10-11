@@ -23,6 +23,7 @@ export function useDiagramRenderingController(params: {
   schema?: SchemaModule;
   index?: SemanticIndex;
   view?: DiagramView;
+  preserveParallelEdges?: boolean;
 }) {
   const graph = useMemo(() => {
     if (params.index) return params.index;
@@ -32,7 +33,11 @@ export function useDiagramRenderingController(params: {
   const view = params.index ? params.view : params.doc?.view;
   const declarativeViewState = useMemo(() => selectDeclarativeDiagramViewState({ view }), [view]);
   const viewState = useMemo(() => compileView(graph, view), [graph, view]);
-  const layout = useMemo(() => buildLayoutResult({ graph, viewState }), [graph, viewState]);
+  const layout = useMemo(
+    () =>
+      buildLayoutResult({ graph, viewState, preserveParallelEdges: params.preserveParallelEdges }),
+    [graph, viewState, params.preserveParallelEdges],
+  );
 
   const resolveViewportFocusRoot = useCallback(
     (tree: LayoutResult['tree'], requestedRootId: string) =>

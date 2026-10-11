@@ -8,8 +8,15 @@ import {
 import { load } from 'js-yaml';
 import { semanticBootstrap } from '../semantic/bootstrap';
 import { loadDiagramDocFromRaw } from '../viewer-core/loadDiagramDocFromRaw';
+import type { DiagramComparison } from './diagram-comparison';
 
 export interface LocalDiagram {
+  comparison?: DiagramComparison;
+  folder?: {
+    name: string;
+    repos: string[];
+    missingTargets: { repo: string; name: string; target: string }[];
+  };
   raw: string;
   title: string;
   filename: string;

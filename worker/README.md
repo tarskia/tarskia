@@ -1,6 +1,6 @@
 # Tarskia CLI Worker
 
-Tarskia CLI analyzes a git repository and writes a semantic architecture diagram as a YAML file. To view a diagram, open the YAML file at [https://tarskia.io/gallery](https://tarskia.io/gallery) with **Open file**, together with the `--schema-out` file if you used one. It stays in your browser.
+Tarskia CLI analyzes a git repository and writes a semantic architecture diagram as a YAML file. To view a diagram, open the YAML file at [https://tarskia.io/gallery](https://tarskia.io/gallery) with **Open file**, together with the `--schema-out` file if you used one. To see several repos together, open their parent folder in the viewer. It stays in your browser.
 
 Experimental: the CLI isn't released on npm yet.
 
@@ -121,7 +121,22 @@ even when the working directory contains similarly named files.
 
 ## Validate output
 
-Use `tarskia validate diagram.yaml --json` for one JSON result. A valid document:
+Use `tarskia validate diagram.yaml --json` for one JSON result. To validate a
+combined set of repositories, run `tarskia validate <folder> --kind diagram --json`.
+If the folder has a `.tarskia/` directory, its diagrams are used. Otherwise,
+diagrams are read from each direct child's `.tarskia/` directory. Only `*.yaml`
+diagrams and `*.schema.yaml` schemas in those directories are read; `.job/` is
+ignored. Local schemas and any `--schema` files are included in validation.
+
+An entity can declare `represents: sibling-diagram/entity-id` to identify a
+stand-in for an entity in another diagram. The sibling name is its YAML filename
+without `.yaml`, regardless of the repository folder name. A stand-in cannot
+have children. Combining redirects its relations to the target and removes the
+stand-in, preserving each repository's provenance. Missing repositories are
+silent; missing entities in available repositories produce warnings. Validating
+one `.tarskia/*.yaml` diagram also checks available sibling targets.
+
+A valid document:
 
 ```json
 {"version":1,"ok":true,"kind":"diagram","path":"/work/diagram.yaml","diagnostics":[],"resolvedSchemaIds":["core/base@0.1"]}
@@ -248,3 +263,34 @@ without a handoff retains its thread for that one retry rather than losing conte
 Timeout logs identify both attempts and announce the recovery retry. A first-turn
 timeout is not a terminal build failure; monitors should await the CLI's final
 status or their explicitly configured overall deadline.
+
+## Open diagrams when the viewer starts
+
+Set `TARSKIA_OPEN` to a repository, a folder of repositories, or one diagram file.
+Repository folders load the selected diagrams and schemas from `.tarskia/`;
+a single file loads with the `*.schema.yaml` files beside it. The viewer opens
+at `/gallery/open`, with the gallery reachable from the header. Reload to read
+changes written by `tarskia evolve` or a build. No backend is needed.
+
+From the Tarskia checkout:
+
+```sh
+TARSKIA_OPEN=/path/to/repos npm run dev -w @tarskia/frontend
+```
+
+You can also set `TARSKIA_OPEN` in the checkout's `.env`. Relative paths resolve
+from the checkout root. The same setting works with `npm run preview` after a
+frontend build; a static deployment does not read local files.
+
+To run the viewer alongside a local stack, build from the Tarskia repository root
+and mount the folder read-only:
+
+```sh
+docker build -f frontend/Dockerfile -t tarskia-viewer .
+docker run --rm -p 4173:4173 \
+  -v /path/to/repos:/workspace:ro \
+  -e TARSKIA_OPEN=/workspace tarskia-viewer
+```
+
+Visit http://localhost:4173/. The image uses the Node version in `.node-version`
+and builds its own Linux dependencies. It does not need host `node_modules`.

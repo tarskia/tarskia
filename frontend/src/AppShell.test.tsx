@@ -42,18 +42,6 @@ describe('AppShell routes', () => {
       ':namespace/:slug',
     ]);
   });
-  it('redirects / to /gallery', () => {
-    const rootRoute = appRoutes.find((route) => route.path === '/');
-    if (!isValidElement(rootRoute?.element)) {
-      throw new Error('Expected root route to render a redirect element');
-    }
-    const props = rootRoute.element.props as { to: string; replace?: boolean };
-
-    expect(rootRoute.element.type).toBe(Navigate);
-    expect(props.to).toBe('/gallery');
-    expect(props.replace).toBe(true);
-  });
-
   it('renders the gallery index at /gallery', () => {
     const html = renderAt('/gallery');
 

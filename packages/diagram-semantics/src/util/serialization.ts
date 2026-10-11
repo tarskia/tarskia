@@ -17,6 +17,7 @@ import { migrateDiagramView, sanitizeDiagramViewNodesById } from '../view/normal
 import { validateWithSchema } from './schema-validator';
 
 type RawEntity = {
+  represents?: unknown;
   id?: unknown;
   type?: unknown;
   name?: unknown;
@@ -292,6 +293,8 @@ const normalizeEntities = (rawEntities: unknown[]): SemanticDocument['entities']
         typeof entry.name === 'string' && entry.name.trim().length > 0
           ? entry.name.trim()
           : undefined,
+      // Preserve malformed values so document validation can report them.
+      represents: entry.represents as string | undefined,
       description: normalizeDescription(entry.description),
       tags: normalizeTagList(entry.tags),
       removeDefaultTags: normalizeTagList(entry.removeDefaultTags),
@@ -360,6 +363,7 @@ const toNestedEntities = (entities: SemanticDocument['entities']) => {
       id: entity.id,
       type: entity.type,
     };
+    if (entity.represents !== undefined) out.represents = entity.represents;
     const normalizedName = entity.name?.trim();
     if (normalizedName && normalizedName.length > 0) {
       out.name = normalizedName;

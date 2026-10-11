@@ -87,6 +87,50 @@ it('compiles nested filesystem imports relative to each importing diagram', asyn
     diagnostics: [expect.objectContaining({ code: 'diagram.source.import_not_found' })],
   });
 });
+it('validates two worker-style imported repositories without top-level inputs', async () => {
+  for (const name of ['backend', 'frontend']) {
+    await file(
+      `${name}.yaml`,
+      `version: 0.1.0
+schemaRefs:
+  - schema: core/web-app@0.3
+    layer: 0
+inputs:
+  - id: primary
+    kind: git
+    role: primary
+    repo: https://github.com/acme/${name}
+    revision: ${'a'.repeat(40)}
+entities:
+  - id: api
+    type: core/web-app.types.service
+    name: API
+    provenance:
+      locations:
+        - input: primary
+          path: src/api.ts
+relations: []
+`,
+    );
+  }
+  const target = await file(
+    'combined.yaml',
+    `version: 0.1.0
+schemaRefs: []
+imports:
+  - slug: backend.yaml
+    namespace: backend
+  - slug: frontend.yaml
+    namespace: frontend
+entities: []
+relations: []
+`,
+  );
+  expect(await validateCli({ path: target, schemaSource })).toMatchObject({
+    ok: true,
+    diagnostics: [],
+  });
+});
 it('rejects duplicate extra schema IDs and names both files', async () => {
   const bundled = path.join(schemaSource, 'web-app.yaml');
   const duplicate = await file('duplicate.yaml', await fs.readFile(bundled, 'utf8'));
@@ -108,4 +152,45 @@ it('preserves valid standalone relation IDs containing path separators', async (
   expect(result.diagnostics.some((entry) => entry.code.startsWith('diagram.source.'))).toBe(false);
   expect(result.diagnostics).toEqual([]);
   expect(result.ok).toBe(true);
+});
+
+it('validates a conventional folder of repo diagrams with their local schemas', async () => {
+  await file('backend/.tarskia/api.yaml', diagram('core/web-app@0.3'));
+  await file('frontend/.tarskia/web.yaml', diagram('core/web-app@0.3'));
+  await file(
+    'frontend/.tarskia/local.schema.yaml',
+    'owner: user\nname: custom\nversion: "0.1"\ntypes: []\nrelations: []\n',
+  );
+  await file('frontend/.tarskia/.job/broken.yaml', 'not yaml [');
+  await file('unrelated/broken.yaml', 'not yaml [');
+  const result = await validateCli({ path: root, kind: 'diagram', schemaSource });
+  expect(result.ok).toBe(true);
+  expect(result.kind).toBe('diagram');
+  expect(result.path).toBe(root);
+});
+
+it('warns for missing sibling targets while validating one diagram and ignores missing repos', async () => {
+  const target = await file(
+    'backend/.tarskia/api.yaml',
+    diagram('core/web-app@0.3').replace(
+      '    name: App',
+      '    name: App\n    represents: web/missing',
+    ),
+  );
+  await file('frontend/.tarskia/web.yaml', diagram('core/web-app@0.3'));
+  const result = await validateCli({ path: target, schemaSource });
+  expect(result.ok).toBe(true);
+  expect(result.diagnostics).toContainEqual(
+    expect.objectContaining({
+      severity: 'warning',
+      code: 'diagram.combine.represents_target_missing',
+      entityId: 'api/app',
+    }),
+  );
+  await fs.rm(path.join(root, 'frontend'), { recursive: true });
+  expect(
+    (await validateCli({ path: target, schemaSource })).diagnostics.some((item) =>
+      item.code.includes('represents'),
+    ),
+  ).toBe(false);
 });

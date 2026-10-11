@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/.git
+**/.job
+**/.jobs
+worker/jobs
+worker/workspaces
+**/.tmp
+.cache
+.playwright-mcp
+.env
+.env.*

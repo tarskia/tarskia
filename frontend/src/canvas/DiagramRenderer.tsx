@@ -1,11 +1,12 @@
 import { type MutableRefObject, memo, useId, useLayoutEffect, useMemo, useRef } from 'react';
 import type { CanvasInteractionBindings, CanvasNode, CanvasNodeTypes } from './canvas-types';
-import { EdgeLabel } from './components/edges/EdgeLabel';
 import { resolveEdgeLabelTransform } from './components/edges/edge-label-placement';
 import {
   resolveCachedEdgeOverlayRenderState,
   resolveEdgeOverlayRenderState,
 } from './components/edges/edge-overlay-state';
+import { diffSymbol, useCanvasDiff } from './diff-context';
+import { DiffEdgeGroup, DiffEdgeLabel } from './diff-edges';
 import { buildCanvasRenderState } from './node-presentation';
 import type {
   CanvasOverlayEdgeView,
@@ -17,7 +18,6 @@ import {
   type TransitionFrameState,
 } from './rendering/transition/overlay';
 import type { OverlayFrameStore } from './rendering/transition/overlay-frame-store';
-
 /** One keyed DOM tree for both settled and moving geometry. Frames never enter React state. */
 export const DiagramRenderer = memo(function DiagramRenderer({
   nodes,
@@ -42,6 +42,7 @@ export const DiagramRenderer = memo(function DiagramRenderer({
   state?: TransitionFrameState;
   frameStore?: OverlayFrameStore;
 }) {
+  const diff = useCanvasDiff();
   const root = useRef<HTMLDivElement>(null);
   const clipScope = useId();
   const records = useMemo(() => {
@@ -188,6 +189,8 @@ export const DiagramRenderer = memo(function DiagramRenderer({
             <div
               key={node.id}
               className={`canvas-node${node.selectable !== false ? ' selectable' : ''}${node.selected ? ' selected' : ''}`}
+              data-diff={diff?.entities.get(node.id)}
+              data-diff-symbol={diffSymbol(diff?.entities.get(node.id))}
               data-entity-id={node.id}
               data-render-node={node.id}
               role="treeitem"
@@ -225,7 +228,7 @@ export const DiagramRenderer = memo(function DiagramRenderer({
             ))}
           </defs>
           {records.edges.map((edge) => (
-            <g key={edge.id} data-render-edge={edge.id} style={{ opacity: edge.opacity }}>
+            <DiffEdgeGroup key={edge.id} edge={edge}>
               <path
                 className={`edge-underlay-path${edge.selected ? ' edge-underlay-path-selected' : ''}${edge.matched ? ' edge-underlay-path-matched' : ''}`}
                 d={edge.path}
@@ -249,14 +252,12 @@ export const DiagramRenderer = memo(function DiagramRenderer({
                 clipPath={`url(#${clipId(edge.id, 'solid')})`}
                 pointerEvents="stroke"
               />
-            </g>
+            </DiffEdgeGroup>
           ))}
         </svg>
         <div className="edge-overlay-world edge-overlay-world-labels">
           {records.edges.map((edge) => (
-            <div key={edge.id} data-render-label={edge.id}>
-              <EdgeLabel edge={edge} delegateClicks />
-            </div>
+            <DiffEdgeLabel key={edge.id} edge={edge} />
           ))}
         </div>
       </div>

@@ -1,0 +1,56 @@
+[data-diff="added"] {
+  --diff-color: #16803c;
+}
+[data-diff="removed"] {
+  --diff-color: #c83636;
+}
+[data-diff="changed"] {
+  --diff-color: #a46a08;
+}
+.dark [data-diff="added"] {
+  --diff-color: #61d28c;
+}
+.dark [data-diff="removed"] {
+  --diff-color: #f98282;
+}
+.dark [data-diff="changed"] {
+  --diff-color: #f6c45c;
+}
+.canvas-node[data-diff="added"] .node,
+.canvas-node[data-diff="removed"] .node,
+.canvas-node[data-diff="changed"] .node {
+  outline: 2px solid var(--diff-color);
+  outline-offset: 2px;
+}
+.canvas-node[data-diff="removed"] .node {
+  outline-style: dashed;
+  opacity: 0.65;
+}
+.canvas-node[data-diff="unchanged"] .node {
+  opacity: 0.55;
+}
+.canvas-node[data-diff]:not([data-diff="unchanged"])::after {
+  content: attr(data-diff-symbol);
+  position: absolute;
+  top: 2px;
+  right: 5px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--diff-color);
+  pointer-events: none;
+}
+[data-render-edge][data-diff="removed"] path:not(.edge-hit-path) {
+  stroke-dasharray: 7 5;
+}
+[data-render-edge][data-diff="unchanged"] path:not(.edge-hit-path) {
+  opacity: 0.4;
+}
+[data-render-edge][data-diff]:not([data-diff="unchanged"]) path:not(.edge-hit-path) {
+  stroke: var(--diff-color);
+}
+[data-render-label][data-diff]:not([data-diff="unchanged"]) .edge-label {
+  color: var(--diff-color);
+}
+[data-render-label][data-diff="unchanged"] .edge-label {
+  opacity: 0.55;
+}

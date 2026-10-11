@@ -36,13 +36,13 @@ describe('diff io', () => {
       kind: 'semantic-diagram-diff',
       version: 1,
       entities: [
-        expect.objectContaining({ entityId: 'added', change: 'added' }),
-        expect.objectContaining({ entityId: 'removed', change: 'removed' }),
         expect.objectContaining({
           entityId: 'stable',
           change: 'changed',
           changedFields: ['name'],
         }),
+        expect.objectContaining({ entityId: 'added', change: 'added' }),
+        expect.objectContaining({ entityId: 'removed', change: 'removed' }),
       ],
       relations: [
         expect.objectContaining({ relationId: 'rel-added', change: 'added' }),

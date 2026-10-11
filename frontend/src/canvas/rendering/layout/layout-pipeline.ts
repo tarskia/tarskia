@@ -19,19 +19,27 @@ export type LayoutResult = CanvasScene;
 
 const results = new WeakMap<SemanticIndex, WeakMap<CompiledDiagramViewState, LayoutResult>>();
 
+const parallelResults = new WeakMap<
+  SemanticIndex,
+  WeakMap<CompiledDiagramViewState, LayoutResult>
+>();
+
 export function buildLayoutResult(params: {
   graph: SemanticIndex;
   viewState: CompiledDiagramViewState;
   uncached?: boolean;
+  preserveParallelEdges?: boolean;
 }): LayoutResult {
   const { graph, viewState } = params;
-  const cached = !params.uncached && results.get(graph)?.get(viewState);
+  const cache = params.preserveParallelEdges ? parallelResults : results;
+  const cached = !params.uncached && cache.get(graph)?.get(viewState);
   if (cached) return cached;
   const tree = createLayoutGeometry({ tree: viewState.tree });
   const nodeVisuals = buildNodeVisualMap({ schema: graph.schema, tree, uncached: params.uncached });
   const edges = buildEdgeVisuals({
     schema: graph.schema,
     edges: viewState.edges,
+    preserveParallelEdges: params.preserveParallelEdges,
   });
   applySceneLayout({
     edges,
@@ -89,10 +97,10 @@ export function buildLayoutResult(params: {
     zIndexById: new ImmutableMap(buildSceneZIndex(viewState.nodePaintOrder)),
   });
   if (!params.uncached) {
-    let byView = results.get(graph);
+    let byView = cache.get(graph);
     if (!byView) {
       byView = new WeakMap();
-      results.set(graph, byView);
+      cache.set(graph, byView);
     }
     byView.set(viewState, result);
   }

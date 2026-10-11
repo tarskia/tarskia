@@ -93,7 +93,7 @@ it('shows the file drag overlay, opens a dropped pair and clears errors on the n
     drag('dragenter');
   });
   expect(host.textContent).toContain(
-    'Drop a diagram file, and its schema file if it has one, to open it here',
+    'Drop a diagram with its schema file, or a folder of repos, to open it here',
   );
   await act(async () => {
     expect(
@@ -114,4 +114,111 @@ it('ignores an old read after a newer file selection completes', async () => {
   await act(async () => finish('unreadable'));
   expect(router.state.location.pathname).toBe('/gallery/open');
   expect(host.textContent).toContain('Opened from new.yaml. Nothing was uploaded.');
+});
+
+it('hides Open folder when directory picking is unavailable', async () => {
+  const { host } = await mount();
+  expect(
+    [...host.querySelectorAll('button')].some((button) => button.textContent === 'Open folder'),
+  ).toBe(false);
+});
+it('opens a folder, shows its metadata and missing-target disclosure, and treats cancellation quietly', async () => {
+  const raw = (name: string, represents?: string) => `version: 0.1.0
+schemaRefs: []
+metadata:
+  name: ${name}
+entities:
+  - id: app
+    type: example
+    name: ${name}
+${represents ? `    represents: ${represents}\n` : ''}relations: []
+`;
+  const directory = (name: string, children: unknown[]) => ({
+    kind: 'directory',
+    name,
+    async *values() {
+      yield* children;
+    },
+  });
+  const diagramFile = (name: string, text: string) => ({
+    kind: 'file',
+    name,
+    getFile: async () => file(name, text),
+  });
+  const picker = vi.fn(async () =>
+    directory('workspace', [
+      directory('api', [directory('.tarskia', [diagramFile('api.yaml', raw('API'))])]),
+      directory('web', [
+        directory('.tarskia', [diagramFile('web.yaml', raw('Web', 'api/missing'))]),
+      ]),
+    ]),
+  );
+  vi.stubGlobal('showDirectoryPicker', picker);
+  const { host, router } = await mount();
+  const button = [...host.querySelectorAll('button')].find(
+    (button) => button.textContent === 'Open folder',
+  )!;
+  expect(button.title).toBe(
+    'Open a repo folder, or a folder of repos, to see their Tarskia diagrams together. Nothing is uploaded.',
+  );
+  await act(async () => button.click());
+  expect(router.state.location.pathname).toBe('/gallery/open');
+  expect(host.textContent).toContain(
+    'Opened from the workspace folder: 2 repos (api, web). Nothing was uploaded.',
+  );
+  expect(host.textContent).toContain(
+    "1 links to other repos point at entities that aren't in those repos' diagrams.",
+  );
+  expect(host.querySelector('details')?.textContent).toContain('web: Web → api/missing');
+  expect(host.querySelector('[data-local-viewer]')?.getAttribute('data-share')).toBe('false');
+  await act(async () => router.navigate('/gallery'));
+  picker.mockRejectedValueOnce(new DOMException('Cancelled', 'AbortError'));
+  await act(async () =>
+    [...host.querySelectorAll('button')]
+      .find((button) => button.textContent === 'Open folder')!
+      .click(),
+  );
+  expect(host.querySelector('[role=alert]')).toBeNull();
+});
+
+it('opens a dropped folder while already viewing a local diagram', async () => {
+  const { host, router } = await mount();
+  await choose(host, [file('example.yaml', diagram), file('schema.yaml', schema)]);
+  const entry = (name: string, children: unknown[]) => ({
+    name,
+    isDirectory: true,
+    createReader() {
+      let consumed = false;
+      return {
+        readEntries(resolve: (entries: unknown[]) => void) {
+          resolve(consumed ? [] : children);
+          consumed = true;
+        },
+      };
+    },
+  });
+  const folder = entry('repo', [
+    entry('.tarskia', [
+      {
+        name: 'repo.yaml',
+        isDirectory: false,
+        file: (resolve: (value: unknown) => void) => resolve(file('repo.yaml', diagram)),
+      },
+      {
+        name: 'repo.schema.yaml',
+        isDirectory: false,
+        file: (resolve: (value: unknown) => void) => resolve(file('repo.schema.yaml', schema)),
+      },
+    ]),
+  ]);
+  const event = new Event('drop', { cancelable: true });
+  Object.defineProperty(event, 'dataTransfer', {
+    value: { types: ['Files'], files: [], items: [{ webkitGetAsEntry: () => folder }] },
+  });
+  await act(async () => {
+    window.dispatchEvent(event);
+  });
+  expect(event.defaultPrevented).toBe(true);
+  expect(router.state.location.pathname).toBe('/gallery/open');
+  expect(host.textContent).toContain('Opened from repo.yaml. Nothing was uploaded.');
 });
