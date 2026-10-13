@@ -54,11 +54,12 @@ const qualifyReference = (
   value: string,
   prefix: string[],
   localImportNamespaces: Set<string>,
+  localEntityIds: Set<string>,
 ): string => {
   if (prefix.length === 0) return value;
   const trimmed = value.trim();
   if (!trimmed) return trimmed;
-  if (!trimmed.includes('/')) {
+  if (!trimmed.includes('/') || localEntityIds.has(trimmed)) {
     return qualifyLocalId(prefix, trimmed);
   }
   const [head] = trimmed.split('/', 1);
@@ -98,17 +99,18 @@ const compileEntity = (
   prefix: string[],
   localImportNamespaces: Set<string>,
   inputs: DocumentInput[],
+  localEntityIds: Set<string>,
 ): Entity => {
   return {
     ...entity,
     provenance: compileProvenance(entity.provenance, prefix, inputs),
     id: qualifyLocalId(prefix, entity.id),
     parent: entity.parent
-      ? qualifyReference(entity.parent, prefix, localImportNamespaces)
+      ? qualifyReference(entity.parent, prefix, localImportNamespaces, localEntityIds)
       : undefined,
     children:
       entity.children?.map((child) =>
-        compileEntity(child, prefix, localImportNamespaces, inputs),
+        compileEntity(child, prefix, localImportNamespaces, inputs, localEntityIds),
       ) ?? undefined,
   };
 };
@@ -118,13 +120,14 @@ const compileRelation = (
   prefix: string[],
   localImportNamespaces: Set<string>,
   inputs: DocumentInput[],
+  localEntityIds: Set<string>,
 ): Relation => {
   return {
     ...relation,
     provenance: compileProvenance(relation.provenance, prefix, inputs),
     id: qualifyLocalId(prefix, relation.id),
-    from: qualifyReference(relation.from, prefix, localImportNamespaces),
-    to: qualifyReference(relation.to, prefix, localImportNamespaces),
+    from: qualifyReference(relation.from, prefix, localImportNamespaces, localEntityIds),
+    to: qualifyReference(relation.to, prefix, localImportNamespaces, localEntityIds),
   };
 };
 
@@ -262,6 +265,14 @@ export const compileSourceGraph = (
     const localImportNamespaces = new Set(
       (context.doc.imports ?? []).map((importSpec) => importSpec.namespace.trim()),
     );
+    const localEntityIds = new Set<string>();
+    const collectLocalIds = (entities: Entity[]) => {
+      for (const entity of entities) {
+        localEntityIds.add(entity.id);
+        collectLocalIds(entity.children ?? []);
+      }
+    };
+    collectLocalIds(context.doc.entities);
 
     dedupeSchemaRefs(
       diagnostics,
@@ -273,7 +284,13 @@ export const compileSourceGraph = (
 
     for (const entity of context.doc.entities) {
       validateLocalId(diagnostics, context.sourceLabel, 'entity', entity.id);
-      const compiledEntity = compileEntity(entity, context.prefix, localImportNamespaces, inputs);
+      const compiledEntity = compileEntity(
+        entity,
+        context.prefix,
+        localImportNamespaces,
+        inputs,
+        localEntityIds,
+      );
       const previousSource = seenEntityIds.get(compiledEntity.id);
       if (previousSource) {
         pushDiagnostic(diagnostics, {
@@ -297,6 +314,7 @@ export const compileSourceGraph = (
         context.prefix,
         localImportNamespaces,
         inputs,
+        localEntityIds,
       );
       const previousSource = seenRelationIds.get(compiledRelation.id);
       if (previousSource) {

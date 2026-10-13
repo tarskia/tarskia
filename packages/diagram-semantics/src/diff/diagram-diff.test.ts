@@ -1,12 +1,38 @@
 import { describe, expect, it } from 'vitest';
 import { ingestSemanticDiagramDiff, serializeSemanticDiagramDiff } from '../io/diff';
 import type { SchemaModule, SemanticDocument } from '../model/types';
+import { parseDocument, serializeDocument } from '../util/serialization';
 import {
   compileSemanticDiagramDiffUnion,
   diffSemanticDiagramDocuments,
   evolveSemanticDiagramDiffUnion,
   type SemanticDiagramDiffNode,
 } from './diagram-diff';
+
+it('evolves serialized diffs against parsed documents with optional fields, descriptions and unordered tags', () => {
+  const before = parseDocument(
+    serializeDocument({
+      version: '1',
+      schemaRefs: [],
+      entities: [
+        { id: 'a', type: 'service', description: 'Original', tags: ['z', 'a'] },
+        { id: 'b', type: 'service' },
+      ],
+      relations: [{ id: 'ab', from: 'a', to: 'b', description: 'Calls B', tags: ['z', 'a'] }],
+    }),
+  );
+  const after = structuredClone(before);
+  after.entities[0].description = 'Updated';
+  after.relations[0].description = 'Updated call';
+  const ingested = ingestSemanticDiagramDiff(
+    serializeSemanticDiagramDiff(diffSemanticDiagramDocuments({ before, after })),
+  );
+  expect(ingested.ok).toBe(true);
+  const result = evolveSemanticDiagramDiffUnion({ before, diff: ingested.value! });
+  expect(result.ok).toBe(true);
+  expect(result.value?.afterDocument.entities[0].description).toBe('Updated');
+  expect(result.value?.afterDocument.relations[0].description).toBe('Updated call');
+});
 
 const schema: SchemaModule = {
   owner: 'user',
