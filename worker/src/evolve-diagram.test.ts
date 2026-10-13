@@ -10,7 +10,11 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DiagramEvolverInput } from './codex/diagram-evolver';
 import { buildDiagramEvolvePrompt } from './codex/diagram-evolver';
-import { assertAdditiveSchema, completeEvolveCandidate } from './evolve-candidate';
+import {
+  assertAdditiveSchema,
+  assertInheritedPropertiesUnchanged,
+  completeEvolveCandidate,
+} from './evolve-candidate';
 import { evolveDiagram } from './evolve-diagram';
 import { workerGit } from './git';
 import { parseDocument, parseSchema, serializeDocument, serializeSchemaModule } from './semantic';
@@ -136,6 +140,79 @@ describe('after-only candidate', () => {
 });
 
 describe('committed evolution', () => {
+  it.each(['core', 'repo'])('rejects overriding an unused inherited %s property', async (owner) => {
+    const { root, git } = await fixture(false);
+    const parent = { id: 'parent', properties: [{ id: 'unused', type: 'string' as const }] };
+    const child = { id: 'child', extends: owner === 'core' ? 'core/code.types.module' : 'parent' };
+    const schema: SchemaModule = {
+      owner: 'repo',
+      name: 'example',
+      version: '0.1',
+      use: [{ schema: 'core/code@0.1' }],
+      types: owner === 'core' ? [child] : [parent, child],
+      relations: [],
+    };
+    const schemaPath = path.join(root, '.tarskia/example.schema.yaml');
+    const schemaYaml = serializeSchemaModule(schema);
+    await fs.writeFile(schemaPath, schemaYaml);
+    await fs.writeFile(
+      path.join(root, '.tarskia/example.yaml'),
+      serializeDocument({
+        ...base,
+        schemaRefs: [...base.schemaRefs, { schema: 'repo/example@0.1', layer: 1 }],
+      }),
+    );
+    await git.add('.');
+    await git.commit('Diagram with unused inherited properties');
+    await fs.writeFile(path.join(root, 'app.ts'), 'changed\n');
+    await git.add('.');
+    await git.commit('Code');
+    const property = owner === 'core' ? 'language' : 'unused';
+    const next = {
+      ...schema,
+      types: schema.types.map((type) =>
+        type.id === 'child'
+          ? { ...type, properties: [{ id: property, type: 'number' as const }] }
+          : type,
+      ),
+    };
+    const evolve = vi.fn(async () => ({
+      response: response([], [], serializeSchemaModule(next)),
+      threadId: null,
+    }));
+    await expect(
+      evolveDiagram({ cwd: root, evolver: { evolve }, logger: logger() }),
+    ).rejects.toThrow(`Cannot change inherited property repo/example.types.child.${property}`);
+    expect(evolve).toHaveBeenCalledTimes(4);
+    expect(await fs.readFile(schemaPath, 'utf8')).toBe(schemaYaml);
+  });
+  it.each([
+    false,
+    true,
+  ])('restores schema absence only on successful publication (failure=%s)', async (failure) => {
+    const { root } = await fixture();
+    const schemaPath = path.join(root, '.tarskia/example.schema.yaml');
+    await fs.writeFile(schemaPath, 'uncommitted schema');
+    const log = logger();
+    const evolve = vi.fn(async () => {
+      if (failure) throw new Error('agent failed');
+      return { response: response(), threadId: null };
+    });
+    const run = evolveDiagram({ cwd: root, evolver: { evolve }, logger: log });
+    if (failure) {
+      await expect(run).rejects.toThrow('agent failed');
+      expect(await fs.readFile(schemaPath, 'utf8')).toBe('uncommitted schema');
+    } else {
+      await expect(run).resolves.toMatchObject({
+        status: 'succeeded',
+        schemaOutputPath: undefined,
+      });
+      await expect(fs.stat(schemaPath)).rejects.toMatchObject({ code: 'ENOENT' });
+      expect(log.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Replacing uncommitted diagram/schema'),
+      );
+    }
+  });
   it('adds a repo schema type while keeping the committed base valid', async () => {
     const { root, git } = await fixture(false);
     const schema: SchemaModule = {
@@ -347,6 +424,27 @@ describe('committed evolution', () => {
 });
 
 describe('additive repo schema', () => {
+  it('allows an identical inherited property and a genuinely new optional property', () => {
+    const property = { id: 'unused', type: 'string' as const, description: 'Optional value' };
+    const base: SchemaModule = {
+      owner: 'repo',
+      name: 'example',
+      version: '0.1',
+      relations: [],
+      types: [
+        { id: 'parent', properties: [property] },
+        { id: 'child', extends: 'parent' },
+      ],
+    };
+    const next = {
+      ...base,
+      types: [
+        base.types[0],
+        { ...base.types[1], properties: [property, { id: 'new', type: 'boolean' as const }] },
+      ],
+    };
+    expect(() => assertInheritedPropertiesUnchanged(base, next, new Map())).not.toThrow();
+  });
   const schema: SchemaModule = {
     owner: 'repo',
     name: 'example',

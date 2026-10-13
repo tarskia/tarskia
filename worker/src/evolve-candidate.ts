@@ -2,12 +2,15 @@ import { isDeepStrictEqual } from 'node:util';
 import {
   buildEntityTree,
   buildSchemaId,
+  buildSchemaRuntimeFromCatalog,
+  buildSchemaVersionCatalogFromRegistry,
   completeSemanticDiagramDiff,
   type Entity,
   evolveSemanticDiagramDiffUnion,
   ingestSemanticDiagramDiff,
   parseSchemaRef,
   type Relation,
+  resolveTypeDef,
   type SchemaModule,
   type SemanticDiagramEntityDiff,
   type SemanticDiagramRelationDiff,
@@ -153,4 +156,39 @@ export function assertAdditiveSchema(base: SchemaModule, next: SchemaModule): st
     }
   }
   return [...addedEntities, ...addedRelations].map((type) => type.id);
+}
+
+export function assertInheritedPropertiesUnchanged(
+  base: SchemaModule,
+  next: SchemaModule,
+  modules: Map<string, SchemaModule>,
+): void {
+  const schemaId = `${base.owner}/${base.name}`;
+  const resolve = (module: SchemaModule) => {
+    const registry = new Map(modules).set(schemaId, module);
+    const result = buildSchemaRuntimeFromCatalog({
+      catalog: buildSchemaVersionCatalogFromRegistry(registry),
+      activations: [{ schema: `${schemaId}@${base.version}`, layer: 0 }],
+    });
+    const errors = result.diagnostics.filter((item) => item.severity === 'error');
+    if (errors.length) throw new Error(errors.map((item) => item.message).join('\n'));
+    return result.runtime.resolved.effectiveSchema;
+  };
+  const before = resolve(base);
+  const after = resolve(next);
+  for (const type of base.types) {
+    const id = `${schemaId}.types.${type.id}`;
+    const previous = resolveTypeDef(before, id);
+    const replacement = resolveTypeDef(after, id);
+    if (!previous || !replacement) throw new Error(`Cannot resolve existing type ${id}.`);
+    for (const property of previous.properties ?? []) {
+      if (
+        !isDeepStrictEqual(
+          property,
+          replacement.properties?.find((item) => item.id === property.id),
+        )
+      )
+        throw new Error(`Cannot change inherited property ${id}.${property.id}.`);
+    }
+  }
 }

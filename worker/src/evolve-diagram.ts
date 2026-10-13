@@ -16,7 +16,11 @@ import {
 } from './codex/prompt-package';
 import { UsageAccounting, withUsageAccounting } from './codex/usage-accounting';
 import { resolveDefaultSchemaSource } from './default-assets';
-import { assertAdditiveSchema, completeEvolveCandidate } from './evolve-candidate';
+import {
+  assertAdditiveSchema,
+  assertInheritedPropertiesUnchanged,
+  completeEvolveCandidate,
+} from './evolve-candidate';
 import { validateGeneratedSchemaCandidate } from './generated-schema';
 import { workerGit, workerGitEnv, workerGitTimeoutMs } from './git';
 import { acquireJobLock } from './job-lock';
@@ -223,6 +227,7 @@ export async function evolveDiagram(options: EvolveDiagramOptions = {}) {
               throw new Error(validation.diagnostics.map((item) => item.message).join('\n'));
             const nextSchema = parseSchema(validation.rawSchema);
             addedTypes = assertAdditiveSchema(baseSchema, nextSchema);
+            assertInheritedPropertiesUnchanged(baseSchema, nextSchema, registry.modulesById);
             schemaYaml = validation.rawSchema;
             candidateRegistry.modulesById.set(getSchemaModuleRef(nextSchema), nextSchema);
           }
@@ -303,6 +308,7 @@ export async function evolveDiagram(options: EvolveDiagramOptions = {}) {
     await writeFileAtomic(path.join(jobRoot, 'diagram.diff.yaml'), result.candidate.rawDiff);
     if (schemaOutputPath && result.schemaYaml)
       await writeFileAtomic(schemaOutputPath, result.schemaYaml);
+    else await fs.rm(path.join(root, schemaPath), { force: true });
     await writeFileAtomic(outputPath, result.yaml);
     const summary = {
       status: 'succeeded' as const,
