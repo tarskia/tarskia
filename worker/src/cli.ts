@@ -12,6 +12,7 @@ import { BuildDiagramError, buildDiagram, derivePartialOutputPath } from './buil
 import { installCancellationHandlers, withCancellation } from './cancellation';
 import { ConfigError, UsageError } from './cli-errors';
 import { resolveDefaultSchemaSource } from './default-assets';
+import { evolveDiagram } from './evolve-diagram';
 import { deriveGeneratedSchemaId } from './generated-schema';
 import { runValidateGeneratedSchemaCli } from './generated-schema-validator-cli';
 import { workerGit } from './git';
@@ -35,6 +36,10 @@ let unmaskedSecrets: UnmaskedSecrets | undefined;
 
 function printUsage(command?: string, json = false): void {
   const usage: Record<string, string[]> = {
+    evolve: [
+      `tarskia evolve [--ref <commit>] [--diagram <path>] [--model <model>] [--reasoning-effort <${REASONING_EFFORTS.join('|')}>] [--json]`,
+      '  Evolves the committed .tarskia/ diagram from committed code changes, keeping existing IDs.',
+    ],
     build: [
       `tarskia build <repo-path-or-git-url> --out <file> [--schema-out <file>] [--schema-id <repo/name>] [--schema-source <dir>] [--ref <git-ref>] [--model <model>] [--reasoning-effort <${REASONING_EFFORTS.join('|')}>] [--graphify-hints <auto|off|required>] [--restart-from <stage>] [--stop-after <stage>] [--max-depth <n>] [--max-turns <n>] [--turn-timeout <minutes>] [--overwrite] [--fresh]`,
       '  --max-turns: optional invocation-wide limit, including repairs and retries; checkpoints to .partial.yaml.',
@@ -55,7 +60,7 @@ function printUsage(command?: string, json = false): void {
       'tarskia internal validate-schema-selection [--job-root <path>] --context <path>',
     ],
   };
-  const text = `Usage:\n${(command && usage[command] ? usage[command] : [...usage.build, ...usage.validate, ...usage.check, 'tarskia --version']).join('\n')}\n`;
+  const text = `Usage:\n${(command && usage[command] ? usage[command] : [...usage.build, ...usage.evolve, ...usage.validate, ...usage.check, 'tarskia --version']).join('\n')}\n`;
   process.stdout.write(json ? `${JSON.stringify({ usage: text })}\n` : text);
 }
 
@@ -205,6 +210,7 @@ async function runInternalCommand(
 }
 
 type ParsedValues = {
+  diagram?: string;
   repo?: string;
   ref?: string;
   'schema-source'?: string;
@@ -237,6 +243,7 @@ async function main(): Promise<void> {
     parsed = parseArgs({
       allowPositionals: true,
       options: {
+        diagram: { type: 'string' },
         repo: { type: 'string' },
         ref: { type: 'string' },
         'schema-source': { type: 'string' },
@@ -303,6 +310,23 @@ async function main(): Promise<void> {
       schemas: parsedValues.schema,
       json: Boolean(parsedValues.json),
     });
+    return;
+  }
+
+  if (command === 'evolve') {
+    assertBuildPlatform();
+    const effort = parsedValues['reasoning-effort'];
+    if (effort !== undefined && !REASONING_EFFORTS.includes(effort.trim() as never))
+      throw new UsageError(`invalid --reasoning-effort '${effort}'`);
+    const result = await evolveDiagram({
+      ref: parsedValues.ref?.trim() || undefined,
+      diagram: parsedValues.diagram?.trim() || undefined,
+      model: parsedValues.model?.trim() || undefined,
+      reasoningEffort: resolveReasoningEffort(effort),
+    });
+    if (parsedValues.json || result.status === 'succeeded')
+      console.log(JSON.stringify(result, null, 2));
+    else console.log(result.message);
     return;
   }
 
@@ -473,7 +497,7 @@ withCancellation(controller.signal, main)
       process.exitCode = cancellation.exitCode;
       return;
     }
-    const command = ['build', 'validate', 'check', 'internal'].includes(process.argv[2])
+    const command = ['build', 'evolve', 'validate', 'check', 'internal'].includes(process.argv[2])
       ? process.argv[2]
       : undefined;
     const repoFlag = process.argv.indexOf('--repo');

@@ -16,6 +16,7 @@ const DIFF_VERSION = 1;
 
 const ENTITY_FIELD_ORDER: SemanticDiagramEntityChangedField[] = [
   'represents',
+  'description',
   'name',
   'type',
   'parent',
@@ -25,6 +26,7 @@ const ENTITY_FIELD_ORDER: SemanticDiagramEntityChangedField[] = [
 ];
 
 const RELATION_FIELD_ORDER: SemanticDiagramRelationChangedField[] = [
+  'description',
   'type',
   'label',
   'state',
@@ -84,6 +86,8 @@ const collectEntityChangedFields = (
     switch (field) {
       case 'represents':
         return before.represents !== after.represents;
+      case 'description':
+        return before.description !== after.description;
       case 'name':
         return before.name !== after.name;
       case 'type':
@@ -107,6 +111,8 @@ const collectRelationChangedFields = (
 ): SemanticDiagramRelationChangedField[] =>
   RELATION_FIELD_ORDER.filter((field) => {
     switch (field) {
+      case 'description':
+        return before.description !== after.description;
       case 'type':
         return before.type !== after.type;
       case 'label':
@@ -304,6 +310,7 @@ const validateEntitySnapshot = (candidate: unknown, path: string): ValidationRes
   const type = readRequiredString(candidate, 'type', path, diagnostics);
   const represents = readOptionalString(candidate, 'represents', path, diagnostics);
   const name = readOptionalString(candidate, 'name', path, diagnostics);
+  const description = readOptionalString(candidate, 'description', path, diagnostics);
   const parent = readOptionalString(candidate, 'parent', path, diagnostics);
   const tags = readOptionalStringArray(candidate, 'tags', path, diagnostics);
   const removeDefaultTags = readOptionalStringArray(
@@ -335,6 +342,7 @@ const validateEntitySnapshot = (candidate: unknown, path: string): ValidationRes
       type,
       ...(represents !== undefined ? { represents } : {}),
       ...(name !== undefined ? { name } : {}),
+      ...(description !== undefined ? { description } : {}),
       ...(parent !== undefined ? { parent } : {}),
       ...(tags !== undefined ? { tags } : {}),
       ...(removeDefaultTags !== undefined ? { removeDefaultTags } : {}),
@@ -366,6 +374,7 @@ const validateRelationSnapshot = (candidate: unknown, path: string): ValidationR
   const to = readRequiredString(candidate, 'to', path, diagnostics);
   const type = readOptionalString(candidate, 'type', path, diagnostics);
   const label = readOptionalString(candidate, 'label', path, diagnostics);
+  const description = readOptionalString(candidate, 'description', path, diagnostics);
   const stateCandidate = candidate.state;
   if (stateCandidate !== undefined && stateCandidate !== 'undecided' && stateCandidate !== 'none') {
     diagnostics.push(
@@ -409,6 +418,7 @@ const validateRelationSnapshot = (candidate: unknown, path: string): ValidationR
       to,
       ...(type !== undefined ? { type } : {}),
       ...(label !== undefined ? { label } : {}),
+      ...(description !== undefined ? { description } : {}),
       ...(state !== undefined ? { state } : {}),
       ...(tags !== undefined ? { tags } : {}),
       ...(removeDefaultTags !== undefined ? { removeDefaultTags } : {}),

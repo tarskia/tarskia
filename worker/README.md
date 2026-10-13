@@ -27,7 +27,47 @@ node dist/cli.js check
 node dist/cli.js build <repo-path-or-git-url> --out diagram.yaml
 ```
 
-Useful options:
+## Evolve a committed diagram
+
+Commit a repository's diagram as `.tarskia/<repo-name>.yaml`, together with
+`.tarskia/<repo-name>.schema.yaml` when the build used `--schema-out`. Add
+`.tarskia/** linguist-generated=true` to the repository's `.gitattributes` so
+GitHub collapses generated YAML in code reviews.
+
+After committing code changes, run from inside that repository:
+
+```sh
+tarskia evolve
+tarskia evolve --ref HEAD --diagram .tarskia/my-repo.yaml --model gpt-6-astra --reasoning-effort medium
+tarskia evolve --json
+```
+
+Evolve starts from the last commit that changed the selected diagram. It sends a
+separate, read-only Codex agent the diagram, schema, code diff and an exported
+code snapshot without git history. The agent returns only changed items; existing
+IDs and unaffected items remain stable. Uncommitted code is ignored, and any
+uncommitted diagram/schema edits are replaced with a notice. Commit the evolved
+files alongside, or after, the code they describe.
+
+New entity/relation types and optional properties on existing entity types may
+be added to an existing `repo/` schema at version `0.1`; existing definitions and
+core schemas cannot change. Imports stay unchanged unless a new type needs an
+additional import. Without a
+repo schema, evolve uses core types only. Large changes have no size cap, but a
+change touching more than half the entities suggests a manual rebuild.
+
+The ignored `.tarskia/.job/` directory holds the code export, diff, diagnostics,
+usage metadata and comparison files. Evolve prints the merge-base diagram and
+updated diagram paths. Opening the repository folder in the viewer offers
+**Show changes** while those comparison files match the current diagram.
+The repository needs `origin/HEAD` or `origin/main` for this comparison.
+
+When two branches evolve the same diagram and conflict, take main's diagram and
+run `tarskia evolve` again, starting from main's last diagram commit. Rebuild
+manually only when the architecture diagram has drifted; evolve never triggers
+a full build.
+
+## Build options
 
 ```sh
 node dist/cli.js build <repo> --out diagram.yaml

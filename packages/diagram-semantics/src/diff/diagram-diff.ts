@@ -12,6 +12,7 @@ export type SemanticDiagramDiffSide = 'before' | 'after' | 'merged';
 
 export type SemanticDiagramEntityChangedField =
   | 'represents'
+  | 'description'
   | 'name'
   | 'type'
   | 'parent'
@@ -19,6 +20,7 @@ export type SemanticDiagramEntityChangedField =
   | 'props'
   | 'provenance';
 export type SemanticDiagramRelationChangedField =
+  | 'description'
   | 'type'
   | 'label'
   | 'state'
@@ -118,6 +120,7 @@ export interface EvolveSemanticDiagramDiffUnionParams {
 
 const ENTITY_FIELD_ORDER: SemanticDiagramEntityChangedField[] = [
   'represents',
+  'description',
   'name',
   'type',
   'parent',
@@ -127,6 +130,7 @@ const ENTITY_FIELD_ORDER: SemanticDiagramEntityChangedField[] = [
 ];
 
 const RELATION_FIELD_ORDER: SemanticDiagramRelationChangedField[] = [
+  'description',
   'type',
   'label',
   'state',
@@ -145,9 +149,9 @@ const stableSerialize = (value: unknown): string => {
   if (Array.isArray(value)) {
     return `[${value.map((entry) => stableSerialize(entry)).join(',')}]`;
   }
-  const entries = Object.entries(value as Record<string, unknown>).sort(([left], [right]) =>
-    left.localeCompare(right),
-  );
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([, entry]) => entry !== undefined)
+    .sort(([left], [right]) => left.localeCompare(right));
   return `{${entries
     .map(([key, entryValue]) => `${JSON.stringify(key)}:${stableSerialize(entryValue)}`)
     .join(',')}}`;
@@ -157,6 +161,13 @@ const normalizeStringArray = (values?: string[]): string[] | undefined => {
   if (!values || values.length === 0) return undefined;
   return [...values].sort((left, right) => left.localeCompare(right));
 };
+
+const snapshotKey = (value: Entity | Relation) =>
+  stableSerialize({
+    ...value,
+    tags: normalizeStringArray(value.tags),
+    removeDefaultTags: normalizeStringArray(value.removeDefaultTags),
+  });
 
 const normalizeParentId = (parentId?: string) =>
   parentId && parentId !== ROOT_ID ? parentId : undefined;
@@ -222,6 +233,8 @@ const collectEntityChangedFields = (
     switch (field) {
       case 'represents':
         return before.represents !== after.represents;
+      case 'description':
+        return before.description !== after.description;
       case 'name':
         return before.name !== after.name;
       case 'type':
@@ -245,6 +258,8 @@ const collectRelationChangedFields = (
 ): SemanticDiagramRelationChangedField[] =>
   RELATION_FIELD_ORDER.filter((field) => {
     switch (field) {
+      case 'description':
+        return before.description !== after.description;
       case 'type':
         return before.type !== after.type;
       case 'label':
@@ -265,6 +280,51 @@ const collectRelationChangedFields = (
         return false;
     }
   });
+
+/** Fill trusted base snapshots and field changes without materializing the candidate hierarchy. */
+export function completeSemanticDiagramDiff(params: {
+  before: SemanticDocument;
+  entities: Array<Omit<SemanticDiagramEntityDiff, 'before' | 'changedFields'>>;
+  relations: Array<Omit<SemanticDiagramRelationDiff, 'before' | 'changedFields'>>;
+}): SemanticDiagramDiff {
+  const tree = buildEntityTree(params.before);
+  return {
+    kind: 'semantic-diagram-diff',
+    version: 1,
+    entities: params.entities.map((entry) => {
+      const node = tree.byId.get(entry.entityId);
+      const before = entry.change === 'added' ? undefined : normalizeEntitySnapshot(node);
+      const after = entry.after ? { ...entry.after } : undefined;
+      if (after && stableSerialize(after.provenance) === stableSerialize(node?.entity.provenance))
+        delete after.provenance;
+      return {
+        ...entry,
+        before,
+        after,
+        changedFields:
+          entry.change === 'changed' && before && after
+            ? collectEntityChangedFields(before, after)
+            : [],
+      };
+    }),
+    relations: params.relations.map((entry) => {
+      const original = params.before.relations.find((item) => item.id === entry.relationId);
+      const before = entry.change === 'added' ? undefined : normalizeRelationSnapshot(original);
+      const after = entry.after ? { ...entry.after } : undefined;
+      if (after && stableSerialize(after.provenance) === stableSerialize(original?.provenance))
+        delete after.provenance;
+      return {
+        ...entry,
+        before,
+        after,
+        changedFields:
+          entry.change === 'changed' && before && after
+            ? collectRelationChangedFields(before, after)
+            : [],
+      };
+    }),
+  };
+}
 
 const normalizeEntityChangedFields = (fields: SemanticDiagramEntityChangedField[]) =>
   ENTITY_FIELD_ORDER.filter((field) => fields.includes(field));
@@ -632,7 +692,7 @@ const validateEntityDiffAgainstBefore = (
         );
         return diagnostics;
       }
-      if (stableSerialize(beforeSnapshot) !== stableSerialize(entry.before)) {
+      if (snapshotKey(beforeSnapshot) !== snapshotKey(entry.before)) {
         diagnostics.push(
           buildDiffDiagnostic(
             'diagram.diff.before_snapshot_mismatch',
@@ -703,7 +763,7 @@ const validateRelationDiffAgainstBefore = (
         );
         return diagnostics;
       }
-      if (stableSerialize(beforeSnapshot) !== stableSerialize(entry.before)) {
+      if (snapshotKey(beforeSnapshot) !== snapshotKey(entry.before)) {
         diagnostics.push(
           buildDiffDiagnostic(
             'diagram.diff.before_snapshot_mismatch',

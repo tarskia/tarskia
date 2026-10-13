@@ -30,6 +30,34 @@ const edge = (id: string, from: string, to: string): Relation => ({
 });
 
 describe('combineRepoDiagrams', () => {
+  it('qualifies path-shaped nested IDs and endpoints when comparing evolved repo diagrams', () => {
+    const result = combineRepoDiagrams({
+      name: 'workspace',
+      diagrams: [
+        diagram(
+          'server',
+          [
+            {
+              ...entity('runtime'),
+              children: [
+                { ...entity('runtime/api'), children: [entity('runtime/api/handler')] },
+                entity('runtime/metrics'),
+              ],
+            },
+          ],
+          [edge('records', 'runtime/api/handler', 'runtime/metrics')],
+        ),
+      ],
+    });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.doc?.relations[0]).toMatchObject({
+      from: 'server/runtime/api/handler',
+      to: 'server/runtime/metrics',
+    });
+    expect(result.doc?.entities[0].children?.[0].children?.[0].id).toBe(
+      'server/runtime/api/handler',
+    );
+  });
   it('namespaces IDs and input-backed provenance, merging stand-ins and parallel edges under the source owner', () => {
     const result = combineRepoDiagrams({
       name: 'workspace',

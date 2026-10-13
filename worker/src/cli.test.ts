@@ -9,6 +9,7 @@ import { version } from '../package.json';
 import { resolveDefaultSchemaSource } from './default-assets';
 import { createInitialJobMetadata, writeJobMetadata } from './job-metadata';
 import { schemaRepoFixture } from './schema-repo-fixture';
+import { CANONICAL_EXAMPLE_YAML } from './semantic/diagram-synthesis-contract';
 
 const exec = promisify(execFile);
 const cli = path.resolve('dist/cli.js');
@@ -20,10 +21,11 @@ async function run(
   missing: 'codex' | 'uv' | '' = '',
   codexYaml = '',
   platform = process.platform,
+  cwd = tmp,
 ) {
   return new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve, reject) => {
     const child = spawn(process.execPath, [cli, ...args], {
-      cwd: tmp,
+      cwd,
       env: {
         ...process.env,
         TARSKIA_DEBUG: debug ? '1' : '',
@@ -90,11 +92,43 @@ afterAll(async () => {
 });
 
 describe('built CLI streams and errors', () => {
+  it('returns evolve JSON using an independent stubbed agent', async () => {
+    const root = await fs.mkdtemp(path.join(tmp, 'evolve-'));
+    const git = (...args: string[]) => exec('git', args, { cwd: root });
+    await git('init');
+    await git('config', 'user.email', 'test@example.test');
+    await git('config', 'user.name', 'Test');
+    await fs.mkdir(path.join(root, '.tarskia'));
+    await fs.writeFile(path.join(root, '.tarskia/example.yaml'), CANONICAL_EXAMPLE_YAML);
+    await fs.writeFile(path.join(root, 'app.ts'), 'before');
+    await git('add', '.');
+    await git('commit', '-m', 'Base');
+    await git('update-ref', 'refs/remotes/origin/main', 'HEAD');
+    await fs.writeFile(path.join(root, 'app.ts'), 'after');
+    await git('add', '.');
+    await git('commit', '-m', 'Code');
+    const candidate = path.join(tmp, 'evolve-response.json');
+    await fs.writeFile(
+      candidate,
+      JSON.stringify({
+        diff: { kind: 'semantic-diagram-diff', version: 1, entities: [], relations: [] },
+      }),
+    );
+    const result = await run(['evolve', '--json'], false, '', candidate, process.platform, root);
+    expect(result.code, result.stderr).toBe(0);
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      status: 'succeeded',
+      outputPath: path.join(await fs.realpath(root), '.tarskia/example.yaml'),
+      threadId: 'fake-cli-thread',
+      repaired: false,
+    });
+  });
   it('prints the package version', async () => {
     expect(await run(['--version'])).toEqual({ code: 0, stdout: `${version}\n`, stderr: '' });
   });
   it.each([
     ['build', 'tarskia build', 'tarskia validate'],
+    ['evolve', 'tarskia evolve', 'tarskia build'],
     ['validate', 'tarskia validate', 'tarskia build'],
     ['check', 'tarskia check', 'tarskia build'],
   ])('prints only %s help', async (command, expected, absent) => {
