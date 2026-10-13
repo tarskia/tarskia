@@ -322,6 +322,28 @@ describe('committed evolution', () => {
       CANONICAL_EXAMPLE_YAML,
     );
   });
+  it('names a requested relation type when no repo schema exists', async () => {
+    const { root } = await fixture();
+    const original = base.relations[0];
+    const evolve = vi.fn(async () => ({
+      response: response(
+        [],
+        [
+          {
+            relationId: original.id,
+            change: 'changed',
+            after: { ...original, type: 'repo/example.relations.unavailable' },
+          },
+        ],
+        'owner: repo\nname: example\nversion: "0.1"\ntypes: []\nrelations: []',
+      ),
+      threadId: null,
+    }));
+    await expect(
+      evolveDiagram({ cwd: root, evolver: { evolve }, logger: logger() }),
+    ).rejects.toThrow('repo/example.relations.unavailable');
+    expect(evolve).toHaveBeenCalledTimes(4);
+  });
 });
 
 describe('additive repo schema', () => {

@@ -210,7 +210,7 @@ export async function evolveDiagram(options: EvolveDiagramOptions = {}) {
           if (candidate.schema != null) {
             if (!baseSchema)
               throw new Error(
-                `No repo schema exists; new types cannot be added. Use the available core types. Candidate entity types: ${candidate.diff.entities.flatMap((entry) => entry.after?.type ?? []).join(', ') || '(none)'}.`,
+                `No repo schema exists; new types cannot be added. Use the available core types. Candidate types: ${[...candidate.diff.entities, ...candidate.diff.relations].flatMap((entry) => entry.after?.type ?? []).join(', ') || '(none)'}.`,
               );
             const proposed = parseSchema(candidate.schema);
             assertAdditiveSchema(baseSchema, proposed);
